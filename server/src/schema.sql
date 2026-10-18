@@ -1,0 +1,282 @@
+-- Lilyan Pert (QR Menu Pro) — canonical schema.
+-- Every business-owned table carries business_id so tenant isolation can be enforced in SQL.
+
+CREATE TABLE IF NOT EXISTS users (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  email          text UNIQUE NOT NULL,
+  password_hash  text NOT NULL,
+  full_name      text,
+  phone          text,
+  is_super_admin boolean NOT NULL DEFAULT false,
+  locale         text NOT NULL DEFAULT 'en',
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS businesses (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  slug          text UNIQUE NOT NULL,
+  name          text NOT NULL,
+  name_ku       text, name_fa text, name_ar text, name_en text,
+  description   text,
+  logo_url      text,
+  cover_url     text,
+  phone         text,
+  email         text,
+  website       text,
+  address       text,
+  city          text,
+  latitude      double precision,
+  longitude     double precision,
+  socials       jsonb NOT NULL DEFAULT '{}'::jsonb,
+  business_type text NOT NULL DEFAULT 'cafe',
+  theme         jsonb NOT NULL DEFAULT '{"mode":"light","preset":"midnight","primary":"#7C67E4"}'::jsonb,
+  working_hours jsonb NOT NULL DEFAULT '{}'::jsonb,
+  receipt_settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  notification_settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  menu_settings jsonb NOT NULL DEFAULT '{"show_customer_menu":true,"show_admin_return":true}'::jsonb,
+  editable_text jsonb NOT NULL DEFAULT '{}'::jsonb,
+  timezone      text NOT NULL DEFAULT 'Asia/Baghdad',
+  currency      text NOT NULL DEFAULT 'IQD',
+  tax_rate      numeric(6,3) NOT NULL DEFAULT 0,
+  service_charge_rate numeric(6,3) NOT NULL DEFAULT 0,
+  order_seq     integer NOT NULL DEFAULT 1000,
+  is_sample     boolean NOT NULL DEFAULT false,
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS memberships (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role        text NOT NULL CHECK (role IN ('owner','manager','staff','customer')),
+  status      text NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled')),
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (business_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS memberships_user_idx ON memberships(user_id);
+CREATE INDEX IF NOT EXISTS memberships_business_idx ON memberships(business_id);
+
+CREATE TABLE IF NOT EXISTS categories (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  icon        text NOT NULL DEFAULT 'utensils',
+  sort_order  integer NOT NULL DEFAULT 0,
+  active      boolean NOT NULL DEFAULT true,
+  name_ku     text, name_fa text, name_ar text, name_en text,
+  is_sample   boolean NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS categories_business_idx ON categories(business_id);
+
+CREATE TABLE IF NOT EXISTS products (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id  uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  category_id  uuid REFERENCES categories(id) ON DELETE SET NULL,
+  price        numeric(12,2) NOT NULL DEFAULT 0 CHECK (price >= 0),
+  image_url    text,
+  active       boolean NOT NULL DEFAULT true,
+  available    boolean NOT NULL DEFAULT true,
+  sort_order   integer NOT NULL DEFAULT 0,
+  name_ku      text, name_fa text, name_ar text, name_en text,
+  description_ku text, description_fa text, description_ar text, description_en text,
+  is_sample    boolean NOT NULL DEFAULT false,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS products_business_idx ON products(business_id);
+CREATE INDEX IF NOT EXISTS products_category_idx ON products(category_id);
+
+CREATE TABLE IF NOT EXISTS tables (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name        text NOT NULL,
+  seats       integer NOT NULL DEFAULT 4,
+  qr_token    text UNIQUE NOT NULL,
+  zone        text,
+  active      boolean NOT NULL DEFAULT true,
+  is_sample   boolean NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS tables_business_idx ON tables(business_id);
+
+CREATE TABLE IF NOT EXISTS orders (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id    uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  table_id       uuid REFERENCES tables(id) ON DELETE SET NULL,
+  order_number   integer NOT NULL,
+  status         text NOT NULL DEFAULT 'pending'
+                 CHECK (status IN ('pending','preparing','ready','completed','cancelled')),
+  channel        text NOT NULL DEFAULT 'customer' CHECK (channel IN ('customer','staff')),
+  customer_name  text,
+  customer_phone text,
+  notes          text,
+  subtotal       numeric(12,2) NOT NULL DEFAULT 0,
+  discount       numeric(12,2) NOT NULL DEFAULT 0,
+  tax            numeric(12,2) NOT NULL DEFAULT 0,
+  service_charge numeric(12,2) NOT NULL DEFAULT 0,
+  total          numeric(12,2) NOT NULL DEFAULT 0,
+  promotion_id   uuid,
+  created_by     uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_at     timestamptz NOT NULL DEFAULT now(),
+  updated_at     timestamptz NOT NULL DEFAULT now(),
+  completed_at   timestamptz,
+  is_sample      boolean NOT NULL DEFAULT false,
+  UNIQUE (business_id, order_number)
+);
+CREATE INDEX IF NOT EXISTS orders_business_created_idx ON orders(business_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS orders_business_status_idx ON orders(business_id, status);
+
+-- Historical snapshot of what was actually ordered: names/prices are frozen at order time.
+CREATE TABLE IF NOT EXISTS order_items (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id    uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  product_id  uuid REFERENCES products(id) ON DELETE SET NULL,
+  name        text NOT NULL,
+  unit_price  numeric(12,2) NOT NULL DEFAULT 0,
+  quantity    integer NOT NULL DEFAULT 1 CHECK (quantity > 0),
+  line_total  numeric(12,2) NOT NULL DEFAULT 0,
+  notes       text
+);
+CREATE INDEX IF NOT EXISTS order_items_order_idx ON order_items(order_id);
+
+-- Append-only audit of real status changes.
+CREATE TABLE IF NOT EXISTS order_status_history (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  order_id    uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  from_status text,
+  to_status   text NOT NULL,
+  changed_by  uuid REFERENCES users(id) ON DELETE SET NULL,
+  changed_by_name text,
+  changed_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS osh_order_idx ON order_status_history(order_id, changed_at);
+
+-- Append-only audit of "user pressed Print" events (not proof of physical printing).
+CREATE TABLE IF NOT EXISTS receipt_prints (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  order_id    uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  printed_by  uuid REFERENCES users(id) ON DELETE SET NULL,
+  printed_by_name text,
+  printed_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS receipt_prints_order_idx ON receipt_prints(order_id, printed_at);
+
+CREATE TABLE IF NOT EXISTS reviews (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id   uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  order_id      uuid REFERENCES orders(id) ON DELETE SET NULL,
+  customer_name text,
+  rating        integer NOT NULL DEFAULT 5 CHECK (rating BETWEEN 1 AND 5),
+  comment       text,
+  status        text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  is_sample     boolean NOT NULL DEFAULT false,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS reviews_business_idx ON reviews(business_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS advertisements (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id   uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  image_url     text,
+  link_url      text,
+  title_ku      text, title_fa text, title_ar text, title_en text,
+  subtitle_ku   text, subtitle_fa text, subtitle_ar text, subtitle_en text,
+  active        boolean NOT NULL DEFAULT true,
+  sort_order    integer NOT NULL DEFAULT 0,
+  is_sample     boolean NOT NULL DEFAULT false,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS ads_business_idx ON advertisements(business_id);
+
+CREATE TABLE IF NOT EXISTS promotions (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id    uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  product_id     uuid REFERENCES products(id) ON DELETE CASCADE,
+  discount_type  text NOT NULL DEFAULT 'percent' CHECK (discount_type IN ('percent','fixed')),
+  discount_value numeric(12,2) NOT NULL DEFAULT 0 CHECK (discount_value >= 0),
+  starts_at      timestamptz,
+  ends_at        timestamptz,
+  active         boolean NOT NULL DEFAULT true,
+  title_ku       text, title_fa text, title_ar text, title_en text,
+  is_sample      boolean NOT NULL DEFAULT false,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS promotions_business_idx ON promotions(business_id);
+
+CREATE TABLE IF NOT EXISTS media (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid REFERENCES businesses(id) ON DELETE CASCADE,
+  mime        text NOT NULL DEFAULT 'image/png',
+  byte_size   integer NOT NULL DEFAULT 0,
+  data        text NOT NULL,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS backups (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  name        text NOT NULL,
+  backup_type text NOT NULL DEFAULT 'full' CHECK (backup_type IN ('full','custom','uploaded')),
+  status      text NOT NULL DEFAULT 'ready' CHECK (status IN ('ready','restored','failed')),
+  format_version text NOT NULL DEFAULT '1.0',
+  manifest    jsonb NOT NULL DEFAULT '{}'::jsonb,
+  payload     jsonb NOT NULL DEFAULT '{}'::jsonb,
+  size_bytes  integer NOT NULL DEFAULT 0,
+  created_by  uuid REFERENCES users(id) ON DELETE SET NULL,
+  created_by_name text,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  restored_at timestamptz
+);
+CREATE INDEX IF NOT EXISTS backups_business_idx ON backups(business_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint    text UNIQUE NOT NULL,
+  p256dh      text NOT NULL,
+  auth        text NOT NULL,
+  user_agent  text,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS push_subs_business_idx ON push_subscriptions(business_id);
+
+CREATE TABLE IF NOT EXISTS notifications (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  type        text NOT NULL DEFAULT 'new_order',
+  title       text NOT NULL,
+  body        text,
+  order_id    uuid REFERENCES orders(id) ON DELETE CASCADE,
+  read_at     timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS notifications_business_idx ON notifications(business_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS business_views (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  session_key text NOT NULL,
+  source      text NOT NULL DEFAULT 'menu',
+  viewed_on   date NOT NULL DEFAULT CURRENT_DATE,
+  is_sample   boolean NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (business_id, session_key, viewed_on)
+);
+CREATE INDEX IF NOT EXISTS business_views_idx ON business_views(business_id, viewed_on);
+
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        text PRIMARY KEY,
+  value      text NOT NULL,
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Additive migrations (safe to re-run on an existing database).
+ALTER TABLE business_views ADD COLUMN IF NOT EXISTS is_sample boolean NOT NULL DEFAULT false;
+ALTER TABLE backups ADD COLUMN IF NOT EXISTS restored_at timestamptz;
