@@ -13,6 +13,7 @@ export default {
   nav_settings: 'پرۆفایلی کار',
   nav_order_menu: 'مێنیۆی داواکاری',
   nav_customer_menu: 'مێنیۆی کڕیار',
+  nav_promotions: 'پرۆمۆشنەکان',
 
   action_save: 'پاشەکەوتکردن',
   action_cancel: 'هەڵوەشاندنەوە',

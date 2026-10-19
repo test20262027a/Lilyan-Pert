@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
   Alert,
@@ -39,7 +40,13 @@ export default function Marketing() {
   const timeZone = zoneFor(locale, business?.timezone);
   const currency = business?.currency || 'IQD';
 
-  const [tab, setTab] = useState('ads');
+  /*
+   * The sidebar's Promotions entry opens this page on its promotions tab; a
+   * bare /marketing keeps advertisements as the default view.
+   */
+  const [params, setParams] = useSearchParams();
+  const tab = params.get('tab') === 'promotions' ? 'promotions' : 'ads';
+  const setTab = (next) => setParams(next === 'promotions' ? { tab: 'promotions' } : {}, { replace: true });
   const [ads, setAds] = useState([]);
   const [promotions, setPromotions] = useState([]);
   const [products, setProducts] = useState([]);

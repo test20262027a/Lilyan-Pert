@@ -871,6 +871,8 @@ table.data tr:hover td { background: var(--surface-2); }
   width: 5px; height: 5px; border-radius: 50%; flex: none;
   background: currentColor; opacity: 0.5;
 }
+/* A submenu entry that carries its own small outlined mark instead of the dot. */
+.nav-children .nav-child-icon { flex: none; opacity: 0.6; }
 
 .nav-collapse {
   width: 26px; height: 26px; border-radius: 50%; flex: none;

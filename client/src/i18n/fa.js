@@ -13,6 +13,7 @@ export default {
   nav_settings: 'پروفایل کسب‌وکار',
   nav_order_menu: 'منوی سفارش',
   nav_customer_menu: 'منوی مشتری',
+  nav_promotions: 'تخفیف‌ها و پروموشن‌ها',
 
   action_save: 'ذخیره',
   action_cancel: 'انصراف',

@@ -13,6 +13,7 @@ export default {
   nav_settings: 'Business Profile',
   nav_order_menu: 'Ordering Menu',
   nav_customer_menu: 'Customer Menu',
+  nav_promotions: 'Promotions & Discounts',
 
   action_save: 'Save',
   action_cancel: 'Cancel',

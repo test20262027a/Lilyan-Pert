@@ -13,6 +13,7 @@ export default {
   nav_settings: 'ملف النشاط',
   nav_order_menu: 'قائمة الطلب',
   nav_customer_menu: 'قائمة العميل',
+  nav_promotions: 'العروض والخصومات',
 
   action_save: 'حفظ',
   action_cancel: 'إلغاء',

@@ -23,6 +23,13 @@ const NAV = [
       { to: '/menu', icon: 'book', key: 'nav_menu' },
       { to: '/order-menu', icon: 'coffee', key: 'nav_order_menu' },
       { to: '/tables', icon: 'qr', key: 'nav_tables' },
+      /*
+       * Promotions live on the existing marketing page, on its promotions tab:
+       * this entry carries that tab in its link so the module is reached from
+       * Menu Management without a second page or route. Editing promotions is
+       * manager work, the same role the page and the API already enforce.
+       */
+      { to: '/marketing', search: '?tab=promotions', icon: 'tag', key: 'nav_promotions', min: 'manager' },
     ],
   },
   {
@@ -30,7 +37,6 @@ const NAV = [
     icon: 'chart',
     children: [
       { to: '/reviews', icon: 'star', key: 'nav_reviews' },
-      { to: '/marketing', icon: 'megaphone', key: 'nav_marketing' },
     ],
   },
   {
@@ -206,11 +212,17 @@ function Shell() {
                     {children.map((child) => (
                       <NavLink
                         key={child.to}
-                        to={child.to}
+                        to={`${child.to}${child.search || ''}`}
                         className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
                         onClick={() => setMenuOpen(false)}
                       >
-                        <span className="nav-dot" />
+                        {/* Submenu entries keep the dot convention; one may opt
+                            into its own small outlined mark instead. */}
+                        {child.icon ? (
+                          <Icon name={child.icon} size={14} className="nav-child-icon" />
+                        ) : (
+                          <span className="nav-dot" />
+                        )}
                         <span>{t(child.key)}</span>
                       </NavLink>
                     ))}
