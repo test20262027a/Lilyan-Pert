@@ -1,0 +1,294 @@
+/* ==========================================================================
+   Shared application header — soft mint-white card.
+   Owned by components/header/AppHeader.jsx and rendered only inside the
+   authenticated shell, so page content is never duplicated or pushed around.
+   ========================================================================== */
+
+.hdr-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  padding: 12px 18px 8px;
+  background: var(--bg);
+}
+
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--mint) 16%, var(--border));
+  background: linear-gradient(180deg, var(--surface) 0%, var(--mint-soft) 100%);
+  box-shadow: 0 12px 28px rgba(23, 26, 43, 0.06), 0 1px 2px rgba(23, 26, 43, 0.04);
+}
+
+.hdr__brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.hdr__logo {
+  width: 44px; height: 44px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 55%, #ffffff));
+  color: #ffffff; font-weight: 800; font-size: 14px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 12%, transparent);
+}
+/* A stored logo keeps its own proportions — contained, never cropped. */
+.hdr__logo.has-image { background: var(--surface); }
+.hdr__logo img { width: 100%; height: 100%; object-fit: contain; }
+.hdr__name {
+  font-size: 17px; font-weight: 800; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hdr__spacer { flex: 1 1 auto; min-width: 0; }
+
+/* --------------------------------------------------------------- controls */
+
+.hdr__tools { display: flex; align-items: center; gap: 8px; }
+
+.hdr-btn {
+  width: 42px; height: 42px; flex: none; padding: 0;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--mint) 14%, var(--border-strong));
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
+}
+.hdr-btn:hover:not(:disabled) {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+  color: var(--mint-ink);
+}
+.hdr-btn:active:not(:disabled) { transform: translateY(1px); }
+.hdr-btn:disabled { opacity: 0.5; cursor: default; }
+/* Muted state (sound off) and active state (dark mode) stay visible without shouting. */
+.hdr-btn.is-off { color: var(--muted); }
+.hdr-btn.is-on {
+  color: var(--mint-ink);
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+}
+
+/* Language selector: flag + current label + chevron over a native <select>. */
+.hdr-lang {
+  position: relative; flex: none;
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 42px; padding-inline: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--mint) 14%, var(--border-strong));
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.hdr-lang:hover {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+}
+.hdr-lang:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+.hdr-lang__flag { font-size: 16px; line-height: 1; }
+.hdr-lang__label { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.hdr-lang__caret { color: var(--muted); }
+.hdr-lang__native {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; border: 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+
+/* Profile trigger: avatar with a chevron on the opposite side. */
+.hdr-user { position: relative; flex: none; display: inline-flex; }
+.hdr-user__btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 42px; padding-inline: 12px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--mint) 18%, var(--border-strong));
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.hdr-user__btn:hover {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+}
+.hdr-user__avatar {
+  width: 32px; height: 32px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  background: color-mix(in srgb, var(--mint) 14%, var(--surface));
+  border: 1.5px solid color-mix(in srgb, var(--mint) 55%, transparent);
+  color: var(--mint-ink);
+  font-weight: 800; font-size: 13px;
+}
+.hdr-user__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hdr-user__caret { color: var(--muted); transition: transform 0.18s ease; }
+.hdr-user__caret.is-open { transform: rotate(180deg); }
+
+/* ------------------------------------------------------------- overlays */
+
+/* Anchored to the trigger, aligned to its inline end so it always opens inwards. */
+.hdr-menu {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 10px);
+  z-index: 60;
+  width: min(320px, calc(100vw - 24px));
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--mint) 15%, var(--border));
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(23, 26, 43, 0.18), 0 2px 6px rgba(23, 26, 43, 0.06);
+  animation: hdr-menu-in 0.16s ease;
+}
+@keyframes hdr-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.hdr-menu__user {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--mint) 16%, transparent);
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--mint) 10%, var(--surface)) 0%,
+    color-mix(in srgb, var(--mint) 24%, var(--surface)) 100%
+  );
+}
+.hdr-menu__avatar {
+  width: 50px; height: 50px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 65%, #ffffff));
+  color: #ffffff; font-weight: 800; font-size: 20px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 16%, transparent);
+}
+.hdr-menu__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.hdr-menu__who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hdr-menu__name {
+  font-size: 15px; font-weight: 800; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hdr-menu__mail {
+  font-size: 12px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hdr-menu__role {
+  align-self: flex-start; margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--mint) 45%, transparent);
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  color: var(--mint-ink);
+  font-size: 11px; font-weight: 700;
+}
+
+.hdr-menu__nav {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.hdr-menu__row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 12px;
+  border: 0; background: none;
+  font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text);
+  text-align: start; cursor: pointer;
+}
+.hdr-menu__row + .hdr-menu__row { border-top: 1px solid var(--border); }
+.hdr-menu__row:hover { background: var(--surface-2); }
+.hdr-menu__caret { margin-inline-start: auto; color: var(--muted); }
+.hdr-menu__row:hover .hdr-menu__caret { color: var(--mint-ink); }
+
+.hdr-menu__logout {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-top: 4px; padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--danger) 18%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+  font: inherit; font-size: 13.5px; font-weight: 700;
+  text-align: start; cursor: pointer;
+  transition: background 0.18s ease;
+}
+.hdr-menu__logout:hover { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
+.hdr-menu__logout-icon {
+  width: 30px; height: 30px; flex: none; border-radius: 10px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* Notifications panel reuses the same shell with its own list layout. */
+.hdr-menu--bell { width: min(340px, calc(100vw - 24px)); padding: 0; gap: 0; }
+.hdr-menu__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 700;
+}
+.hdr-menu__list { max-height: 320px; overflow-y: auto; }
+.hdr-menu__event {
+  display: block; width: 100%; padding: 10px 14px;
+  background: none; border: 0; border-bottom: 1px solid var(--border);
+  font: inherit; font-size: 13px; text-align: start; cursor: pointer;
+}
+.hdr-menu__event:last-child { border-bottom: 0; }
+.hdr-menu__event:hover { background: var(--surface-2); }
+.hdr-menu__event.is-unread { background: color-mix(in srgb, var(--mint) 8%, transparent); }
+.hdr-menu__event-title { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.hdr-menu__event-body { color: var(--muted); font-size: 12px; }
+
+.hdr-bell { position: relative; flex: none; display: inline-flex; }
+.hdr-bell__dot {
+  position: absolute; top: -3px; inset-inline-end: -3px;
+  min-width: 17px; height: 17px; padding: 0 4px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--surface);
+  background: var(--danger); color: #ffffff;
+  font-size: 10px; font-weight: 800;
+}
+
+/* ----------------------------------------------------------- responsive */
+
+@media (max-width: 1000px) {
+  .hdr { min-height: 64px; border-radius: 22px; }
+}
+
+@media (max-width: 768px) {
+  .hdr-wrap { padding: 10px 13px 6px; }
+  .hdr { gap: 10px; min-height: 62px; padding: 9px 12px; border-radius: 20px; }
+  .hdr-btn, .hdr-lang, .hdr-user__btn { height: 40px; }
+  .hdr-btn { width: 40px; border-radius: 13px; }
+}
+
+@media (max-width: 560px) {
+  .hdr__name { display: none; }
+  .hdr__logo { width: 34px; height: 34px; }
+  .hdr { gap: 8px; padding: 8px 10px; }
+  .hdr__tools { gap: 6px; }
+  .hdr-btn { width: 36px; height: 36px; border-radius: 12px; }
+  .hdr-lang { height: 36px; padding-inline: 8px; gap: 6px; border-radius: 12px; }
+  .hdr-lang__flag { font-size: 15px; }
+  .hdr-lang__label { display: none; }
+  .hdr-user__btn { height: 36px; padding-inline: 7px 6px; gap: 6px; }
+  .hdr-user__avatar { width: 26px; height: 26px; font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .hdr-wrap { padding: 8px 8px 5px; }
+  .hdr { gap: 4px; min-height: 54px; padding: 7px; border-radius: 18px; }
+  .hdr__logo { width: 26px; height: 26px; font-size: 12px; }
+  .hdr__tools { gap: 4px; }
+  .hdr-btn { width: 34px; height: 34px; border-radius: 11px; }
+  .hdr-lang { height: 34px; padding-inline: 7px; }
+  /* Narrowest phones: the avatar alone identifies the trigger, so its chevron
+     gives the space back and the header can never scroll sideways. The doubled
+     class outranks the global `.icon { display: block }`. */
+  .hdr-user .hdr-user__caret { display: none; }
+  .hdr-user__btn { height: 34px; padding-inline: 5px; }
+  .hdr-user__avatar { width: 26px; height: 26px; font-size: 11px; }
+  .hdr-menu { padding: 8px; }
+}

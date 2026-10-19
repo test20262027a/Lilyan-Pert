@@ -1,0 +1,365 @@
+import express from 'express';
+import { q, tx } from '../db.js';
+import { ah, bad, isUuid, notFound } from '../lib/http.js';
+import { pushNewOrder } from '../lib/push.js';
+
+const router = express.Router();
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+function activePromotionFor(promotions, productId) {
+  return promotions.find((p) => p.product_id === productId) || null;
+}
+
+function promoUnitPrice(product, promotion) {
+  const base = Number(product.price);
+  if (!promotion) return base;
+  if (promotion.discount_type === 'percent') {
+    return round2(base - (base * Number(promotion.discount_value)) / 100);
+  }
+  return round2(Math.max(0, base - Number(promotion.discount_value)));
+}
+
+async function loadBusiness(key) {
+  const col = isUuid(key) ? 'id' : 'slug';
+  const { rows } = await q(`SELECT * FROM businesses WHERE ${col} = $1`, [key]);
+  if (!rows[0]) throw notFound('BUSINESS_NOT_FOUND');
+  return rows[0];
+}
+
+/**
+ * Public menu payload. Only customer-safe fields leave the server: no member
+ * emails, no user ids, no internal settings.
+ */
+router.get(
+  '/menu/:key',
+  ah(async (req, res) => {
+    const business = await loadBusiness(req.params.key);
+
+    let table = null;
+    if (req.query.table) {
+      const t = await q(
+        'SELECT id, name, zone, seats FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
+        [String(req.query.table).slice(0, 64), business.id],
+      );
+      table = t.rows[0] || null;
+    }
+
+    const [cats, prods, promos, ads, reviews] = await Promise.all([
+      q(
+        `SELECT id, icon, sort_order, name_ku, name_fa, name_ar, name_en
+           FROM categories WHERE business_id = $1 AND active = true
+          ORDER BY sort_order, created_at`,
+        [business.id],
+      ),
+      q(
+        `SELECT p.id, p.category_id, p.price, p.image_url, p.name_ku, p.name_fa, p.name_ar, p.name_en,
+                p.description_ku, p.description_fa, p.description_ar, p.description_en, p.sort_order
+           FROM products p JOIN categories c ON c.id = p.category_id
+          WHERE p.business_id = $1 AND p.active = true AND p.available = true AND c.active = true
+          ORDER BY p.sort_order, p.created_at`,
+        [business.id],
+      ),
+      q(
+        `SELECT id, product_id, discount_type, discount_value, title_ku, title_fa, title_ar, title_en
+           FROM promotions
+          WHERE business_id = $1 AND active = true AND product_id IS NOT NULL
+            AND (starts_at IS NULL OR starts_at <= now())
+            AND (ends_at IS NULL OR ends_at >= now())`,
+        [business.id],
+      ),
+      q(
+        `SELECT id, image_url, link_url, title_ku, title_fa, title_ar, title_en,
+                subtitle_ku, subtitle_fa, subtitle_ar, subtitle_en, sort_order
+           FROM advertisements WHERE business_id = $1 AND active = true
+          ORDER BY sort_order, created_at`,
+        [business.id],
+      ),
+      q(
+        `SELECT id, customer_name, rating, comment, created_at
+           FROM reviews WHERE business_id = $1 AND status = 'approved'
+          ORDER BY created_at DESC LIMIT 30`,
+        [business.id],
+      ),
+    ]);
+
+    const products = prods.rows.map((p) => {
+      const promotion = activePromotionFor(promos.rows, p.id);
+      return {
+        ...p,
+        promotion_id: promotion?.id || null,
+        promo_price: promotion ? promoUnitPrice(p, promotion) : null,
+        promotion_titles: promotion
+          ? {
+              ku: promotion.title_ku,
+              fa: promotion.title_fa,
+              ar: promotion.title_ar,
+              en: promotion.title_en,
+            }
+          : null,
+      };
+    });
+
+    res.json({
+      business: {
+        id: business.id,
+        slug: business.slug,
+        name: business.name,
+        name_ku: business.name_ku,
+        name_fa: business.name_fa,
+        name_ar: business.name_ar,
+        name_en: business.name_en,
+        description: business.description,
+        logo_url: business.logo_url,
+        cover_url: business.cover_url,
+        phone: business.phone,
+        address: business.address,
+        city: business.city,
+        latitude: business.latitude,
+        longitude: business.longitude,
+        socials: business.socials,
+        business_type: business.business_type,
+        theme: business.theme,
+        working_hours: business.working_hours,
+        menu_settings: business.menu_settings,
+        editable_text: business.editable_text,
+        currency: business.currency,
+        timezone: business.timezone,
+      },
+      menu_disabled: business.menu_settings?.show_customer_menu === false,
+      table,
+      categories: cats.rows,
+      products,
+      advertisements: ads.rows,
+      reviews: reviews.rows,
+    });
+  }),
+);
+
+/** Counts one menu view per browser session per day. */
+router.post(
+  '/views/:key',
+  ah(async (req, res) => {
+    const business = await loadBusiness(req.params.key);
+    const sessionKey = String(req.body?.session_key || '').slice(0, 80);
+    if (!sessionKey) throw bad('SESSION_KEY_REQUIRED');
+    await q(
+      `INSERT INTO business_views (business_id, session_key, source)
+       VALUES ($1,$2,'menu') ON CONFLICT (business_id, session_key, viewed_on) DO NOTHING`,
+      [business.id, sessionKey],
+    );
+    res.json({ ok: true });
+  }),
+);
+
+router.post(
+  '/reviews/:key',
+  ah(async (req, res) => {
+    const business = await loadBusiness(req.params.key);
+    const rating = Number(req.body?.rating);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw bad('INVALID_RATING');
+    const comment = req.body?.comment ? String(req.body.comment).slice(0, 2000) : null;
+    const name = req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null;
+    const { rows } = await q(
+      `INSERT INTO reviews (business_id, order_id, customer_name, rating, comment, status)
+       VALUES ($1,$2,$3,$4,$5,'pending') RETURNING id, created_at`,
+      [business.id, req.body?.order_id || null, name, rating, comment],
+    );
+    res.status(201).json({ review: rows[0], moderated: true });
+  }),
+);
+
+/**
+ * Public order placement. Prices, discounts, taxes and totals are all derived
+ * server-side from stored product rows — nothing money-related is trusted from
+ * the client.
+ */
+router.post(
+  '/orders/:key',
+  ah(async (req, res) => {
+    const business = await loadBusiness(req.params.key);
+    if (business.menu_settings?.show_customer_menu === false) {
+      throw bad('MENU_DISABLED');
+    }
+
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length) throw bad('EMPTY_ORDER');
+    if (items.length > 60) throw bad('TOO_MANY_ITEMS');
+
+    const result = await tx(async (c) => {
+      let table = null;
+      if (req.body?.table_token) {
+        const t = await c.query(
+          'SELECT id, name FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
+          [String(req.body.table_token).slice(0, 64), business.id],
+        );
+        table = t.rows[0] || null;
+        if (!table) throw bad('INVALID_TABLE');
+      }
+
+      const ids = [...new Set(items.map((i) => String(i.product_id)))].filter(isUuid);
+      if (!ids.length) throw bad('INVALID_ITEMS');
+
+      const found = await c.query(
+        `SELECT p.id, p.price, p.name_en, p.name_ku, p.name_fa, p.name_ar, p.active, p.available,
+                c.active AS category_active
+           FROM products p LEFT JOIN categories c ON c.id = p.category_id
+          WHERE p.business_id = $1 AND p.id = ANY($2::uuid[])`,
+        [business.id, ids],
+      );
+      const byId = new Map(found.rows.map((r) => [r.id, r]));
+
+      const promos = await c.query(
+        `SELECT id, product_id, discount_type, discount_value FROM promotions
+          WHERE business_id = $1 AND active = true AND product_id = ANY($2::uuid[])
+            AND (starts_at IS NULL OR starts_at <= now())
+            AND (ends_at IS NULL OR ends_at >= now())`,
+        [business.id, ids],
+      );
+      const promoByProduct = new Map(promos.rows.map((p) => [p.product_id, p]));
+
+      const lines = [];
+      let subtotal = 0;
+      let appliedPromotion = null;
+
+      for (const raw of items) {
+        const product = byId.get(String(raw.product_id));
+        if (!product) throw bad('PRODUCT_NOT_FOUND');
+        if (!product.active || !product.available || product.category_active === false) {
+          throw bad('PRODUCT_UNAVAILABLE', product.name_en || product.id);
+        }
+        const quantity = Math.max(1, Math.min(99, Math.floor(Number(raw.quantity) || 1)));
+        const promotion = promoByProduct.get(product.id) || null;
+        const unitPrice = promoUnitPrice(product, promotion);
+        if (promotion) appliedPromotion = promotion.id;
+        const lineTotal = round2(unitPrice * quantity);
+        subtotal = round2(subtotal + lineTotal);
+        lines.push({
+          product_id: product.id,
+          name: product.name_en || product.name_ku || product.name_fa || product.name_ar,
+          unit_price: unitPrice,
+          quantity,
+          line_total: lineTotal,
+          notes: raw.notes ? String(raw.notes).slice(0, 300) : null,
+        });
+      }
+
+      const taxRate = Number(business.tax_rate || 0);
+      const serviceRate = Number(business.service_charge_rate || 0);
+      const tax = round2((subtotal * taxRate) / 100);
+      const service = round2((subtotal * serviceRate) / 100);
+      const total = round2(subtotal + tax + service);
+
+      const seq = await c.query(
+        'UPDATE businesses SET order_seq = order_seq + 1 WHERE id = $1 RETURNING order_seq',
+        [business.id],
+      );
+      const orderNumber = seq.rows[0].order_seq;
+
+      const order = await c.query(
+        `INSERT INTO orders (business_id, table_id, order_number, status, channel, customer_name,
+                             customer_phone, notes, subtotal, discount, tax, service_charge, total,
+                             promotion_id, created_at, updated_at)
+         VALUES ($1,$2,$3,'pending','customer',$4,$5,$6,$7,0,$8,$9,$10,$11,now(),now())
+         RETURNING *`,
+        [
+          business.id,
+          table?.id || null,
+          orderNumber,
+          req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null,
+          req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,
+          req.body?.notes ? String(req.body.notes).slice(0, 500) : null,
+          subtotal,
+          tax,
+          service,
+          total,
+          appliedPromotion,
+        ],
+      );
+
+      for (const line of lines) {
+        await c.query(
+          `INSERT INTO order_items (order_id, business_id, product_id, name, unit_price, quantity, line_total, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            order.rows[0].id,
+            business.id,
+            line.product_id,
+            line.name,
+            line.unit_price,
+            line.quantity,
+            line.line_total,
+            line.notes,
+          ],
+        );
+      }
+
+      await c.query(
+        `INSERT INTO order_status_history (business_id, order_id, from_status, to_status, changed_by_name)
+         VALUES ($1,$2,NULL,'pending','Customer')`,
+        [business.id, order.rows[0].id],
+      );
+
+      await c.query(
+        `INSERT INTO notifications (business_id, type, title, body, order_id)
+         VALUES ($1,'new_order',$2,$3,$4)`,
+        [
+          business.id,
+          `#${orderNumber}`,
+          table?.name || req.body?.customer_name || '—',
+          order.rows[0].id,
+        ],
+      );
+
+      return { order: order.rows[0], tableName: table?.name || null };
+    });
+
+    // Web push is only ever triggered for a brand-new order.
+    let push = { total: 0, sent: 0, failed: 0, pruned: 0 };
+    try {
+      push = await pushNewOrder(business.id, {
+        id: result.order.id,
+        order_number: result.order.order_number,
+        table_name: result.tableName,
+      });
+    } catch (err) {
+      console.warn('[public] push delivery failed:', err?.message || err);
+      push = { total: 0, sent: 0, failed: 0, pruned: 0, error: true };
+    }
+
+    res.status(201).json({
+      order: {
+        id: result.order.id,
+        order_number: result.order.order_number,
+        status: result.order.status,
+        total: result.order.total,
+        subtotal: result.order.subtotal,
+        created_at: result.order.created_at,
+      },
+      table: result.tableName,
+      push,
+    });
+  }),
+);
+
+/** Status lookup for the customer, keyed by order number + business. */
+router.get(
+  '/orders/:key/:number',
+  ah(async (req, res) => {
+    const business = await loadBusiness(req.params.key);
+    const { rows } = await q(
+      `SELECT o.id, o.order_number, o.status, o.total, o.created_at, t.name AS table_name
+         FROM orders o LEFT JOIN tables t ON t.id = o.table_id
+        WHERE o.business_id = $1 AND o.order_number = $2`,
+      [business.id, Number(req.params.number)],
+    );
+    if (!rows[0]) throw notFound('ORDER_NOT_FOUND');
+    const items = await q(
+      'SELECT name, quantity, unit_price, line_total FROM order_items WHERE order_id = $1 ORDER BY id',
+      [rows[0].id],
+    );
+    res.json({ order: rows[0], items: items.rows });
+  }),
+);
+
+export default router;
