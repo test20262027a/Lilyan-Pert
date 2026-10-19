@@ -381,6 +381,12 @@ export default {
   table_qr_failed: 'نەتوانرا کۆدی QR دروست بکرێت.',
   table_download_done: 'کۆدی QR داگیرا',
   table_copy_failed: 'نەتوانرا ناونیشانەکە کۆپی بکرێت.',
+  table_number: 'ژمارەی مێز',
+  table_number_required: 'ژمارەی مێز بنووسە.',
+  table_number_invalid: 'ژمارەی مێز دەبێت ژمارەیەکی تەواوی ئەرێنی بێت.',
+  table_number_duplicate: 'مێزێک بەم ژمارەیە پێشتر هەیە.',
+  table_display_order_invalid: 'ڕیزبەندی دەبێت ژمارەیەکی تەواو بێت.',
+  vip_table_desc: 'مێزی تایبەت بۆ میوانانی VIP',
 
   review_title: 'هەڵسەنگاندن و ڕا',
   review_subtitle: 'پێداچوونەوە بە ڕای کڕیارەکان',

@@ -381,6 +381,12 @@ export default {
   table_qr_failed: 'Could not generate the QR code.',
   table_download_done: 'QR code downloaded',
   table_copy_failed: 'Could not copy the address.',
+  table_number: 'Table number',
+  table_number_required: 'Enter a table number.',
+  table_number_invalid: 'Table number must be a positive whole number.',
+  table_number_duplicate: 'A table with this number already exists.',
+  table_display_order_invalid: 'Display order must be a whole number.',
+  vip_table_desc: 'Special table for VIP guests',
 
   review_title: 'Reviews & Feedback',
   review_subtitle: 'Moderate what customers say about your business',

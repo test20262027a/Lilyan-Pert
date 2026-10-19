@@ -299,3 +299,36 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS price_en numeric(12,2) CHECK (pric
 -- time and past orders keep showing it. Reads prefer the live table and fall back
 -- to this snapshot.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_name text;
+
+-- Table identity fields carried by the Add / Edit Table form. All additive, so
+-- existing tables keep their values and simply gain the new ones.
+--
+-- A table keeps ONE record: its four localized names live in the name_* columns
+-- (the same shape categories and products already use), while `name` stays the
+-- resolved display value every other part of the app reads (orders, receipts,
+-- customer menu, dashboard). `table_number` is the number the guest sees and is
+-- unique inside a business; `display_order` is the owner's own ordering of the
+-- table grid; `vip` is a plain attribute of the table — it carries no automatic
+-- charge, discount or access rule.
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS name_ku text;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS name_fa text;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS name_ar text;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS name_en text;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS table_number integer CHECK (table_number > 0);
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS display_order integer NOT NULL DEFAULT 0;
+ALTER TABLE tables ADD COLUMN IF NOT EXISTS vip boolean NOT NULL DEFAULT false;
+
+-- One table number per business, enforced by the database so two simultaneous
+-- creates can never both take the same number. Existing tables have no number
+-- yet, and the partial index leaves them out until each one is given a number.
+CREATE UNIQUE INDEX IF NOT EXISTS tables_business_number_key
+  ON tables (business_id, table_number) WHERE table_number IS NOT NULL;
+
+-- One-time fill of the localized names for tables created before the four
+-- languages existed: they start as the single name they already carry in every
+-- language, and a table that already has any localized name is left untouched so
+-- an edited translation is never overwritten.
+UPDATE tables
+   SET name_ku = name, name_fa = name, name_ar = name, name_en = name
+ WHERE name IS NOT NULL
+   AND name_ku IS NULL AND name_fa IS NULL AND name_ar IS NULL AND name_en IS NULL;

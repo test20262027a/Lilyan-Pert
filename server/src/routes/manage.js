@@ -10,17 +10,58 @@ router.use(requireAuth);
 
 /* --------------------------------------------------------------- tables */
 
+/*
+ * A table is ONE record holding its four localized names (name_ku … name_en),
+ * the same shape categories and products already use. `name` stays the resolved
+ * display value — Kurdish first, then Persian, Arabic, English — because the
+ * customer menu, the order snapshot, the receipts and the dashboard all read
+ * that one column.
+ */
+const TABLE_LANGS = ['ku', 'fa', 'ar', 'en'];
+
+/** The four submitted names, trimmed and length-capped. */
+function tableNames(body) {
+  const names = {};
+  for (const code of TABLE_LANGS) {
+    const raw = body?.[`name_${code}`];
+    names[code] = raw === undefined || raw === null ? '' : String(raw).trim().slice(0, 80);
+  }
+  return names;
+}
+
+/** True when the caller sent any of the four name fields at all. */
+const hasNameFields = (body) => TABLE_LANGS.some((code) => body?.[`name_${code}`] !== undefined);
+
+/** The stored display name: the first language that carries one. */
+const displayName = (names) => TABLE_LANGS.map((code) => names[code]).find(Boolean) || '';
+
+/** A positive whole number, null when absent/empty, NaN when not one. */
+function positiveInt(raw) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n > 0 ? n : NaN;
+}
+
+/** A whole number ≥ 0, null when absent/empty, NaN when not one. */
+function orderInt(raw) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 0 ? n : NaN;
+}
+
 router.get(
   '/tables',
   withBusiness('staff'),
   ah(async (req, res) => {
     const { rows } = await q(
-      // Stable display order: names first group by their text ("Table 1 … Table
-      // 10", then "Terrace 1"), and inside a group the number decides — so a
-      // renamed table never jumps around and 10 never sorts before 2.
+      // The owner's display order first, then the stable fallback for tables
+      // that share it (every table created before display order existed is 0):
+      // names group by their text ("Table 1 … Table 10", then "Terrace 1") and
+      // inside a group the number decides, so 10 never sorts before 2.
       `SELECT t.*, (SELECT count(*)::int FROM orders o WHERE o.table_id = t.id) AS order_count
          FROM tables t WHERE t.business_id = $1
-        ORDER BY regexp_replace(t.name, '\\d+$', '') ASC,
+        ORDER BY t.display_order ASC,
+                 regexp_replace(t.name, '\\d+$', '') ASC,
                  NULLIF(regexp_replace(t.name, '\\D', '', 'g'), '')::numeric NULLS LAST,
                  t.name`,
       [req.businessId],
@@ -33,8 +74,22 @@ router.post(
   '/tables',
   withBusiness('manager'),
   ah(async (req, res) => {
-    const name = String(req.body?.name || '').trim();
+    const names = tableNames(req.body);
+    const name = displayName(names);
     if (!name) throw bad('NAME_REQUIRED');
+
+    // The number the guest sees: required, positive, and unique in this business.
+    const tableNumber = positiveInt(req.body?.table_number);
+    if (tableNumber === null) throw bad('TABLE_NUMBER_REQUIRED');
+    if (Number.isNaN(tableNumber)) throw bad('TABLE_NUMBER_INVALID');
+
+    // Seating capacity keeps its existing rule: optional, 1–40, four by default.
+    const seats = positiveInt(req.body?.seats);
+    if (Number.isNaN(seats) || (seats !== null && seats > 40)) throw bad('SEATS_INVALID');
+
+    const requestedOrder = orderInt(req.body?.display_order);
+    if (Number.isNaN(requestedOrder)) throw bad('DISPLAY_ORDER_INVALID');
+
     // One table per name inside a business: the check is server-side so it holds
     // whatever the client sends, and it only ever looks at this business's rows.
     const dupe = await q(
@@ -42,20 +97,51 @@ router.post(
       [req.businessId, name],
     );
     if (dupe.rowCount) throw conflict('TABLE_DUPLICATE');
-    const seats = Math.max(1, Math.min(40, Number(req.body?.seats) || 4));
-    const token = crypto.randomBytes(8).toString('hex');
-    const { rows } = await q(
-      `INSERT INTO tables (business_id, name, seats, zone, qr_token, active)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [
-        req.businessId,
-        name.slice(0, 80),
-        seats,
-        req.body?.zone ? String(req.body.zone).slice(0, 60) : null,
-        token,
-        req.body?.active === undefined ? true : Boolean(req.body.active),
-      ],
+
+    const numberTaken = await q(
+      'SELECT 1 FROM tables WHERE business_id = $1 AND table_number = $2',
+      [req.businessId, tableNumber],
     );
+    if (numberTaken.rowCount) throw conflict('TABLE_NUMBER_DUPLICATE');
+
+    // Appended after every existing table unless the owner chose an order.
+    const order =
+      requestedOrder ??
+      (
+        await q('SELECT COALESCE(max(display_order), 0) + 1 AS next FROM tables WHERE business_id = $1', [
+          req.businessId,
+        ])
+      ).rows[0].next;
+
+    const token = crypto.randomBytes(8).toString('hex');
+    let rows;
+    try {
+      ({ rows } = await q(
+        `INSERT INTO tables (business_id, name, name_ku, name_fa, name_ar, name_en,
+                             table_number, seats, display_order, vip, zone, qr_token, active)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+        [
+          req.businessId,
+          name,
+          names.ku || null,
+          names.fa || null,
+          names.ar || null,
+          names.en || null,
+          tableNumber,
+          seats ?? 4,
+          order,
+          req.body?.vip === true,
+          req.body?.zone ? String(req.body.zone).slice(0, 60) : null,
+          token,
+          req.body?.active === undefined ? true : Boolean(req.body.active),
+        ],
+      ));
+    } catch (err) {
+      // The unique index is the real guard: a number taken between the check
+      // above and this insert is reported as a duplicate, never as a 500.
+      if (err?.code === '23505') throw conflict('TABLE_NUMBER_DUPLICATE');
+      throw err;
+    }
     res.status(201).json({ table: rows[0] });
   }),
 );
@@ -67,7 +153,32 @@ router.put(
     const b = req.body || {};
     // Renaming keeps `qr_token` untouched: an already distributed QR link must
     // survive a rename, so only the display fields are written here.
-    const name = b.name ? String(b.name).slice(0, 80) : null;
+    const names = tableNames(b);
+    const withNames = hasNameFields(b);
+    const name = withNames ? displayName(names) : null;
+    if (withNames && !name) throw bad('NAME_REQUIRED');
+    // A cleared language field clears that translation; a language the caller
+    // never sent keeps whatever it already stored.
+    const nameParams = withNames ? TABLE_LANGS.map((code) => names[code] || null) : [null, null, null, null];
+
+    let tableNumber = null;
+    if (b.table_number !== undefined) {
+      tableNumber = positiveInt(b.table_number);
+      if (tableNumber === null || Number.isNaN(tableNumber)) throw bad('TABLE_NUMBER_INVALID');
+    }
+
+    let seats = null;
+    if (b.seats !== undefined) {
+      seats = positiveInt(b.seats);
+      if (seats === null || Number.isNaN(seats) || seats > 40) throw bad('SEATS_INVALID');
+    }
+
+    let order = null;
+    if (b.display_order !== undefined) {
+      order = orderInt(b.display_order);
+      if (order === null || Number.isNaN(order)) throw bad('DISPLAY_ORDER_INVALID');
+    }
+
     if (name) {
       const dupe = await q(
         'SELECT 1 FROM tables WHERE business_id = $1 AND lower(name) = lower($2) AND id <> $3',
@@ -75,19 +186,42 @@ router.put(
       );
       if (dupe.rowCount) throw conflict('TABLE_DUPLICATE');
     }
-    const { rows } = await q(
-      `UPDATE tables SET name = COALESCE($3, name), seats = COALESCE($4, seats),
-                         zone = COALESCE($5, zone), active = COALESCE($6, active)
-        WHERE id = $1 AND business_id = $2 RETURNING *`,
-      [
-        req.params.id,
-        req.businessId,
-        name,
-        b.seats === undefined ? null : Math.max(1, Math.min(40, Number(b.seats) || 4)),
-        b.zone === undefined ? null : String(b.zone).slice(0, 60),
-        b.active === undefined ? null : Boolean(b.active),
-      ],
-    );
+    if (tableNumber !== null) {
+      const taken = await q(
+        'SELECT 1 FROM tables WHERE business_id = $1 AND table_number = $2 AND id <> $3',
+        [req.businessId, tableNumber, req.params.id],
+      );
+      if (taken.rowCount) throw conflict('TABLE_NUMBER_DUPLICATE');
+    }
+
+    let rows;
+    try {
+      ({ rows } = await q(
+        `UPDATE tables SET name = COALESCE($3, name),
+                           name_ku = COALESCE($4, name_ku), name_fa = COALESCE($5, name_fa),
+                           name_ar = COALESCE($6, name_ar), name_en = COALESCE($7, name_en),
+                           table_number = COALESCE($8, table_number),
+                           seats = COALESCE($9, seats), display_order = COALESCE($10, display_order),
+                           vip = COALESCE($11, vip), zone = COALESCE($12, zone),
+                           active = COALESCE($13, active)
+          WHERE id = $1 AND business_id = $2 RETURNING *`,
+        [
+          req.params.id,
+          req.businessId,
+          name,
+          ...nameParams,
+          tableNumber,
+          seats,
+          order,
+          b.vip === undefined ? null : Boolean(b.vip),
+          b.zone === undefined ? null : String(b.zone).slice(0, 60),
+          b.active === undefined ? null : Boolean(b.active),
+        ],
+      ));
+    } catch (err) {
+      if (err?.code === '23505') throw conflict('TABLE_NUMBER_DUPLICATE');
+      throw err;
+    }
     if (!rows[0]) throw notFound('TABLE_NOT_FOUND');
     res.json({ table: rows[0] });
   }),

@@ -3,7 +3,7 @@ import QRCode from 'qrcode';
 import Icon from '../Icon';
 import QrCode from '../QrCode';
 import { useToast } from '../ui';
-import { useI18n } from '../../i18n';
+import { localized, useI18n } from '../../i18n';
 import { copyText, qrFileName } from './menuUrl';
 
 /*
@@ -25,11 +25,14 @@ import { copyText, qrFileName } from './menuUrl';
  * corner control copies or shares this table's address.
  */
 export default function TableQrCard({ table, menuUrl, businessSlug, canManage, onEdit, onDelete }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const toast = useToast();
   const [downloading, setDownloading] = useState(false);
 
   const seats = Number(table.seats);
+  // The table's own name in the language the owner is reading, falling back to
+  // the stored display name of a table created before the four languages existed.
+  const label = localized(table, 'name', locale) || table.name || '';
 
   // A large PNG (1024px, full quiet zone) so the printed code scans reliably.
   const download = async () => {
@@ -44,7 +47,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
       });
       const link = document.createElement('a');
       link.href = dataUrl;
-      link.download = qrFileName(businessSlug, table.name);
+      link.download = qrFileName(businessSlug, label);
       document.body.appendChild(link);
       link.click();
       link.remove();
@@ -59,7 +62,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
   const share = async () => {
     if (!menuUrl) return;
     try {
-      if (navigator.share) await navigator.share({ title: table.name, url: menuUrl });
+      if (navigator.share) await navigator.share({ title: label, url: menuUrl });
       else {
         await copyText(menuUrl);
         toast.success(t('table_copied'));
@@ -77,7 +80,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
         className="tcard__share"
         onClick={share}
         title={t('table_share')}
-        aria-label={`${t('table_share')} — ${table.name}`}
+        aria-label={`${t('table_share')} — ${label}`}
       >
         <Icon name="share" size={15} />
       </button>
@@ -93,11 +96,11 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
         rel="noreferrer"
         title={t('table_open_menu')}
       >
-        <QrCode value={menuUrl} size={165} label={`${table.name} — ${t('table_qr')}`} />
+        <QrCode value={menuUrl} size={165} label={`${label} — ${t('table_qr')}`} />
       </a>
 
-      <div className="tcard__name" title={table.name}>
-        {table.name}
+      <div className="tcard__name" title={label}>
+        {label}
       </div>
       <div className="tcard__seats">
         {Number.isFinite(seats) && seats > 0 ? `${seats} ${t('table_seats')}` : t('label_none')}
@@ -112,7 +115,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
           onClick={download}
           disabled={downloading || !menuUrl}
           title={t('table_download_qr')}
-          aria-label={`${t('table_download_qr')} — ${table.name}`}
+          aria-label={`${t('table_download_qr')} — ${label}`}
         >
           {downloading ? <span className="spinner" /> : <Icon name="download" size={16} />}
         </button>
@@ -128,7 +131,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
               className="tcard__act tcard__act--del"
               onClick={onDelete}
               title={t('action_delete')}
-              aria-label={`${t('action_delete')} — ${table.name}`}
+              aria-label={`${t('action_delete')} — ${label}`}
             >
               <Icon name="trash" size={16} />
             </button>

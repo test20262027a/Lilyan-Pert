@@ -320,3 +320,138 @@
   .tgrid { grid-template-columns: minmax(0, 1fr); }
   .tadd { width: 100%; justify-content: center; }
 }
+
+/* ==========================================================================
+   Add / Edit Table dialog — the café-table banner, the four language cards,
+   the table-number / seating pair, the display order field and the VIP card.
+   The shell, the language-card shape and the tokens are the Menu module's
+   (.mcmodal); everything here only sizes them to this reference and adds the
+   two pieces it does not have. Dark theme remaps the surfaces above.
+   ========================================================================== */
+
+/* The reference's narrow, compact dialog. */
+.tform.mcmodal { max-width: 452px; }
+
+/* The page's own café illustration fills a taller banner: it is scaled to the
+   banner's height and cropped at the sides, so the round table and its two
+   chairs stay centred behind the heading instead of shrinking into a strip. */
+.tform .mcmodal__head {
+  min-height: 132px;
+  padding: 18px;
+  padding-inline-end: 64px;
+}
+.tform .mcmodal__art .mart {
+  height: 100%;
+  width: auto;
+  min-width: 100%;
+}
+.tform .mcmodal__glyph {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+}
+.tform .mcmodal__title { font-size: 16.5px; }
+
+/* The small gray supporting label under the section heading. */
+.tform__hint {
+  margin-top: -3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mm-muted);
+  text-align: start;
+}
+
+/* Language inputs are a little taller here than in the other module dialogs. */
+.tform .mcmodal__lang { padding: 10px 11px 11px; }
+.tform .mcmodal__lang .mcmodal__input { height: 43px; border-radius: 11px; }
+
+/* ------------------------------------ table number / seating capacity */
+
+.tform__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.tform__field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.tform__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mm-ink);
+}
+
+/* Numbers read naturally in every language and never show browser spinners. */
+.tform__num {
+  height: 44px;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.tform__num::-webkit-outer-spin-button,
+.tform__num::-webkit-inner-spin-button { appearance: none; margin: 0; }
+
+/* -------------------------------------------------------- VIP setting */
+
+.tform__vip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 65px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--mm-card);
+  border: 1px solid var(--mm-line);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.04);
+}
+.tform__vip-info { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.tform__crown {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #fdf3d7;
+  border: 1px solid #f2dd9e;
+  color: #c9922a;
+}
+[data-theme='dark'] .tform__crown {
+  background: rgba(201, 146, 42, 0.18);
+  border-color: rgba(242, 221, 158, 0.35);
+  color: #f0c163;
+}
+.tform__vip-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tform__vip-title { font-size: 13.5px; font-weight: 800; color: var(--mm-ink); }
+.tform__vip-desc { font-size: 11.5px; line-height: 1.4; color: var(--mm-muted); }
+
+/* The VIP switch keeps the module's green, whatever the business theme is. */
+.tform__vip .switch { flex: none; position: relative; }
+/* A switch is a control, not a 1px hit target: its own checkbox covers the
+   whole pill, so a tap anywhere on it toggles VIP. */
+.tform__vip .switch input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.tform__vip .switch__track { background: #d3d8d3; }
+.tform__vip .switch input:checked + .switch__track { background: var(--mm-green); }
+
+/* Two name cards stay readable side by side on a phone, so this dialog keeps
+   them side by side and only stacks them once a card would be too narrow. */
+.tform .mcmodal__langs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+@media (max-width: 340px) {
+  .tform .mcmodal__langs { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 560px) {
+  .tform .mcmodal__head { min-height: 118px; padding: 15px; padding-inline-end: 58px; }
+}

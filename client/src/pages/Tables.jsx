@@ -83,7 +83,9 @@ export default function Tables() {
 
   const openCreate = () => {
     setFormError(null);
-    setModal({ values: { name: '', seats: 4, zone: '', active: true } });
+    // The dialog fills the number, the display order and the seat count in from
+    // this business's own tables; nothing is pre-filled from a hardcoded default.
+    setModal({ values: {} });
   };
 
   const openEdit = (table) => {

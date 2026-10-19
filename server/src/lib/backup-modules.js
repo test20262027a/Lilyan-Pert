@@ -104,7 +104,10 @@ export const BACKUP_MODULES = [
     scope: 'business',
     exportMode: 'rows',
     table: 'tables',
-    columns: ['id', 'name', 'seats', 'qr_token', 'zone', 'active'],
+    columns: [
+      'id', 'name', 'name_ku', 'name_fa', 'name_ar', 'name_en',
+      'table_number', 'seats', 'display_order', 'vip', 'qr_token', 'zone', 'active',
+    ],
   },
   {
     key: 'reviews',

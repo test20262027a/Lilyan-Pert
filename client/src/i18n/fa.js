@@ -381,6 +381,12 @@ export default {
   table_qr_failed: 'کد QR ساخته نشد.',
   table_download_done: 'کد QR دانلود شد',
   table_copy_failed: 'نشانی کپی نشد.',
+  table_number: 'شماره میز',
+  table_number_required: 'شماره میز را وارد کنید.',
+  table_number_invalid: 'شماره میز باید عددی صحیح و مثبت باشد.',
+  table_number_duplicate: 'میزی با این شماره از قبل وجود دارد.',
+  table_display_order_invalid: 'ترتیب نمایش باید عددی صحیح باشد.',
+  vip_table_desc: 'میز ویژه برای مهمانان VIP',
 
   review_title: 'نظرات و بازخورد',
   review_subtitle: 'بررسی نظرات مشتریان',

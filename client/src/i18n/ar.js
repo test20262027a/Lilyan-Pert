@@ -381,6 +381,12 @@ export default {
   table_qr_failed: 'تعذّر إنشاء رمز QR.',
   table_download_done: 'تم تنزيل رمز QR',
   table_copy_failed: 'تعذّر نسخ العنوان.',
+  table_number: 'رقم الطاولة',
+  table_number_required: 'أدخل رقم الطاولة.',
+  table_number_invalid: 'يجب أن يكون رقم الطاولة رقماً صحيحاً موجباً.',
+  table_number_duplicate: 'توجد طاولة بهذا الرقم بالفعل.',
+  table_display_order_invalid: 'يجب أن يكون ترتيب العرض رقماً صحيحاً.',
+  vip_table_desc: 'طاولة خاصة لضيوف VIP',
 
   review_title: 'التقييمات والملاحظات',
   review_subtitle: 'مراجعة ما يقوله العملاء',
