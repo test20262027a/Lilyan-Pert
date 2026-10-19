@@ -279,7 +279,14 @@ router.get(
   }),
 );
 
-/** Combined category+product search used by the menu management screen. */
+/**
+ * Combined category+product search used by the menu management screen.
+ *
+ * Results carry the same shape as the list endpoints (counts on categories,
+ * category context on products) so the page can render them directly. Products
+ * match on their own names in every stored language and on their category's
+ * names, which is how a search finds an item that lives in another category.
+ */
 router.get(
   '/search',
   withBusiness('staff'),
@@ -289,18 +296,28 @@ router.get(
     const like = `%${term.slice(0, 80)}%`;
     const [cats, prods] = await Promise.all([
       q(
-        `SELECT id, name_en, name_ku, name_fa, name_ar, icon, active FROM categories
-          WHERE business_id = $1 AND (name_en ILIKE $2 OR name_ku ILIKE $2 OR name_fa ILIKE $2 OR name_ar ILIKE $2)
-          ORDER BY sort_order LIMIT 30`,
+        `SELECT c.*,
+                (SELECT count(*)::int FROM products p WHERE p.category_id = c.id) AS product_count,
+                (SELECT count(*)::int FROM products p
+                  WHERE p.category_id = c.id AND p.active AND p.available) AS product_active_count
+           FROM categories c
+          WHERE c.business_id = $1
+            AND (c.name_en ILIKE $2 OR c.name_ku ILIKE $2 OR c.name_fa ILIKE $2 OR c.name_ar ILIKE $2)
+          ORDER BY c.sort_order, c.created_at
+          LIMIT 50`,
         [req.businessId, like],
       ),
       q(
-        `SELECT p.id, p.name_en, p.name_ku, p.name_fa, p.name_ar, p.price, p.active, p.available,
-                p.category_id, c.name_en AS category_name_en
-           FROM products p LEFT JOIN categories c ON c.id = p.category_id
-          WHERE p.business_id = $1 AND (p.name_en ILIKE $2 OR p.name_ku ILIKE $2 OR p.name_fa ILIKE $2 OR p.name_ar ILIKE $2)
-          ORDER BY p.sort_order LIMIT 60`,
-        [req.businessId, term],
+        `SELECT p.*, c.name_en AS category_name_en, c.name_ku AS category_name_ku,
+                c.name_fa AS category_name_fa, c.name_ar AS category_name_ar, c.active AS category_active
+           FROM products p
+           LEFT JOIN categories c ON c.id = p.category_id
+          WHERE p.business_id = $1
+            AND (p.name_en ILIKE $2 OR p.name_ku ILIKE $2 OR p.name_fa ILIKE $2 OR p.name_ar ILIKE $2
+                 OR c.name_en ILIKE $2 OR c.name_ku ILIKE $2 OR c.name_fa ILIKE $2 OR c.name_ar ILIKE $2)
+          ORDER BY p.sort_order, p.created_at
+          LIMIT 60`,
+        [req.businessId, like],
       ),
     ]);
     res.json({ categories: cats.rows, products: prods.rows });

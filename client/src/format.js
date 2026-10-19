@@ -90,6 +90,32 @@ export function fmtMoney(value, currency, locale) {
   }
 }
 
+/**
+ * The same money formatting as `fmtMoney`, split into its number and its
+ * localized currency label — the product cards show the amount large and the
+ * currency small beside it without changing how either is formatted.
+ */
+export function fmtMoneyParts(value, currency, locale) {
+  const n = Number(value) || 0;
+  const zeroDecimal = ['IQD', 'IRR'].includes(currency);
+  try {
+    const parts = new Intl.NumberFormat(safeLocale(locale), {
+      style: 'currency',
+      currency: currency || 'IQD',
+      maximumFractionDigits: zeroDecimal ? 0 : 2,
+      minimumFractionDigits: 0,
+    }).formatToParts(n);
+    const number = parts
+      .filter((p) => ['integer', 'group', 'decimal', 'fraction', 'minusSign'].includes(p.type))
+      .map((p) => p.value)
+      .join('');
+    const symbol = (parts.find((p) => p.type === 'currency')?.value || currency || '').trim();
+    return { number, symbol };
+  } catch {
+    return { number: fmtNumber(n, locale), symbol: currency || '' };
+  }
+}
+
 export function fmtBytes(bytes, locale) {
   const n = Number(bytes) || 0;
   if (n < 1024) return `${fmtNumber(n, locale)} B`;
