@@ -108,3 +108,31 @@ export function isoDay(value, timeZone) {
   }).format(d);
   return parts;
 }
+
+/** Midnight-free anchor for a `yyyy-mm-dd` calendar day (noon UTC keeps it stable). */
+function dayToDate(ymd) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(ymd || ''));
+  if (!m) return null;
+  return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
+}
+
+/**
+ * A calendar day (`yyyy-mm-dd`) in the active language: `numeric` gives the
+ * compact pill form (09/27/2026, ۲۷/۰۹/۲۰۲۶ …), the default the long one.
+ */
+export function fmtDay(ymd, locale, timeZone, { weekday = false, numeric = false } = {}) {
+  const d = dayToDate(ymd);
+  if (!d) return '—';
+  const options = numeric
+    ? { year: 'numeric', month: '2-digit', day: '2-digit' }
+    : { year: 'numeric', month: 'long', day: 'numeric' };
+  if (weekday) options.weekday = 'long';
+  return new Intl.DateTimeFormat(safeLocale(locale), { ...options, timeZone }).format(d);
+}
+
+/** Steps a `yyyy-mm-dd` day by whole days — plain date maths, no zone shifts. */
+export function addDaysToDay(ymd, days) {
+  const d = dayToDate(ymd) || dayToDate(isoDay(new Date(), 'UTC'));
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}

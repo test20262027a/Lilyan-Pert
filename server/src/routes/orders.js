@@ -2,6 +2,7 @@ import express from 'express';
 import { q, tx } from '../db.js';
 import { requireAuth, withBusiness } from '../auth.js';
 import { ah, bad, conflict, isUuid, notFound, num } from '../lib/http.js';
+import { safeZone } from '../lib/ranges.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -35,6 +36,22 @@ router.get(
     const params = [req.businessId];
     const where = ['o.business_id = $1'];
 
+    /*
+     * A day filter means a *business* day: the boundary is resolved in the
+     * business timezone, the same way the dashboard buckets its reports.
+     */
+    const timezone = safeZone(
+      (await q('SELECT timezone FROM businesses WHERE id = $1', [req.businessId])).rows[0]?.timezone,
+    );
+    let tzSlot = null;
+    const dayExpr = () => {
+      if (!tzSlot) {
+        params.push(timezone);
+        tzSlot = params.length;
+      }
+      return `(o.created_at AT TIME ZONE $${tzSlot}::text)::date`;
+    };
+
     const receipt = String(req.query.receipt || '').trim();
     if (receipt) {
       // Receipt search deliberately spans every date, as required.
@@ -42,16 +59,19 @@ router.get(
       where.push(`o.order_number = $${params.length}`);
     } else {
       if (req.query.date) {
+        const expr = dayExpr();
         params.push(String(req.query.date).slice(0, 10));
-        where.push(`o.created_at::date = $${params.length}::date`);
+        where.push(`${expr} = $${params.length}::date`);
       }
       if (req.query.from) {
+        const expr = dayExpr();
         params.push(String(req.query.from).slice(0, 10));
-        where.push(`o.created_at::date >= $${params.length}::date`);
+        where.push(`${expr} >= $${params.length}::date`);
       }
       if (req.query.to) {
+        const expr = dayExpr();
         params.push(String(req.query.to).slice(0, 10));
-        where.push(`o.created_at::date <= $${params.length}::date`);
+        where.push(`${expr} <= $${params.length}::date`);
       }
     }
 
@@ -90,7 +110,13 @@ router.get(
     ]);
 
     res.json({
-      orders: list.rows,
+      // Each row carries the transitions the server would accept for it, so
+      // the table can offer exactly the valid next statuses (none once an
+      // order is completed or cancelled).
+      orders: list.rows.map((row) => ({
+        ...row,
+        allowed_transitions: TRANSITIONS[row.status] || [],
+      })),
       total: count.rows[0].total,
       limit,
       offset,
@@ -290,7 +316,12 @@ router.patch(
     const next = String(req.body?.status || '');
     if (!Object.keys(TRANSITIONS).includes(next)) throw bad('INVALID_STATUS');
     if (order.status === next) {
-      return res.json({ order, unchanged: true, audited: false });
+      return res.json({
+        order,
+        unchanged: true,
+        audited: false,
+        allowed_transitions: TRANSITIONS[order.status] || [],
+      });
     }
     const allowed = TRANSITIONS[order.status] || [];
     if (!allowed.includes(next)) throw conflict('INVALID_STATUS_TRANSITION');
@@ -318,7 +349,11 @@ router.patch(
       return rows[0];
     });
 
-    res.json({ order: updated, audited: true });
+    res.json({
+      order: updated,
+      audited: true,
+      allowed_transitions: TRANSITIONS[updated.status] || [],
+    });
   }),
 );
 

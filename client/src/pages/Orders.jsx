@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
   Alert,
@@ -8,19 +8,28 @@ import {
   Loading,
   Modal,
   Money,
-  SectionCard,
   Select,
-  StatusBadge,
   Switch,
   useToast,
 } from '../components/ui';
 import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
-import { get, post } from '../api';
-import { fmtDateTime, fmtNumber, isoDay, zoneFor } from '../format';
+import { get, patch, post } from '../api';
+import { fmtDay, fmtNumber, isoDay, zoneFor } from '../format';
+import useMediaQuery from '../hooks/useMediaQuery';
+import OrdersBanner from '../components/orders/OrdersBanner';
+import DateNav from '../components/orders/DateNav';
+import OrdersToolbar from '../components/orders/OrdersToolbar';
+import OrdersTable from '../components/orders/OrdersTable';
+import OrdersCards from '../components/orders/OrdersCards';
+import '../orders.css';
 
+/* The application's own authoritative status model — one list, no duplicates. */
 const STATUSES = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
+const PAGE_SIZE = 25;
+/** Quiet refresh so a new order or a status change shows up without a reload. */
+const POLL_MS = 15000;
 
 export default function Orders() {
   const { t, locale } = useI18n();
@@ -28,41 +37,95 @@ export default function Orders() {
   const { isManager } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  /*
+   * The list view can be linked to (`/orders?date=…&status=…&q=…`) — that is
+   * what the row links hand back when an order is opened and closed again.
+   */
+  const [urlParams] = useSearchParams();
   const timeZone = zoneFor(locale, business?.timezone);
   const currency = business?.currency || 'IQD';
+  // Phones get the compact cards; tablets and up keep the seven-column table.
+  const compact = useMediaQuery('(max-width: 720px)');
 
-  const [filters, setFilters] = useState({ status: 'all', date: '', from: '', to: '', receipt: '' });
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [day, setDay] = useState(() => urlParams.get('date') || isoDay(new Date(), timeZone));
+  const [status, setStatus] = useState(() => urlParams.get('status') || 'all');
+  const [query, setQuery] = useState(() => urlParams.get('q') || '');
+  const [search, setSearch] = useState(() => (urlParams.get('q') || '').trim());
+  const [pages, setPages] = useState(1);
+
+  const [list, setList] = useState({ orders: [], total: 0, loading: true, error: null });
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [busyId, setBusyId] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [tables, setTables] = useState([]);
 
-  const receiptMode = Boolean(filters.receipt.trim());
+  const searching = Boolean(search);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (filters.status && filters.status !== 'all') params.set('status', filters.status);
-      if (receiptMode) {
-        // Receipt search deliberately spans all dates.
-        params.set('receipt', filters.receipt.trim());
-      } else {
-        if (filters.date) params.set('date', filters.date);
-        if (filters.from) params.set('from', filters.from);
-        if (filters.to) params.set('to', filters.to);
+  // Debounced search: the query only reaches the API once typing pauses.
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSearch(query.trim());
+      setPages(1);
+    }, 300);
+    return () => clearTimeout(id);
+  }, [query]);
+
+
+
+  /*
+   * Receipt search deliberately ignores the selected date and looks across
+   * every order of this business; clearing it restores the day view.
+   */
+  const requestQuery = useMemo(() => {
+    const p = new URLSearchParams();
+    if (searching) p.set('receipt', search);
+    else p.set('date', day);
+    if (status !== 'all') p.set('status', status);
+    p.set('limit', String(PAGE_SIZE * pages));
+    return p.toString();
+  }, [day, search, searching, status, pages]);
+
+  const reqRef = useRef(0);
+
+  const load = useCallback(
+    async ({ silent = false } = {}) => {
+      const id = ++reqRef.current;
+      if (!silent) setList((s) => ({ ...s, loading: true, error: null }));
+      try {
+        const res = await get(`/orders?${requestQuery}`);
+        // A newer request already answered — never let a stale one overwrite it.
+        if (id !== reqRef.current) return;
+        setList({ orders: res.orders || [], total: res.total || 0, loading: false, error: null });
+      } catch (err) {
+        if (id !== reqRef.current) return;
+        setList((s) => ({ ...s, loading: false, error: err.code || 'REQUEST_FAILED' }));
       }
-      params.set('limit', '100');
-      const res = await get(`/orders?${params.toString()}`);
-      setData(res);
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, receiptMode]);
+    },
+    [requestQuery],
+  );
+
+  // "Load more" keeps the rows already on screen; a filter change replaces them.
+  useEffect(() => {
+    load({ silent: loadingMore });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [load]);
 
   useEffect(() => {
-    load();
+    setLoadingMore(false);
+  }, [list]);
+
+  // Live refresh of the same query (replaced, never appended, so no duplicates).
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === 'visible') load({ silent: true });
+    };
+    const timer = setInterval(tick, POLL_MS);
+    window.addEventListener('focus', tick);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('focus', tick);
+    };
   }, [load]);
 
   useEffect(() => {
@@ -72,161 +135,150 @@ export default function Orders() {
         setProducts(p.products || []);
         setTables(tb.tables || []);
       } catch {
-        /* list stays empty; the create dialog still opens */
+        /* the list stays empty; the create dialog still opens */
       }
     })();
   }, []);
 
-  const setFilter = (key) => (value) => setFilters((f) => ({ ...f, [key]: value }));
+  const changeDay = (value) => {
+    setDay(value);
+    setPages(1);
+  };
+  const changeStatus = (value) => {
+    setStatus(value);
+    setPages(1);
+  };
 
-  const today = isoDay(new Date(), timeZone);
+  const loadMore = () => {
+    setLoadingMore(true);
+    // The request runs on the next render, once the larger page size applies.
+    setPages((p) => p + 1);
+  };
+
+  /** Real, authorized status transition. The backend validates it again. */
+  const changeOrderStatus = async (order, next) => {
+    setBusyId(order.id);
+    try {
+      const res = await patch(`/orders/${order.id}/status`, { status: next });
+      const updated = { ...res.order, allowed_transitions: res.allowed_transitions || [] };
+      toast.success(t('order_status_updated'));
+      setList((s) => {
+        const stillMatches = status === 'all' || updated.status === status;
+        if (!stillMatches) {
+          return { ...s, orders: s.orders.filter((o) => o.id !== order.id), total: Math.max(0, s.total - 1) };
+        }
+        return { ...s, orders: s.orders.map((o) => (o.id === order.id ? { ...o, ...updated } : o)) };
+      });
+      load({ silent: true });
+    } catch (err) {
+      toast.error(
+        err.code === 'INVALID_STATUS_TRANSITION'
+          ? t('error_invalid_transition')
+          : err.code === 'ORDER_COMPLETED_LOCKED'
+            ? t('error_order_locked')
+            : t('error_generic'),
+      );
+      load({ silent: true });
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const { orders, total } = list;
+  const hasMore = orders.length < total;
+
+  /* Handed to the row links so opening an order and coming back keeps the view. */
+  const backTo = (() => {
+    const p = new URLSearchParams();
+    p.set('date', day);
+    if (status !== 'all') p.set('status', status);
+    if (query.trim()) p.set('q', query.trim());
+    return `/orders?${p.toString()}`;
+  })();
+  const linkState = useMemo(() => ({ from: backTo }), [backTo]);
+
+  const listProps = {
+    orders,
+    currency,
+    timeZone,
+    busyId,
+    linkState,
+    onStatusChange: changeOrderStatus,
+  };
 
   return (
-    <>
-      <div className="page-head">
-        <div className="page-head__text">
-          <h1>{t('order_title')}</h1>
-          <p>{receiptMode ? t('order_search_all_dates') : t('order_filter_date')}</p>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn" onClick={load} disabled={loading}>
-            <Icon name="refresh" size={15} />
-            {t('action_refresh')}
-          </button>
-          <button className="btn btn--primary" onClick={() => setCreateOpen(true)}>
-            <Icon name="plus" size={15} />
-            {t('order_new')}
-          </button>
-        </div>
-      </div>
+    <div className="orders">
+      <OrdersBanner
+        icon="cart"
+        title={t('order_title')}
+        subtitle={fmtDay(day, locale, timeZone, { weekday: true })}
+      >
+        <button type="button" className="obanner__new" onClick={() => setCreateOpen(true)}>
+          <Icon name="plus" size={15} />
+          {t('order_new')}
+        </button>
+        <DateNav value={day} onChange={changeDay} timeZone={timeZone} />
+      </OrdersBanner>
 
-      <SectionCard icon="filter" iconClass="ic-blue" title={t('action_search')}>
-        <div className="form-grid">
-          <Field label={t('order_search_receipt')} hint={t('order_receipt_search_hint')}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <Icon name="search" size={17} />
-              <input
-                className="input"
-                value={filters.receipt}
-                placeholder="#1001"
-                onChange={(e) => setFilter('receipt')(e.target.value)}
-              />
-              {receiptMode ? (
-                <button className="btn btn--sm" onClick={() => setFilter('receipt')('')} aria-label={t('action_clear')}>
-                  <Icon name="close" size={15} />
-                </button>
-              ) : null}
-            </div>
-          </Field>
-          <Field label={t('order_filter_status')}>
-            <Select
-              value={filters.status}
-              onChange={setFilter('status')}
-              options={[
-                { value: 'all', label: t('label_all') },
-                ...STATUSES.map((s) => ({ value: s, label: t(`status_${s}`) })),
-              ]}
-            />
-          </Field>
-          <Field label={t('order_filter_date')}>
-            <input
-              className="input"
-              type="date"
-              value={filters.date}
-              disabled={receiptMode}
-              onChange={(e) => setFilter('date')(e.target.value)}
-            />
-          </Field>
-          <Field label={t('order_filter_from')}>
-            <input
-              className="input"
-              type="date"
-              value={filters.from}
-              disabled={receiptMode}
-              onChange={(e) => setFilter('from')(e.target.value)}
-            />
-          </Field>
-          <Field label={t('order_filter_to')}>
-            <input
-              className="input"
-              type="date"
-              value={filters.to}
-              disabled={receiptMode}
-              onChange={(e) => setFilter('to')(e.target.value)}
-            />
-          </Field>
-        </div>
-        <div className="btn-row" style={{ marginTop: 12 }}>
-          <button className="btn btn--sm" onClick={() => setFilters({ status: 'all', date: today, from: '', to: '', receipt: '' })}>
-            {t('dash_revenue_today')}
-          </button>
-          <button className="btn btn--sm" onClick={() => setFilters({ status: 'all', date: '', from: '', to: '', receipt: '' })}>
-            {t('action_clear_all')}
-          </button>
-        </div>
-      </SectionCard>
+      <OrdersToolbar
+        query={query}
+        onQueryChange={setQuery}
+        status={status}
+        onStatusChange={changeStatus}
+        statuses={STATUSES}
+      />
 
-      {data?.flow ? (
-        <div className="stat-row">
-          {STATUSES.map((s) => (
-            <div className="stat" key={s}>
-              <div className="stat__label">{t(`status_${s}`)}</div>
-              <div className="stat__value">{fmtNumber(data.flow[s] || 0, locale)}</div>
-            </div>
-          ))}
-        </div>
+      {list.error ? (
+        <Alert kind="error">
+          {t('error_generic')}
+          <button className="btn btn--sm" onClick={() => load()} disabled={list.loading}>
+            <Icon name="refresh" size={14} />
+            {t('action_retry')}
+          </button>
+        </Alert>
       ) : null}
 
-      <SectionCard
-        icon="receipt"
-        iconClass="ic-purple"
-        title={t('order_title')}
-        subtitle={`${fmtNumber(data?.total || 0, locale)} ${t('label_records')}`}
-      >
-        {loading ? (
-          <Loading />
-        ) : (data?.orders || []).length === 0 ? (
-          <EmptyState icon="receipt" title={t('order_no_orders')} />
-        ) : (
-          <div className="table-wrap">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>{t('order_number')}</th>
-                  <th>{t('label_table')}</th>
-                  <th>{t('label_customer')}</th>
-                  <th>{t('order_grand_total')}</th>
-                  <th>{t('label_status')}</th>
-                  <th>{t('label_date')}</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {data.orders.map((o) => (
-                  <tr key={o.id}>
-                    <td style={{ fontWeight: 700 }}>#{o.order_number}</td>
-                    <td>{o.table_name || '—'}</td>
-                    <td>{o.customer_name || '—'}</td>
-                    <td style={{ fontWeight: 700 }}>
-                      <Money value={o.total} currency={currency} />
-                    </td>
-                    <td>
-                      <StatusBadge status={o.status} />
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(o.created_at, locale, timeZone)}</td>
-                    <td>
-                      <Link className="btn btn--sm" to={`/orders/${o.id}`}>
-                        <Icon name="eye" size={14} />
-                        {t('action_view')}
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      <div className="otable-wrap">
+        {list.loading ? (
+          <div className="olist__state">
+            <Loading />
           </div>
+        ) : orders.length === 0 ? (
+          <EmptyState icon="receipt" title={t('order_no_orders')} hint={t('order_no_orders_hint')} />
+        ) : compact ? (
+          <div className="ocards">
+            <OrdersCards {...listProps} />
+          </div>
+        ) : (
+          <OrdersTable {...listProps} />
         )}
-      </SectionCard>
+
+        {orders.length > 0 ? (
+          <div className="otable__foot">
+            <span>{t('order_showing', { shown: fmtNumber(orders.length, locale), total: fmtNumber(total, locale) })}</span>
+            {searching ? (
+              <span className="ofoot__note">
+                <Icon name="search" size={13} />
+                {t('order_search_all_dates')}
+              </span>
+            ) : null}
+            <span className="ofoot__spacer" />
+            {hasMore ? (
+              <button
+                type="button"
+                className="btn btn--sm"
+                onClick={loadMore}
+                disabled={loadingMore || list.loading}
+              >
+                {loadingMore ? <span className="spinner" /> : <Icon name="chevronDown" size={14} />}
+                {t('order_load_more')}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+
+      {!isManager ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
 
       {createOpen ? (
         <CreateOrderModal
@@ -237,14 +289,12 @@ export default function Orders() {
           onCreated={async (order) => {
             setCreateOpen(false);
             toast.success(t('order_created'));
-            await load();
+            await load({ silent: true });
             navigate(`/orders/${order.id}`);
           }}
         />
       ) : null}
-
-      {!isManager ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
-    </>
+    </div>
   );
 }
 
@@ -381,7 +431,9 @@ function CreateOrderModal({ products, tables, currency, onClose, onCreated }) {
         {discountValue > 0 ? (
           <div className="totals__row">
             <span>{t('order_discount')}</span>
-            <span>-<Money value={discountValue} currency={currency} /></span>
+            <span>
+              -<Money value={discountValue} currency={currency} />
+            </span>
           </div>
         ) : null}
       </div>

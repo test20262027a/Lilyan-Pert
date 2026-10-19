@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { PrintPortal, ReceiptPaper } from '../components/Receipt';
 import {
@@ -23,6 +23,10 @@ import { fmtDateTime, zoneFor } from '../format';
 export default function OrderDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Opened from the orders list, Back returns to that day and its filters;
+  // a direct visit falls back to the plain list.
+  const backTo = location.state?.from || '/orders';
   const { t, locale } = useI18n();
   const { business } = useBusiness();
   const toast = useToast();
@@ -181,7 +185,7 @@ export default function OrderDetail() {
           </p>
         </div>
         <div className="page-head__actions">
-          <Link className="btn btn--sm" to="/orders">
+          <Link className="btn btn--sm" to={backTo}>
             <Icon name="arrowLeft" size={15} />
             {t('action_back')}
           </Link>
