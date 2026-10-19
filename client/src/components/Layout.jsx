@@ -5,28 +5,52 @@ import { Badge, Spinner, useToast } from './ui';
 import { localized, useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { BusinessProvider, useBusiness } from '../context/BusinessContext';
-import { get, post } from '../api';
+import { get, post, put } from '../api';
 import { applyTheme } from '../theme';
-import { playChime } from '../hooks/usePush';
+import { playSound } from '../sound';
 
+/*
+ * Navigation mirrors the business modules, grouped the way the dashboard
+ * presents them: a few direct destinations and three expandable groups. Every
+ * entry points at a real route and carries the minimum role that may see it.
+ */
 const NAV = [
   { to: '/', icon: 'dashboard', key: 'nav_dashboard', exact: true },
-  { to: '/menu', icon: 'book', key: 'nav_menu' },
-  { to: '/orders', icon: 'receipt', key: 'nav_orders' },
-  { to: '/order-menu', icon: 'coffee', key: 'nav_order_menu' },
-  { to: '/tables', icon: 'qr', key: 'nav_tables' },
-  { to: '/reviews', icon: 'star', key: 'nav_reviews' },
-  { to: '/marketing', icon: 'megaphone', key: 'nav_marketing' },
-  { to: '/backups', icon: 'database', key: 'nav_backups' },
-  { to: '/users', icon: 'users', key: 'nav_users' },
-  { to: '/settings', icon: 'settings', key: 'nav_settings' },
+  { to: '/orders', icon: 'cart', key: 'nav_orders' },
+  { to: '/menu-preview', icon: 'home', key: 'nav_view_menu', preview: true },
+  {
+    key: 'nav_group_menu',
+    icon: 'wrench',
+    children: [
+      { to: '/menu', icon: 'book', key: 'nav_menu' },
+      { to: '/order-menu', icon: 'coffee', key: 'nav_order_menu' },
+      { to: '/tables', icon: 'qr', key: 'nav_tables' },
+    ],
+  },
+  {
+    key: 'nav_group_reports',
+    icon: 'chart',
+    children: [
+      { to: '/reviews', icon: 'star', key: 'nav_reviews' },
+      { to: '/marketing', icon: 'megaphone', key: 'nav_marketing' },
+    ],
+  },
+  {
+    key: 'nav_group_business',
+    icon: 'building',
+    children: [
+      { to: '/settings', icon: 'settings', key: 'nav_settings' },
+      { to: '/users', icon: 'users', key: 'nav_users', min: 'manager' },
+      { to: '/backups', icon: 'database', key: 'nav_backups', min: 'owner' },
+    ],
+  },
 ];
 
 /** Ticking clock isolated in its own component so it never rerenders the page. */
 export function LiveClock({ timeZone, className }) {
   const [, force] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => force((n) => n + 1), 20000);
+    const id = setInterval(() => force((n) => n + 1), 10000);
     return () => clearInterval(id);
   }, []);
   const now = new Date();
@@ -48,6 +72,8 @@ function NotificationsBell() {
   const [unread, setUnread] = useState(0);
   const seenRef = useRef(null);
   const { business } = useBusiness();
+  const soundEnabled = business?.notification_settings?.sound_enabled !== false;
+  const soundKey = business?.notification_settings?.sound_key;
 
   const load = useCallback(async () => {
     try {
@@ -62,9 +88,9 @@ function NotificationsBell() {
           seenRef.current = newest.id; // first load establishes the baseline
         } else if (newest.id !== seenRef.current) {
           seenRef.current = newest.id;
-          // In-app alert for the newest event; sound follows the saved preference.
+          // In-app alert for the newest event; sound follows the saved setting.
           if (newest.type === 'new_order') {
-            if (business?.notification_settings?.sound_enabled !== false) playChime();
+            if (soundEnabled) playSound(soundKey);
             toast.success(`${t('dash_new_orders')} · #${newest.order_number || ''}`.trim());
           }
         }
@@ -73,13 +99,12 @@ function NotificationsBell() {
       /* silently ignore polling errors */
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [business?.notification_settings?.sound_enabled, locale]);
+  }, [soundEnabled, soundKey, locale]);
 
   useEffect(() => {
     load();
     const id = setInterval(load, 20000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load]);
 
   const markAll = async () => {
@@ -90,8 +115,10 @@ function NotificationsBell() {
   return (
     <span className="bell-wrap">
       <button
+        type="button"
         className="btn btn--icon"
         aria-label={t('dash_status_notifications')}
+        title={t('dash_status_notifications')}
         onClick={() => setOpen((v) => !v)}
       >
         <Icon name="bell" size={18} />
@@ -138,44 +165,103 @@ function NotificationsBell() {
   );
 }
 
+const COLLAPSE_KEY = 'lilyan.sidebar.collapsed';
+
+function canSee(item, { isManager, isOwner }) {
+  if (!item.min) return true;
+  if (item.min === 'owner') return isOwner;
+  return isManager;
+}
+
+/** Finds the navigation entry (group child included) that owns a path. */
+function titleKeyFor(pathname) {
+  for (const item of NAV) {
+    if (item.to && (item.exact ? pathname === item.to : pathname.startsWith(item.to))) return item.key;
+    for (const child of item.children || []) {
+      if (pathname === child.to || pathname.startsWith(`${child.to}/`)) return child.key;
+    }
+  }
+  return 'nav_dashboard';
+}
+
 function Shell() {
   const { t, locale, setLocale, LOCALES } = useI18n();
-  const { user, logout, memberships, businessId } = useAuth();
-  const { business, save } = useBusiness();
+  const { user, logout, memberships, businessId, isManager, isOwner } = useAuth();
+  const { business, setBusiness } = useBusiness();
   const location = useLocation();
+  const toast = useToast();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userOpen, setUserOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [collapsed, setCollapsed] = useState(
+    () => typeof localStorage !== 'undefined' && localStorage.getItem(COLLAPSE_KEY) === '1',
+  );
+  const [openGroups, setOpenGroups] = useState(() => {
+    const key = titleKeyFor(location.pathname);
+    const group = NAV.find((item) => (item.children || []).some((c) => c.key === key));
+    return group ? { [group.key]: true } : {};
+  });
 
   useEffect(() => {
     setMenuOpen(false);
+    setUserOpen(false);
+    // Opening a group for the active page keeps the tree self-explanatory.
+    const key = titleKeyFor(location.pathname);
+    const group = NAV.find((item) => (item.children || []).some((c) => c.key === key));
+    if (group) setOpenGroups((state) => ({ ...state, [group.key]: true }));
   }, [location.pathname]);
+
+  const toggleCollapsed = () => {
+    setCollapsed((v) => {
+      localStorage.setItem(COLLAPSE_KEY, v ? '0' : '1');
+      return !v;
+    });
+  };
 
   const themeMode = business?.theme?.mode === 'dark' ? 'dark' : 'light';
   const toggleTheme = async () => {
-    if (!business) return;
-    const next = { ...(business.theme || {}), mode: themeMode === 'dark' ? 'light' : 'dark' };
+    if (!business || busy) return;
+    // The next mode follows what is actually applied, so a quick second click
+    // can never flip back from a stale saved value.
+    const applied = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const next = { ...(business.theme || {}), mode: applied === 'dark' ? 'light' : 'dark' };
     applyTheme(next); // instant feedback, then persisted
     setBusy(true);
     try {
-      await save({ theme: next });
+      const saved = await put('/business', { theme: next });
+      if (saved?.business) setBusiness(saved.business);
     } catch {
       applyTheme(business.theme);
+      toast.error(t('error_generic'));
     } finally {
       setBusy(false);
     }
   };
 
+  const soundEnabled = business?.notification_settings?.sound_enabled !== false;
+  const toggleSound = async () => {
+    if (!business) return;
+    const next = { ...(business.notification_settings || {}), sound_enabled: !soundEnabled };
+    setBusiness({ ...business, notification_settings: next });
+    if (!soundEnabled) playSound(next.sound_key); // preview on the same gesture
+    try {
+      await put('/dashboard/notification-settings', { sound_enabled: !soundEnabled });
+    } catch {
+      setBusiness(business);
+      toast.error(t('error_generic'));
+    }
+  };
+
   const membership = memberships.find((m) => m.business_id === businessId);
-  const title =
-    NAV.find((n) => (n.exact ? location.pathname === n.to : location.pathname.startsWith(n.to)))
-      ?.key || 'nav_dashboard';
-  const businessName =
-    localized(business, 'name', locale) || business?.name || t('app_name');
+  const title = titleKeyFor(location.pathname);
+  const businessName = localized(business, 'name', locale) || business?.name || t('app_name');
+  const initials = (user?.full_name || user?.email || '?').trim().charAt(0).toUpperCase();
+  const allowed = (item) => canSee(item, { isManager, isOwner });
 
   return (
     <div className="app-shell">
       {menuOpen ? <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} /> : null}
-      <aside className={`sidebar ${menuOpen ? 'is-open' : ''}`}>
+      <aside className={`sidebar ${menuOpen ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
         <div className="brand">
           <span className="brand__mark">
             {business?.logo_url ? (
@@ -186,52 +272,100 @@ function Shell() {
           </span>
           <span className="brand__text">
             <div className="brand__name">{business?.name_en || business?.name || t('app_name')}</div>
-            <div className="brand__sub">
-              {membership ? t(`role_${membership.role}`) : t('tagline')}
-            </div>
+            <div className="brand__sub">{membership ? t(`role_${membership.role}`) : t('tagline')}</div>
           </span>
+          <button
+            type="button"
+            className="nav-collapse"
+            onClick={toggleCollapsed}
+            aria-label={collapsed ? t('nav_expand') : t('nav_collapse')}
+            title={collapsed ? t('nav_expand') : t('nav_collapse')}
+          >
+            <Icon name="chevronsLeft" size={15} className={collapsed ? 'icon--dir' : ''} />
+          </button>
         </div>
 
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-          {NAV.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.exact}
-              className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
-              onClick={() => setMenuOpen(false)}
-            >
-              <Icon name={item.icon} size={18} />
-              <span>{t(item.key)}</span>
-            </NavLink>
-          ))}
+          {NAV.filter(allowed).map((item) => {
+            if (item.preview) {
+              // The customer menu is a public page of this business.
+              return (
+                <a
+                  key={item.key}
+                  className="nav-link"
+                  href={business ? `/m/${business.slug}` : '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  title={t(item.key)}
+                  onClick={(e) => {
+                    if (!business) e.preventDefault();
+                    setMenuOpen(false);
+                  }}
+                >
+                  <Icon name={item.icon} size={18} />
+                  <span>{t(item.key)}</span>
+                </a>
+              );
+            }
+            if (!item.children) {
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.exact}
+                  className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
+                  title={t(item.key)}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  <Icon name={item.icon} size={18} />
+                  <span>{t(item.key)}</span>
+                </NavLink>
+              );
+            }
+
+            const children = item.children.filter(allowed);
+            const isOpen = Boolean(openGroups[item.key]);
+            const isCurrent = children.some((c) => c.key === title);
+            return (
+              <div key={item.key}>
+                <button
+                  type="button"
+                  className={`nav-link nav-group ${isCurrent ? 'is-current' : ''}`}
+                  aria-expanded={isOpen}
+                  title={t(item.key)}
+                  onClick={() => {
+                    if (collapsed) {
+                      setCollapsed(false);
+                      localStorage.setItem(COLLAPSE_KEY, '0');
+                    }
+                    setOpenGroups((state) => ({ ...state, [item.key]: !isOpen }));
+                  }}
+                >
+                  <Icon name={item.icon} size={18} />
+                  <span>{t(item.key)}</span>
+                  <Icon name="chevronDown" size={14} className={`nav-group__caret ${isOpen ? 'is-open' : ''}`} />
+                </button>
+                {isOpen ? (
+                  <div className="nav-children">
+                    {children.map((child) => (
+                      <NavLink
+                        key={child.to}
+                        to={child.to}
+                        className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <span className="nav-dot" />
+                        <span>{t(child.key)}</span>
+                      </NavLink>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="sidebar__spacer" />
-
-        {business ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <a
-              className="btn btn--sm"
-              href={`/m/${business.slug}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Icon name="eye" size={15} />
-              {t('nav_customer_menu')}
-            </a>
-            <div className="sidebar__user">{user?.email}</div>
-            <button
-              className="btn btn--sm"
-              onClick={async () => {
-                await logout();
-              }}
-            >
-              <Icon name="logout" size={15} />
-              {t('auth_logout')}
-            </button>
-          </div>
-        ) : null}
       </aside>
 
       <div className="main">
@@ -259,31 +393,80 @@ function Shell() {
           )}
           <span className="topbar__spacer" />
 
-          <select
-            className="select"
-            style={{ width: 'auto', minHeight: 38, padding: '6px 10px', fontSize: 13 }}
-            value={locale}
-            onChange={(e) => setLocale(e.target.value)}
-            aria-label={t('label_language')}
-          >
-            {LOCALES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </select>
+          <div className="topbar__tools">
+            <span className="usermenu">
+              <button
+                type="button"
+                className="avatar"
+                aria-label={t('auth_account')}
+                title={user?.email || t('auth_account')}
+                onClick={() => setUserOpen((v) => !v)}
+              >
+                {initials}
+              </button>
+              {userOpen ? (
+                <div className="dropdown dropdown--sm" role="menu">
+                  <div className="dropdown__head">
+                    <span>{membership ? t(`role_${membership.role}`) : t('auth_account')}</span>
+                    <Badge kind={themeMode === 'dark' ? 'inactive' : 'active'}>
+                      {themeMode === 'dark' ? t('theme_dark') : t('theme_light')}
+                    </Badge>
+                  </div>
+                  <div className="dropdown__item" style={{ color: 'var(--muted)' }}>
+                    {user?.email}
+                  </div>
+                  <button type="button" className="dropdown__item--btn" onClick={toggleTheme} disabled={busy}>
+                    <Icon name={themeMode === 'dark' ? 'sun' : 'moon'} size={14} />{' '}
+                    {themeMode === 'dark' ? t('theme_light') : t('theme_dark')}
+                  </button>
+                  <button type="button" className="dropdown__item--btn" onClick={() => logout()}>
+                    <Icon name="logout" size={14} /> {t('auth_logout')}
+                  </button>
+                </div>
+              ) : null}
+            </span>
 
-          <button
-            className="btn btn--icon"
-            onClick={toggleTheme}
-            disabled={busy || !business}
-            aria-label={themeMode === 'dark' ? t('theme_light') : t('theme_dark')}
-            title={themeMode === 'dark' ? t('theme_light') : t('theme_dark')}
-          >
-            {busy ? <Spinner size={16} /> : <Icon name={themeMode === 'dark' ? 'sun' : 'moon'} size={18} />}
-          </button>
+            <button
+              type="button"
+              className="btn btn--icon"
+              onClick={toggleTheme}
+              disabled={busy || !business}
+              aria-label={themeMode === 'dark' ? t('theme_light') : t('theme_dark')}
+              title={themeMode === 'dark' ? t('theme_light') : t('theme_dark')}
+            >
+              {busy ? <Spinner size={16} /> : <Icon name={themeMode === 'dark' ? 'sun' : 'moon'} size={18} />}
+            </button>
 
-          <NotificationsBell />
+            <NotificationsBell />
+
+            <button
+              type="button"
+              className="btn btn--icon"
+              onClick={toggleSound}
+              disabled={!business}
+              aria-label={t('dash_sound')}
+              aria-pressed={soundEnabled}
+              title={`${t('dash_sound')}: ${soundEnabled ? t('label_active') : t('label_inactive')}`}
+            >
+              <Icon name={soundEnabled ? 'volume' : 'volumeOff'} size={18} />
+            </button>
+
+            <span className="lang-select">
+              <Icon name="globe" size={15} />
+              <select
+                className="select"
+                value={locale}
+                onChange={(e) => setLocale(e.target.value)}
+                aria-label={t('label_language')}
+              >
+                {LOCALES.map((l) => (
+                  <option key={l.code} value={l.code}>
+                    {l.label}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </div>
         </header>
 
         <main className="page">

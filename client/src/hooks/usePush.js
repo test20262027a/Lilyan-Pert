@@ -103,25 +103,3 @@ export function usePush() {
 
   return { ...state, enable, disable, refreshStatus };
 }
-
-/** Short notification sound generated in the browser — no asset needed. */
-export function playChime() {
-  try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.16, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.45);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-    setTimeout(() => ctx.close?.(), 700);
-  } catch {
-    /* audio is best-effort only */
-  }
-}

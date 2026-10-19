@@ -62,6 +62,13 @@ export function fmtWeekday(value, locale, timeZone) {
   return new Intl.DateTimeFormat(safeLocale(locale), { weekday: 'short', timeZone }).format(d);
 }
 
+/** Short month label for month-bucketed charts. */
+export function fmtMonth(value, locale, timeZone) {
+  const d = toDate(value);
+  if (!d) return '';
+  return new Intl.DateTimeFormat(safeLocale(locale), { month: 'short', timeZone }).format(d);
+}
+
 export function fmtNumber(value, locale) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '0';

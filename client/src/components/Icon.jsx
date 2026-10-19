@@ -58,11 +58,32 @@ const PATHS = {
   table: <><rect x="3" y="4" width="18" height="6" rx="1.5" /><path d="M6 10v9M18 10v9M4 19h16" /></>,
   key: <><circle cx="8" cy="15" r="4" /><path d="m10.8 12.2 8-8M17 3l4 4-2 2-4-4z" /></>,
   wifi: <><path d="M2 8.8a16 16 0 0 1 20 0" /><path d="M5.5 12.4a11 11 0 0 1 13 0" /><path d="M9 16a6 6 0 0 1 6 0" /><circle cx="12" cy="19.5" r=".8" /></>,
+  home: <><path d="m3 10.6 9-7.6 9 7.6" /><path d="M5.5 9.4V20a1 1 0 0 0 1 1h11a1 1 0 0 0 1-1V9.4" /><path d="M10 21v-5.5h4V21" /></>,
+  wrench: <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.8-3.8a6 6 0 0 1-7.9 7.9l-6.9 6.9a2.1 2.1 0 0 1-3-3l6.9-6.9a6 6 0 0 1 7.9-7.9z" />,
+  building: <><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M9 7.5h.01M15 7.5h.01M9 11.5h.01M15 11.5h.01M9 15.5h.01M15 15.5h.01" /><path d="M10 21v-3h4v3" /></>,
+  clipboard: <><rect x="6" y="4" width="12" height="17" rx="2" /><path d="M9.5 4V3h5v1" /><path d="M9.5 9.5h5M9.5 13h5M9.5 16.5h3" /></>,
+  checkCircle: <><circle cx="12" cy="12" r="9" /><path d="m8.4 12.4 2.6 2.6 4.6-5.2" /></>,
+  xCircle: <><circle cx="12" cy="12" r="9" /><path d="m9.6 9.6 4.8 4.8M14.4 9.6l-4.8 4.8" /></>,
+  chefHat: <><path d="M6 13.9A4 4 0 0 1 7.4 6a5.1 5.1 0 0 1 1.1-1.5 5 5 0 0 1 7 0A5.1 5.1 0 0 1 16.6 6 4 4 0 0 1 18 13.9V21H6z" /><path d="M6 17h12" /></>,
+  package: <><path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" /><path d="m3.3 7 8.7 5 8.7-5" /><path d="M12 22V12" /><path d="m7.5 4.3 9 5.1" /></>,
+  trophy: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.7V17c0 .6-.5 1-1 1.2-1.2.5-2 2-2 3.8" /><path d="M14 14.7V17c0 .6.5 1 1 1.2 1.2.5 2 2 2 3.8" /><path d="M18 2H6v7a6 6 0 0 0 12 0z" /></>,
+  trendUp: <><path d="M22 7 13.5 15.5l-5-5L2 17" /><path d="M16 7h6v6" /></>,
+  banknote: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2.4" /><path d="M6 12h.01M18 12h.01" /></>,
+  volume: <><path d="M11 5 6 9H3v6h3l5 4z" /><path d="M15.5 8.6a5 5 0 0 1 0 6.8" /><path d="M18.6 5.4a9 9 0 0 1 0 13.2" /></>,
+  volumeOff: <><path d="M11 5 6 9H3v6h3l5 4z" /><path d="m16 9.5 5 5M21 9.5l-5 5" /></>,
+  chevronsUp: <><path d="m7 14 5-5 5 5" /><path d="m7 20 5-5 5 5" /></>,
+  chevronsLeft: <><path d="m11 7-5 5 5 5" /><path d="m17 7-5 5 5 5" /></>,
 };
 
 export default function Icon({ name, size = 18, className = '', style, title }) {
   const path = PATHS[name] || PATHS.info;
-  const directional = ['chevronRight', 'chevronLeft', 'arrowLeft', 'arrowRight'].includes(name);
+  const directional = [
+    'chevronRight',
+    'chevronLeft',
+    'arrowLeft',
+    'arrowRight',
+    'chevronsLeft',
+  ].includes(name);
   return (
     <svg
       viewBox="0 0 24 24"

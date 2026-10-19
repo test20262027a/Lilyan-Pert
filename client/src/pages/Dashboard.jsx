@@ -1,86 +1,116 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import Icon from '../components/Icon';
-import { LiveClock } from '../components/Layout';
-import { Alert, Badge, Loading, SectionCard, SwitchRow, useToast } from '../components/ui';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Loading, useToast } from '../components/ui';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
+import NotificationSettings from '../components/dashboard/NotificationSettings';
+import DateHours from '../components/dashboard/DateHours';
 import KpiCards from '../components/dashboard/KpiCards';
 import FinanceOverview from '../components/dashboard/FinanceOverview';
-import ActivityChart from '../components/dashboard/ActivityChart';
+import OrderFlow from '../components/dashboard/OrderFlow';
 import BestSelling from '../components/dashboard/BestSelling';
 import StatusBreakdown from '../components/dashboard/StatusBreakdown';
-import RecentActivity from '../components/dashboard/RecentActivity';
+import NewOrders from '../components/dashboard/NewOrders';
+import ScrollTop from '../components/dashboard/ScrollTop';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
+import { useAuth } from '../context/AuthContext';
 import { usePush } from '../hooks/usePush';
-import { get } from '../api';
-import { fmtDate, fmtNumber, zoneFor } from '../format';
+import { get, put } from '../api';
+import { zoneFor } from '../format';
 import '../dashboard.css';
 
-const DAY_KEYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+/** Quiet refresh cadence for the live counters. */
+const POLL_MS = 20000;
 
 export default function Dashboard() {
   const { t, locale } = useI18n();
-  const { business, save } = useBusiness();
+  const { business, setBusiness } = useBusiness();
+  const { businessId } = useAuth();
   const toast = useToast();
   const push = usePush();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [failed, setFailed] = useState(false);
-  const [range, setRange] = useState('30d');
+  const [pushError, setPushError] = useState('');
+  const [range, setRange] = useState('today');
+  const [custom, setCustom] = useState({ from: '', to: '' });
 
-  // The financial window is a real backend filter: the API recomputes the
-  // figures for the requested range, so nothing is recalculated on the client.
-  useEffect(() => {
-    let alive = true;
-    setRefreshing(true);
-    (async () => {
+  const query =
+    range === 'custom' && custom.from && custom.to
+      ? `range=custom&from=${custom.from}&to=${custom.to}`
+      : `range=${range}`;
+
+  /*
+   * The financial window is a real backend filter: the API recomputes every
+   * figure for the requested range in the business timezone, so nothing here
+   * is calculated on the client.
+   */
+  const load = useCallback(
+    async (quiet = false) => {
+      if (!quiet) setLoading(true);
       try {
-        const res = await get(`/dashboard?range=${range}`);
-        if (!alive) return;
+        const res = await get(`/dashboard?${query}`);
         setData(res);
         setFailed(false);
+        return res;
       } catch {
-        if (alive) setFailed(true);
+        setFailed(true);
+        return null;
       } finally {
-        if (alive) {
-          setRefreshing(false);
-          setLoading(false);
-        }
+        setLoading(false);
       }
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [range]);
+    },
+    [query],
+  );
 
-  const timeZone = zoneFor(locale, business?.timezone);
-  const currency = data?.business?.currency || business?.currency;
+  useEffect(() => {
+    load(false);
+  }, [load, businessId]);
 
-  const todayHours = useMemo(() => {
-    const hours = data?.business?.working_hours || {};
-    const now = data?.hours?.now;
-    const day = now ? hours[now.dayKey] : null;
-    const dayKey = now?.dayKey || DAY_KEYS[new Date().getDay()];
-    return { day, dayKey };
-  }, [data]);
+  // Live counters: the poll replaces the payload wholesale, so an order that
+  // arrives in two refreshes can never be listed twice.
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (!document.hidden) load(true);
+    }, POLL_MS);
+    return () => clearInterval(id);
+  }, [load]);
 
-  if (loading) return <Loading />;
-  if (!data) return <Alert kind="error">{t('error_generic')}</Alert>;
-
-  const notif = data.notification_settings || {};
-  const openStatus = data.hours || {};
-
-  const updateNotification = async (key, value) => {
-    const next = { ...notif, [key]: value };
+  /** Persists one notification preference and reverts if the write fails. */
+  const updateSettings = async (patch) => {
+    const previous = data?.notification_settings || {};
+    const next = { ...previous, ...patch };
+    setData((d) => ({ ...d, notification_settings: next, business: { ...d.business, notification_settings: next } }));
+    if (business) setBusiness({ ...business, notification_settings: next });
     try {
-      await save({ notification_settings: next });
-      setData((d) => ({ ...d, notification_settings: next, business: { ...d.business, notification_settings: next } }));
+      const res = await put('/dashboard/notification-settings', patch);
+      const merged = res.notification_settings;
+      setData((d) => ({ ...d, notification_settings: merged, business: { ...d.business, notification_settings: merged } }));
+      if (business) setBusiness({ ...business, notification_settings: merged });
+      toast.success(t('action_saved'));
     } catch {
+      setData((d) => ({ ...d, notification_settings: previous, business: { ...d.business, notification_settings: previous } }));
+      if (business) setBusiness({ ...business, notification_settings: previous });
       toast.error(t('error_generic'));
     }
   };
+
+  const onPushToggle = async () => {
+    setPushError('');
+    const res = push.subscribed ? await push.disable() : await push.enable();
+    if (res.ok) {
+      toast.success(push.subscribed ? t('action_saved') : t('dash_push_enabled'));
+      return;
+    }
+    if (res.reason === 'unsupported') setPushError(t('dash_push_unsupported'));
+    else if (res.reason === 'denied') setPushError(t('dash_push_denied'));
+    else setPushError(`${t('dash_sw_failed')}${res.error ? ` — ${res.error}` : ''}`);
+  };
+
+  if (loading && !data) return <Loading />;
+  if (!data) return <Alert kind="error">{t('error_generic')}</Alert>;
+
+  const timeZone = zoneFor(locale, data.business?.timezone || business?.timezone);
+  const currency = data.business?.currency || business?.currency;
 
   return (
     <div className="dash">
@@ -88,137 +118,55 @@ export default function Dashboard() {
 
       {failed ? <Alert kind="error">{t('error_generic')}</Alert> : null}
 
-      {/* ---- Top information row: date & hours, then notification settings ---- */}
+      {/* ---- Date and working hours, then notification settings ---- */}
       <div className="dash-row dash-row--info">
-        <section className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-          <header className="card__head">
-            <span className="card__icon ic-green">
-              <Icon name="clock" size={18} />
-            </span>
-            <div className="card__titles">
-              <div className="card__title">{t('dash_date_hours')}</div>
-              <div className="card__subtitle">{fmtDate(new Date(), locale, timeZone, { weekday: true })}</div>
-            </div>
-            {openStatus.valid ? (
-              <Badge kind={openStatus.is_open ? 'active' : 'inactive'}>
-                <span className={`live-dot ${openStatus.is_open ? '' : 'live-dot--off'}`} />
-                {openStatus.is_open ? t('dash_open_now') : t('dash_closed_now')}
-              </Badge>
-            ) : (
-              <Badge kind="inactive">{t('dash_hours_unknown')}</Badge>
-            )}
-          </header>
-          <div className="card__body" style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: '1 1 auto' }}>
-            <div className="grid grid--2">
-              <div className="stat">
-                <div className="stat__label">
-                  <Icon name="clock" size={13} /> {t('dash_live_time')}
-                </div>
-                <div className="stat__value">
-                  <LiveClock timeZone={timeZone} />
-                </div>
-              </div>
-              <div className="stat">
-                <div className="stat__label">
-                  <Icon name="calendar" size={13} /> {t('dash_working_hours')}
-                </div>
-                <div className="stat__value" style={{ fontSize: 16 }}>
-                  {todayHours.day && !todayHours.day.closed
-                    ? `${todayHours.day.open} – ${todayHours.day.close}`
-                    : t('settings_closed_today')}
-                </div>
-              </div>
-            </div>
-            <div style={{ marginTop: 'auto' }}>
-              <Link className="btn btn--sm" to="/settings">
-                <Icon name="settings" size={14} />
-                {t('sec_hours')}
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        <SectionCard
-          icon="bell"
-          iconClass="ic-amber"
-          title={t('dash_notification_settings')}
-          subtitle={t('dash_notification_hint')}
-        >
-          <SwitchRow
-            title={t('dash_sound')}
-            checked={notif.sound_enabled !== false}
-            onChange={(v) => updateNotification('sound_enabled', v)}
-          />
-          <SwitchRow
-            title={t('settings_new_order_alerts')}
-            hint={t('dash_new_orders_only')}
-            checked={notif.new_order !== false}
-            onChange={(v) => updateNotification('new_order', v)}
-          />
-          <SwitchRow
-            title={t('settings_status_alerts')}
-            checked={Boolean(notif.status_changes)}
-            onChange={(v) => updateNotification('status_changes', v)}
-          />
-          <SwitchRow
-            title={t('settings_daily_summary')}
-            checked={Boolean(notif.daily_summary)}
-            onChange={(v) => updateNotification('daily_summary', v)}
-          />
-
-          <div className="switch-row" style={{ borderBottom: 'none', paddingBottom: 0 }}>
-            <div className="switch-row__text">
-              <div className="switch-row__title">{t('dash_push')}</div>
-              <div className="switch-row__hint">
-                {push.supported
-                  ? `${t('dash_push_devices')}: ${fmtNumber(push.devices, locale)}`
-                  : t('dash_push_unsupported')}
-              </div>
-            </div>
-            {push.supported ? (
-              <button
-                className={`btn btn--sm ${push.subscribed ? '' : 'btn--primary'}`}
-                disabled={push.busy}
-                onClick={async () => {
-                  const res = push.subscribed ? await push.disable() : await push.enable();
-                  if (res.ok) toast.success(push.subscribed ? t('action_saved') : t('dash_push_enabled'));
-                  else if (res.reason === 'denied') toast.error(t('dash_push_denied'));
-                  else if (res.reason === 'unsupported') toast.error(t('dash_push_unsupported'));
-                  else toast.error(t('error_generic'));
-                }}
-              >
-                {push.busy ? <span className="spinner" /> : <Icon name="bell" size={15} />}
-                {push.subscribed ? t('action_clear') : t('dash_enable_push')}
-              </button>
-            ) : null}
-          </div>
-        </SectionCard>
+        <DateHours hours={data.hours} timeZone={timeZone} locale={locale} />
+        <NotificationSettings
+          settings={data.notification_settings}
+          onChange={updateSettings}
+          push={push}
+          onPushToggle={onPushToggle}
+          pushError={pushError}
+          locale={locale}
+        />
       </div>
 
-      {/* ---- Main statistics ---- */}
-      <KpiCards data={data} locale={locale} currency={currency} />
+      {/* ---- Four pastel order metrics ---- */}
+      <KpiCards kpi={data.kpi} locale={locale} />
 
       {/* ---- Financial overview ---- */}
       <FinanceOverview
         finance={data.finance}
         range={range}
-        onRangeChange={setRange}
-        busy={refreshing}
+        onRange={setRange}
+        custom={custom}
+        onCustom={(next) => {
+          setCustom(next);
+          setRange('custom');
+        }}
+        busy={loading}
         currency={currency}
         locale={locale}
       />
 
-      {/* ---- Charts and product analytics ---- */}
+      {/* ---- Order flow and best-selling products ---- */}
       <div className="dash-row dash-row--analytics">
-        <ActivityChart rows={data.daily || []} locale={locale} timeZone={timeZone} />
-        <BestSelling rows={data.best_selling || []} currency={currency} locale={locale} />
+        <OrderFlow series={data.series} locale={locale} timeZone={timeZone} />
+        <BestSelling rows={data.best_selling} currency={currency} locale={locale} />
       </div>
 
-      {/* ---- Order status ---- */}
-      <StatusBreakdown flow={data.order_flow || {}} />
+      {/* ---- Order status counters ---- */}
+      <StatusBreakdown flow={data.order_flow} />
 
-      {/* ---- Recent activity ---- */}
-      <RecentActivity data={data} locale={locale} timeZone={timeZone} currency={currency} />
+      {/* ---- Newest orders ---- */}
+      <NewOrders
+        orders={data.new_orders}
+        currency={currency}
+        locale={locale}
+        timeZone={timeZone}
+      />
+
+      <ScrollTop />
     </div>
   );
 }
