@@ -4,6 +4,8 @@
  */
 const KEYS = {
   NAME_REQUIRED: 'menu_name_required',
+  SORT_ORDER_INVALID: 'menu_sort_order_invalid',
+  CATEGORY_DUPLICATE: 'menu_category_duplicate',
   INVALID_PRICE: 'menu_price_invalid',
   CATEGORY_NOT_FOUND: 'menu_category_required',
   PRODUCT_NOT_FOUND: 'error_generic',

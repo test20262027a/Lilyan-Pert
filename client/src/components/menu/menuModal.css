@@ -1,0 +1,369 @@
+/* ==========================================================================
+   Menu module dialog — the illustrated banner header, the light form body and
+   the white action footer of the Add / Edit Category modal.
+
+   Everything is scoped to .mcmodal / .mcmodal-* so no other modal on the app
+   changes. Colours are local tokens: the reference (cream banner, light gray
+   body, mint green accents) is the design, and the dark theme only remaps the
+   surfaces around it.
+   ========================================================================== */
+
+.mcmodal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(12, 14, 22, 0.55);
+}
+
+.mcmodal {
+  --mm-green: #43c45b;
+  --mm-green-ink: #1b7f42;
+  --mm-mint: #eaf8ee;
+  --mm-red: #ef4444;
+  --mm-body: #f7f7f7;
+  --mm-card: #ffffff;
+  --mm-field: #fbfcfb;
+  --mm-ink: #23281f;
+  --mm-muted: #838a83;
+  --mm-line: #e9ece9;
+  --mm-scrim-a: rgba(255, 253, 245, 0.94);
+  --mm-scrim-b: rgba(255, 253, 245, 0);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 450px;
+  max-height: 92dvh;
+  overflow: hidden;
+  background: var(--mm-card);
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(23, 26, 43, 0.18);
+  color: var(--mm-ink);
+}
+
+[data-theme='dark'] .mcmodal {
+  --mm-body: #191c19;
+  --mm-card: var(--surface);
+  --mm-field: var(--surface-2);
+  --mm-ink: var(--text);
+  --mm-muted: var(--muted);
+  --mm-line: var(--border);
+  --mm-mint: color-mix(in srgb, var(--mm-green) 22%, var(--surface));
+  --mm-scrim-a: rgba(16, 18, 14, 0.86);
+  --mm-scrim-b: rgba(16, 18, 14, 0);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ------------------------------------------- illustrated banner header */
+
+.mcmodal__head {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 96px;
+  padding: 16px 18px;
+  padding-inline-end: 60px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fffdf5, #fff8e6);
+}
+
+/*
+ * The Menu banner artwork fills the header and is cropped by it, so the modal
+ * reuses the very illustration the page behind it shows.
+ */
+.mcmodal__art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.mcmodal__art .mart {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+}
+[data-theme='dark'] .mcmodal__art { opacity: 0.9; }
+
+/*
+ * A soft scrim over the reading edge keeps the heading legible where the
+ * illustration is busiest, without hiding it.
+ */
+.mcmodal__head::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+[dir='rtl'] .mcmodal__head::after {
+  background: linear-gradient(to left, var(--mm-scrim-a), var(--mm-scrim-b) 70%);
+}
+[dir='ltr'] .mcmodal__head::after {
+  background: linear-gradient(to right, var(--mm-scrim-a), var(--mm-scrim-b) 70%);
+}
+
+.mcmodal__identity {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mcmodal__glyph {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--mm-mint);
+  color: var(--mm-green-ink);
+  border: 1px solid color-mix(in srgb, var(--mm-green) 38%, transparent);
+}
+.mcmodal__title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1f2318;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme='dark'] .mcmodal__title { color: #ffffff; }
+
+/* One close control, on the corner opposite the title's reading edge. */
+.mcmodal__close {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--mm-line);
+  color: #4b514b;
+  box-shadow: 0 3px 10px rgba(23, 26, 43, 0.14);
+}
+.mcmodal__close:hover { background: #ffffff; color: #23281f; }
+.mcmodal__close:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
+
+/* --------------------------------------------------------- form body */
+
+.mcmodal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 22px 20px;
+  background: var(--mm-body);
+}
+
+.mcmodal__section { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.mcmodal__section-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mcmodal__bar {
+  flex: none;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--mm-green);
+}
+.mcmodal__label {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--mm-ink);
+}
+.mcmodal__req { color: var(--mm-red); font-weight: 700; }
+
+/* --------------------------------------------------- language inputs */
+
+.mcmodal__langs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.mcmodal__lang {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px 10px 10px;
+  border-radius: 13px;
+  background: var(--mm-field);
+  border: 1px solid var(--mm-line);
+}
+.mcmodal__lang-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+.mcmodal__lang-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--mm-muted);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mcmodal__badge {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--mm-mint);
+  color: var(--mm-green-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mcmodal__input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 13px;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  outline: none;
+}
+.mcmodal__input::placeholder { color: #a9b0a9; }
+.mcmodal__input:focus {
+  border-color: color-mix(in srgb, var(--mm-green) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mm-green) 14%, transparent);
+}
+/* One full-width field: taller than the language inputs, no spinner chrome. */
+.mcmodal__input--wide {
+  height: 44px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  text-align: start;
+}
+
+/* ------------------------------------------------------- status card */
+
+.mcmodal__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--mm-card);
+  border: 1px solid var(--mm-line);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.04);
+}
+.mcmodal__status-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mcmodal__status-glyph {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--mm-mint);
+  color: var(--mm-green-ink);
+}
+.mcmodal__status-title { font-size: 13.5px; font-weight: 750; color: var(--mm-ink); }
+.mcmodal__status-hint {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--mm-muted);
+}
+
+/* The status switch is always the green one, whatever the business theme is. */
+.mcmodal__status .switch { flex: none; }
+.mcmodal__status .switch__track { background: #d3d8d3; }
+.mcmodal__status .switch input:checked + .switch__track { background: var(--mm-green); }
+
+/* ------------------------------------------------------------ footer */
+
+.mcmodal__foot {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 13px 22px;
+  background: var(--mm-card);
+  border-top: 1px solid var(--mm-line);
+}
+
+.mcmodal__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 20px;
+  border-radius: 11px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mcmodal__btn--save {
+  background: var(--mm-green);
+  color: #ffffff;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--mm-green) 26%, transparent);
+}
+.mcmodal__btn--save:hover:not(:disabled) { background: color-mix(in srgb, var(--mm-green) 88%, #000); }
+.mcmodal__btn--save:disabled {
+  background: color-mix(in srgb, var(--mm-green) 42%, #ffffff);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.mcmodal__btn--cancel {
+  background: var(--mm-card);
+  border-color: var(--mm-line);
+  color: var(--mm-ink);
+}
+.mcmodal__btn--cancel:hover:not(:disabled) { background: var(--mm-body); }
+.mcmodal__btn:disabled { cursor: not-allowed; }
+.mcmodal__btn:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
+
+/* -------------------------------------------------------- responsive */
+
+@media (max-width: 560px) {
+  .mcmodal__head { min-height: 86px; padding: 14px; padding-inline-end: 56px; }
+  .mcmodal__body { padding: 16px 16px 18px; }
+  .mcmodal__foot { padding: 12px 16px; }
+}
+
+/* Only once the two columns stop being readable do the cards stack. */
+@media (max-width: 380px) {
+  .mcmodal__langs { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 420px) {
+  .mcmodal__foot { flex-wrap: wrap; }
+  .mcmodal__btn { flex: 1 1 auto; padding: 0 14px; }
+}

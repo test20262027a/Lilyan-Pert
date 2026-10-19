@@ -300,6 +300,7 @@ export default function MenuManagement() {
       {categoryModal ? (
         <CategoryFormModal
           modal={categoryModal}
+          categories={categories}
           busy={busy}
           error={formError}
           onClose={() => setCategoryModal(null)}
