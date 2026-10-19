@@ -15,8 +15,14 @@ router.get(
   withBusiness('staff'),
   ah(async (req, res) => {
     const { rows } = await q(
+      // Stable display order: names first group by their text ("Table 1 … Table
+      // 10", then "Terrace 1"), and inside a group the number decides — so a
+      // renamed table never jumps around and 10 never sorts before 2.
       `SELECT t.*, (SELECT count(*)::int FROM orders o WHERE o.table_id = t.id) AS order_count
-         FROM tables t WHERE t.business_id = $1 ORDER BY t.name`,
+         FROM tables t WHERE t.business_id = $1
+        ORDER BY regexp_replace(t.name, '\\d+$', '') ASC,
+                 NULLIF(regexp_replace(t.name, '\\D', '', 'g'), '')::numeric NULLS LAST,
+                 t.name`,
       [req.businessId],
     );
     res.json({ tables: rows });
@@ -29,6 +35,13 @@ router.post(
   ah(async (req, res) => {
     const name = String(req.body?.name || '').trim();
     if (!name) throw bad('NAME_REQUIRED');
+    // One table per name inside a business: the check is server-side so it holds
+    // whatever the client sends, and it only ever looks at this business's rows.
+    const dupe = await q(
+      'SELECT 1 FROM tables WHERE business_id = $1 AND lower(name) = lower($2)',
+      [req.businessId, name],
+    );
+    if (dupe.rowCount) throw conflict('TABLE_DUPLICATE');
     const seats = Math.max(1, Math.min(40, Number(req.body?.seats) || 4));
     const token = crypto.randomBytes(8).toString('hex');
     const { rows } = await q(
@@ -52,6 +65,16 @@ router.put(
   withBusiness('manager'),
   ah(async (req, res) => {
     const b = req.body || {};
+    // Renaming keeps `qr_token` untouched: an already distributed QR link must
+    // survive a rename, so only the display fields are written here.
+    const name = b.name ? String(b.name).slice(0, 80) : null;
+    if (name) {
+      const dupe = await q(
+        'SELECT 1 FROM tables WHERE business_id = $1 AND lower(name) = lower($2) AND id <> $3',
+        [req.businessId, name, req.params.id],
+      );
+      if (dupe.rowCount) throw conflict('TABLE_DUPLICATE');
+    }
     const { rows } = await q(
       `UPDATE tables SET name = COALESCE($3, name), seats = COALESCE($4, seats),
                          zone = COALESCE($5, zone), active = COALESCE($6, active)
@@ -59,7 +82,7 @@ router.put(
       [
         req.params.id,
         req.businessId,
-        b.name ? String(b.name).slice(0, 80) : null,
+        name,
         b.seats === undefined ? null : Math.max(1, Math.min(40, Number(b.seats) || 4)),
         b.zone === undefined ? null : String(b.zone).slice(0, 60),
         b.active === undefined ? null : Boolean(b.active),
@@ -70,15 +93,37 @@ router.put(
   }),
 );
 
+/*
+ * Deleting a table is refused while it still carries live work, so a delete can
+ * never detach an order that is not finished. Historical orders are never
+ * deleted: they keep their own `table_name` snapshot (see schema.sql) and their
+ * `table_id` is released by the foreign key, and the public QR link stops
+ * resolving as soon as the row is gone.
+ */
 router.delete(
   '/tables/:id',
   withBusiness('manager'),
   ah(async (req, res) => {
-    const { rowCount } = await q('DELETE FROM tables WHERE id = $1 AND business_id = $2', [
+    // Ownership first: a malformed or another business's table id reads as
+    // "not found" and never reaches the database as a query.
+    if (!isUuid(req.params.id)) throw notFound('TABLE_NOT_FOUND');
+    const owned = await q('SELECT 1 FROM tables WHERE id = $1 AND business_id = $2', [
       req.params.id,
       req.businessId,
     ]);
-    if (!rowCount) throw notFound('TABLE_NOT_FOUND');
+    if (!owned.rowCount) throw notFound('TABLE_NOT_FOUND');
+
+    const active = await q(
+      `SELECT count(*)::int AS c FROM orders
+        WHERE table_id = $1 AND status IN ('pending','preparing','ready')`,
+      [req.params.id],
+    );
+    if (active.rows[0].c > 0) throw conflict('TABLE_HAS_ACTIVE_ORDERS');
+
+    await q('DELETE FROM tables WHERE id = $1 AND business_id = $2', [
+      req.params.id,
+      req.businessId,
+    ]);
     res.json({ ok: true });
   }),
 );

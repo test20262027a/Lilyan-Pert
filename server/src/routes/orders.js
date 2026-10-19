@@ -89,7 +89,7 @@ router.get(
 
     const [list, count, flow] = await Promise.all([
       q(
-        `SELECT o.*, t.name AS table_name,
+        `SELECT o.*, COALESCE(t.name, o.table_name) AS table_name,
                 (SELECT full_name FROM users u WHERE u.id = o.created_by) AS created_by_name,
                 (SELECT count(*)::int FROM order_items i WHERE i.order_id = o.id) AS item_count,
                 (SELECT coalesce(sum(i.quantity),0)::int FROM order_items i WHERE i.order_id = o.id) AS units
@@ -149,7 +149,8 @@ router.get(
       items: items.rows,
       history: history.rows,
       prints: prints.rows,
-      table: table.rows[0] || null,
+      // A deleted table falls back to the snapshot stored on the order.
+      table: table.rows[0] || (order.table_name ? { id: null, name: order.table_name, zone: null } : null),
       business: business.rows[0],
       allowed_transitions: TRANSITIONS[order.status] || [],
     });
@@ -175,7 +176,7 @@ router.get(
     res.json({
       order,
       items: items.rows,
-      table: table.rows[0] || null,
+      table: table.rows[0] || (order.table_name ? { name: order.table_name, zone: null } : null),
       business: business.rows[0],
       prints: prints.rows,
       currency: business.rows[0]?.currency,
@@ -269,12 +270,13 @@ router.post(
       );
 
       const order = await c.query(
-        `INSERT INTO orders (business_id, table_id, order_number, status, channel, customer_name,
+        `INSERT INTO orders (business_id, table_id, table_name, order_number, status, channel, customer_name,
                              customer_phone, notes, subtotal, discount, tax, service_charge, total, created_by)
-         VALUES ($1,$2,$3,'pending','staff',$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+         VALUES ($1,$2,$3,$4,'pending','staff',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
         [
           req.businessId,
           table?.id || null,
+          table?.name || null,
           seq.rows[0].order_seq,
           req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null,
           req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,

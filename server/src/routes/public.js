@@ -257,14 +257,15 @@ router.post(
       const orderNumber = seq.rows[0].order_seq;
 
       const order = await c.query(
-        `INSERT INTO orders (business_id, table_id, order_number, status, channel, customer_name,
+        `INSERT INTO orders (business_id, table_id, table_name, order_number, status, channel, customer_name,
                              customer_phone, notes, subtotal, discount, tax, service_charge, total,
                              promotion_id, created_at, updated_at)
-         VALUES ($1,$2,$3,'pending','customer',$4,$5,$6,$7,0,$8,$9,$10,$11,now(),now())
+         VALUES ($1,$2,$3,$4,'pending','customer',$5,$6,$7,$8,0,$9,$10,$11,$12,now(),now())
          RETURNING *`,
         [
           business.id,
           table?.id || null,
+          table?.name || null,
           orderNumber,
           req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null,
           req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,

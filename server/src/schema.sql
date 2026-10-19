@@ -293,3 +293,9 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';
 ALTER TABLE products ADD COLUMN IF NOT EXISTS featured boolean NOT NULL DEFAULT false;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price_fa numeric(12,2) CHECK (price_fa >= 0);
 ALTER TABLE products ADD COLUMN IF NOT EXISTS price_en numeric(12,2) CHECK (price_en >= 0);
+
+-- Historical table label per order. A table can later be deleted, which releases
+-- `table_id`, so the name the customer actually sat at is snapshotted at order
+-- time and past orders keep showing it. Reads prefer the live table and fall back
+-- to this snapshot.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_name text;
