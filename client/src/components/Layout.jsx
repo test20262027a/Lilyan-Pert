@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
 import { Badge, Spinner, useToast } from './ui';
-import { useI18n } from '../i18n';
+import { localized, useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { BusinessProvider, useBusiness } from '../context/BusinessContext';
 import { get, post } from '../api';
@@ -169,6 +169,8 @@ function Shell() {
   const title =
     NAV.find((n) => (n.exact ? location.pathname === n.to : location.pathname.startsWith(n.to)))
       ?.key || 'nav_dashboard';
+  const businessName =
+    localized(business, 'name', locale) || business?.name || t('app_name');
 
   return (
     <div className="app-shell">
@@ -218,9 +220,7 @@ function Shell() {
               <Icon name="eye" size={15} />
               {t('nav_customer_menu')}
             </a>
-            <div style={{ fontSize: 11.5, color: 'var(--muted)', paddingInline: 4 }}>
-              {user?.email}
-            </div>
+            <div className="sidebar__user">{user?.email}</div>
             <button
               className="btn btn--sm"
               onClick={async () => {
@@ -243,7 +243,20 @@ function Shell() {
           >
             <Icon name="layers" size={18} />
           </button>
-          <span className="topbar__title">{t(title)}</span>
+          {/* Branding + the current page, kept on a single compact row. */}
+          {business ? (
+            <div className="topbar__brand">
+              <span className="topbar__logo">
+                {business.logo_url ? <img src={business.logo_url} alt="" /> : 'LP'}
+              </span>
+              <div className="topbar__brand-text">
+                <span className="topbar__brand-name" title={businessName}>{businessName}</span>
+                <span className="topbar__brand-sub">{t(title)}</span>
+              </div>
+            </div>
+          ) : (
+            <span className="topbar__title">{t(title)}</span>
+          )}
           <span className="topbar__spacer" />
 
           <select

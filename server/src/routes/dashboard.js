@@ -7,12 +7,27 @@ import { openStatus, zonedNow } from '../lib/hours.js';
 const router = express.Router();
 router.use(requireAuth);
 
+/*
+ * Whitelisted date windows for the financial overview. The SQL fragment is
+ * taken from this table only, so the client can never inject a clause.
+ */
+const FINANCE_RANGES = {
+  today: "AND created_at::date = CURRENT_DATE",
+  '7d': "AND created_at >= CURRENT_DATE - interval '6 days'",
+  '30d': "AND created_at >= CURRENT_DATE - interval '29 days'",
+  all: '',
+};
+const DEFAULT_RANGE = '30d';
+
 /** Every number on the dashboard is aggregated from stored records. */
 router.get(
   '/',
   withBusiness('staff'),
   ah(async (req, res) => {
     const b = req.businessId;
+    const range = Object.prototype.hasOwnProperty.call(FINANCE_RANGES, String(req.query.range))
+      ? String(req.query.range)
+      : DEFAULT_RANGE;
 
     const [
       business,
@@ -25,6 +40,7 @@ router.get(
       revenue,
       recentStatusChanges,
       reviewSummary,
+      finance,
     ] = await Promise.all([
       q('SELECT * FROM businesses WHERE id = $1', [b]),
       q(
@@ -89,6 +105,16 @@ router.get(
            FROM reviews WHERE business_id = $1`,
         [b],
       ),
+      q(
+        `SELECT coalesce(sum(total) FILTER (WHERE status <> 'cancelled'),0)::numeric(12,2) AS revenue,
+                count(*)::int AS orders,
+                count(*) FILTER (WHERE status = 'completed')::int AS completed,
+                coalesce(avg(total) FILTER (WHERE status <> 'cancelled'),0)::numeric(12,2) AS avg_order,
+                coalesce(sum(tax) FILTER (WHERE status <> 'cancelled'),0)::numeric(12,2) AS tax,
+                coalesce(sum(service_charge) FILTER (WHERE status <> 'cancelled'),0)::numeric(12,2) AS service_charge
+           FROM orders WHERE business_id = $1 ${FINANCE_RANGES[range]}`,
+        [b],
+      ),
     ]);
 
     const biz = business.rows[0];
@@ -116,6 +142,7 @@ router.get(
       new_orders: newOrders.rows,
       daily: daily.rows,
       revenue: revenue.rows[0],
+      finance: { range, ...finance.rows[0] },
       reviews: reviewSummary.rows[0],
       hours: {
         ...openStatus(biz.working_hours, biz.timezone),

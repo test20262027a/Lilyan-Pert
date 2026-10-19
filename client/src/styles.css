@@ -16,11 +16,40 @@
   --accent-pink: #db2777;
   --accent-slate: #64748b;
 
-  --bg: #f4f5fb;
-  --bg-soft: #eef0f9;
+  /*
+   * Fixed shell chrome: a dark navy sidebar and mint (soft green) tints.
+   * These stay the same whatever brand colour the business picks, so the
+   * layout never shifts — only `--primary` follows the business theme.
+   */
+  --navy: #16243c;
+  --navy-2: #1e2f4d;
+  --navy-line: rgba(255, 255, 255, 0.1);
+  --navy-ink: #e8eef8;
+  --navy-muted: #9db0cc;
+  --mint: #2f9e6b;
+  --mint-ink: #1f7a4f;
+  --mint-soft: #eaf6ef;
+  --mint-line: #d7ebe0;
+
+  /* Pastel KPI / status tones. */
+  --pastel-blue: #e9f1fd;
+  --pastel-blue-ink: #3568c4;
+  --pastel-blue-line: #d7e5f9;
+  --pastel-amber: #fdf4e3;
+  --pastel-amber-ink: #b7791f;
+  --pastel-amber-line: #f6e7cb;
+  --pastel-green: #e8f7ee;
+  --pastel-green-ink: #23875b;
+  --pastel-green-line: #d5eddf;
+  --pastel-pink: #fdecf3;
+  --pastel-pink-ink: #bd3f77;
+  --pastel-pink-line: #f7dae7;
+
+  --bg: #f6f7f9;
+  --bg-soft: #f0f2f5;
   --surface: #ffffff;
-  --surface-2: #f8f9fd;
-  --surface-3: #f1f2f9;
+  --surface-2: #f8f9fb;
+  --surface-3: #f0f2f6;
   --text: #171a2b;
   --text-soft: #4b5165;
   --muted: #767c92;
@@ -36,9 +65,9 @@
   --warning: #d97706;
   --warning-soft: #fef3c7;
 
-  --radius-sm: 10px;
-  --radius: 14px;
-  --radius-lg: 20px;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 12px;
   --radius-pill: 999px;
   --gap: 16px;
   --page-max: 1240px;
@@ -63,6 +92,27 @@
   --danger-soft: #3b1417;
   --success-soft: #10331f;
   --warning-soft: #3a2a0d;
+
+  /* Sidebar keeps its navy chrome; mint and the pastel tones deepen. */
+  --navy: #121b2c;
+  --navy-2: #182338;
+  --navy-line: rgba(255, 255, 255, 0.09);
+  --mint: #3fbe86;
+  --mint-ink: #7ddcae;
+  --mint-soft: #14261f;
+  --mint-line: #22392f;
+  --pastel-blue: #172232;
+  --pastel-blue-ink: #9dc0f7;
+  --pastel-blue-line: #24334a;
+  --pastel-amber: #2e2513;
+  --pastel-amber-ink: #eec586;
+  --pastel-amber-line: #453720;
+  --pastel-green: #142a1e;
+  --pastel-green-ink: #82d9a8;
+  --pastel-green-line: #22402f;
+  --pastel-pink: #2e1a24;
+  --pastel-pink-ink: #f0a2c5;
+  --pastel-pink-line: #46283a;
 }
 
 * { box-sizing: border-box; }
@@ -97,11 +147,13 @@ a { color: var(--primary); }
 
 .app-shell { display: flex; min-height: 100dvh; align-items: stretch; }
 
+/* Dark navy navigation rail — it sits on the right in RTL, the left in LTR. */
 .sidebar {
   width: 250px;
   flex: none;
-  background: var(--surface);
-  border-inline-end: 1px solid var(--border);
+  background: var(--navy);
+  border-inline-end: 1px solid var(--navy-line);
+  color: var(--navy-ink);
   padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
   position: sticky;
   top: 0;
@@ -120,15 +172,17 @@ a { color: var(--primary); }
   padding: 6px 8px 16px;
   min-width: 0;
 }
-.brand__mark {
+.sidebar .brand__mark {
   width: 40px; height: 40px; border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #ffffff));
-  color: var(--primary-ink);
+  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 60%, #ffffff));
+  color: #ffffff;
   display: grid; place-items: center;
   font-weight: 800; font-size: 16px;
   flex: none;
 }
 .brand__text { min-width: 0; }
+.sidebar .brand__name { color: #ffffff; }
+.sidebar .brand__sub { color: var(--navy-muted); }
 .brand__name { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .brand__sub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
@@ -151,6 +205,23 @@ a { color: var(--primary); }
   border-color: color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
+/* Navy rail overrides: muted labels, soft green active highlight. */
+.sidebar .nav-link { color: var(--navy-muted); }
+.sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+.sidebar .nav-link.is-active {
+  background: color-mix(in srgb, var(--mint) 30%, transparent);
+  color: #d8f6e6;
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+}
+.sidebar .btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--navy-line);
+  color: var(--navy-ink);
+}
+.sidebar .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.sidebar .btn--primary { background: var(--mint); border-color: var(--mint); color: #ffffff; }
+.sidebar__user { font-size: 11.5px; color: var(--navy-muted); padding-inline: 4px; }
+
 .sidebar__spacer { flex: 1 1 auto; min-height: 12px; }
 
 .main {
@@ -169,12 +240,35 @@ a { color: var(--primary); }
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 16px;
-  padding-top: calc(10px + env(safe-area-inset-top));
+  gap: 9px;
+  padding: 7px 14px;
+  padding-top: calc(7px + env(safe-area-inset-top));
+  min-height: 54px;
 }
 .topbar__title { font-size: 16px; font-weight: 800; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .topbar__spacer { flex: 1 1 auto; }
+
+/* Slim toolbar branding: the business name, with the current page underneath. */
+.topbar__brand { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.topbar__logo {
+  width: 34px; height: 34px; border-radius: 10px; flex: none;
+  overflow: hidden; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 60%, #ffffff));
+  color: #ffffff; font-weight: 800; font-size: 13px;
+}
+.topbar__logo img { width: 100%; height: 100%; object-fit: cover; }
+.topbar__brand-text { min-width: 0; display: flex; flex-direction: column; line-height: 1.15; }
+.topbar__brand-name {
+  font-size: 13.5px; font-weight: 800;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.topbar__brand-sub {
+  font-size: 11px; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+@media (max-width: 520px) {
+  .topbar__brand-text { display: none; }
+}
 
 .page {
   padding: 18px;
@@ -209,12 +303,8 @@ a { color: var(--primary); }
   align-items: center;
   gap: 12px;
   padding: 15px 18px;
-  border-bottom: 1px solid var(--border);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 6%, var(--surface)),
-    var(--surface)
-  );
+  border-bottom: 1px solid var(--mint-line);
+  background: linear-gradient(180deg, var(--mint-soft), var(--surface));
   min-width: 0;
 }
 .card__head--plain { background: var(--surface); }
@@ -466,8 +556,8 @@ table.data tr:hover td { background: var(--surface-2); }
 }
 .modal__close:hover { background: var(--surface-3); color: var(--text); }
 .modal__head {
-  padding: 16px 60px 14px 18px; border-bottom: 1px solid var(--border);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 7%, var(--surface)), var(--surface));
+  padding: 16px 60px 14px 18px; border-bottom: 1px solid var(--mint-line);
+  background: linear-gradient(180deg, var(--mint-soft), var(--surface));
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 [dir='rtl'] .modal__head { padding: 16px 18px 14px 60px; }
