@@ -15,11 +15,8 @@ import Advertisements from './pages/Advertisements';
 import Statistics from './pages/Statistics';
 import ActivityReports from './pages/ActivityReports';
 import Backups from './pages/Backups';
-import ResetSampleData from './pages/ResetSampleData';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
-import MenuSettings from './pages/MenuSettings';
-import TextEditor from './pages/TextEditor';
 import CustomerMenu from './pages/CustomerMenu';
 import AdminOrderMenu from './pages/AdminOrderMenu';
 
@@ -60,11 +57,15 @@ export default function App() {
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/activity" element={<ActivityReports />} />
         <Route path="/backups" element={<Backups />} />
-        <Route path="/reset-sample" element={<ResetSampleData />} />
+        {/* The sample-data reset is the section at the end of Backups; this
+            address opens the same page scrolled to it. */}
+        <Route path="/reset-sample" element={<Backups focus="reset" />} />
         <Route path="/users" element={<Users />} />
         <Route path="/settings" element={<Settings />} />
-        <Route path="/menu-settings" element={<MenuSettings />} />
-        <Route path="/text-editor" element={<TextEditor />} />
+        {/* Menu settings and editable text are the Settings tabs of the same
+            name; these addresses open them directly. */}
+        <Route path="/menu-settings" element={<Settings initialTab="menu" />} />
+        <Route path="/text-editor" element={<Settings initialTab="text" />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

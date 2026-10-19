@@ -77,12 +77,17 @@ function ImageField({ label, value, onChange }) {
   );
 }
 
-export default function Settings() {
+/**
+ * The business profile and its settings tabs. `initialTab` lets the sidebar
+ * entries for a single section (menu settings, editable text) open the same
+ * page directly on their tab instead of duplicating the screen.
+ */
+export default function Settings({ initialTab = 'profile' }) {
   const { t } = useI18n();
   const { business, save } = useBusiness();
   const { isManager } = useAuth();
   const toast = useToast();
-  const [tab, setTab] = useState('profile');
+  const [tab, setTab] = useState(TABS.some((x) => x.value === initialTab) ? initialTab : 'profile');
   const [draft, setDraft] = useState(null);
   const [busy, setBusy] = useState(false);
 

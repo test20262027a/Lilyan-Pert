@@ -1,0 +1,219 @@
+/* ==========================================================================
+   Promotions & Discounts — the illustrated banner, the responsive grid of
+   promotion cards and the golden "gift" accents of the page.
+   Layout only: the palette lives in local tokens on .promos-page, so the
+   app-wide light/dark theme and the business primary colour keep working.
+   ========================================================================== */
+
+.promos-page {
+  --pr-gold: #e9b34b;
+  --pr-gold-ink: #8a6414;
+  --pr-cream: #fff8e8;
+  --pr-cream-line: #f2e2bd;
+  --pr-ink: #242724;
+  --pr-muted: #8d8b82;
+  --pr-line: #efe9dc;
+  --pr-red: #ef4444;
+  --pr-red-soft: #fff2f2;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+[data-theme='dark'] .promos-page {
+  --pr-gold: #e5b95e;
+  --pr-gold-ink: #f2d999;
+  --pr-cream: rgba(233, 179, 75, 0.13);
+  --pr-cream-line: rgba(233, 179, 75, 0.3);
+  --pr-ink: var(--text);
+  --pr-muted: var(--muted);
+  --pr-line: var(--border);
+  --pr-red: #f27b7b;
+  --pr-red-soft: rgba(239, 68, 68, 0.14);
+}
+
+/* -------------------------------------------------------- page banner */
+
+.promos-page .mhero__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--pr-cream);
+  border: 1px solid var(--pr-cream-line);
+  color: var(--pr-gold-ink);
+}
+.promos-page .mhero__title { color: var(--pr-ink); }
+.promos-page .mhero__sub { color: var(--pr-muted); }
+
+.promo-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--pr-gold);
+  color: #ffffff;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--pr-gold) 30%, transparent);
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.promo-add:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--pr-gold) 36%, transparent);
+}
+.promo-add:active:not(:disabled) { transform: translateY(1px); }
+.promo-add:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.promo-add__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  color: var(--pr-gold-ink);
+}
+.promo-add__label { white-space: nowrap; }
+
+.promo-loading { display: grid; place-items: center; padding: 26px 0; }
+
+/* ------------------------------------------------------------- the grid */
+
+/* Three cards per row on a wide screen, in the reading direction of the
+   language — grid follows the document direction, so RTL needs no override. */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------- one card */
+
+.promo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--pr-line);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 130% at 100% 0%, color-mix(in srgb, var(--pr-gold) 9%, transparent) 0%, transparent 56%),
+    var(--surface);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+}
+
+.promo-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.promo-card__mark {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  background: var(--pr-cream);
+  border: 1px solid var(--pr-cream-line);
+  color: var(--pr-gold-ink);
+}
+.promo-card__title { flex: 1 1 auto; min-width: 0; }
+.promo-card__title h3 {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--pr-ink);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.promo-card__product {
+  display: block;
+  font-size: 12px;
+  color: var(--pr-muted);
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.promo-card__value {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--pr-gold-ink);
+  line-height: 1.1;
+}
+
+.promo-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 12.5px;
+  color: var(--pr-muted);
+}
+.promo-card__meta span { display: inline-flex; align-items: center; gap: 5px; }
+
+.promo-card__usage {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 11px 12px;
+  border-radius: 15px;
+  background: var(--surface-2);
+  border: 1px solid var(--pr-line);
+}
+.promo-card__usage-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12.5px;
+  color: var(--pr-muted);
+}
+.promo-card__usage-row strong { color: var(--pr-ink); font-size: 13px; }
+
+.promo-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pr-gold) 20%, transparent);
+  overflow: hidden;
+}
+.promo-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--pr-gold);
+  transition: width 0.25s ease;
+}
+
+.promo-card__foot { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.promo-card__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1100px) {
+  .promo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .promo-grid { grid-template-columns: minmax(0, 1fr); }
+  .promo-card__value { font-size: 26px; }
+}

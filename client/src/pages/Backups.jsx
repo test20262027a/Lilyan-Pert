@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../components/Icon';
 import {
   Alert,
@@ -29,12 +29,17 @@ const RESET_META = {
   backups: { icon: 'database', danger: true },
 };
 
-export default function Backups() {
+/**
+ * Backups and restore. `focus="reset"` opens the page on its sample-data
+ * section, which is the destination of the sidebar's Reset Sample Data entry.
+ */
+export default function Backups({ focus }) {
   const { t, locale } = useI18n();
   const { business } = useBusiness();
   const { isOwner } = useAuth();
   const toast = useToast();
   const timeZone = zoneFor(locale, business?.timezone);
+  const resetRef = useRef(null);
 
   const [registry, setRegistry] = useState(null);
   const [backups, setBackups] = useState([]);
@@ -59,6 +64,13 @@ export default function Backups() {
   useEffect(() => {
     load();
   }, [load]);
+
+  // The sidebar's Reset Sample Data entry lands on that section, not the top.
+  useEffect(() => {
+    if (focus === 'reset' && !loading) {
+      resetRef.current?.scrollIntoView({ block: 'start' });
+    }
+  }, [focus, loading]);
 
   const modules = registry?.modules || [];
   const groups = registry?.groups || [];
@@ -355,6 +367,7 @@ export default function Backups() {
       </SectionCard>
 
       {/* Reset sample data: clearly separated and never touches real access data. */}
+      <div ref={resetRef}>
       <SectionCard
         icon="alert"
         iconClass="ic-coral"
@@ -405,6 +418,7 @@ export default function Backups() {
           })}
         </div>
       </SectionCard>
+      </div>
 
       {confirm?.kind === 'restore' ? (
         <RestoreConfirm

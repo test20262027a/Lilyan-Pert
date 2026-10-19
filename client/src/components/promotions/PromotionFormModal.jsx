@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import Icon from '../Icon';
-import { Field, Modal, Select, Switch } from '../ui';
+import { Alert, Field, Modal, Select, Switch } from '../ui';
 import { localized, useI18n } from '../../i18n';
+import { promotionsErrorText } from './errorText';
 
 /*
  * Create / edit one promotion. The form only sends the fields the promotions
  * module supports; prices, validity and the redemption limit are all validated
  * again on the server.
  */
-export default function PromotionFormModal({ modal, products, busy, onClose, onSave }) {
+export default function PromotionFormModal({ modal, products, busy, error, onClose, onSave }) {
   const { t, locale } = useI18n();
   const [values, setValues] = useState({
     product_id: modal.values.product_id || '',
@@ -86,6 +87,8 @@ export default function PromotionFormModal({ modal, products, busy, onClose, onS
           <input className="input" type="date" value={values.ends_at} onChange={(e) => set('ends_at', e.target.value)} />
         </Field>
       </div>
+
+      {error ? <Alert kind="error">{promotionsErrorText(error, t)}</Alert> : null}
 
       <div className="form-grid" style={{ marginTop: 14 }}>
         {['en', 'ku', 'fa', 'ar'].map((code) => (
