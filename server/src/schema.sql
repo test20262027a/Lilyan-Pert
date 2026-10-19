@@ -324,6 +324,31 @@ ALTER TABLE tables ADD COLUMN IF NOT EXISTS vip boolean NOT NULL DEFAULT false;
 CREATE UNIQUE INDEX IF NOT EXISTS tables_business_number_key
   ON tables (business_id, table_number) WHERE table_number IS NOT NULL;
 
+-- Promotion usage limits. Additive: a promotion without a limit keeps behaving
+-- exactly as before (max_uses NULL = unlimited) and starts counting real
+-- redemptions from now on. `used_count` is only ever written by the server when
+-- an order really took the promotion.
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS max_uses integer CHECK (max_uses > 0);
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS used_count integer NOT NULL DEFAULT 0;
+
+-- Admin activity log: authorized changes to business-owned modules that were not
+-- audited anywhere else (menu, tables, promotions, ads, reviews, users, settings,
+-- backups). Append-only; order status changes and receipt prints keep their own
+-- dedicated tables and are merged with this one by the activity report.
+CREATE TABLE IF NOT EXISTS activity_log (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id  uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  actor_id     uuid REFERENCES users(id) ON DELETE SET NULL,
+  actor_name   text,
+  entity       text NOT NULL,
+  action       text NOT NULL,
+  entity_id    uuid,
+  entity_label text,
+  path         text,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS activity_log_business_idx ON activity_log(business_id, created_at DESC);
+
 -- One-time fill of the localized names for tables created before the four
 -- languages existed: they start as the single name they already carry in every
 -- language, and a table that already has any localized name is left untouched so

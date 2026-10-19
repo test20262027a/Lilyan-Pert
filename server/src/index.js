@@ -3,6 +3,7 @@ import { q } from './db.js';
 import { migrate, seed } from './seed.js';
 import { attachSession } from './auth.js';
 import { HttpError } from './lib/http.js';
+import { activityLogger } from './lib/activity.js';
 import authRoutes from './routes/auth-routes.js';
 import businessRoutes from './routes/business.js';
 import catalogRoutes from './routes/catalog.js';
@@ -11,12 +12,15 @@ import dashboardRoutes from './routes/dashboard.js';
 import manageRoutes from './routes/manage.js';
 import backupRoutes from './routes/backups.js';
 import publicRoutes from './routes/public.js';
+import activityRoutes from './routes/activity.js';
 
 const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '12mb' }));
 app.use(attachSession);
+// Records authorized changes for the Activity Reports page — see lib/activity.js.
+app.use(activityLogger);
 
 app.get('/api/health', async (_req, res) => {
   try {
@@ -35,6 +39,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/manage', manageRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/activity', activityRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));
 

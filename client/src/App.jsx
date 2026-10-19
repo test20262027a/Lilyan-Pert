@@ -10,10 +10,16 @@ import Orders from './pages/Orders';
 import OrderDetail from './pages/OrderDetail';
 import Tables from './pages/Tables';
 import Reviews from './pages/Reviews';
-import Marketing from './pages/Marketing';
+import Discounts from './pages/Discounts';
+import Advertisements from './pages/Advertisements';
+import Statistics from './pages/Statistics';
+import ActivityReports from './pages/ActivityReports';
 import Backups from './pages/Backups';
+import ResetSampleData from './pages/ResetSampleData';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
+import MenuSettings from './pages/MenuSettings';
+import TextEditor from './pages/TextEditor';
 import CustomerMenu from './pages/CustomerMenu';
 import AdminOrderMenu from './pages/AdminOrderMenu';
 
@@ -46,10 +52,19 @@ export default function App() {
         <Route path="/order-menu" element={<AdminOrderMenu />} />
         <Route path="/tables" element={<Tables />} />
         <Route path="/reviews" element={<Reviews />} />
-        <Route path="/marketing" element={<Marketing />} />
+        <Route path="/discounts" element={<Discounts />} />
+        <Route path="/advertisements" element={<Advertisements />} />
+        {/* Advertisements and promotions used to share one page; the old address
+            still works and lands on the advertisements module. */}
+        <Route path="/marketing" element={<Navigate to="/advertisements" replace />} />
+        <Route path="/statistics" element={<Statistics />} />
+        <Route path="/activity" element={<ActivityReports />} />
         <Route path="/backups" element={<Backups />} />
+        <Route path="/reset-sample" element={<ResetSampleData />} />
         <Route path="/users" element={<Users />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/menu-settings" element={<MenuSettings />} />
+        <Route path="/text-editor" element={<TextEditor />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

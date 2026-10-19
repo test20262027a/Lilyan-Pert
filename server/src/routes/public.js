@@ -65,7 +65,9 @@ router.get(
            FROM promotions
           WHERE business_id = $1 AND active = true AND product_id IS NOT NULL
             AND (starts_at IS NULL OR starts_at <= now())
-            AND (ends_at IS NULL OR ends_at >= now())`,
+            AND (ends_at IS NULL OR ends_at >= now())
+            -- A promotion that used up its redemptions stops being advertised.
+            AND (max_uses IS NULL OR used_count < max_uses)`,
         [business.id],
       ),
       q(
@@ -210,7 +212,7 @@ router.post(
       const byId = new Map(found.rows.map((r) => [r.id, r]));
 
       const promos = await c.query(
-        `SELECT id, product_id, discount_type, discount_value FROM promotions
+        `SELECT id, product_id, discount_type, discount_value, max_uses, used_count FROM promotions
           WHERE business_id = $1 AND active = true AND product_id = ANY($2::uuid[])
             AND (starts_at IS NULL OR starts_at <= now())
             AND (ends_at IS NULL OR ends_at >= now())`,
@@ -220,7 +222,8 @@ router.post(
 
       const lines = [];
       let subtotal = 0;
-      let appliedPromotion = null;
+      // Every promotion this order really redeemed, so their counters can move.
+      const appliedPromotions = new Set();
 
       for (const raw of items) {
         const product = byId.get(String(raw.product_id));
@@ -229,9 +232,17 @@ router.post(
           throw bad('PRODUCT_UNAVAILABLE', product.name_en || product.id);
         }
         const quantity = Math.max(1, Math.min(99, Math.floor(Number(raw.quantity) || 1)));
-        const promotion = promoByProduct.get(product.id) || null;
+        let promotion = promoByProduct.get(product.id) || null;
+        /*
+         * Usage limit is enforced here, on the authoritative side: a promotion
+         * whose redemptions are used up is ignored and the product is charged
+         * its normal price, whatever the client sent.
+         */
+        if (promotion && promotion.max_uses !== null && Number(promotion.used_count) >= Number(promotion.max_uses)) {
+          promotion = null;
+        }
         const unitPrice = promoUnitPrice(product, promotion);
-        if (promotion) appliedPromotion = promotion.id;
+        if (promotion) appliedPromotions.add(promotion.id);
         const lineTotal = round2(unitPrice * quantity);
         subtotal = round2(subtotal + lineTotal);
         lines.push({
@@ -274,9 +285,17 @@ router.post(
           tax,
           service,
           total,
-          appliedPromotion,
+          [...appliedPromotions][0] || null,
         ],
       );
+
+      // One redemption per promotion actually applied by this order.
+      for (const promotionId of appliedPromotions) {
+        await c.query(
+          'UPDATE promotions SET used_count = used_count + 1 WHERE id = $1 AND business_id = $2',
+          [promotionId, business.id],
+        );
+      }
 
       for (const line of lines) {
         await c.query(

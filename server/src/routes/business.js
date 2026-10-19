@@ -55,7 +55,16 @@ router.put(
   '/',
   withBusiness('manager'),
   ah(async (req, res) => {
-    const body = req.body || {};
+    const body = { ...(req.body || {}) };
+    /*
+     * The admin-return control is meaningless while the customer menu is off,
+     * so the rule is enforced here too and not only in the settings screen: a
+     * direct request can never leave a business with the control armed while
+     * its public menu is disabled.
+     */
+    if (body.menu_settings && typeof body.menu_settings === 'object' && body.menu_settings.show_customer_menu === false) {
+      body.menu_settings = { ...body.menu_settings, show_admin_return: false };
+    }
     const sets = [];
     const values = [req.businessId];
 

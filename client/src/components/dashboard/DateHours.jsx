@@ -1,6 +1,6 @@
 import Icon from '../Icon';
 import { Badge } from '../ui';
-import { LiveClock } from '../Layout';
+import LiveClock from '../LiveClock';
 import { useI18n } from '../../i18n';
 import { fmtDate } from '../../format';
 

@@ -421,6 +421,14 @@ async function assertProduct(businessId, productId) {
   return productId;
 }
 
+/** Optional redemption cap: absent/empty means unlimited, otherwise a whole number ≥ 1. */
+function usageLimit(raw) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < 1) throw bad('INVALID_MAX_USES');
+  return n;
+}
+
 router.post(
   '/promotions',
   withBusiness('manager'),
@@ -433,8 +441,8 @@ router.post(
     const productId = await assertProduct(req.businessId, b.product_id || null);
     const { rows } = await q(
       `INSERT INTO promotions (business_id, product_id, discount_type, discount_value,
-                               starts_at, ends_at, active, title_ku, title_fa, title_ar, title_en)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *`,
+                               starts_at, ends_at, active, title_ku, title_fa, title_ar, title_en, max_uses)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
       [
         req.businessId,
         productId,
@@ -447,6 +455,7 @@ router.post(
         b.title_fa || null,
         b.title_ar || null,
         b.title_en || null,
+        usageLimit(b.max_uses),
       ],
     );
     res.status(201).json({ promotion: rows[0] });
@@ -467,7 +476,8 @@ router.put(
               starts_at = $6, ends_at = $7,
               active = COALESCE($8, active),
               title_ku = COALESCE($9, title_ku), title_fa = COALESCE($10, title_fa),
-              title_ar = COALESCE($11, title_ar), title_en = COALESCE($12, title_en)
+              title_ar = COALESCE($11, title_ar), title_en = COALESCE($12, title_en),
+              max_uses = $13
         WHERE id = $1 AND business_id = $2 RETURNING *`,
       [
         req.params.id,
@@ -482,6 +492,8 @@ router.put(
         b.title_fa || null,
         b.title_ar || null,
         b.title_en || null,
+        // Sent explicitly by the form; an unlimited promotion keeps max_uses NULL.
+        usageLimit(b.max_uses),
       ],
     );
     if (!rows[0]) throw notFound('PROMOTION_NOT_FOUND');
