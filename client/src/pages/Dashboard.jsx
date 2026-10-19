@@ -122,7 +122,9 @@ export default function Dashboard() {
       <div className="dash-row dash-row--info">
         <DateHours hours={data.hours} timeZone={timeZone} locale={locale} />
         <NotificationSettings
-          settings={data.notification_settings}
+          /* The business record is the single source of truth for notification
+             settings, so a change made from the header shows up here at once. */
+          settings={business?.notification_settings || data.notification_settings}
           onChange={updateSettings}
           push={push}
           onPushToggle={onPushToggle}
