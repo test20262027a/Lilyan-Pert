@@ -367,3 +367,211 @@
   .mcmodal__foot { flex-wrap: wrap; }
   .mcmodal__btn { flex: 1 1 auto; padding: 0 14px; }
 }
+
+/* ==========================================================================
+   Add / Edit Product — the same dialog shell with the product form's own
+   pieces: the large dashed picture drop zone, the four-language name and
+   description cards, the four price inputs, the category select, the
+   calories / preparation-time pair, the tags field and the two status toggles.
+
+   Everything is scoped to .mcmodal / .mform__* and reuses the same tokens, so
+   the dark theme only remaps the surfaces around the form.
+   ========================================================================== */
+
+/* Four price inputs need a little more room than the category dialog's 450px —
+   still the compact centred modal the reference shows. */
+.mcmodal--wide { max-width: 480px; }
+
+/* Multiline companion of .mcmodal__input, inside the language cards. */
+.mcmodal__textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  outline: none;
+  resize: none;
+}
+.mcmodal__textarea::placeholder { color: #a9b0a9; }
+.mcmodal__textarea:focus {
+  border-color: color-mix(in srgb, var(--mm-green) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mm-green) 14%, transparent);
+}
+
+/* ------------------------------------------------------ picture drop zone */
+
+.mform__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 156px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1.5px dashed color-mix(in srgb, var(--mm-line) 60%, #b6c2ba);
+  background: var(--mm-field);
+  color: var(--mm-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.mform__drop:hover,
+.mform__drop.is-dragging {
+  border-color: color-mix(in srgb, var(--mm-green) 60%, transparent);
+  background: color-mix(in srgb, var(--mm-green) 7%, var(--mm-field));
+  color: var(--mm-green-ink);
+}
+.mform__drop.is-busy { cursor: progress; }
+.mform__drop .spinner { width: 26px; height: 26px; }
+.mform__drop-label { font-size: 12.5px; font-weight: 650; }
+
+/*
+ * The frame follows the chosen picture: the whole image is shown
+ * (object-fit: contain) at its natural aspect ratio, never cropped to fill a
+ * fixed box, so what is saved is what the product card will show.
+ */
+.mform__image { display: flex; flex-direction: column; gap: 8px; }
+.mform__image-frame {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border-radius: 14px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-field);
+}
+.mform__image-frame img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 230px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+.mform__image-actions { display: flex; gap: 8px; }
+.mform__mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.mform__mini:hover:not(:disabled) { background: var(--mm-body); }
+.mform__mini:disabled,
+.mform__mini.is-busy { opacity: 0.6; cursor: not-allowed; }
+.mform__mini .spinner { width: 14px; height: 14px; }
+
+/* --------------------------------------------------------- price inputs */
+
+.mform__prices {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mform__price,
+.mform__field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+.mform__price-label {
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--mm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Numbers read left-to-right in every language and stay compact. */
+.mform__num {
+  text-align: center;
+  padding: 0 6px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.mform__num::-webkit-outer-spin-button,
+.mform__num::-webkit-inner-spin-button { appearance: none; margin: 0; }
+
+/* ------------------------------------------------------ category select */
+
+.mform__select { position: relative; display: block; }
+.mform__select-input {
+  appearance: none;
+  padding-inline-end: 36px;
+  text-align: start;
+  cursor: pointer;
+}
+.mform__select-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-end: 13px;
+  display: grid;
+  place-items: center;
+  color: var(--mm-muted);
+  pointer-events: none;
+}
+
+/* ---------------------------------------------- calories / preparation */
+
+.mform__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------- tags */
+
+.mform__tags { position: relative; display: block; }
+.mform__tags-input { padding-inline-start: 38px; }
+.mform__tags-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: 13px;
+  display: grid;
+  place-items: center;
+  color: var(--mm-muted);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------- available / featured */
+
+.mform__toggles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mform__toggle { display: inline-flex; align-items: center; gap: 9px; }
+.mform__toggle-label { font-size: 13px; font-weight: 700; color: var(--mm-ink); }
+/* Both switches keep the module's green, whatever the business theme is. */
+.mform__toggles .switch__track { background: #d3d8d3; }
+.mform__toggles .switch input:checked + .switch__track { background: var(--mm-green); }
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 430px) {
+  /* The four prices only wrap once they stop being readable. */
+  .mform__prices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mform__drop { min-height: 132px; }
+  .mform__image-frame img { max-height: 180px; }
+}

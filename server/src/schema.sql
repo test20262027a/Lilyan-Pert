@@ -280,3 +280,16 @@ CREATE TABLE IF NOT EXISTS app_settings (
 -- Additive migrations (safe to re-run on an existing database).
 ALTER TABLE business_views ADD COLUMN IF NOT EXISTS is_sample boolean NOT NULL DEFAULT false;
 ALTER TABLE backups ADD COLUMN IF NOT EXISTS restored_at timestamptz;
+
+-- Product detail fields carried by the Add / Edit Product form. All additive, so
+-- existing products keep their values and simply start with none of the new ones.
+-- `calories` and `prep_minutes` are optional; `tags` is the product's own tag list;
+-- `featured` is the "special / featured" flag, kept separate from `active` and
+-- `available`; `price_fa` / `price_en` are OPTIONAL alternate-currency prices for
+-- those two locales (IRR and USD) that the owner enters by hand.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS calories integer CHECK (calories >= 0);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS prep_minutes integer CHECK (prep_minutes >= 0);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS tags text[] NOT NULL DEFAULT '{}';
+ALTER TABLE products ADD COLUMN IF NOT EXISTS featured boolean NOT NULL DEFAULT false;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_fa numeric(12,2) CHECK (price_fa >= 0);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_en numeric(12,2) CHECK (price_en >= 0);

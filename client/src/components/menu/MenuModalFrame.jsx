@@ -16,7 +16,7 @@ import './menuModal.css';
  * The shell only lays out; validation, unsaved-changes guarding and submission
  * belong to the form inside it.
  */
-export default function MenuModalFrame({ title, icon = 'package', onClose, children, footer }) {
+export default function MenuModalFrame({ title, icon = 'package', wide = false, onClose, children, footer }) {
   const { t } = useI18n();
   const titleId = useId();
 
@@ -40,7 +40,12 @@ export default function MenuModalFrame({ title, icon = 'package', onClose, child
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className="mcmodal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div
+        className={`mcmodal ${wide ? 'mcmodal--wide' : ''}`}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+      >
         <header className="mcmodal__head">
           {/* Decorative: the banner illustration never carries UI text. */}
           <div className="mcmodal__art" aria-hidden="true">

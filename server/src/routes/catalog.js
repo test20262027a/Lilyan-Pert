@@ -9,6 +9,39 @@ router.use(requireAuth);
 const catName = (n) => (n === null || n === undefined || n === '' ? null : String(n).slice(0, 300));
 const desc = (n) => (n === null || n === undefined || n === '' ? null : String(n).slice(0, 1000));
 
+/** Optional whole number (calories, preparation minutes) — empty means "not set". */
+function optInt(value, code) {
+  if (value === undefined || value === null || String(value).trim() === '') return null;
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0) throw bad(code);
+  return n;
+}
+
+/**
+ * Optional alternate-currency price. The owner types these by hand — nothing is
+ * ever converted server-side, so an empty field simply stores no price.
+ */
+function optPrice(value) {
+  if (value === undefined || value === null || String(value).trim() === '') return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) throw bad('INVALID_PRICE');
+  return n;
+}
+
+/** Comma separated tags (Latin and Arabic commas) → trimmed, deduped, capped. */
+function tagList(value) {
+  const raw = Array.isArray(value) ? value : String(value ?? '').split(/[,،]/);
+  const out = [];
+  for (const item of raw) {
+    const tag = String(item).trim().slice(0, 40);
+    if (!tag) continue;
+    if (out.some((t) => t.toLowerCase() === tag.toLowerCase())) continue;
+    out.push(tag);
+    if (out.length >= 20) break;
+  }
+  return out;
+}
+
 async function loadCategory(businessId, id) {
   const { rows } = await q('SELECT * FROM categories WHERE id=$1 AND business_id=$2', [id, businessId]);
   if (!rows[0]) throw notFound('CATEGORY_NOT_FOUND');
@@ -155,22 +188,29 @@ router.post(
     if (!b.name_en && !b.name_ku && !b.name_fa && !b.name_ar) throw bad('NAME_REQUIRED');
     const price = num(b.price, NaN);
     if (!Number.isFinite(price) || price < 0) throw bad('INVALID_PRICE');
-    if (b.category_id) {
-      await loadCategory(req.businessId, b.category_id);
-    }
+    // A product is never created without a category that belongs to this business.
+    if (!b.category_id) throw bad('CATEGORY_REQUIRED');
+    await loadCategory(req.businessId, b.category_id);
     const { rows } = await q(
-      `INSERT INTO products (business_id, category_id, price, image_url, active, available, sort_order,
+      `INSERT INTO products (business_id, category_id, price, price_fa, price_en, image_url,
+                             active, available, featured, sort_order, calories, prep_minutes, tags,
                              name_ku, name_fa, name_ar, name_en,
                              description_ku, description_fa, description_ar, description_en)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
       [
         req.businessId,
-        b.category_id || null,
+        b.category_id,
         price,
+        optPrice(b.price_fa),
+        optPrice(b.price_en),
         b.image_url ? String(b.image_url).slice(0, 2000) : null,
         b.active === undefined ? true : Boolean(b.active),
         b.available === undefined ? true : Boolean(b.available),
+        b.featured === undefined ? false : Boolean(b.featured),
         num(b.sort_order, 0),
+        optInt(b.calories, 'INVALID_CALORIES'),
+        optInt(b.prep_minutes, 'INVALID_PREP_TIME'),
+        tagList(b.tags),
         catName(b.name_ku),
         catName(b.name_fa),
         catName(b.name_ar),
@@ -212,6 +252,15 @@ router.put(
               description_fa = COALESCE($14, description_fa),
               description_ar = COALESCE($15, description_ar),
               description_en = COALESCE($16, description_en),
+              -- Detail fields are written exactly as sent (an empty value clears
+              -- them), the same rule image_url already follows: the form always
+              -- submits the product's complete payload.
+              price_fa = $17,
+              price_en = $18,
+              calories = $19,
+              prep_minutes = $20,
+              tags = $21,
+              featured = $22,
               updated_at = now()
         WHERE id = $1 AND business_id = $2
         RETURNING *`,
@@ -232,6 +281,12 @@ router.put(
         desc(b.description_fa),
         desc(b.description_ar),
         desc(b.description_en),
+        optPrice(b.price_fa),
+        optPrice(b.price_en),
+        optInt(b.calories, 'INVALID_CALORIES'),
+        optInt(b.prep_minutes, 'INVALID_PREP_TIME'),
+        tagList(b.tags),
+        b.featured === undefined ? false : Boolean(b.featured),
       ],
     );
     res.json({ product: rows[0] });

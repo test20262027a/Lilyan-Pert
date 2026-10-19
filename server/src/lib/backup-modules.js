@@ -51,7 +51,8 @@ export const BACKUP_MODULES = [
     exportMode: 'rows',
     table: 'products',
     columns: [
-      'id', 'category_id', 'price', 'image_url', 'active', 'available', 'sort_order',
+      'id', 'category_id', 'price', 'price_fa', 'price_en', 'image_url',
+      'active', 'available', 'featured', 'sort_order', 'calories', 'prep_minutes', 'tags',
       'name_ku', 'name_fa', 'name_ar', 'name_en',
       'description_ku', 'description_fa', 'description_ar', 'description_en',
     ],

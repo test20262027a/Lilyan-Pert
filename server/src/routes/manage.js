@@ -465,7 +465,11 @@ router.post(
       `INSERT INTO media (business_id, mime, byte_size, data) VALUES ($1,$2,$3,$4) RETURNING id`,
       [req.businessId, mime, buffer.length, match[3]],
     );
-    res.status(201).json({ id: rows[0].id, url: `/api/media/${rows[0].id}`, byte_size: buffer.length });
+    // The read route below is mounted under /api/manage, so the URL handed back
+    // to the client must be that same path — otherwise every stored image 404s.
+    res
+      .status(201)
+      .json({ id: rows[0].id, url: `/api/manage/media/${rows[0].id}`, byte_size: buffer.length });
   }),
 );
 

@@ -23,7 +23,9 @@ const emptyCategory = () => ({
 const emptyProduct = (categoryId) => ({
   name_ku: '', name_fa: '', name_ar: '', name_en: '',
   description_ku: '', description_fa: '', description_ar: '', description_en: '',
-  price: '', category_id: categoryId || '', image_url: null, active: true, available: true, sort_order: 0,
+  price: '', price_fa: '', price_en: '', calories: '', prep_minutes: '', tags: [],
+  category_id: categoryId || '', image_url: null,
+  active: true, available: true, featured: false, sort_order: 0,
 });
 
 /**
@@ -312,6 +314,7 @@ export default function MenuManagement() {
         <ProductFormModal
           modal={productModal}
           categories={categories}
+          currency={currency}
           busy={busy}
           error={formError}
           onClose={() => setProductModal(null)}
