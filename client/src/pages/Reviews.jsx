@@ -1,93 +1,78 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import Icon from '../components/Icon';
-import { Alert, EmptyState, Loading, SectionCard, Select, useToast } from '../components/ui';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, ConfirmDialog, EmptyState, useToast } from '../components/ui';
+import PageHeroBanner from '../components/menu/PageHeroBanner';
+import ReviewsArtwork from '../components/reviews/ReviewsArtwork';
+import RatingOverview from '../components/reviews/RatingOverview';
+import ReviewCard from '../components/reviews/ReviewCard';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
-import { del, get, patch } from '../api';
-import { fmtDateTime, fmtNumber, zoneFor } from '../format';
 import { useBusiness } from '../context/BusinessContext';
+import { del, get, patch } from '../api';
+import { zoneFor } from '../format';
+import '../menu.css';
+import '../reviews.css';
 
-const STATUS_OPTIONS = ['all', 'pending', 'approved', 'rejected'];
-
-function Stars({ value }) {
-  return (
-    <span style={{ display: 'inline-flex', gap: 2, color: 'var(--accent-amber)' }} aria-label={`${value}/5`}>
-      {[1, 2, 3, 4, 5].map((i) => (
-        <Icon key={i} name="star" size={14} style={{ opacity: i <= value ? 1 : 0.28 }} />
-      ))}
-    </span>
-  );
-}
-
-/**
- * "Show more" appears only while the text is genuinely clipped at the current
- * viewport, language and font size — measured, not guessed — and is
- * recalculated when any of those change.
+/*
+ * Reviews & Feedback.
+ *
+ * The illustrated banner, the full-width ratings overview and the vertical list
+ * of real customer reviews of the signed-in business. `/manage/reviews` returns
+ * the page of reviews, the total and one server-computed summary (average plus
+ * the five counts), so the overview can never disagree with the list. Deleting
+ * goes through the business-scoped delete route and the page is reloaded from
+ * the API afterwards — the UI never removes a card the backend still holds.
  */
-function ClampedText({ text, t }) {
-  const ref = useRef(null);
-  const [clipped, setClipped] = useState(false);
-  const [expanded, setExpanded] = useState(false);
-  const { locale } = useI18n();
 
-  const measure = useCallback(() => {
-    const el = ref.current;
-    if (!el || expanded) return;
-    setClipped(el.scrollHeight > el.clientHeight + 1);
-  }, [expanded]);
-
-  useLayoutEffect(() => {
-    measure();
-  }, [measure, text, locale]);
-
-  useEffect(() => {
-    const onResize = () => measure();
-    window.addEventListener('resize', onResize);
-    window.addEventListener('orientationchange', onResize);
-    return () => {
-      window.removeEventListener('resize', onResize);
-      window.removeEventListener('orientationchange', onResize);
-    };
-  }, [measure]);
-
-  return (
-    <div>
-      <div ref={ref} className={`review-text ${expanded ? '' : 'is-clamped'}`}>
-        {text}
-      </div>
-      {clipped || expanded ? (
-        <button className="btn btn--ghost btn--sm" style={{ marginTop: 4 }} onClick={() => setExpanded((v) => !v)}>
-          {expanded ? t('review_show_less') : t('review_show_more')}
-        </button>
-      ) : null}
-    </div>
-  );
-}
+const PAGE_SIZE = 20;
 
 export default function Reviews() {
   const { t, locale } = useI18n();
   const { business } = useBusiness();
   const { isManager } = useAuth();
   const toast = useToast();
-  const [status, setStatus] = useState('all');
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
   const timeZone = zoneFor(locale, business?.timezone);
+
+  const [reviews, setReviews] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [confirm, setConfirm] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await get(`/manage/reviews?status=${status}`);
+      const res = await get(`/manage/reviews?limit=${PAGE_SIZE}&offset=0`);
       setReviews(res.reviews || []);
+      setSummary(res.summary || null);
+      setTotal(Number(res.total) || 0);
+      setFailed(false);
+    } catch {
+      setFailed(true);
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const res = await get(`/manage/reviews?limit=${PAGE_SIZE}&offset=${reviews.length}`);
+      setReviews((current) => [...current, ...(res.reviews || [])]);
+      setSummary(res.summary || null);
+      setTotal(Number(res.total) || 0);
+    } catch {
+      toast.error(t('review_load_error'));
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const moderate = async (id, next) => {
     setBusy(true);
@@ -101,11 +86,14 @@ export default function Reviews() {
     }
   };
 
-  const remove = async (id) => {
+  const remove = async () => {
+    if (!confirm) return;
     setBusy(true);
     try {
-      await del(`/manage/reviews/${id}`);
+      await del(`/manage/reviews/${confirm.id}`);
+      setConfirm(null);
       await load();
+      toast.success(t('review_deleted'));
     } catch {
       toast.error(t('error_generic'));
     } finally {
@@ -113,101 +101,93 @@ export default function Reviews() {
     }
   };
 
+  const hasMore = total > reviews.length;
+
   return (
-    <>
-      <div className="page-head">
-        <div className="page-head__text">
-          <h1>{t('review_title')}</h1>
-          <p>{t('review_subtitle')}</p>
-        </div>
-      </div>
+    <div className="reviews-page">
+      <PageHeroBanner
+        icon="star"
+        title={t('review_title')}
+        subtitle={t('review_subtitle')}
+        art={<ReviewsArtwork />}
+      />
 
       {!isManager ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
 
-      <SectionCard
-        icon="star"
-        iconClass="ic-pink"
-        title={t('review_title')}
-        subtitle={`${fmtNumber(reviews.length, locale)} ${t('label_records')}`}
-        actions={
-          <div style={{ minWidth: 170 }}>
-            <Select
-              value={status}
-              onChange={setStatus}
-              aria-label={t('review_filter_status')}
-              options={STATUS_OPTIONS.map((s) => ({
-                value: s,
-                label: s === 'all' ? t('label_all') : t(`review_${s}`),
-              }))}
-            />
+      {loading ? (
+        <>
+          <div className="rv-overview rv-overview--skeleton" aria-hidden="true">
+            <div className="rv-skel rv-skel--summary">
+              <span className="rv-skel__line" style={{ width: 74, height: 34 }} />
+              <span className="rv-skel__line" style={{ width: 96, height: 14 }} />
+              <span className="rv-skel__line" style={{ width: 62, height: 11 }} />
+            </div>
+            <div className="rv-skel rv-skel--rows">
+              {[0, 1, 2, 3, 4].map((row) => (
+                <span className="rv-skel__line" key={row} style={{ height: 8 }} />
+              ))}
+            </div>
           </div>
-        }
-      >
-        {loading ? (
-          <Loading />
-        ) : reviews.length === 0 ? (
-          <EmptyState icon="star" title={t('review_no_reviews')} />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {reviews.map((r) => (
-              <article
-                key={r.id}
-                style={{
-                  border: '1px solid var(--border)',
-                  borderRadius: 'var(--radius)',
-                  padding: 13,
-                  background: 'var(--surface-2)',
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 13.5 }}>
-                      {r.customer_name || t('review_customer')}
-                      {r.order_number ? <span className="chip" style={{ marginInlineStart: 8 }}>#{r.order_number}</span> : null}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'var(--muted)' }}>
-                      {fmtDateTime(r.created_at, locale, timeZone)}
-                    </div>
-                  </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Stars value={r.rating} />
-                    <span className={`badge badge--${r.status === 'approved' ? 'completed' : r.status === 'rejected' ? 'cancelled' : 'pending'}`}>
-                      {t(`review_${r.status}`)}
-                    </span>
-                  </div>
-                </div>
-
-                {r.comment ? (
-                  <div style={{ marginTop: 8 }}>
-                    <ClampedText text={r.comment} t={t} />
-                  </div>
-                ) : null}
-
-                {isManager ? (
-                  <div className="btn-row" style={{ marginTop: 10 }}>
-                    {r.status !== 'approved' ? (
-                      <button className="btn btn--sm btn--primary" disabled={busy} onClick={() => moderate(r.id, 'approved')}>
-                        <Icon name="check" size={14} />
-                        {t('review_approve')}
-                      </button>
-                    ) : null}
-                    {r.status !== 'rejected' ? (
-                      <button className="btn btn--sm" disabled={busy} onClick={() => moderate(r.id, 'rejected')}>
-                        <Icon name="close" size={14} />
-                        {t('review_reject')}
-                      </button>
-                    ) : null}
-                    <button className="btn btn--sm btn--danger-soft" disabled={busy} onClick={() => remove(r.id)}>
-                      <Icon name="trash" size={14} />
-                      {t('action_delete')}
-                    </button>
-                  </div>
-                ) : null}
-              </article>
+          <div className="rv-list" aria-hidden="true">
+            {[0, 1, 2].map((card) => (
+              <div className="rv-card rv-card--skeleton" key={card}>
+                <span className="rv-skel__line" style={{ width: 120, height: 13 }} />
+                <span className="rv-skel__line" style={{ width: 88, height: 12, marginTop: 8 }} />
+                <span className="rv-skel__line" style={{ width: '78%', height: 12, marginTop: 10 }} />
+              </div>
             ))}
           </div>
-        )}
-      </SectionCard>
-    </>
+        </>
+      ) : failed ? (
+        <Alert kind="error">
+          {t('review_load_error')}{' '}
+          <button type="button" className="btn btn--sm" onClick={load}>
+            {t('action_retry')}
+          </button>
+        </Alert>
+      ) : (
+        <>
+          <RatingOverview summary={summary} locale={locale} />
+
+          {reviews.length === 0 ? (
+            <EmptyState icon="star" title={t('review_empty')} hint={t('review_empty_hint')} />
+          ) : (
+            <div className="rv-list">
+              {reviews.map((review) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  locale={locale}
+                  timeZone={timeZone}
+                  canManage={isManager}
+                  busy={busy}
+                  onDelete={setConfirm}
+                  onModerate={moderate}
+                />
+              ))}
+            </div>
+          )}
+
+          {hasMore ? (
+            <button type="button" className="rv-more" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? <span className="spinner" /> : null}
+              {t('review_load_more')}
+            </button>
+          ) : null}
+        </>
+      )}
+
+      {confirm ? (
+        <ConfirmDialog
+          title={t('review_delete_title')}
+          message={t('review_delete_message')}
+          confirmLabel={t('action_delete')}
+          danger
+          busy={busy}
+          onCancel={() => setConfirm(null)}
+          onConfirm={remove}
+        />
+      ) : null}
+    </div>
   );
 }

@@ -268,19 +268,57 @@ router.get(
   '/reviews',
   withBusiness('staff'),
   ah(async (req, res) => {
+    const parsedLimit = Number.parseInt(req.query.limit, 10);
+    const parsedOffset = Number.parseInt(req.query.offset, 10);
+    const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 100);
+    const offset = Math.max(Number.isFinite(parsedOffset) ? parsedOffset : 0, 0);
+
     const params = [req.businessId];
     let where = 'r.business_id = $1';
     if (req.query.status && req.query.status !== 'all') {
       params.push(String(req.query.status).slice(0, 20));
       where += ` AND r.status = $${params.length}`;
     }
-    const { rows } = await q(
-      `SELECT r.*, o.order_number FROM reviews r
-         LEFT JOIN orders o ON o.id = r.order_id
-        WHERE ${where} ORDER BY r.created_at DESC LIMIT 200`,
-      params,
-    );
-    res.json({ reviews: rows });
+
+    const [list, counted, rated] = await Promise.all([
+      q(
+        `SELECT r.*, o.order_number FROM reviews r
+           LEFT JOIN orders o ON o.id = r.order_id
+          WHERE ${where}
+          ORDER BY r.created_at DESC, r.id DESC
+          LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+        [...params, limit, offset],
+      ),
+      q(`SELECT count(*)::int AS c FROM reviews r WHERE ${where}`, params),
+      /*
+       * One population for every number on the page: all reviews this business
+       * owns, whatever their moderation state, scoped by business_id. The
+       * average therefore always describes exactly the rows the five counts
+       * add up to, and the page never mixes two different populations.
+       */
+      q(
+        `SELECT count(*)::int AS total,
+                COALESCE(avg(rating), 0) AS average,
+                count(*) FILTER (WHERE rating = 5)::int AS r5,
+                count(*) FILTER (WHERE rating = 4)::int AS r4,
+                count(*) FILTER (WHERE rating = 3)::int AS r3,
+                count(*) FILTER (WHERE rating = 2)::int AS r2,
+                count(*) FILTER (WHERE rating = 1)::int AS r1
+           FROM reviews WHERE business_id = $1`,
+        [req.businessId],
+      ),
+    ]);
+
+    const s = rated.rows[0];
+    res.json({
+      reviews: list.rows,
+      total: counted.rows[0].c,
+      summary: {
+        total: s.total,
+        average: Number(s.average) || 0,
+        counts: { 5: s.r5, 4: s.r4, 3: s.r3, 2: s.r2, 1: s.r1 },
+      },
+    });
   }),
 );
 
