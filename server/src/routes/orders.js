@@ -166,7 +166,9 @@ router.get(
     const [items, table, business, prints] = await Promise.all([
       q('SELECT name, quantity, unit_price, line_total, notes FROM order_items WHERE order_id = $1 ORDER BY id', [order.id]),
       order.table_id ? q('SELECT name, zone FROM tables WHERE id = $1', [order.table_id]) : { rows: [] },
-      q('SELECT name, name_en, logo_url, address, city, phone, currency, receipt_settings, timezone FROM businesses WHERE id = $1', [req.businessId]),
+      // `editable_text` carries the business's edited receipt messages, so the
+      // printed receipt uses them instead of the built-in defaults.
+      q('SELECT name, name_en, logo_url, address, city, phone, currency, receipt_settings, editable_text, timezone FROM businesses WHERE id = $1', [req.businessId]),
       q(
         `SELECT p.printed_at, p.printed_by_name FROM receipt_prints p
           WHERE p.order_id = $1 ORDER BY p.printed_at DESC LIMIT 5`,

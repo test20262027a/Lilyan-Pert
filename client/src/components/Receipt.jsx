@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { fmtDateTime, zoneFor } from '../format';
+import { receiptMessageText } from '../receiptMessages';
 
 /**
  * One receipt markup used by the on-screen receipt, the preview and the
@@ -24,6 +25,20 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
   const contentAlign =
     settings.alignment === 'center' ? 'center' : settings.alignment === 'start' ? 'start' : undefined;
   const moreInfo = settings.show_more_info !== false;
+  /*
+   * Every printed wording comes from the Text Editor (defaults included), so a
+   * business edit appears on the next receipt without touching this layout.
+   */
+  const msg = (key) => receiptMessageText(business, key, locale);
+  const footerText = receiptMessageText(business, 'footer', locale, {
+    business_name: businessName,
+    order_number: order?.order_number ?? '',
+    table: table?.name || '',
+    customer_name: order?.customer_name || '',
+    date: order ? fmtDateTime(order.created_at, locale, timeZone) : '',
+    total: `${Number(order?.total || 0).toFixed(0)}${business?.currency ? ` ${business.currency}` : ''}`,
+    currency: business?.currency || '',
+  });
 
   return (
     <div className="receipt-paper" style={contentAlign ? { textAlign: contentAlign } : undefined}>
@@ -46,31 +61,31 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
         <div className="receipt-meta">
           {settings.show_order_number !== false ? (
             <div className="receipt-row">
-              <span>{t('receipt_order_no')}</span>
+              <span>{msg('order_no')}</span>
               <span>#{order?.order_number}</span>
             </div>
           ) : null}
           {table && settings.show_table_number !== false ? (
             <div className="receipt-row">
-              <span>{t('receipt_table')}</span>
+              <span>{msg('table')}</span>
               <span>{table.name}</span>
             </div>
           ) : null}
           {settings.show_datetime !== false ? (
             <div className="receipt-row">
-              <span>{t('receipt_date')}</span>
+              <span>{msg('datetime')}</span>
               <span>{fmtDateTime(order?.created_at, locale, timeZone)}</span>
             </div>
           ) : null}
           {settings.show_customer_name !== false && order?.customer_name ? (
             <div className="receipt-row">
-              <span>{t('receipt_customer')}</span>
+              <span>{msg('customer')}</span>
               <span>{order.customer_name}</span>
             </div>
           ) : null}
           {moreInfo && settings.show_cashier ? (
             <div className="receipt-row">
-              <span>{t('receipt_cashier')}</span>
+              <span>{msg('cashier')}</span>
               <span>{order?.created_by_name || '—'}</span>
             </div>
           ) : null}
@@ -80,8 +95,8 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
       <hr className="receipt-hr" />
 
       <div className="receipt-row receipt-meta" style={{ fontWeight: 700 }}>
-        <span>{t('receipt_items')}</span>
-        <span>{t('label_total')}</span>
+        <span>{msg('items')}</span>
+        <span>{msg('total_column')}</span>
       </div>
       {(items || []).map((line, idx) => (
         <div key={`${line.name}-${idx}`} style={{ marginTop: 4 }}>
@@ -103,7 +118,7 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
 
       {settings.show_notes !== false && order?.notes ? (
         <div className="receipt-meta" style={{ marginTop: 6 }}>
-          <div style={{ fontWeight: 700 }}>{t('receipt_notes')}</div>
+          <div style={{ fontWeight: 700 }}>{msg('notes')}</div>
           <div>{order.notes}</div>
         </div>
       ) : null}
@@ -112,29 +127,29 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
 
       <div className="receipt-meta">
         <div className="receipt-row">
-          <span>{t('order_subtotal')}</span>
+          <span>{msg('subtotal')}</span>
           <span>{Number(order?.subtotal || 0).toFixed(0)}</span>
         </div>
         {Number(order?.discount || 0) > 0 ? (
           <div className="receipt-row">
-            <span>{t('order_discount')}</span>
+            <span>{msg('discount')}</span>
             <span>-{Number(order.discount).toFixed(0)}</span>
           </div>
         ) : null}
         {Number(order?.tax || 0) > 0 ? (
           <div className="receipt-row">
-            <span>{t('order_tax')}</span>
+            <span>{msg('tax')}</span>
             <span>{Number(order.tax).toFixed(0)}</span>
           </div>
         ) : null}
         {Number(order?.service_charge || 0) > 0 ? (
           <div className="receipt-row">
-            <span>{t('order_service')}</span>
+            <span>{msg('service_charge')}</span>
             <span>{Number(order.service_charge).toFixed(0)}</span>
           </div>
         ) : null}
         <div className="receipt-row" style={{ fontWeight: 700, fontSize: 13.5, marginTop: 4 }}>
-          <span>{t('order_grand_total')}</span>
+          <span>{msg('total')}</span>
           <span>
             {Number(order?.total || 0).toFixed(0)} {business?.currency || ''}
           </span>
@@ -150,7 +165,7 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
         <>
           <hr className="receipt-hr" />
           <div className="receipt-meta">
-            <div style={{ fontWeight: 700 }}>{t('receipt_change_info')}</div>
+            <div style={{ fontWeight: 700 }}>{msg('change_info')}</div>
             <div className="receipt-row">
               <span>
                 {t(`status_${lastChange.from_status}`)} → {t(`status_${lastChange.to_status}`)}
@@ -162,10 +177,10 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
         </>
       ) : null}
 
-      {settings.footer_text ? (
+      {footerText ? (
         <>
           <hr className="receipt-hr" />
-          <div className="receipt-center receipt-meta">{settings.footer_text}</div>
+          <div className="receipt-center receipt-meta">{footerText}</div>
         </>
       ) : null}
     </div>

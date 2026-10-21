@@ -1,8 +1,9 @@
 import express from 'express';
 import { q } from '../db.js';
 import { requireAuth, withBusiness } from '../auth.js';
-import { ah, bad } from '../lib/http.js';
+import { ah, bad, conflict } from '../lib/http.js';
 import { normalizeMenuSettings } from '../lib/menu-settings.js';
+import { normalizeReceiptMessages } from '../lib/receipt-messages.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -75,6 +76,30 @@ router.put(
      */
     if (body.menu_settings && typeof body.menu_settings === 'object' && body.menu_settings.show_customer_menu === false) {
       body.menu_settings = { ...body.menu_settings, show_admin_return: false };
+    }
+    /*
+     * Receipt messages are the only editable text with a fixed identity: only
+     * the fifteen known message ids and the four supported locales may be
+     * stored, and an emptied message drops its override entirely.
+     */
+    if (body.editable_text && typeof body.editable_text === 'object' && 'receipt_messages' in body.editable_text) {
+      body.editable_text = {
+        ...body.editable_text,
+        receipt_messages: normalizeReceiptMessages(body.editable_text.receipt_messages),
+      };
+    }
+    /*
+     * Optimistic concurrency for editors that send the record version they
+     * loaded: a save that would overwrite a newer change is refused instead of
+     * silently winning. Requests without the header keep the old behaviour.
+     */
+    if (body.expected_updated_at) {
+      const { rows } = await q('SELECT updated_at FROM businesses WHERE id = $1', [req.businessId]);
+      const stored = rows[0]?.updated_at ? new Date(rows[0].updated_at).getTime() : null;
+      const expected = new Date(body.expected_updated_at).getTime();
+      if (stored !== null && Number.isFinite(expected) && stored !== expected) {
+        throw conflict('STALE_BUSINESS');
+      }
     }
     const sets = [];
     const values = [req.businessId];

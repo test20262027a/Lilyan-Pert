@@ -69,6 +69,7 @@ function sampleReceipt(draft, t) {
       currency: draft.currency,
       timezone: draft.timezone,
       receipt_settings: draft.receipt_settings,
+      editable_text: draft.editable_text,
     },
   };
 }

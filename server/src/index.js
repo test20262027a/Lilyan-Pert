@@ -13,6 +13,7 @@ import manageRoutes from './routes/manage.js';
 import backupRoutes from './routes/backups.js';
 import publicRoutes from './routes/public.js';
 import activityRoutes from './routes/activity.js';
+import translateRoutes from './routes/translate.js';
 
 const app = express();
 app.set('trust proxy', true);
@@ -40,6 +41,7 @@ app.use('/api/manage', manageRoutes);
 app.use('/api/backups', backupRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/activity', activityRoutes);
+app.use('/api/text', translateRoutes);
 
 app.use((_req, res) => res.status(404).json({ error: 'NOT_FOUND' }));
 

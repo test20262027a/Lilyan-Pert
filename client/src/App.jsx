@@ -17,6 +17,7 @@ import ActivityReports from './pages/ActivityReports';
 import Backups from './pages/Backups';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
+import TextEditor from './pages/TextEditor';
 import CustomerMenu from './pages/CustomerMenu';
 import AdminOrderMenu from './pages/AdminOrderMenu';
 
@@ -62,10 +63,10 @@ export default function App() {
         <Route path="/reset-sample" element={<Backups focus="reset" />} />
         <Route path="/users" element={<Users />} />
         <Route path="/settings" element={<Settings />} />
-        {/* Menu settings and editable menu text both live in the Customer Menu
-            tab of the same workspace; these addresses open it directly. */}
+        {/* Menu settings live in the settings workspace; the text editor is
+            its own page for the automatic receipt messages. */}
         <Route path="/menu-settings" element={<Settings initialTab="menu" />} />
-        <Route path="/text-editor" element={<Settings initialTab="menutext" />} />
+        <Route path="/text-editor" element={<TextEditor />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
