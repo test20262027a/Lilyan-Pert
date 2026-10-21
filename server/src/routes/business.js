@@ -27,10 +27,12 @@ const PROFILE_FIELDS = {
 
 const JSON_FIELDS = [
   'socials',
+  'addresses',
   'theme',
   'working_hours',
   'receipt_settings',
   'notification_settings',
+  'dashboard_settings',
   'menu_settings',
   'editable_text',
 ];

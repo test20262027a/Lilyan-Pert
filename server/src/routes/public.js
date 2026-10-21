@@ -139,6 +139,32 @@ router.get(
       };
     });
 
+    /*
+     * Best-selling recommendations. Ranked from this business's own order
+     * history — never invented — and limited to products that are still active
+     * and available inside an active category. Only the business's configured
+     * number of products is returned.
+     */
+    const bestSettings = business.menu_settings?.best_selling || {};
+    const bestCount = Math.min(20, Math.max(1, Math.floor(Number(bestSettings.count) || 6)));
+    let bestSelling = [];
+    if (bestSettings.enabled === true) {
+      const best = await q(
+        `SELECT p.id, sum(i.quantity)::int AS units
+           FROM order_items i
+           JOIN orders o ON o.id = i.order_id
+           JOIN products p ON p.id = i.product_id
+           JOIN categories c ON c.id = p.category_id
+          WHERE i.business_id = $1 AND o.status <> 'cancelled'
+            AND p.active = true AND p.available = true AND c.active = true
+          GROUP BY p.id
+          ORDER BY units DESC, p.id
+          LIMIT $2`,
+        [business.id, bestCount],
+      );
+      bestSelling = best.rows;
+    }
+
     res.json({
       business: {
         id: business.id,
@@ -152,7 +178,10 @@ router.get(
         logo_url: business.logo_url,
         cover_url: business.cover_url,
         phone: business.phone,
+        email: business.email,
+        website: business.website,
         address: business.address,
+        addresses: business.addresses,
         city: business.city,
         latitude: business.latitude,
         longitude: business.longitude,
@@ -171,6 +200,7 @@ router.get(
       products,
       advertisements: ads.rows,
       reviews: reviews.rows,
+      best_selling: bestSelling,
     });
   }),
 );

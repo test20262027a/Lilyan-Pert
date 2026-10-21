@@ -14,19 +14,29 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
   const businessName =
     business?.[`name_${locale}`] || business?.name_en || business?.name || '';
   const lastChange = (data.history || []).filter((h) => h.from_status).slice(-1)[0];
+  /*
+   * The stored per-language address wins; the original single address stays
+   * the fallback so a business that never filled the new fields prints exactly
+   * what it printed before.
+   */
+  const addressText = business?.addresses?.[locale] || business?.addresses?.en || business?.address;
+  const logoWidth = { small: 70, medium: 110, large: 150 }[settings.logo_size] || 110;
+  const contentAlign =
+    settings.alignment === 'center' ? 'center' : settings.alignment === 'start' ? 'start' : undefined;
+  const moreInfo = settings.show_more_info !== false;
 
   return (
-    <div className="receipt-paper">
+    <div className="receipt-paper" style={contentAlign ? { textAlign: contentAlign } : undefined}>
       {settings.show_logo && business?.logo_url ? (
-        <img className="receipt-logo" src={business.logo_url} alt="" />
+        <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: logoWidth }} />
       ) : null}
       <div className="receipt-center" style={{ fontWeight: 700, fontSize: 14 }}>{businessName}</div>
-      {settings.show_address && (business?.address || business?.city) ? (
+      {moreInfo && settings.show_address && (addressText || business?.city) ? (
         <div className="receipt-center receipt-meta">
-          {[business?.address, business?.city].filter(Boolean).join(', ')}
+          {[addressText, business?.city].filter(Boolean).join(', ')}
         </div>
       ) : null}
-      {settings.show_phone && business?.phone ? (
+      {moreInfo && settings.show_phone && business?.phone ? (
         <div className="receipt-center receipt-meta">{business.phone}</div>
       ) : null}
 
@@ -34,21 +44,31 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
 
       {settings.show_order_info !== false ? (
         <div className="receipt-meta">
-          <div className="receipt-row">
-            <span>{t('receipt_order_no')}</span>
-            <span>#{order?.order_number}</span>
-          </div>
-          {table ? (
+          {settings.show_order_number !== false ? (
+            <div className="receipt-row">
+              <span>{t('receipt_order_no')}</span>
+              <span>#{order?.order_number}</span>
+            </div>
+          ) : null}
+          {table && settings.show_table_number !== false ? (
             <div className="receipt-row">
               <span>{t('receipt_table')}</span>
               <span>{table.name}</span>
             </div>
           ) : null}
-          <div className="receipt-row">
-            <span>{t('receipt_date')}</span>
-            <span>{fmtDateTime(order?.created_at, locale, timeZone)}</span>
-          </div>
-          {settings.show_cashier ? (
+          {settings.show_datetime !== false ? (
+            <div className="receipt-row">
+              <span>{t('receipt_date')}</span>
+              <span>{fmtDateTime(order?.created_at, locale, timeZone)}</span>
+            </div>
+          ) : null}
+          {settings.show_customer_name !== false && order?.customer_name ? (
+            <div className="receipt-row">
+              <span>{t('receipt_customer')}</span>
+              <span>{order.customer_name}</span>
+            </div>
+          ) : null}
+          {moreInfo && settings.show_cashier ? (
             <div className="receipt-row">
               <span>{t('receipt_cashier')}</span>
               <span>{order?.created_by_name || '—'}</span>
@@ -64,15 +84,29 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
         <span>{t('label_total')}</span>
       </div>
       {(items || []).map((line, idx) => (
-        <div className="receipt-row receipt-item" key={`${line.name}-${idx}`} style={{ marginTop: 4 }}>
-          <span className="receipt-item-name">
-            {line.quantity} × {line.name}
-          </span>
-          <span style={{ whiteSpace: 'nowrap' }}>
-            {Number(line.line_total).toFixed(0)}
-          </span>
+        <div key={`${line.name}-${idx}`} style={{ marginTop: 4 }}>
+          <div className="receipt-row receipt-item">
+            <span className="receipt-item-name">
+              {line.quantity} × {line.name}
+            </span>
+            <span style={{ whiteSpace: 'nowrap' }}>
+              {Number(line.line_total).toFixed(0)}
+            </span>
+          </div>
+          {settings.show_notes !== false && line.notes ? (
+            <div className="receipt-meta receipt-item-name" style={{ paddingInlineStart: 12 }}>
+              {line.notes}
+            </div>
+          ) : null}
         </div>
       ))}
+
+      {settings.show_notes !== false && order?.notes ? (
+        <div className="receipt-meta" style={{ marginTop: 6 }}>
+          <div style={{ fontWeight: 700 }}>{t('receipt_notes')}</div>
+          <div>{order.notes}</div>
+        </div>
+      ) : null}
 
       <hr className="receipt-hr" />
 
@@ -112,7 +146,7 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
         receipt_settings.show_change_info is enabled; the order-details form
         always shows the same information regardless of this setting.
       */}
-      {showChangeInfo && settings.show_change_info !== false && lastChange ? (
+      {moreInfo && showChangeInfo && settings.show_change_info !== false && lastChange ? (
         <>
           <hr className="receipt-hr" />
           <div className="receipt-meta">

@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS businesses (
   email         text,
   website       text,
   address       text,
+  addresses     jsonb NOT NULL DEFAULT '{}'::jsonb,
   city          text,
   latitude      double precision,
   longitude     double precision,
@@ -34,6 +35,7 @@ CREATE TABLE IF NOT EXISTS businesses (
   working_hours jsonb NOT NULL DEFAULT '{}'::jsonb,
   receipt_settings jsonb NOT NULL DEFAULT '{}'::jsonb,
   notification_settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  dashboard_settings jsonb NOT NULL DEFAULT '{"show_overview":true,"show_insights":true,"show_order_notifications":true,"show_recent_orders":true,"show_notification_settings":true}'::jsonb,
   menu_settings jsonb NOT NULL DEFAULT '{"show_customer_menu":true,"show_admin_return":true}'::jsonb,
   editable_text jsonb NOT NULL DEFAULT '{}'::jsonb,
   timezone      text NOT NULL DEFAULT 'Asia/Baghdad',
@@ -434,3 +436,10 @@ ALTER TABLE advertisements ADD CONSTRAINT advertisements_placement_check
 
 CREATE INDEX IF NOT EXISTS ads_public_idx
   ON advertisements (business_id, placement, starts_at, ends_at) WHERE active;
+
+-- Tabbed business settings additions. Additive only: an existing business keeps
+-- its single `address` (still used as the fallback everywhere it was before)
+-- and gains an empty per-language address map, plus the dashboard section
+-- visibility flags every dashboard has always shown.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS addresses jsonb NOT NULL DEFAULT '{}'::jsonb;
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS dashboard_settings jsonb NOT NULL DEFAULT '{"show_overview":true,"show_insights":true,"show_order_notifications":true,"show_recent_orders":true,"show_notification_settings":true}'::jsonb;

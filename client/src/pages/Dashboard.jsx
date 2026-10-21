@@ -111,6 +111,14 @@ export default function Dashboard() {
 
   const timeZone = zoneFor(locale, data.business?.timezone || business?.timezone);
   const currency = data.business?.currency || business?.currency;
+  /*
+   * Section visibility comes from the Business Settings › Dashboard tab. A
+   * missing key means "shown", so a business that never opened that tab keeps
+   * the dashboard it always had. This only controls display — order processing
+   * and notifications keep running regardless.
+   */
+  const sections = business?.dashboard_settings || data.business?.dashboard_settings || {};
+  const show = (key) => sections[key] !== false;
 
   return (
     <div className="dash">
@@ -121,25 +129,28 @@ export default function Dashboard() {
       {/* ---- Date and working hours, then notification settings ---- */}
       <div className="dash-row dash-row--info">
         <DateHours hours={data.hours} timeZone={timeZone} locale={locale} />
-        <NotificationSettings
-          /* The business record is the single source of truth for notification
-             settings, so a change made from the header shows up here at once. */
-          settings={business?.notification_settings || data.notification_settings}
-          onChange={updateSettings}
-          push={push}
-          onPushToggle={onPushToggle}
-          pushError={pushError}
-          locale={locale}
-        />
+        {show('show_notification_settings') ? (
+          <NotificationSettings
+            /* The business record is the single source of truth for notification
+               settings, so a change made from the header shows up here at once. */
+            settings={business?.notification_settings || data.notification_settings}
+            onChange={updateSettings}
+            push={push}
+            onPushToggle={onPushToggle}
+            pushError={pushError}
+            locale={locale}
+          />
+        ) : null}
       </div>
 
       {/* ---- Four pastel order metrics ---- */}
-      <KpiCards kpi={data.kpi} locale={locale} />
+      {show('show_overview') ? <KpiCards kpi={data.kpi} locale={locale} /> : null}
 
       {/* ---- Financial overview ---- */}
       <FinanceOverview
         finance={data.finance}
         insights={data.insights}
+        showInsights={show('show_insights')}
         range={range}
         onRange={setRange}
         custom={custom}
@@ -159,18 +170,20 @@ export default function Dashboard() {
       </div>
 
       {/* ---- Order status counters ---- */}
-      <StatusBreakdown flow={data.order_flow} />
+      {show('show_order_notifications') ? <StatusBreakdown flow={data.order_flow} /> : null}
 
       {/* ---- Newest orders ---- */}
-      <NewOrders
-        orders={data.new_orders}
-        total={data.kpi?.total_orders || 0}
-        currency={currency}
-        locale={locale}
-        timeZone={timeZone}
-        failed={failed}
-        onRetry={() => load(false)}
-      />
+      {show('show_recent_orders') ? (
+        <NewOrders
+          orders={data.new_orders}
+          total={data.kpi?.total_orders || 0}
+          currency={currency}
+          locale={locale}
+          timeZone={timeZone}
+          failed={failed}
+          onRetry={() => load(false)}
+        />
+      ) : null}
 
       <ScrollTop />
     </div>

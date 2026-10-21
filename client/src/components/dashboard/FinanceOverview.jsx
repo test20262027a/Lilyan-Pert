@@ -53,6 +53,7 @@ export default function FinanceOverview({
   busy,
   currency,
   locale,
+  showInsights = true,
 }) {
   const { t } = useI18n();
   const f = finance || {};
@@ -126,7 +127,7 @@ export default function FinanceOverview({
           />
         </div>
 
-        <BusinessInsights insights={insights} finance={f} locale={locale} />
+        {showInsights ? <BusinessInsights insights={insights} finance={f} locale={locale} /> : null}
       </div>
 
       {picker ? (

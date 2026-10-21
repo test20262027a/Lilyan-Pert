@@ -210,6 +210,7 @@ router.get(
         timezone: biz.timezone,
         working_hours: biz.working_hours,
         notification_settings: biz.notification_settings,
+        dashboard_settings: biz.dashboard_settings,
         socials: biz.socials,
         logo_url: biz.logo_url,
       },

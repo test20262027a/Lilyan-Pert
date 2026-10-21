@@ -219,6 +219,15 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     adminMode && biz.menu_settings?.show_admin_return !== false && biz.menu_settings?.show_customer_menu !== false;
 
   /*
+   * The API ranks this business's best sellers from its own order history and
+   * only sends them while the owner enabled the recommendation; each id is
+   * resolved against the menu products that are actually sellable right now.
+   */
+  const bestProducts = (data.best_selling || [])
+    .map((row) => products.find((p) => p.id === row.id))
+    .filter(Boolean);
+
+  /*
    * Advertisements arrive already filtered by the API (enabled AND inside their
    * schedule) and ordered by priority; the placement decides where each strip
    * sits, so it never covers the category bar or the ordering controls.
@@ -334,6 +343,28 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
         <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
 
+        {bestProducts.length > 0 ? (
+          <section className="menu-section best-sellers">
+            <h2 style={{ fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="trophy" size={17} />
+              {t('customer_menu_best_sellers')}
+            </h2>
+            <div className="menu-item-grid">
+              {bestProducts.map((p) => (
+                <MenuProduct
+                  key={p.id}
+                  product={p}
+                  locale={locale}
+                  currency={currency}
+                  onAdd={add}
+                  addLabel={t('customer_menu_add')}
+                  promoLabel={t('customer_menu_promo')}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         {products.length === 0 ? (
           <EmptyState icon="coffee" title={t('customer_menu_no_products')} />
         ) : (
@@ -350,45 +381,15 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                     {products
                       .filter((p) => p.category_id === c.id)
                       .map((p) => (
-                        <article className="menu-item" key={p.id}>
-                          <span className="menu-item__thumb">
-                            {p.image_url ? (
-                              <img src={p.image_url} alt="" loading="lazy" />
-                            ) : (
-                              <Icon name="coffee" size={22} />
-                            )}
-                          </span>
-                          <div className="menu-item__info">
-                            {/* Product names stay fully visible on one line. */}
-                            <div className="product-name" title={localized(p, 'name', locale)}>
-                              {localized(p, 'name', locale)}
-                            </div>
-                            {localized(p, 'description', locale) ? (
-                              <div className="menu-item__desc">{localized(p, 'description', locale)}</div>
-                            ) : null}
-                            <div className="menu-item__foot">
-                              <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-                                {p.promo_price ? (
-                                  <span className="price-tag--old">
-                                    <Money value={p.price} currency={currency} />
-                                  </span>
-                                ) : null}
-                                <span className="price-tag">
-                                  <Money value={p.promo_price ?? p.price} currency={currency} />
-                                </span>
-                                {p.promo_price ? (
-                                  <Badge kind="pending">
-                                    <Icon name="tag" size={11} />
-                                    {t('customer_menu_promo')}
-                                  </Badge>
-                                ) : null}
-                              </span>
-                              <button className="add-btn" onClick={() => add(p)} aria-label={t('customer_menu_add')}>
-                                <Icon name="plus" size={19} />
-                              </button>
-                            </div>
-                          </div>
-                        </article>
+                        <MenuProduct
+                          key={p.id}
+                          product={p}
+                          locale={locale}
+                          currency={currency}
+                          onAdd={add}
+                          addLabel={t('customer_menu_add')}
+                          promoLabel={t('customer_menu_promo')}
+                        />
                       ))}
                   </div>
                 </section>
@@ -661,5 +662,49 @@ function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit })
         </>
       )}
     </Modal>
+  );
+}
+
+/**
+ * One sellable product card. Shared by the regular category sections and the
+ * best-selling strip, so both always offer the same price and add action.
+ */
+function MenuProduct({ product: p, locale, currency, onAdd, addLabel, promoLabel }) {
+  return (
+    <article className="menu-item">
+      <span className="menu-item__thumb">
+        {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <Icon name="coffee" size={22} />}
+      </span>
+      <div className="menu-item__info">
+        {/* Product names stay fully visible on one line. */}
+        <div className="product-name" title={localized(p, 'name', locale)}>
+          {localized(p, 'name', locale)}
+        </div>
+        {localized(p, 'description', locale) ? (
+          <div className="menu-item__desc">{localized(p, 'description', locale)}</div>
+        ) : null}
+        <div className="menu-item__foot">
+          <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
+            {p.promo_price ? (
+              <span className="price-tag--old">
+                <Money value={p.price} currency={currency} />
+              </span>
+            ) : null}
+            <span className="price-tag">
+              <Money value={p.promo_price ?? p.price} currency={currency} />
+            </span>
+            {p.promo_price ? (
+              <Badge kind="pending">
+                <Icon name="tag" size={11} />
+                {promoLabel}
+              </Badge>
+            ) : null}
+          </span>
+          <button className="add-btn" onClick={() => onAdd(p)} aria-label={addLabel}>
+            <Icon name="plus" size={19} />
+          </button>
+        </div>
+      </div>
+    </article>
   );
 }
