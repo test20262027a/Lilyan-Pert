@@ -1,6 +1,6 @@
 import express from 'express';
 import { q } from '../db.js';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, isUuid, notFound } from '../lib/http.js';
 import { addDays, localDay, safeZone } from '../lib/ranges.js';
 
@@ -48,6 +48,7 @@ const cleanTerm = (v) => String(v ?? '').replace(/[%_\\]/g, ' ').trim().slice(0,
 router.get(
   '/',
   withBusiness('manager'),
+  perm('activity.view'),
   ah(async (req, res) => {
     const business = req.businessId;
     const biz = (await q('SELECT timezone FROM businesses WHERE id = $1', [business])).rows[0];
@@ -218,6 +219,7 @@ router.get(
 router.delete(
   '/:kind/:id',
   withBusiness('manager'),
+  perm('activity.delete'),
   ah(async (req, res) => {
     const kind = String(req.params.kind);
     const id = String(req.params.id);

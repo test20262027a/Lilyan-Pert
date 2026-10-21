@@ -1,6 +1,6 @@
 import express from 'express';
 import { q } from '../db.js';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad } from '../lib/http.js';
 import { openStatus, zonedNow } from '../lib/hours.js';
 import {
@@ -29,6 +29,7 @@ const SOUND_KEYS = ['classic', 'double', 'soft', 'alert'];
 router.get(
   '/',
   withBusiness('staff'),
+  perm('dashboard.view'),
   ah(async (req, res) => {
     const b = req.businessId;
     const biz = (await q('SELECT * FROM businesses WHERE id = $1', [b])).rows[0];
@@ -277,6 +278,7 @@ router.get(
 router.get(
   '/statistics',
   withBusiness('staff'),
+  perm('statistics.view'),
   ah(async (req, res) => {
     const b = req.businessId;
     const biz = (await q('SELECT currency, timezone FROM businesses WHERE id = $1', [b])).rows[0];

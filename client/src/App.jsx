@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { Loading } from './components/ui';
+import { Loading, EmptyState } from './components/ui';
+import { useI18n } from './i18n';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -29,6 +30,20 @@ function RequireAuth({ children }) {
   return children;
 }
 
+/**
+ * Route-level permission gate. Hiding a sidebar entry is not enough — a typed
+ * URL lands here, and the same permission the API enforces is checked again.
+ */
+function RequirePermission({ perm, children }) {
+  const { can, loading } = useAuth();
+  const { t } = useI18n();
+  if (loading) return <Loading />;
+  if (!can(perm)) {
+    return <EmptyState icon="lock" title={t('access_denied')} hint={t('access_denied_hint')} />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -43,30 +58,30 @@ export default function App() {
           </RequireAuth>
         }
       >
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/menu" element={<MenuManagement />} />
-        <Route path="/orders" element={<Orders />} />
-        <Route path="/orders/:id" element={<OrderDetail />} />
-        <Route path="/order-menu" element={<AdminOrderMenu />} />
-        <Route path="/tables" element={<Tables />} />
-        <Route path="/reviews" element={<Reviews />} />
-        <Route path="/discounts" element={<Discounts />} />
-        <Route path="/advertisements" element={<Advertisements />} />
+        <Route path="/" element={<RequirePermission perm="dashboard.view"><Dashboard /></RequirePermission>} />
+        <Route path="/menu" element={<RequirePermission perm="menu.products.view"><MenuManagement /></RequirePermission>} />
+        <Route path="/orders" element={<RequirePermission perm="orders.view"><Orders /></RequirePermission>} />
+        <Route path="/orders/:id" element={<RequirePermission perm="orders.view"><OrderDetail /></RequirePermission>} />
+        <Route path="/order-menu" element={<RequirePermission perm="orders.view"><AdminOrderMenu /></RequirePermission>} />
+        <Route path="/tables" element={<RequirePermission perm="tables.view"><Tables /></RequirePermission>} />
+        <Route path="/reviews" element={<RequirePermission perm="reviews.view"><Reviews /></RequirePermission>} />
+        <Route path="/discounts" element={<RequirePermission perm="promotions.view"><Discounts /></RequirePermission>} />
+        <Route path="/advertisements" element={<RequirePermission perm="ads.view"><Advertisements /></RequirePermission>} />
         {/* Advertisements and promotions used to share one page; the old address
             still works and lands on the advertisements module. */}
         <Route path="/marketing" element={<Navigate to="/advertisements" replace />} />
-        <Route path="/statistics" element={<Statistics />} />
-        <Route path="/activity" element={<ActivityReports />} />
-        <Route path="/backups" element={<Backups />} />
+        <Route path="/statistics" element={<RequirePermission perm="statistics.view"><Statistics /></RequirePermission>} />
+        <Route path="/activity" element={<RequirePermission perm="activity.view"><ActivityReports /></RequirePermission>} />
+        <Route path="/backups" element={<RequirePermission perm="backup.full"><Backups /></RequirePermission>} />
         {/* The sample-data reset is the section at the end of Backups; this
             address opens the same page scrolled to it. */}
-        <Route path="/reset-sample" element={<Backups focus="reset" />} />
-        <Route path="/users" element={<Users />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route path="/reset-sample" element={<RequirePermission perm="reset_sample.full"><Backups focus="reset" /></RequirePermission>} />
+        <Route path="/users" element={<RequirePermission perm="users.view"><Users /></RequirePermission>} />
+        <Route path="/settings" element={<RequirePermission perm="settings.view"><Settings /></RequirePermission>} />
         {/* Menu settings live in the settings workspace; the text editor is
             its own page for the automatic receipt messages. */}
-        <Route path="/menu-settings" element={<Settings initialTab="menu" />} />
-        <Route path="/text-editor" element={<TextEditor />} />
+        <Route path="/menu-settings" element={<RequirePermission perm="menu_settings.view"><Settings initialTab="menu" /></RequirePermission>} />
+        <Route path="/text-editor" element={<RequirePermission perm="text_editor.view"><TextEditor /></RequirePermission>} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

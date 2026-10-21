@@ -54,9 +54,14 @@ CREATE TABLE IF NOT EXISTS memberships (
   user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   role        text NOT NULL CHECK (role IN ('owner','manager','staff','customer')),
   status      text NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled')),
+  -- Explicit module permissions ({ "orders.view": true, … }). NULL means "use
+  -- the role template", so every account created before this column existed
+  -- keeps exactly the access its role already granted.
+  permissions jsonb,
   created_at  timestamptz NOT NULL DEFAULT now(),
   UNIQUE (business_id, user_id)
 );
+ALTER TABLE memberships ADD COLUMN IF NOT EXISTS permissions jsonb;
 CREATE INDEX IF NOT EXISTS memberships_user_idx ON memberships(user_id);
 CREATE INDEX IF NOT EXISTS memberships_business_idx ON memberships(business_id);
 

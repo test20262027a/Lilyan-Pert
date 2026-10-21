@@ -1,6 +1,6 @@
 import express from 'express';
 import { q } from '../db.js';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, isUuid, notFound, num } from '../lib/http.js';
 
 const router = express.Router();
@@ -60,6 +60,7 @@ async function loadProduct(businessId, id) {
 router.get(
   '/categories',
   withBusiness('staff'),
+  perm('menu.categories.view'),
   ah(async (req, res) => {
     const { rows } = await q(
       `SELECT c.*,
@@ -78,6 +79,7 @@ router.get(
 router.post(
   '/categories',
   withBusiness('manager'),
+  perm('menu.categories.create'),
   ah(async (req, res) => {
     const b = req.body || {};
     const nameEn = catName(b.name_en);
@@ -104,6 +106,7 @@ router.post(
 router.put(
   '/categories/:id',
   withBusiness('manager'),
+  perm('menu.categories.edit'),
   ah(async (req, res) => {
     await loadCategory(req.businessId, req.params.id);
     const b = req.body || {};
@@ -139,6 +142,7 @@ router.put(
 router.delete(
   '/categories/:id',
   withBusiness('manager'),
+  perm('menu.categories.delete'),
   ah(async (req, res) => {
     await loadCategory(req.businessId, req.params.id);
     const used = await q('SELECT count(*)::int c FROM products WHERE category_id = $1', [req.params.id]);
@@ -155,6 +159,7 @@ router.delete(
 router.get(
   '/products',
   withBusiness('staff'),
+  perm('menu.products.view'),
   ah(async (req, res) => {
     const params = [req.businessId];
     let where = 'p.business_id = $1';
@@ -183,6 +188,7 @@ router.get(
 router.post(
   '/products',
   withBusiness('manager'),
+  perm('menu.products.create'),
   ah(async (req, res) => {
     const b = req.body || {};
     if (!b.name_en && !b.name_ku && !b.name_fa && !b.name_ar) throw bad('NAME_REQUIRED');
@@ -228,6 +234,7 @@ router.post(
 router.put(
   '/products/:id',
   withBusiness('manager'),
+  perm('menu.products.edit'),
   ah(async (req, res) => {
     await loadProduct(req.businessId, req.params.id);
     const b = req.body || {};
@@ -296,6 +303,7 @@ router.put(
 router.delete(
   '/products/:id',
   withBusiness('manager'),
+  perm('menu.products.delete'),
   ah(async (req, res) => {
     await loadProduct(req.businessId, req.params.id);
     await q('DELETE FROM products WHERE id=$1 AND business_id=$2', [req.params.id, req.businessId]);
@@ -310,6 +318,7 @@ router.delete(
 router.get(
   '/stats',
   withBusiness('staff'),
+  perm('menu.products.view'),
   ah(async (req, res) => {
     const b = req.businessId;
     const [cats, prods] = await Promise.all([
@@ -345,6 +354,7 @@ router.get(
 router.get(
   '/search',
   withBusiness('staff'),
+  perm('menu.products.view'),
   ah(async (req, res) => {
     const term = String(req.query.q || '').trim();
     if (!term) return res.json({ categories: [], products: [] });

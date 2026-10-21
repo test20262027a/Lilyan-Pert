@@ -23,7 +23,7 @@ const COLLAPSED_WIDTH = '72px';
  */
 export default function Sidebar({ open = false, onNavigate }) {
   const { t } = useI18n();
-  const { memberships, businessId, isManager, isOwner } = useAuth();
+  const { memberships, businessId, isManager, isOwner, can } = useAuth();
   const { business } = useBusiness();
   const location = useLocation();
 
@@ -86,7 +86,7 @@ export default function Sidebar({ open = false, onNavigate }) {
         <nav className="sidebar__nav">
           <SidebarNav
             items={NAV}
-            roles={{ isManager, isOwner }}
+            roles={{ isManager, isOwner, can }}
             currentKey={currentKey}
             collapsed={collapsed}
             openGroups={openGroups}

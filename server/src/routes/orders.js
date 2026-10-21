@@ -1,6 +1,6 @@
 import express from 'express';
 import { q, tx } from '../db.js';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, conflict, isUuid, notFound, num } from '../lib/http.js';
 import { safeZone } from '../lib/ranges.js';
 
@@ -32,6 +32,7 @@ function assertEditable(order) {
 router.get(
   '/',
   withBusiness('staff'),
+  perm('orders.view'),
   ah(async (req, res) => {
     const params = [req.businessId];
     const where = ['o.business_id = $1'];
@@ -128,6 +129,7 @@ router.get(
 router.get(
   '/:id',
   withBusiness('staff'),
+  perm('orders.view'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     const creator = await q('SELECT full_name, email FROM users WHERE id = $1', [order.created_by]);
@@ -161,6 +163,7 @@ router.get(
 router.get(
   '/:id/receipt',
   withBusiness('staff'),
+  perm('orders.print'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     const [items, table, business, prints] = await Promise.all([
@@ -190,6 +193,7 @@ router.get(
 router.post(
   '/:id/print',
   withBusiness('staff'),
+  perm('orders.print'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     if (req.body?.preview === true) {
@@ -209,6 +213,7 @@ router.post(
 router.post(
   '/',
   withBusiness('staff'),
+  perm('orders.edit'),
   ah(async (req, res) => {
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     if (!items.length) throw bad('EMPTY_ORDER');
@@ -315,6 +320,7 @@ router.post(
 router.patch(
   '/:id/status',
   withBusiness('staff'),
+  perm('orders.status'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     const next = String(req.body?.status || '');
@@ -365,6 +371,7 @@ router.patch(
 router.patch(
   '/:id',
   withBusiness('staff'),
+  perm('orders.edit'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     assertEditable(order);
@@ -391,6 +398,7 @@ router.patch(
 router.put(
   '/:id/items',
   withBusiness('staff'),
+  perm('orders.edit'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     assertEditable(order);
@@ -460,6 +468,7 @@ router.put(
 router.delete(
   '/:id',
   withBusiness('manager'),
+  perm('orders.edit'),
   ah(async (req, res) => {
     const order = await loadOrder(req.businessId, req.params.id);
     if (order.status === 'completed') throw conflict('ORDER_COMPLETED_LOCKED');

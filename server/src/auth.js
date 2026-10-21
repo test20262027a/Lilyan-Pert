@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { q } from './db.js';
+import { ALL_PERMISSIONS, effectivePermissions } from './lib/permissions.js';
 
 const SECRET =
   process.env.SESSION_SECRET || crypto.randomBytes(32).toString('hex');
@@ -111,13 +112,19 @@ export async function attachSession(req, _res, next) {
       if (rows[0]) {
         req.user = rows[0];
         const m = await q(
-          `SELECT m.business_id, m.role, m.status, b.name AS business_name, b.slug, b.theme
+          `SELECT m.business_id, m.role, m.status, m.permissions,
+                  b.name AS business_name, b.slug, b.theme
              FROM memberships m JOIN businesses b ON b.id = m.business_id
             WHERE m.user_id = $1 AND m.status = 'active'
             ORDER BY (m.role = 'owner') DESC, m.created_at`,
           [payload.uid],
         );
-        req.memberships = m.rows;
+        // A membership carries its effective permission list, never the raw
+        // stored object: the client can only ever be told what is really allowed.
+        req.memberships = m.rows.map((row) => ({
+          ...row,
+          permissions: effectivePermissions(row.role, row.permissions),
+        }));
       }
     }
     next();
@@ -180,6 +187,33 @@ export function withBusiness(minRole = 'staff') {
 
     req.businessId = chosen.business_id;
     req.role = req.user?.is_super_admin ? 'super_admin' : chosen.role;
+    /*
+     * Module permissions are resolved from the server's own membership record
+     * (never from the request), so a client that sends an edited permission set
+     * still gets exactly what its membership says.
+     */
+    req.permissions = req.user?.is_super_admin
+      ? ALL_PERMISSIONS.slice()
+      : chosen.permissions || effectivePermissions(chosen.role, null);
     next();
   };
+}
+
+/**
+ * Route guard for one module permission. Always mounted AFTER withBusiness, so
+ * the business and the caller's effective permissions are already resolved.
+ * The role rank remains the outer boundary; this is the finer check inside it.
+ */
+export function perm(key) {
+  return (req, res, next) => {
+    if (!req.permissions?.includes(key)) {
+      return res.status(403).json({ error: 'PERMISSION_DENIED' });
+    }
+    return next();
+  };
+}
+
+/** True when this request may perform `key` (for optional in-handler branches). */
+export function can(req, key) {
+  return Boolean(req.permissions?.includes(key));
 }

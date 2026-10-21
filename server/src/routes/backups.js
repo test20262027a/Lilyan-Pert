@@ -1,6 +1,6 @@
 import express from 'express';
 import { q, tx } from '../db.js';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, isUuid, notFound } from '../lib/http.js';
 import {
   BACKUP_MODULES,
@@ -14,6 +14,9 @@ import {
 const router = express.Router();
 router.use(requireAuth);
 router.use(withBusiness('owner'));
+// The elevated backup/restore privilege is its own permission: a role that
+// cannot hold it never reaches these routes, whatever the client asks for.
+router.use(perm('backup.full'));
 
 /** Never backed up: password hashes, sessions, private keys, device secrets. */
 const EXCLUDED_NOTE =
@@ -373,6 +376,7 @@ const PROTECTED = [
 
 router.post(
   '/reset-sample',
+  perm('reset_sample.full'),
   ah(async (req, res) => {
     const requested = Array.isArray(req.body?.groups) ? req.body.groups : [];
     const groups = requested.filter((g) => SAMPLE_GROUPS[g]);

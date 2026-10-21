@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { get, post, setBusinessId, patch } from '../api';
+import { ALL_PERMISSION_KEYS } from '../permissions';
 
 const AuthContext = createContext(null);
 
@@ -75,10 +76,18 @@ export function AuthProvider({ children }) {
     await refresh();
   }, [refresh]);
 
-  const value = useMemo(
-    () => ({
+  const value = useMemo(() => {
+    const activeMembership = state.memberships.find((m) => m.business_id === state.businessId);
+    // The server sends each membership's *effective* permission list; the client
+    // only ever reflects it. A super admin holds everything.
+    const permissions = state.user?.is_super_admin
+      ? ALL_PERMISSION_KEYS
+      : activeMembership?.permissions || [];
+    return {
       ...state,
-      role: state.memberships.find((m) => m.business_id === state.businessId)?.role || null,
+      role: activeMembership?.role || null,
+      permissions,
+      can: (key) => permissions.includes(key),
       isSuperAdmin: Boolean(state.user?.is_super_admin),
       isOwner: state.user?.is_super_admin
         || state.memberships.some((m) => m.business_id === state.businessId && m.role === 'owner'),
@@ -92,9 +101,8 @@ export function AuthProvider({ children }) {
       refresh,
       switchBusiness,
       updateProfile,
-    }),
-    [state, login, register, logout, refresh, switchBusiness, updateProfile],
-  );
+    };
+  }, [state, login, register, logout, refresh, switchBusiness, updateProfile]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

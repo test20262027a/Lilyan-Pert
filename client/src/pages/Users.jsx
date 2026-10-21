@@ -1,209 +1,336 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../components/Icon';
-import {
-  Alert,
-  ConfirmDialog,
-  EmptyState,
-  Field,
-  Loading,
-  Modal,
-  SectionCard,
-  Select,
-  Switch,
-  useToast,
-} from '../components/ui';
+import { Alert, ConfirmDialog, EmptyState, Field, Modal, Select, useToast } from '../components/ui';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
-import { del, get, patch, post } from '../api';
-import { fmtDate, zoneFor } from '../format';
 import { useBusiness } from '../context/BusinessContext';
+import { del, get, patch, post } from '../api';
+import PageHeroBanner from '../components/menu/PageHeroBanner';
+import UsersArtwork from '../components/users/UsersArtwork';
+import UserFormModal from '../components/users/UserFormModal';
+import { permissionSummaryKey } from '../permissions';
+import '../users.css';
 
-const ROLES = ['owner', 'manager', 'staff', 'customer'];
+/*
+ * User Management.
+ *
+ * The list is business memberships, loaded from the server with the search and
+ * filters applied there, so a search never only looks at what is on screen. The
+ * rows show the fields the reference shows — name/email, role, status, an
+ * effective-permission summary — with edit, access and delete actions on the
+ * physical left. Every mutation goes through the membership endpoints, which
+ * enforce role rank, module permissions and last-owner protection on their own.
+ */
+
+const EMPTY = { users: [], grantable: {}, presets: {}, mandatory: {}, business: null };
+
+const ERROR_KEYS = {
+  LAST_OWNER: 'user_last_owner',
+  CANNOT_MODIFY_SELF: 'user_cannot_modify_self',
+  ROLE_NOT_ASSIGNABLE: 'user_role_not_assignable',
+  PERMISSION_NOT_GRANTABLE: 'user_permission_not_grantable',
+  PERMISSION_DENIED: 'access_denied',
+  ALREADY_MEMBER: 'user_already_member',
+  WEAK_PASSWORD: 'auth_weak_password',
+  INVALID_EMAIL: 'user_invalid_email',
+  NAME_REQUIRED: 'user_name_required',
+};
 
 export default function Users() {
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const { business } = useBusiness();
-  const { user, isOwner, updateProfile } = useAuth();
+  const { user: me, can, updateProfile } = useAuth();
   const toast = useToast();
-  const timeZone = zoneFor(locale, business?.timezone);
 
-  const [users, setUsers] = useState([]);
-  const [canManage, setCanManage] = useState(false);
+  const [data, setData] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [role, setRole] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [modal, setModal] = useState(null);
+  const [confirm, setConfirm] = useState(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const [confirm, setConfirm] = useState(null);
+  const requestId = useRef(0);
+
+  const canCreate = can('users.create');
+  const canEdit = can('users.edit');
+  const canDelete = can('users.delete');
 
   const load = useCallback(async () => {
+    const id = ++requestId.current;
     setLoading(true);
+    setFailed(false);
     try {
-      const res = await get('/manage/users');
-      setUsers(res.users || []);
-      setCanManage(res.can_manage);
+      const params = new URLSearchParams();
+      if (search.trim()) params.set('q', search.trim());
+      if (role !== 'all') params.set('role', role);
+      if (status !== 'all') params.set('status', status);
+      const query = params.toString();
+      const res = await get(`/manage/users${query ? `?${query}` : ''}`);
+      // Only the newest request may write the list (a slow older search must not
+      // overwrite a newer one).
+      if (id === requestId.current) setData({ ...EMPTY, ...res });
+    } catch {
+      if (id === requestId.current) setFailed(true);
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
-  }, []);
+  }, [search, role, status]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    const timer = setTimeout(load, search ? 250 : 0);
+    return () => clearTimeout(timer);
+  }, [load, search]);
 
-  const changeRole = async (membershipId, role) => {
+  const failMessage = (err) => t(ERROR_KEYS[err.code] || 'error_generic');
+
+  const openCreate = () => setModal({ mode: 'create' });
+
+  const submitUser = async (values) => {
     setBusy(true);
     try {
-      await patch(`/manage/users/${membershipId}`, { role });
+      if (modal.mode === 'edit') {
+        await patch(`/manage/users/${modal.user.membership_id}`, {
+          full_name: values.full_name,
+          role: values.role,
+          status: values.status,
+          permissions: values.permissions,
+        });
+      } else {
+        await post('/manage/users', values);
+      }
+      setModal(null);
       await load();
+      toast.success(t('user_saved'));
     } catch (err) {
-      toast.error(err.code === 'LAST_OWNER' ? t('user_last_owner') : t('error_generic'));
+      toast.error(failMessage(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const toggleStatus = async (membershipId, status) => {
+  const applyConfirm = async () => {
+    if (!confirm) return;
     setBusy(true);
     try {
-      await patch(`/manage/users/${membershipId}`, { status });
-      await load();
-    } catch (err) {
-      toast.error(err.code === 'LAST_OWNER' ? t('user_last_owner') : t('error_generic'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const remove = async (membershipId) => {
-    setBusy(true);
-    try {
-      await del(`/manage/users/${membershipId}`);
+      if (confirm.kind === 'delete') {
+        await del(`/manage/users/${confirm.user.membership_id}`);
+      } else {
+        await patch(`/manage/users/${confirm.user.membership_id}`, {
+          status: confirm.user.status === 'active' ? 'disabled' : 'active',
+        });
+      }
       setConfirm(null);
       await load();
+      toast.success(t('state_saved'));
     } catch (err) {
-      toast.error(err.code === 'LAST_OWNER' ? t('user_last_owner') : t('error_generic'));
+      toast.error(failMessage(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const addUser = async (values) => {
+  const toggleStatus = async (member) => {
     setBusy(true);
     try {
-      await post('/manage/users', values);
-      toast.success(t('state_saved'));
-      setAddOpen(false);
+      await patch(`/manage/users/${member.membership_id}`, {
+        status: member.status === 'active' ? 'disabled' : 'active',
+      });
       await load();
     } catch (err) {
-      const map = {
-        ALREADY_MEMBER: t('user_already_member'),
-        WEAK_PASSWORD: t('auth_weak_password'),
-        INVALID_EMAIL: t('error_generic'),
-      };
-      toast.error(map[err.code] || t('error_generic'));
+      toast.error(failMessage(err));
     } finally {
       setBusy(false);
     }
   };
 
+  const roleOptions = [
+    { value: 'all', label: t('user_filter_role_all') },
+    ...['owner', 'manager', 'staff', 'customer'].map((key) => ({
+      value: key,
+      label: t(`role_${key}`),
+    })),
+  ];
+
+  const statusOptions = [
+    { value: 'all', label: t('user_filter_status_all') },
+    { value: 'active', label: t('user_active') },
+    { value: 'disabled', label: t('user_disabled') },
+  ];
+
+  const filtered = Boolean(search.trim() || role !== 'all' || status !== 'all');
+
   return (
-    <>
-      <div className="page-head">
-        <div className="page-head__text">
-          <h1>{t('user_title')}</h1>
-          <p>{t('user_subtitle')}</p>
+    <div className="users-page">
+      <PageHeroBanner
+        icon="users"
+        title={t('user_page_title')}
+        subtitle={t('user_page_subtitle')}
+        art={<UsersArtwork />}
+      >
+        <button type="button" className="btn btn--sm" onClick={() => setProfileOpen(true)}>
+          <Icon name="users" size={14} />
+          {t('user_my_account')}
+        </button>
+        <button type="button" className="btn btn--sm" onClick={() => setPasswordOpen(true)}>
+          <Icon name="key" size={14} />
+          {t('user_change_password')}
+        </button>
+        {canCreate ? (
+          <button type="button" className="um-add" onClick={openCreate}>
+            <span className="um-add__plus" aria-hidden="true">
+              <Icon name="plus" size={14} />
+            </span>
+            <span>{t('user_create')}</span>
+          </button>
+        ) : null}
+      </PageHeroBanner>
+
+      <div className="um-toolbar">
+        <span className="um-search">
+          <Icon name="search" size={16} className="um-search__icon" />
+          <input
+            className="um-search__input"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={t('user_search_placeholder')}
+            aria-label={t('user_search_placeholder')}
+          />
+        </span>
+        <div className="um-filter">
+          <Select value={role} onChange={setRole} options={roleOptions} aria-label={t('user_role')} />
         </div>
-        <div className="page-head__actions">
-          <button className="btn btn--sm" onClick={() => setProfileOpen(true)}>
-            <Icon name="users" size={15} />
-            {t('user_my_account')}
-          </button>
-          <button className="btn btn--sm" onClick={() => setPasswordOpen(true)}>
-            <Icon name="key" size={15} />
-            {t('user_change_password')}
-          </button>
-          {isOwner ? (
-            <button className="btn btn--primary btn--sm" onClick={() => setAddOpen(true)}>
-              <Icon name="plus" size={15} />
-              {t('user_create')}
-            </button>
-          ) : null}
+        <div className="um-filter">
+          <Select value={status} onChange={setStatus} options={statusOptions} aria-label={t('label_status')} />
         </div>
       </div>
 
-      {!canManage ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
+      {failed ? (
+        <Alert kind="error">
+          {t('error_generic')}{' '}
+          <button type="button" className="btn btn--sm" onClick={load}>
+            {t('action_retry')}
+          </button>
+        </Alert>
+      ) : null}
 
-      <SectionCard icon="users" iconClass="ic-blue" title={t('user_title')}>
+      <div className="um-list" aria-busy={loading}>
         {loading ? (
-          <Loading />
-        ) : users.length === 0 ? (
-          <EmptyState icon="users" title={t('user_no_users')} />
+          [0, 1, 2, 3].map((row) => (
+            <div className="um-row um-row--skeleton" key={row} aria-hidden="true">
+              <span className="um-skel" style={{ width: 170, height: 12 }} />
+              <span className="um-skel" style={{ width: 60, height: 20, borderRadius: 999 }} />
+              <span className="um-skel" style={{ width: 52, height: 20, borderRadius: 999 }} />
+              <span className="um-skel" style={{ width: 130, height: 11 }} />
+            </div>
+          ))
+        ) : data.users.length === 0 ? (
+          <EmptyState
+            icon="users"
+            title={filtered ? t('user_search_empty') : t('user_no_users')}
+            hint={filtered ? t('user_search_empty_hint') : undefined}
+          />
         ) : (
-          <div className="table-wrap">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>{t('label_full_name')}</th>
-                  <th>{t('label_email')}</th>
-                  <th>{t('label_phone')}</th>
-                  <th>{t('user_role')}</th>
-                  <th>{t('label_status')}</th>
-                  <th>{t('label_created_at')}</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.membership_id}>
-                    <td style={{ fontWeight: 650 }}>{u.full_name || '—'}</td>
-                    <td dir="ltr">{u.email}</td>
-                    <td dir="ltr">{u.phone || '—'}</td>
-                    <td>
-                      {canManage ? (
-                        <div style={{ minWidth: 130 }}>
-                          <Select
-                            value={u.role}
-                            onChange={(v) => changeRole(u.membership_id, v)}
-                            aria-label={t('user_role')}
-                            options={ROLES.map((r) => ({ value: r, label: t(`role_${r}`) }))}
-                          />
-                        </div>
-                      ) : (
-                        <span className={`badge ${u.role === 'owner' ? 'badge--completed' : ''}`}>{t(`role_${u.role}`)}</span>
-                      )}
-                    </td>
-                    <td>
-                      <span className={`badge badge--${u.status === 'active' ? 'active' : 'inactive'}`}>
-                        {u.status === 'active' ? t('user_active') : t('user_disabled')}
-                      </span>
-                    </td>
-                    <td style={{ whiteSpace: 'nowrap' }}>{fmtDate(u.created_at, locale, timeZone, { short: true })}</td>
-                    <td>
-                      {canManage ? (
-                        <div className="btn-row">
-                          <button
-                            className="btn btn--sm"
-                            disabled={busy}
-                            onClick={() => toggleStatus(u.membership_id, u.status === 'active' ? 'disabled' : 'active')}
-                          >
-                            <Icon name={u.status === 'active' ? 'close' : 'check'} size={13} />
-                          </button>
-                          <button className="btn btn--sm btn--danger-soft" disabled={busy} onClick={() => setConfirm(u)}>
-                            <Icon name="trash" size={13} />
-                          </button>
-                        </div>
-                      ) : null}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </SectionCard>
+          data.users.map((member) => {
+            const self = member.id === me?.id;
+            const activeMember = member.status === 'active';
+            return (
+              <div className="um-row" key={member.membership_id}>
+                <div className="um-row__identity">
+                  <span className="um-row__name">{member.full_name || member.email}</span>
+                  <span className="um-row__email" dir="ltr">
+                    {member.email}
+                  </span>
+                </div>
 
-      {addOpen ? <AddUserModal busy={busy} onClose={() => setAddOpen(false)} onSave={addUser} /> : null}
+                <span className={`um-badge um-badge--${member.role}`}>{t(`role_${member.role}`)}</span>
+
+                <span className={`um-badge ${activeMember ? 'um-badge--active' : 'um-badge--off'}`}>
+                  {t(activeMember ? 'user_active' : 'user_disabled')}
+                </span>
+
+                <span className="um-row__perms">
+                  {t('user_permissions_label')}{' '}
+                  <strong>{t(permissionSummaryKey(member))}</strong>
+                </span>
+
+                <div className="um-row__actions">
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      className="um-iconbtn"
+                      onClick={() => setModal({ mode: 'edit', user: member })}
+                      title={t('user_edit_title')}
+                      aria-label={t('user_edit_title')}
+                    >
+                      <Icon name="pencil" size={15} />
+                    </button>
+                  ) : null}
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      className="um-iconbtn"
+                      disabled={self || busy}
+                      onClick={() =>
+                        activeMember
+                          ? setConfirm({ kind: 'access', user: member })
+                          : toggleStatus(member)
+                      }
+                      title={self
+                        ? t('user_cannot_modify_self')
+                        : t(activeMember ? 'user_deactivate' : 'user_activate')}
+                      aria-label={t(activeMember ? 'user_deactivate' : 'user_activate')}
+                    >
+                      <Icon name={activeMember ? 'eyeOff' : 'eye'} size={15} />
+                    </button>
+                  ) : null}
+                  {canDelete ? (
+                    <button
+                      type="button"
+                      className="um-iconbtn um-iconbtn--danger"
+                      disabled={self || busy}
+                      onClick={() => setConfirm({ kind: 'delete', user: member })}
+                      title={self ? t('user_cannot_modify_self') : t('action_delete')}
+                      aria-label={t('action_delete')}
+                    >
+                      <Icon name="trash" size={15} />
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {modal ? (
+        <UserFormModal
+          mode={modal.mode}
+          user={modal.user}
+          business={data.business || business}
+          grantable={data.grantable}
+          presets={data.presets}
+          mandatory={data.mandatory}
+          busy={busy}
+          onClose={() => setModal(null)}
+          onSubmit={submitUser}
+        />
+      ) : null}
+
+      {confirm ? (
+        <ConfirmDialog
+          title={confirm.kind === 'delete' ? t('user_delete_confirm') : t('user_disable_confirm')}
+          message={confirm.user.full_name || confirm.user.email}
+          danger={confirm.kind === 'delete'}
+          busy={busy}
+          confirmLabel={confirm.kind === 'delete' ? t('action_delete') : t('user_deactivate')}
+          onCancel={() => setConfirm(null)}
+          onConfirm={applyConfirm}
+        />
+      ) : null}
 
       {passwordOpen ? (
         <ChangePasswordModal
@@ -214,72 +341,13 @@ export default function Users() {
 
       {profileOpen ? (
         <ProfileModal
-          user={user}
+          user={me}
           onClose={() => setProfileOpen(false)}
-          onSave={async (values) => {
-            await updateProfile(values);
-            setProfileOpen(false);
-            toast.success(t('state_saved'));
-          }}
+          updateProfile={updateProfile}
+          onSaved={() => toast.success(t('state_saved'))}
         />
       ) : null}
-
-      {confirm ? (
-        <ConfirmDialog
-          title={t('user_delete_confirm')}
-          message={confirm.full_name || confirm.email}
-          danger
-          busy={busy}
-          confirmLabel={t('action_delete')}
-          onCancel={() => setConfirm(null)}
-          onConfirm={() => remove(confirm.membership_id)}
-        />
-      ) : null}
-    </>
-  );
-}
-
-function AddUserModal({ busy, onClose, onSave }) {
-  const { t } = useI18n();
-  const [values, setValues] = useState({ email: '', full_name: '', phone: '', password: '', role: 'staff' });
-  return (
-    <Modal
-      title={t('user_create')}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button className="btn btn--primary" onClick={() => onSave(values)} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-            {t('action_create')}
-          </button>
-        </>
-      }
-    >
-      <div className="form-grid">
-        <Field label={t('label_email')}>
-          <input className="input" type="email" dir="ltr" value={values.email} onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))} />
-        </Field>
-        <Field label={t('label_full_name')}>
-          <input className="input" value={values.full_name} onChange={(e) => setValues((v) => ({ ...v, full_name: e.target.value }))} />
-        </Field>
-        <Field label={t('label_phone')}>
-          <input className="input" dir="ltr" value={values.phone} onChange={(e) => setValues((v) => ({ ...v, phone: e.target.value }))} />
-        </Field>
-        <Field label={t('user_role')}>
-          <Select
-            value={values.role}
-            onChange={(v) => setValues((s) => ({ ...s, role: v }))}
-            options={['manager', 'staff', 'customer'].map((r) => ({ value: r, label: t(`role_${r}`) }))}
-          />
-        </Field>
-        <Field label={t('label_password')} hint={t('auth_weak_password')} className="span-2">
-          <input className="input" type="password" value={values.password} onChange={(e) => setValues((v) => ({ ...v, password: e.target.value }))} />
-        </Field>
-      </div>
-    </Modal>
+    </div>
   );
 }
 
@@ -322,17 +390,27 @@ function ChangePasswordModal({ onClose, onSaved }) {
       {error ? <Alert kind="error">{error}</Alert> : null}
       <div className="form-grid">
         <Field label={t('label_current_password')}>
-          <input className="input" type="password" value={values.current_password} onChange={(e) => setValues((v) => ({ ...v, current_password: e.target.value }))} />
+          <input
+            className="input"
+            type="password"
+            value={values.current_password}
+            onChange={(e) => setValues((v) => ({ ...v, current_password: e.target.value }))}
+          />
         </Field>
         <Field label={t('label_new_password')}>
-          <input className="input" type="password" value={values.new_password} onChange={(e) => setValues((v) => ({ ...v, new_password: e.target.value }))} />
+          <input
+            className="input"
+            type="password"
+            value={values.new_password}
+            onChange={(e) => setValues((v) => ({ ...v, new_password: e.target.value }))}
+          />
         </Field>
       </div>
     </Modal>
   );
 }
 
-function ProfileModal({ user, onClose, onSave }) {
+function ProfileModal({ user, onClose, updateProfile, onSaved }) {
   const { t } = useI18n();
   const [values, setValues] = useState({
     full_name: user?.full_name || '',
@@ -348,7 +426,14 @@ function ProfileModal({ user, onClose, onSave }) {
           <button className="btn" onClick={onClose}>
             {t('action_cancel')}
           </button>
-          <button className="btn btn--primary" onClick={() => onSave(values)}>
+          <button
+            className="btn btn--primary"
+            onClick={async () => {
+              await updateProfile(values);
+              onSaved();
+              onClose();
+            }}
+          >
             <Icon name="check" size={16} />
             {t('action_save')}
           </button>
@@ -357,10 +442,19 @@ function ProfileModal({ user, onClose, onSave }) {
     >
       <div className="form-grid">
         <Field label={t('label_full_name')}>
-          <input className="input" value={values.full_name} onChange={(e) => setValues((v) => ({ ...v, full_name: e.target.value }))} />
+          <input
+            className="input"
+            value={values.full_name}
+            onChange={(e) => setValues((v) => ({ ...v, full_name: e.target.value }))}
+          />
         </Field>
         <Field label={t('label_phone')}>
-          <input className="input" dir="ltr" value={values.phone} onChange={(e) => setValues((v) => ({ ...v, phone: e.target.value }))} />
+          <input
+            className="input"
+            dir="ltr"
+            value={values.phone}
+            onChange={(e) => setValues((v) => ({ ...v, phone: e.target.value }))}
+          />
         </Field>
         <Field label={t('label_language')}>
           <Select

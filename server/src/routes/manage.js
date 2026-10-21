@@ -1,7 +1,15 @@
 import crypto from 'node:crypto';
 import express from 'express';
 import { q, tx } from '../db.js';
-import { requireAuth, withBusiness, hashPassword } from '../auth.js';
+import { requireAuth, withBusiness, perm, hashPassword } from '../auth.js';
+import {
+  MANDATORY,
+  effectivePermissions,
+  grantablePermissions,
+  isFullAccess,
+  rolePresets,
+  sanitizePermissions,
+} from '../lib/permissions.js';
 import { ah, bad, conflict, isUuid, notFound } from '../lib/http.js';
 import { getVapidKeys } from '../lib/push.js';
 
@@ -52,6 +60,7 @@ function orderInt(raw) {
 router.get(
   '/tables',
   withBusiness('staff'),
+  perm('tables.view'),
   ah(async (req, res) => {
     const { rows } = await q(
       // The owner's display order first, then the stable fallback for tables
@@ -73,6 +82,7 @@ router.get(
 router.post(
   '/tables',
   withBusiness('manager'),
+  perm('tables.create'),
   ah(async (req, res) => {
     const names = tableNames(req.body);
     const name = displayName(names);
@@ -149,6 +159,7 @@ router.post(
 router.put(
   '/tables/:id',
   withBusiness('manager'),
+  perm('tables.edit'),
   ah(async (req, res) => {
     const b = req.body || {};
     // Renaming keeps `qr_token` untouched: an already distributed QR link must
@@ -237,6 +248,7 @@ router.put(
 router.delete(
   '/tables/:id',
   withBusiness('manager'),
+  perm('tables.delete'),
   ah(async (req, res) => {
     // Ownership first: a malformed or another business's table id reads as
     // "not found" and never reaches the database as a query.
@@ -267,6 +279,7 @@ router.delete(
 router.get(
   '/reviews',
   withBusiness('staff'),
+  perm('reviews.view'),
   ah(async (req, res) => {
     const parsedLimit = Number.parseInt(req.query.limit, 10);
     const parsedOffset = Number.parseInt(req.query.offset, 10);
@@ -325,6 +338,7 @@ router.get(
 router.patch(
   '/reviews/:id',
   withBusiness('manager'),
+  perm('reviews.edit'),
   ah(async (req, res) => {
     const status = String(req.body?.status || '');
     if (!['pending', 'approved', 'rejected'].includes(status)) throw bad('INVALID_STATUS');
@@ -340,6 +354,7 @@ router.patch(
 router.delete(
   '/reviews/:id',
   withBusiness('manager'),
+  perm('reviews.delete'),
   ah(async (req, res) => {
     const { rowCount } = await q('DELETE FROM reviews WHERE id = $1 AND business_id = $2', [
       req.params.id,
@@ -522,6 +537,7 @@ function adValues(input) {
 router.get(
   '/ads',
   withBusiness('staff'),
+  perm('ads.view'),
   ah(async (req, res) => {
     const { rows } = await q(
       `${AD_SELECT} WHERE a.business_id = $1 ORDER BY a.sort_order DESC, a.created_at DESC`,
@@ -534,6 +550,7 @@ router.get(
 router.post(
   '/ads',
   withBusiness('manager'),
+  perm('ads.create'),
   ah(async (req, res) => {
     const input = await adInput(req.businessId, req.body || {});
     const { rows } = await q(
@@ -553,6 +570,7 @@ router.post(
 router.put(
   '/ads/:id',
   withBusiness('manager'),
+  perm('ads.edit'),
   ah(async (req, res) => {
     const found = await q('SELECT * FROM advertisements WHERE id = $1 AND business_id = $2', [
       req.params.id,
@@ -588,6 +606,7 @@ router.put(
 router.delete(
   '/ads/:id',
   withBusiness('manager'),
+  perm('ads.delete'),
   ah(async (req, res) => {
     const { rowCount } = await q('DELETE FROM advertisements WHERE id = $1 AND business_id = $2', [
       req.params.id,
@@ -601,6 +620,7 @@ router.delete(
 router.get(
   '/promotions',
   withBusiness('staff'),
+  perm('promotions.view'),
   ah(async (req, res) => {
     const { rows } = await q(
       `SELECT p.*, pr.name_en AS product_name_en, pr.name_ku AS product_name_ku,
@@ -730,6 +750,7 @@ async function promotionInput(businessId, body, excludeId) {
 router.post(
   '/promotions',
   withBusiness('manager'),
+  perm('promotions.create'),
   ah(async (req, res) => {
     const b = req.body || {};
     const input = await promotionInput(req.businessId, b);
@@ -764,6 +785,7 @@ router.post(
 router.put(
   '/promotions/:id',
   withBusiness('manager'),
+  perm('promotions.edit'),
   ah(async (req, res) => {
     const b = req.body || {};
     if (!isUuid(req.params.id)) throw notFound('PROMOTION_NOT_FOUND');
@@ -806,6 +828,7 @@ router.put(
 router.delete(
   '/promotions/:id',
   withBusiness('manager'),
+  perm('promotions.delete'),
   ah(async (req, res) => {
     const { rowCount } = await q('DELETE FROM promotions WHERE id = $1 AND business_id = $2', [
       req.params.id,
@@ -818,44 +841,149 @@ router.delete(
 
 /* ---------------------------------------------------------------- users */
 
-router.get(
-  '/users',
-  withBusiness('manager'),
-  ah(async (req, res) => {
-    const { rows } = await q(
-      `SELECT m.id AS membership_id, m.role, m.status, m.created_at,
-              u.id, u.email, u.full_name, u.phone, u.locale
-         FROM memberships m JOIN users u ON u.id = m.user_id
-        WHERE m.business_id = $1
-        ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'manager' THEN 1 WHEN 'staff' THEN 2 ELSE 3 END, u.created_at`,
-      [req.businessId],
-    );
-    res.json({ users: rows, can_manage: req.role === 'owner' || req.role === 'super_admin' });
-  }),
-);
+/*
+ * User management works on business memberships, never on the global identity.
+ * Removing someone from this business deletes their membership row only; the
+ * `users` row (and every order, receipt print and audit entry they produced)
+ * stays, so history keeps its attribution. Role rank is the outer boundary and
+ * the stored module permission set is the finer one, both enforced here.
+ */
+const ASSIGNABLE_ROLES = ['owner', 'manager', 'staff', 'customer'];
+const ROLE_RANK = { customer: 0, staff: 1, manager: 2, owner: 3 };
 
-async function countOwners(client, businessId) {
-  const { rows } = await client.query(
+async function countOwners(businessId) {
+  const { rows } = await q(
     `SELECT count(*)::int AS c FROM memberships WHERE business_id = $1 AND role = 'owner' AND status = 'active'`,
     [businessId],
   );
   return rows[0].c;
 }
 
+/** The actor's own rank inside this business (super admin ranks above owner). */
+function actorRank(req) {
+  return req.role === 'super_admin' ? 4 : ROLE_RANK[req.role] ?? -1;
+}
+
+/** True when the actor may hand out `role` / act on a membership of that role. */
+function canActOnRole(req, role) {
+  if (req.role === 'super_admin') return true;
+  const rank = ROLE_RANK[role] ?? -1;
+  // An owner may create or manage another owner; anyone else stays strictly below.
+  if (req.role === 'owner') return rank <= ROLE_RANK.owner;
+  return rank < actorRank(req);
+}
+
+/** The permissions object a save should store (NULL = follow the role template). */
+function permissionPayload(req, role, submitted) {
+  if (submitted === undefined || submitted === null) return null;
+  const allowed = new Set(grantablePermissions(role, req.permissions));
+  for (const [key, value] of Object.entries(submitted)) {
+    if (value === true && !allowed.has(key)) throw bad('PERMISSION_NOT_GRANTABLE');
+  }
+  return sanitizePermissions(role, submitted, req.permissions);
+}
+
+router.get(
+  '/users',
+  withBusiness('manager'),
+  perm('users.view'),
+  ah(async (req, res) => {
+    const params = [req.businessId];
+    const where = ['m.business_id = $1'];
+
+    const term = String(req.query.q || '').trim().slice(0, 80);
+    if (term) {
+      params.push(`%${term}%`);
+      where.push(
+        `(u.full_name ILIKE $${params.length} OR u.email ILIKE $${params.length}
+          OR u.phone ILIKE $${params.length})`,
+      );
+    }
+    if (ASSIGNABLE_ROLES.includes(req.query.role)) {
+      params.push(req.query.role);
+      where.push(`m.role = $${params.length}`);
+    }
+    if (['active', 'disabled'].includes(req.query.status)) {
+      params.push(req.query.status);
+      where.push(`m.status = $${params.length}`);
+    }
+
+    const { rows } = await q(
+      `SELECT m.id AS membership_id, m.role, m.status, m.permissions, m.created_at,
+              u.id, u.email, u.full_name, u.phone, u.locale
+         FROM memberships m JOIN users u ON u.id = m.user_id
+        WHERE ${where.join(' AND ')}
+        ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'manager' THEN 1 WHEN 'staff' THEN 2 ELSE 3 END,
+                 u.created_at`,
+      params,
+    );
+
+    const business = await q('SELECT id, name, name_ku, name_fa, name_ar, name_en FROM businesses WHERE id = $1', [
+      req.businessId,
+    ]);
+
+    // Each row carries what the membership really holds; the raw stored object
+    // and the role template are both resolved on the server.
+    const users = rows.map((r) => {
+      const permissions = effectivePermissions(r.role, r.permissions);
+      return {
+        membership_id: r.membership_id,
+        id: r.id,
+        email: r.email,
+        full_name: r.full_name,
+        phone: r.phone,
+        locale: r.locale,
+        role: r.role,
+        status: r.status,
+        created_at: r.created_at,
+        permissions,
+        full_access: isFullAccess(r.role, permissions),
+      };
+    });
+
+    // What this administrator may grant, per role — the UI's locked cards come
+    // from the server, so an edited page still cannot select them.
+    const grantable = Object.fromEntries(
+      ASSIGNABLE_ROLES.map((role) => [role, grantablePermissions(role, req.permissions)]),
+    );
+
+    res.json({
+      users,
+      can_manage: true,
+      actor_role: req.role,
+      grantable,
+      presets: rolePresets(),
+      mandatory: MANDATORY,
+      business: business.rows[0] || null,
+    });
+  }),
+);
+
 router.post(
   '/users',
-  withBusiness('owner'),
+  withBusiness('manager'),
+  perm('users.create'),
   ah(async (req, res) => {
+    const fullName = String(req.body?.full_name || '').trim().slice(0, 120);
     const email = String(req.body?.email || '').trim().toLowerCase();
+    const phone = String(req.body?.phone || '').trim().slice(0, 40) || null;
     const password = String(req.body?.password || '');
-    const role = ['manager', 'staff', 'customer'].includes(req.body?.role) ? req.body.role : 'staff';
-    if (!email.includes('@')) throw bad('INVALID_EMAIL');
-    if (password.length < 8) throw bad('WEAK_PASSWORD');
+    const role = ASSIGNABLE_ROLES.includes(req.body?.role) ? req.body.role : 'staff';
+    const status = req.body?.status === 'disabled' ? 'disabled' : 'active';
+
+    if (!fullName) throw bad('NAME_REQUIRED');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw bad('INVALID_EMAIL');
+    if (!canActOnRole(req, role) || (role === 'owner' && !['owner', 'super_admin'].includes(req.role))) {
+      throw bad('ROLE_NOT_ASSIGNABLE');
+    }
+    const permissions = permissionPayload(req, role, req.body?.permissions);
 
     const created = await tx(async (c) => {
       let userId;
       const existing = await c.query('SELECT id FROM users WHERE email = $1', [email]);
       if (existing.rows[0]) {
+        // An existing identity is linked, never duplicated — and its password
+        // is never touched by a business administrator.
         userId = existing.rows[0].id;
         const member = await c.query(
           'SELECT 1 FROM memberships WHERE business_id = $1 AND user_id = $2',
@@ -863,77 +991,128 @@ router.post(
         );
         if (member.rowCount) throw conflict('ALREADY_MEMBER');
       } else {
+        if (password.length < 8) throw bad('WEAK_PASSWORD');
         const u = await c.query(
           `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1,$2,$3,$4) RETURNING id`,
-          [
-            email,
-            hashPassword(password),
-            req.body?.full_name ? String(req.body.full_name).slice(0, 120) : null,
-            req.body?.phone ? String(req.body.phone).slice(0, 40) : null,
-          ],
+          [email, hashPassword(password), fullName, phone],
         );
         userId = u.rows[0].id;
       }
-      await c.query('INSERT INTO memberships (business_id, user_id, role) VALUES ($1,$2,$3)', [
-        req.businessId,
-        userId,
-        role,
-      ]);
-      return userId;
+      const membership = await c.query(
+        `INSERT INTO memberships (business_id, user_id, role, status, permissions)
+         VALUES ($1,$2,$3,$4,$5) RETURNING id`,
+        [req.businessId, userId, role, status, permissions],
+      );
+      return { userId, membershipId: membership.rows[0].id };
     });
 
-    res.status(201).json({ ok: true, user_id: created });
+    res.status(201).json({
+      ok: true,
+      user_id: created.userId,
+      membership_id: created.membershipId,
+      linked: Boolean(created.userId) && Boolean(req.body?.link_only),
+    });
   }),
 );
 
 router.patch(
   '/users/:membershipId',
-  withBusiness('owner'),
+  withBusiness('manager'),
+  perm('users.edit'),
   ah(async (req, res) => {
+    if (!isUuid(req.params.membershipId)) throw notFound('MEMBERSHIP_NOT_FOUND');
     const { rows } = await q(
-      'SELECT * FROM memberships WHERE id = $1 AND business_id = $2',
+      `SELECT m.*, u.email FROM memberships m JOIN users u ON u.id = m.user_id
+        WHERE m.id = $1 AND m.business_id = $2`,
       [req.params.membershipId, req.businessId],
     );
     const membership = rows[0];
     if (!membership) throw notFound('MEMBERSHIP_NOT_FOUND');
+    if (!canActOnRole(req, membership.role)) throw bad('ROLE_NOT_ASSIGNABLE');
 
-    const nextRole = ['owner', 'manager', 'staff', 'customer'].includes(req.body?.role)
-      ? req.body.role
-      : null;
-    const nextStatus = ['active', 'disabled'].includes(req.body?.status) ? req.body.status : null;
+    const self = membership.user_id === req.user.id;
+    const b = req.body || {};
+    const nextRole = b.role === undefined ? null : b.role;
+    const nextStatus = b.status === undefined ? null : b.status;
 
-    if (membership.role === 'owner' && nextRole && nextRole !== 'owner') {
-      const owners = await countOwners({ query: (t, p) => q(t, p) }, req.businessId);
-      if (owners <= 1) throw conflict('LAST_OWNER');
+    if (nextRole !== null) {
+      if (!ASSIGNABLE_ROLES.includes(nextRole)) throw bad('INVALID_ROLE');
+      if (!canActOnRole(req, nextRole)) throw bad('ROLE_NOT_ASSIGNABLE');
+      if (nextRole === 'owner' && !['owner', 'super_admin'].includes(req.role)) {
+        throw bad('ROLE_NOT_ASSIGNABLE');
+      }
+      if (self && nextRole !== membership.role) throw conflict('CANNOT_MODIFY_SELF');
     }
-    if (membership.role === 'owner' && nextStatus === 'disabled') {
-      const owners = await countOwners({ query: (t, p) => q(t, p) }, req.businessId);
-      if (owners <= 1) throw conflict('LAST_OWNER');
+    if (nextStatus !== null) {
+      if (!['active', 'disabled'].includes(nextStatus)) throw bad('INVALID_STATUS');
+      // Nobody can deactivate their own account — that is how a business locks
+      // itself out with a single click.
+      if (self && nextStatus === 'disabled') throw conflict('CANNOT_MODIFY_SELF');
     }
 
-    const updated = await q(
-      `UPDATE memberships SET role = COALESCE($3, role), status = COALESCE($4, status)
-        WHERE id = $1 AND business_id = $2 RETURNING *`,
-      [req.params.membershipId, req.businessId, nextRole, nextStatus],
-    );
-    res.json({ membership: updated.rows[0] });
+    const losingOwner =
+      membership.role === 'owner' &&
+      ((nextRole !== null && nextRole !== 'owner') || nextStatus === 'disabled');
+    if (losingOwner && (await countOwners(req.businessId)) <= 1) throw conflict('LAST_OWNER');
+
+    // Permissions are validated against the role the membership will end up in.
+    const targetRole = nextRole || membership.role;
+    const permissions = permissionPayload(req, targetRole, b.permissions);
+
+    const updated = await tx(async (c) => {
+      const saved = await c.query(
+        `UPDATE memberships SET role = COALESCE($3, role),
+                                status = COALESCE($4, status),
+                                permissions = CASE WHEN $5::boolean THEN $6::jsonb ELSE permissions END
+          WHERE id = $1 AND business_id = $2 RETURNING *`,
+        [
+          req.params.membershipId,
+          req.businessId,
+          nextRole,
+          nextStatus,
+          b.permissions !== undefined,
+          permissions === null ? null : JSON.stringify(permissions),
+        ],
+      );
+      // The identity's own profile fields live on `users`, not on the membership.
+      if (b.full_name !== undefined || b.phone !== undefined) {
+        const fullName = b.full_name === undefined ? null : String(b.full_name).trim().slice(0, 120);
+        if (b.full_name !== undefined && !fullName) throw bad('NAME_REQUIRED');
+        await c.query(
+          `UPDATE users SET full_name = COALESCE($2, full_name),
+                            phone = COALESCE($3, phone), updated_at = now()
+            WHERE id = $1`,
+          [membership.user_id, fullName, b.phone === undefined ? null : String(b.phone).slice(0, 40)],
+        );
+      }
+      return saved.rows[0];
+    });
+
+    res.json({
+      membership: updated,
+      permissions: effectivePermissions(updated.role, updated.permissions),
+    });
   }),
 );
 
 router.delete(
   '/users/:membershipId',
-  withBusiness('owner'),
+  withBusiness('manager'),
+  perm('users.delete'),
   ah(async (req, res) => {
+    if (!isUuid(req.params.membershipId)) throw notFound('MEMBERSHIP_NOT_FOUND');
     const { rows } = await q(
       'SELECT * FROM memberships WHERE id = $1 AND business_id = $2',
       [req.params.membershipId, req.businessId],
     );
     const membership = rows[0];
     if (!membership) throw notFound('MEMBERSHIP_NOT_FOUND');
-    if (membership.role === 'owner') {
-      const owners = await countOwners({ query: (t, p) => q(t, p) }, req.businessId);
-      if (owners <= 1) throw conflict('LAST_OWNER');
+    if (!canActOnRole(req, membership.role)) throw bad('ROLE_NOT_ASSIGNABLE');
+    if (membership.user_id === req.user.id) throw conflict('CANNOT_MODIFY_SELF');
+    if (membership.role === 'owner' && (await countOwners(req.businessId)) <= 1) {
+      throw conflict('LAST_OWNER');
     }
+    // Membership only: the global identity, its orders and its audit trail stay.
     await q('DELETE FROM memberships WHERE id = $1 AND business_id = $2', [
       req.params.membershipId,
       req.businessId,

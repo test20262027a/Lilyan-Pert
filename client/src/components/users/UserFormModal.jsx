@@ -1,0 +1,377 @@
+import { useEffect, useId, useMemo, useState } from 'react';
+import Icon from '../Icon';
+import { useI18n } from '../../i18n';
+import UsersArtwork from './UsersArtwork';
+import {
+  PERMISSION_CARDS,
+  actionLabelKey,
+  cardGrantable,
+} from '../../permissions';
+
+/*
+ * Add / Edit User dialog.
+ *
+ * Three fixed zones — the illustrated cream header, the independently
+ * scrolling light form body, and the white sticky footer — so the permission
+ * list can be long without ever hiding Save or covering the last card.
+ *
+ * The permission matrix renders the canonical catalog; which checkboxes are
+ * editable comes from the server (`grantable` per role). A locked card is
+ * visibly muted with a lock icon and its inputs are disabled, so it cannot be
+ * turned on from the page. The server validates the same rules again on save.
+ */
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function Section({ title, children, aside }) {
+  return (
+    <section className="um-sec">
+      <div className="um-sec__head">
+        <span className="um-sec__bar" aria-hidden="true" />
+        <h3 className="um-sec__title">{title}</h3>
+        {aside ? <div className="um-sec__aside">{aside}</div> : null}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function PasswordField({ label, value, onChange, autoComplete }) {
+  const { t } = useI18n();
+  const [shown, setShown] = useState(false);
+  return (
+    <label className="um-field">
+      <span className="um-field__label">{label}</span>
+      <span className="um-field__wrap">
+        <input
+          className="um-input"
+          type={shown ? 'text' : 'password'}
+          dir="ltr"
+          autoComplete={autoComplete}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+        <button
+          type="button"
+          className="um-field__eye"
+          onClick={() => setShown((s) => !s)}
+          aria-label={t(shown ? 'user_hide_password' : 'user_show_password')}
+          title={t(shown ? 'user_hide_password' : 'user_show_password')}
+        >
+          <Icon name={shown ? 'eyeOff' : 'eye'} size={15} />
+        </button>
+      </span>
+    </label>
+  );
+}
+
+function PermissionCard({ card, permissions, grantable, mandatory, onToggle }) {
+  const { t } = useI18n();
+  const groups = card.subgroups || [{ label: null, perms: card.perms }];
+  const editable = cardGrantable(card, grantable);
+
+  const renderCheck = (key) => {
+    const locked = !grantable.includes(key);
+    const required = mandatory.includes(key);
+    const checked = Boolean(permissions[key]);
+    return (
+      <label key={key} className={`um-check ${locked ? 'is-locked' : ''} ${required ? 'is-required' : ''}`}>
+        <input
+          type="checkbox"
+          checked={checked}
+          disabled={locked}
+          onChange={(e) => onToggle(key, e.target.checked)}
+        />
+        <span className="um-check__box" aria-hidden="true">
+          <Icon name="check" size={11} />
+        </span>
+        <span className="um-check__label">{t(actionLabelKey(key))}</span>
+      </label>
+    );
+  };
+
+  return (
+    <div className={`um-permcard ${editable ? '' : 'is-locked'}`}>
+      <div className="um-permcard__head">
+        <h4 className="um-permcard__title">{t(card.label)}</h4>
+        {editable ? null : <Icon name="lock" size={13} className="um-permcard__lock" />}
+      </div>
+      {groups.map((group, index) => (
+        <div className="um-permgroup" key={group.label || index}>
+          {group.label ? <span className="um-permgroup__label">{t(group.label)}</span> : null}
+          <div className="um-permgroup__checks">{group.perms.map(renderCheck)}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default function UserFormModal({
+  mode = 'create',
+  user,
+  business,
+  grantable = {},
+  presets = {},
+  mandatory = {},
+  busy,
+  onClose,
+  onSubmit,
+}) {
+  const { t } = useI18n();
+  const titleId = useId();
+
+  const [fullName, setFullName] = useState(user?.full_name || '');
+  const [email, setEmail] = useState(user?.email || '');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState(user?.role || 'staff');
+  const [active, setActive] = useState(user ? user.status === 'active' : true);
+  const [permissions, setPermissions] = useState(() =>
+    Object.fromEntries((user?.permissions || []).map((key) => [key, true])),
+  );
+  const [roleNotice, setRoleNotice] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [onClose]);
+
+  const roleOptions = useMemo(
+    () => ['owner', 'manager', 'staff', 'customer'].filter((key) => (grantable[key] || []).length > 0),
+    [grantable],
+  );
+  const currentGrantable = grantable[role] || [];
+  const currentMandatory = mandatory[role] || [];
+
+  const dirty =
+    fullName !== (user?.full_name || '')
+    || email !== (user?.email || '')
+    || password.length > 0
+    || role !== (user?.role || 'staff')
+    || active !== (user ? user.status === 'active' : true)
+    || JSON.stringify(permissions)
+      !== JSON.stringify(Object.fromEntries((user?.permissions || []).map((key) => [key, true])));
+
+  const close = () => {
+    // Meaningful unsaved input is never discarded behind a stray click.
+    if (dirty && !window.confirm(t('user_discard_confirm'))) return;
+    onClose?.();
+  };
+
+  /*
+   * Selecting a role loads that role's canonical preset inside the scope this
+   * administrator may actually grant. A change is announced, never silent, so
+   * custom permissions that fall outside the new role are visible before save.
+   */
+  const changeRole = (next) => {
+    if (next === role) return;
+    const allowed = grantable[next] || [];
+    const preset = (presets[next] || []).filter((key) => allowed.includes(key));
+    setPermissions(Object.fromEntries(preset.map((key) => [key, true])));
+    setRole(next);
+    setRoleNotice(mode === 'edit');
+  };
+
+  const toggle = (key, on) => {
+    if (!currentGrantable.includes(key)) return;
+    setPermissions((current) => {
+      if (on) return { ...current, [key]: true };
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setPermissions(Object.fromEntries(currentGrantable.map((key) => [key, true])));
+  };
+
+  const clearAll = () => {
+    // Mandatory abilities stay: an account must never be locked out of its shell.
+    setPermissions(Object.fromEntries(currentMandatory.map((key) => [key, true])));
+  };
+
+  const submit = () => {
+    const name = fullName.trim();
+    if (!name) return setError(t('user_name_required'));
+    if (!EMAIL_RE.test(email.trim())) return setError(t('user_invalid_email'));
+    if (password && password.length < 8) return setError(t('auth_weak_password'));
+    if (password !== confirmPassword) return setError(t('user_password_mismatch'));
+    setError(null);
+    return onSubmit({
+      full_name: name,
+      email: email.trim(),
+      password: password || undefined,
+      role,
+      status: active ? 'active' : 'disabled',
+      permissions,
+    });
+  };
+
+  const activeGrantableCount = currentGrantable.length;
+
+  return (
+    <div
+      className="um-backdrop"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) close();
+      }}
+    >
+      <div className="um-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <header className="um-modal__head">
+          <div className="um-modal__art" aria-hidden="true">
+            <UsersArtwork />
+          </div>
+          <div className="um-modal__identity">
+            <span className="um-modal__glyph">
+              <Icon name="users" size={19} />
+            </span>
+            <h2 className="um-modal__title" id={titleId}>
+              {mode === 'edit' ? t('user_edit_title') : t('user_create')}
+            </h2>
+          </div>
+          <button
+            type="button"
+            className="um-modal__close"
+            onClick={close}
+            aria-label={t('action_close')}
+            title={t('action_close')}
+          >
+            <Icon name="close" size={16} />
+          </button>
+        </header>
+
+        <div className="um-modal__body">
+          {error ? <div className="um-error">{error}</div> : null}
+
+          <Section title={t('user_section_general')}>
+            <div className="um-fields">
+              <label className="um-field">
+                <span className="um-field__label">{t('label_full_name')}</span>
+                <input
+                  className="um-input"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  autoComplete="name"
+                />
+              </label>
+              <label className="um-field">
+                <span className="um-field__label">{t('user_email_username')}</span>
+                <input
+                  className="um-input"
+                  dir="ltr"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
+              </label>
+            </div>
+          </Section>
+
+          <Section title={t('user_section_password')}>
+            <div className="um-fields um-fields--2">
+              <PasswordField
+                label={t('label_password')}
+                value={password}
+                onChange={setPassword}
+                autoComplete="new-password"
+              />
+              <PasswordField
+                label={t('user_confirm_password')}
+                value={confirmPassword}
+                onChange={setConfirmPassword}
+                autoComplete="new-password"
+              />
+            </div>
+            <p className="um-note">{t('user_password_notice')}</p>
+          </Section>
+
+          <Section title={t('user_section_role')}>
+            <div className="um-fields um-fields--2">
+              <label className="um-field">
+                <span className="um-field__label">{t('user_role')}</span>
+                <select className="um-input um-select" value={role} onChange={(e) => changeRole(e.target.value)}>
+                  {roleOptions.map((key) => (
+                    <option key={key} value={key}>
+                      {t(`role_${key}`)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="um-field">
+                <span className="um-field__label">{t('user_assigned_business')}</span>
+                <input className="um-input" value={business?.name || ''} readOnly disabled />
+              </label>
+            </div>
+
+            <div className="um-status">
+              <div className="um-status__text">
+                <span className="um-status__label">{t('label_status')}</span>
+                <span className="um-status__hint">{t(active ? 'user_active' : 'user_disabled')}</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={active}
+                aria-label={t('label_status')}
+                className={`um-switch ${active ? 'is-on' : ''}`}
+                onClick={() => setActive((v) => !v)}
+              >
+                <span className="um-switch__dot" />
+              </button>
+            </div>
+            {roleNotice ? <p className="um-note">{t('user_role_preset_notice')}</p> : null}
+          </Section>
+
+          <Section
+            title={t('user_section_permissions')}
+            aside={
+              <div className="um-perm-actions">
+                <button type="button" className="um-mini" onClick={selectAll} disabled={!activeGrantableCount}>
+                  {t('user_select_all')}
+                </button>
+                <button type="button" className="um-mini" onClick={clearAll}>
+                  {t('user_clear_all')}
+                </button>
+              </div>
+            }
+          >
+            <div className="um-perm-list">
+              {PERMISSION_CARDS.map((card) => (
+                <PermissionCard
+                  key={card.id}
+                  card={card}
+                  permissions={permissions}
+                  grantable={currentGrantable}
+                  mandatory={currentMandatory}
+                  onToggle={toggle}
+                />
+              ))}
+            </div>
+            <p className="um-note">{t('user_locked_hint')}</p>
+          </Section>
+        </div>
+
+        <footer className="um-modal__foot">
+          <button type="button" className="um-btn" onClick={close} disabled={busy}>
+            {t('action_cancel')}
+          </button>
+          <button type="button" className="um-btn um-btn--primary" onClick={submit} disabled={busy}>
+            {busy ? <span className="spinner" /> : null}
+            {t('action_save')}
+          </button>
+        </footer>
+      </div>
+    </div>
+  );
+}

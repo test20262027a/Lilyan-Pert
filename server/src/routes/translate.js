@@ -1,5 +1,5 @@
 import express from 'express';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad } from '../lib/http.js';
 
 /*
@@ -48,6 +48,7 @@ const placeholdersOf = (text) => (String(text).match(PLACEHOLDER) || []).map((p)
 router.post(
   '/translate',
   withBusiness('manager'),
+  perm('text_editor.edit'),
   ah(async (req, res) => {
     const text = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
     if (!text) throw bad('TEXT_REQUIRED');

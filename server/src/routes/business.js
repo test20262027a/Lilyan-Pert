@@ -1,6 +1,6 @@
 import express from 'express';
 import { q } from '../db.js';
-import { requireAuth, withBusiness } from '../auth.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, conflict } from '../lib/http.js';
 import { normalizeMenuSettings } from '../lib/menu-settings.js';
 import { normalizeReceiptMessages } from '../lib/receipt-messages.js';
@@ -58,6 +58,7 @@ router.get(
 router.put(
   '/',
   withBusiness('manager'),
+  perm('settings.edit'),
   ah(async (req, res) => {
     const body = { ...(req.body || {}) };
     /*
