@@ -2,6 +2,7 @@ import express from 'express';
 import { q, tx } from '../db.js';
 import { ah, bad, isUuid, notFound } from '../lib/http.js';
 import { pushNewOrder } from '../lib/push.js';
+import { menuContext, normalizeMenuSettings } from '../lib/menu-settings.js';
 
 const router = express.Router();
 
@@ -54,13 +55,41 @@ router.get(
   ah(async (req, res) => {
     const business = await loadBusiness(req.params.key);
 
+    /*
+     * The same payload serves both menu contexts. The in-store ordering menu
+     * asks for `context=main`; every public visitor is the `qr` context.
+     */
+    const settings = normalizeMenuSettings(business.menu_settings);
+    const menu = menuContext(settings, req.query.context === 'main' ? 'main' : 'qr');
+
+    /*
+     * Table identification follows the configured mode:
+     *   manual      — the scanned token is ignored; the guest picks a table.
+     *   qr          — only a valid scanned token associates a table.
+     *   qr_fallback — the token is tried first, the guest may pick a table.
+     * A token that no longer exists (or belongs to another business, or a
+     * disabled table) is never accepted; the menu says so instead of guessing.
+     */
     let table = null;
-    if (req.query.table) {
+    let tableState = menu.context === 'qr' ? 'missing' : 'none';
+    const token = req.query.table ? String(req.query.table).slice(0, 64) : '';
+    if (menu.context === 'qr' && menu.table_mode !== 'manual' && token) {
       const t = await q(
-        'SELECT id, name, zone, seats FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
-        [String(req.query.table).slice(0, 64), business.id],
+        'SELECT id, name, zone, seats, qr_token FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
+        [token, business.id],
       );
       table = t.rows[0] || null;
+      tableState = table ? 'resolved' : 'invalid';
+    }
+
+    // Only the two modes that let a guest choose need the business's table list.
+    let tables = [];
+    if (menu.context === 'qr' && menu.table_mode !== 'qr') {
+      const rows = await q(
+        'SELECT id, name, zone FROM tables WHERE business_id = $1 AND active = true ORDER BY name',
+        [business.id],
+      );
+      tables = rows.rows;
     }
 
     const [cats, prods, promos, ads, reviews] = await Promise.all([
@@ -148,7 +177,7 @@ router.get(
     const bestSettings = business.menu_settings?.best_selling || {};
     const bestCount = Math.min(20, Math.max(1, Math.floor(Number(bestSettings.count) || 6)));
     let bestSelling = [];
-    if (bestSettings.enabled === true) {
+    if (bestSettings.enabled === true && menu.features.best_selling) {
       const best = await q(
         `SELECT p.id, sum(i.quantity)::int AS units
            FROM order_items i
@@ -163,6 +192,24 @@ router.get(
         [business.id, bestCount],
       );
       bestSelling = best.rows;
+    }
+
+    /*
+     * The featured strip uses the business's own "special" flag — no invented
+     * products, and only rows that are still sellable right now.
+     */
+    let featuredIds = [];
+    if (menu.features.featured) {
+      const featured = await q(
+        `SELECT p.id
+           FROM products p JOIN categories c ON c.id = p.category_id
+          WHERE p.business_id = $1 AND p.featured = true
+            AND p.active = true AND p.available = true AND c.active = true
+          ORDER BY p.sort_order, p.created_at
+          LIMIT 12`,
+        [business.id],
+      );
+      featuredIds = featured.rows.map((row) => row.id);
     }
 
     res.json({
@@ -195,12 +242,18 @@ router.get(
         timezone: business.timezone,
       },
       menu_disabled: business.menu_settings?.show_customer_menu === false,
+      menu,
       table,
+      table_state: tableState,
+      tables,
       categories: cats.rows,
       products,
-      advertisements: ads.rows,
+      /* The advertisement module is untouched; its banners are simply withheld
+         from a context where the owner turned them off. */
+      advertisements: menu.features.ads ? ads.rows : [],
       reviews: reviews.rows,
       best_selling: bestSelling,
+      featured_ids: featuredIds,
     });
   }),
 );
@@ -251,16 +304,41 @@ router.post(
       throw bad('MENU_DISABLED');
     }
 
+    /*
+     * The ordering policy is enforced here, not only in the menu UI: a guest
+     * whose context has the cart, checkout or ordering switched off cannot post
+     * an order by calling this endpoint directly.
+     */
+    const settings = normalizeMenuSettings(business.menu_settings);
+    const menu = menuContext(settings, 'qr');
+    if (!menu.can_order) throw bad('ORDERING_DISABLED');
+
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     if (!items.length) throw bad('EMPTY_ORDER');
     if (items.length > 60) throw bad('TOO_MANY_ITEMS');
 
     const result = await tx(async (c) => {
+      /*
+       * Table resolution follows the configured identification mode. A token is
+       * only ever accepted when it belongs to this business and its table is
+       * still active; a manual id is validated the same way, so neither a forged
+       * token nor another tenant's table can be attached to an order.
+       */
       let table = null;
-      if (req.body?.table_token) {
+      const mode = menu.table_mode;
+      if (req.body?.table_token && mode !== 'manual') {
         const t = await c.query(
           'SELECT id, name FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
           [String(req.body.table_token).slice(0, 64), business.id],
+        );
+        table = t.rows[0] || null;
+        if (!table) throw bad('INVALID_TABLE');
+      }
+      if (!table && req.body?.table_id && mode !== 'qr') {
+        if (!isUuid(String(req.body.table_id))) throw bad('INVALID_TABLE');
+        const t = await c.query(
+          'SELECT id, name FROM tables WHERE id = $1 AND business_id = $2 AND active = true',
+          [req.body.table_id, business.id],
         );
         table = t.rows[0] || null;
         if (!table) throw bad('INVALID_TABLE');

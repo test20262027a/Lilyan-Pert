@@ -65,7 +65,7 @@ export default function App() {
         {/* Menu settings and editable menu text both live in the Customer Menu
             tab of the same workspace; these addresses open it directly. */}
         <Route path="/menu-settings" element={<Settings initialTab="menu" />} />
-        <Route path="/text-editor" element={<Settings initialTab="menu" />} />
+        <Route path="/text-editor" element={<Settings initialTab="menutext" />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

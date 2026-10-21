@@ -2,6 +2,7 @@ import express from 'express';
 import { q } from '../db.js';
 import { requireAuth, withBusiness } from '../auth.js';
 import { ah, bad } from '../lib/http.js';
+import { normalizeMenuSettings } from '../lib/menu-settings.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -58,6 +59,14 @@ router.put(
   withBusiness('manager'),
   ah(async (req, res) => {
     const body = { ...(req.body || {}) };
+    /*
+     * Menu Settings is stored as one canonical object: unknown table modes and
+     * non-boolean switches are coerced here, so a direct request can never save
+     * a configuration the menus cannot interpret.
+     */
+    if (body.menu_settings && typeof body.menu_settings === 'object') {
+      body.menu_settings = normalizeMenuSettings(body.menu_settings);
+    }
     /*
      * The admin-return control is meaningless while the customer menu is off,
      * so the rule is enforced here too and not only in the settings screen: a

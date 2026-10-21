@@ -43,6 +43,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const [stuck, setStuck] = useState(false);
   const [placed, setPlaced] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [detail, setDetail] = useState(null);
+  const [tableId, setTableId] = useState('');
   const headerRef = useRef(null);
 
   const storageKey = `lilyan.cart.${key}`;
@@ -51,6 +53,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     setLoading(true);
     try {
       const url = new URL(`/api/public/menu/${key}`, window.location.origin);
+      // The in-store ordering menu is the "main" context; a public visitor is "qr".
+      if (adminMode) url.searchParams.set('context', 'main');
       const tableToken = new URLSearchParams(window.location.search).get('table');
       if (tableToken) url.searchParams.set('table', tableToken);
       const res = await fetch(url.toString(), { credentials: 'include' });
@@ -63,7 +67,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     } finally {
       setLoading(false);
     }
-  }, [key]);
+  }, [key, adminMode]);
 
   useEffect(() => {
     load();
@@ -163,6 +167,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         // recalculates the discount, so the amount is never taken from here.
         res = await post(`/public/orders/${key}`, {
           table_token: data?.table?.qr_token || null,
+          // Only sent in the modes that allow choosing a table; the server
+          // validates it against this business before attaching it.
+          table_id: tableId || null,
           customer_name,
           customer_phone,
           notes,
@@ -176,6 +183,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       toast.success(t('customer_menu_order_placed'));
     } catch (err) {
       if (err.code === 'MENU_DISABLED') toast.error(t('customer_menu_unavailable'));
+      else if (err.code === 'ORDERING_DISABLED') toast.error(t('customer_ordering_disabled'));
+      else if (err.code === 'INVALID_TABLE') toast.error(t('customer_table_invalid'));
       else if (err.code === 'PROMO_MIN_ORDER') toast.error(t('customer_promo_min_order'));
       else if (String(err.code || '').startsWith('PROMO_')) toast.error(t('customer_promo_invalid'));
       else toast.error(t('error_generic'));
@@ -219,12 +228,34 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     adminMode && biz.menu_settings?.show_admin_return !== false && biz.menu_settings?.show_customer_menu !== false;
 
   /*
+   * The server resolves the Menu Settings for this context (main or qr), so the
+   * guest only ever sees what the owner enabled there, and a missing payload
+   * from an older API keeps every feature visible.
+   */
+  const features = data.menu?.features || {};
+  const ordering = data.menu?.ordering || {};
+  const showFeature = (name) => features[name] !== false;
+  const allowAction = (name) => ordering[name] !== false;
+  const tableMode = data.menu?.table_mode || 'qr';
+  const cartEnabled = allowAction('cart');
+  const checkoutEnabled = cartEnabled && allowAction('checkout');
+  const orderingEnabled = checkoutEnabled && allowAction('order');
+  /* In manual mode the guest always picks a table; the fallback mode only asks
+     when the scanned QR did not identify one. */
+  const needsTableChoice = !data.table && (tableMode === 'manual' || tableMode === 'qr_fallback');
+
+  /*
    * The API ranks this business's best sellers from its own order history and
    * only sends them while the owner enabled the recommendation; each id is
    * resolved against the menu products that are actually sellable right now.
    */
   const bestProducts = (data.best_selling || [])
     .map((row) => products.find((p) => p.id === row.id))
+    .filter(Boolean);
+
+  /* The featured strip is likewise resolved from the business's own products. */
+  const featuredProducts = (data.featured_ids || [])
+    .map((id) => products.find((p) => p.id === id))
     .filter(Boolean);
 
   /*
@@ -291,14 +322,17 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                 </option>
               ))}
             </select>
-            <button className="ghost-btn" onClick={() => setCartOpen(true)} aria-label={t('customer_menu_cart')}>
-              <Icon name="cart" size={18} />
-              {cartCount > 0 ? <span style={{ fontWeight: 800 }}>{cartCount}</span> : null}
-            </button>
+            {cartEnabled ? (
+              <button className="ghost-btn" onClick={() => setCartOpen(true)} aria-label={t('customer_menu_cart')}>
+                <Icon name="cart" size={18} />
+                {cartCount > 0 ? <span style={{ fontWeight: 800 }}>{cartCount}</span> : null}
+              </button>
+            ) : null}
           </div>
         </div>
       </header>
 
+      {showFeature('categories') ? (
       <div className={`category-bar ${stuck ? 'is-stuck' : ''}`}>
         <div className="category-bar__scroll">
           <button
@@ -322,26 +356,56 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           ))}
         </div>
       </div>
+      ) : null}
 
       <main className="customer-body">
-        <div className="card card--pad">
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Icon name="search" size={17} />
-            <input
-              className="input"
-              value={query}
-              placeholder={t('customer_menu_search')}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+        {showFeature('search') || biz.editable_text?.welcome?.[locale] ? (
+          <div className="card card--pad">
+            {showFeature('search') ? (
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <Icon name="search" size={17} />
+                <input
+                  className="input"
+                  value={query}
+                  placeholder={t('customer_menu_search')}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+            ) : null}
+            {biz.editable_text?.welcome?.[locale] ? (
+              <p style={{ marginTop: 10, color: 'var(--muted)', fontSize: 13 }}>
+                {biz.editable_text.welcome[locale]}
+              </p>
+            ) : null}
           </div>
-          {biz.editable_text?.welcome?.[locale] ? (
-            <p style={{ marginTop: 10, color: 'var(--muted)', fontSize: 13 }}>
-              {biz.editable_text.welcome[locale]}
-            </p>
-          ) : null}
-        </div>
+        ) : null}
 
         <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
+
+        {featuredProducts.length > 0 ? (
+          <section className="menu-section featured-products">
+            <h2 style={{ fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="sparkles" size={17} />
+              {t('customer_menu_featured')}
+            </h2>
+            <div className="menu-item-grid">
+              {featuredProducts.map((p) => (
+                <MenuProduct
+                  key={p.id}
+                  product={p}
+                  locale={locale}
+                  currency={currency}
+                  onAdd={add}
+                  addLabel={t('customer_menu_add')}
+                  promoLabel={t('customer_menu_promo')}
+                  showPrices={showFeature('prices')}
+                  canAdd={cartEnabled}
+                  onOpen={showFeature('details') ? setDetail : undefined}
+                />
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         {bestProducts.length > 0 ? (
           <section className="menu-section best-sellers">
@@ -359,6 +423,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   onAdd={add}
                   addLabel={t('customer_menu_add')}
                   promoLabel={t('customer_menu_promo')}
+                  showPrices={showFeature('prices')}
+                  canAdd={cartEnabled}
+                  onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
             </div>
@@ -389,6 +456,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                           onAdd={add}
                           addLabel={t('customer_menu_add')}
                           promoLabel={t('customer_menu_promo')}
+                          showPrices={showFeature('prices')}
+                          canAdd={cartEnabled}
+                          onOpen={showFeature('details') ? setDetail : undefined}
                         />
                       ))}
                   </div>
@@ -402,12 +472,12 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} timeZone={timeZone} />
 
         <footer style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12.5, paddingBottom: 8 }}>
-          {biz.phone ? (
+          {showFeature('social') && biz.phone ? (
             <div>
               <Icon name="phone" size={12} /> <span dir="ltr">{biz.phone}</span>
             </div>
           ) : null}
-          {biz.socials && Object.keys(biz.socials).length ? (
+          {showFeature('social') && biz.socials && Object.keys(biz.socials).length ? (
             <div className="social-list" style={{ justifyContent: 'center', marginTop: 8 }}>
               {Object.entries(biz.socials).map(([network, url]) => (
                 <a key={network} className={`social-link social-link--${network}`} href={url} target="_blank" rel="noreferrer" aria-label={network}>
@@ -419,7 +489,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         </footer>
       </main>
 
-      {cartCount > 0 && !placed ? (
+      {cartEnabled && cartCount > 0 && !placed ? (
         <div className="cart-bar">
           <div className="cart-bar__inner">
             <button className="btn btn--primary" style={{ flex: 1 }} onClick={() => setCartOpen(true)}>
@@ -453,10 +523,32 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           lines={cartLines}
           currency={currency}
           busy={busy}
+          canCheckout={checkoutEnabled}
+          canOrder={orderingEnabled}
+          tableMode={tableMode}
+          tableMissing={!data.table && tableMode === 'qr'}
+          needsTableChoice={needsTableChoice}
+          tables={data.tables || []}
+          tableId={tableId}
+          onTable={setTableId}
           onClose={() => setCartOpen(false)}
           onQty={setQty}
           onClear={() => setCart({})}
           onSubmit={placeOrder}
+        />
+      ) : null}
+
+      {detail ? (
+        <ProductDetail
+          product={detail}
+          locale={locale}
+          currency={currency}
+          showPrices={showFeature('prices')}
+          canAdd={cartEnabled}
+          addLabel={t('customer_menu_add')}
+          promoLabel={t('customer_menu_promo')}
+          onAdd={add}
+          onClose={() => setDetail(null)}
         />
       ) : null}
 
@@ -564,10 +656,29 @@ function ReviewSection({ reviews, onSubmit, timeZone }) {
   );
 }
 
-function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit }) {
+function CartModal({
+  lines,
+  currency,
+  busy,
+  canCheckout,
+  canOrder,
+  tableMode,
+  tableMissing,
+  needsTableChoice,
+  tables,
+  tableId,
+  onTable,
+  onClose,
+  onQty,
+  onClear,
+  onSubmit,
+}) {
   const { t } = useI18n();
   const [form, setForm] = useState({ customer_name: '', customer_phone: '', notes: '', promotion_code: '' });
   const total = lines.reduce((s, l) => s + l.total, 0);
+  // A mode that requires choosing a table cannot submit without one.
+  const tableReady = !needsTableChoice || Boolean(tableId);
+  const canSubmit = canOrder && tableReady;
 
   return (
     <Modal
@@ -579,10 +690,12 @@ function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit })
             <Icon name="trash" size={15} />
             {t('customer_menu_clear_cart')}
           </button>
-          <button className="btn btn--primary" onClick={() => onSubmit(form)} disabled={busy || lines.length === 0}>
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-            {t('customer_menu_place_order')}
-          </button>
+          {canSubmit ? (
+            <button className="btn btn--primary" onClick={() => onSubmit(form)} disabled={busy || lines.length === 0}>
+              {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
+              {t('customer_menu_place_order')}
+            </button>
+          ) : null}
         </>
       }
     >
@@ -615,6 +728,37 @@ function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit })
             </div>
           ))}
 
+          {needsTableChoice ? (
+            <div className="field" style={{ marginTop: 12 }}>
+              <span className="field__label">{t('customer_table_select')}</span>
+              <select className="select" value={tableId} onChange={(e) => onTable(e.target.value)}>
+                <option value="">{t('customer_table_select_placeholder')}</option>
+                {tables.map((row) => (
+                  <option key={row.id} value={row.id}>
+                    {row.name}
+                    {row.zone ? ` · ${row.zone}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+          {tableMissing ? (
+            <p className="cart-note">
+              <Icon name="info" size={14} /> {t('customer_table_missing')}
+            </p>
+          ) : null}
+          {!canCheckout ? (
+            <p className="cart-note">
+              <Icon name="info" size={14} /> {t('customer_checkout_disabled')}
+            </p>
+          ) : null}
+          {canCheckout && !canOrder ? (
+            <p className="cart-note">
+              <Icon name="info" size={14} /> {t('customer_ordering_disabled')}
+            </p>
+          ) : null}
+
+          {canCheckout ? (
           <div className="form-grid" style={{ marginTop: 12 }}>
             <div className="field">
               <span className="field__label">{t('label_customer_name')}</span>
@@ -652,6 +796,7 @@ function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit })
               />
             </div>
           </div>
+          ) : null}
 
           <div className="totals" style={{ marginTop: 14 }}>
             <div className="totals__row totals__row--grand">
@@ -669,9 +814,26 @@ function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit })
  * One sellable product card. Shared by the regular category sections and the
  * best-selling strip, so both always offer the same price and add action.
  */
-function MenuProduct({ product: p, locale, currency, onAdd, addLabel, promoLabel }) {
+function MenuProduct({ product: p, locale, currency, onAdd, addLabel, promoLabel, showPrices = true, canAdd = true, onOpen }) {
+  const open = () => onOpen?.(p);
+
   return (
-    <article className="menu-item">
+    <article
+      className={`menu-item ${onOpen ? 'is-openable' : ''}`}
+      onClick={onOpen ? open : undefined}
+      onKeyDown={
+        onOpen
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                open();
+              }
+            }
+          : undefined
+      }
+      role={onOpen ? 'button' : undefined}
+      tabIndex={onOpen ? 0 : undefined}
+    >
       <span className="menu-item__thumb">
         {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <Icon name="coffee" size={22} />}
       </span>
@@ -685,26 +847,106 @@ function MenuProduct({ product: p, locale, currency, onAdd, addLabel, promoLabel
         ) : null}
         <div className="menu-item__foot">
           <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-            {p.promo_price ? (
+            {showPrices ? (
+              <>
+                {p.promo_price ? (
+                  <span className="price-tag--old">
+                    <Money value={p.price} currency={currency} />
+                  </span>
+                ) : null}
+                <span className="price-tag">
+                  <Money value={p.promo_price ?? p.price} currency={currency} />
+                </span>
+                {p.promo_price ? (
+                  <Badge kind="pending">
+                    <Icon name="tag" size={11} />
+                    {promoLabel}
+                  </Badge>
+                ) : null}
+              </>
+            ) : null}
+          </span>
+          {canAdd ? (
+            <button
+              className="add-btn"
+              onClick={(event) => {
+                event.stopPropagation();
+                onAdd(p);
+              }}
+              aria-label={addLabel}
+            >
+              <Icon name="plus" size={19} />
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * The product detail view opened by tapping a card while the owner kept
+ * "Product details" enabled. It reads only the data the menu already sent.
+ */
+function ProductDetail({ product, locale, currency, showPrices, canAdd, addLabel, promoLabel, onAdd, onClose }) {
+  const { t } = useI18n();
+  const name = localized(product, 'name', locale);
+  const description = localized(product, 'description', locale);
+
+  return (
+    <Modal
+      title={name}
+      onClose={onClose}
+      footer={
+        <>
+          <button className="btn" onClick={onClose}>
+            {t('action_close')}
+          </button>
+          {canAdd ? (
+            <button
+              className="btn btn--primary"
+              onClick={() => {
+                onAdd(product);
+                onClose();
+              }}
+            >
+              <Icon name="plus" size={16} />
+              {addLabel}
+            </button>
+          ) : null}
+        </>
+      }
+    >
+      <div className="product-detail">
+        <div className="product-detail__media">
+          {product.image_url ? (
+            <img src={product.image_url} alt="" />
+          ) : (
+            <span className="product-detail__empty">
+              <Icon name="coffee" size={30} />
+            </span>
+          )}
+        </div>
+        {description ? <p className="product-detail__desc">{description}</p> : null}
+        {showPrices ? (
+          <div className="product-detail__price">
+            {product.promo_price ? (
               <span className="price-tag--old">
-                <Money value={p.price} currency={currency} />
+                <Money value={product.price} currency={currency} />
               </span>
             ) : null}
             <span className="price-tag">
-              <Money value={p.promo_price ?? p.price} currency={currency} />
+              <Money value={product.promo_price ?? product.price} currency={currency} />
             </span>
-            {p.promo_price ? (
+            {product.promo_price ? (
               <Badge kind="pending">
                 <Icon name="tag" size={11} />
                 {promoLabel}
               </Badge>
             ) : null}
-          </span>
-          <button className="add-btn" onClick={() => onAdd(p)} aria-label={addLabel}>
-            <Icon name="plus" size={19} />
-          </button>
-        </div>
+          </div>
+        ) : null}
       </div>
-    </article>
+    </Modal>
   );
 }

@@ -7,6 +7,7 @@ import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import SettingsArtwork from '../components/settings/SettingsArtwork';
+import MenuSettingsArtwork from '../components/settings/menu/MenuSettingsArtwork';
 import SettingsTabs from '../components/settings/SettingsTabs';
 import LogoCoverTab from '../components/settings/LogoCoverTab';
 import BusinessInfoTab from '../components/settings/BusinessInfoTab';
@@ -15,6 +16,7 @@ import SocialTab from '../components/settings/SocialTab';
 import HoursTab from '../components/settings/HoursTab';
 import DashboardTab from '../components/settings/DashboardTab';
 import BestSellingTab from '../components/settings/BestSellingTab';
+import MenuSettingsTab from '../components/settings/MenuSettingsTab';
 import CustomerMenuTab from '../components/settings/CustomerMenuTab';
 import ReceiptTab from '../components/settings/ReceiptTab';
 import AppearanceTab from '../components/settings/AppearanceTab';
@@ -41,6 +43,7 @@ const TABS = [
   { value: 'dashboard', icon: 'dashboard' },
   { value: 'best', icon: 'trophy' },
   { value: 'menu', icon: 'sliders' },
+  { value: 'menutext', icon: 'type' },
   { value: 'receipt', icon: 'print' },
   { value: 'appearance', icon: 'palette' },
 ];
@@ -213,6 +216,8 @@ export default function Settings({ initialTab }) {
       case 'best':
         return <BestSellingTab {...shared} />;
       case 'menu':
+        return <MenuSettingsTab {...shared} />;
+      case 'menutext':
         return <CustomerMenuTab {...shared} />;
       case 'receipt':
         return <ReceiptTab {...shared} />;
@@ -223,14 +228,21 @@ export default function Settings({ initialTab }) {
     }
   };
 
+  /*
+   * The Menu Settings tab keeps the workspace's single hero and single Save —
+   * it only switches the banner's identity and artwork to the menu one, so no
+   * second top-level banner or Save button ever appears on the page.
+   */
+  const isMenuSection = tab === 'menu';
+
   return (
     <div className="set-page">
-      <div className="set-hero">
+      <div className={`set-hero ${isMenuSection ? 'is-menu' : ''}`}>
         <PageHeroBanner
-          icon="settings"
-          title={t('settings_title')}
-          subtitle={t('settings_subtitle')}
-          art={<SettingsArtwork />}
+          icon={isMenuSection ? 'sliders' : 'settings'}
+          title={isMenuSection ? t('menu_settings_title') : t('settings_title')}
+          subtitle={isMenuSection ? t('menu_settings_subtitle') : t('settings_subtitle')}
+          art={isMenuSection ? <MenuSettingsArtwork /> : <SettingsArtwork />}
         >
           {dirty ? (
             <span className="set-hero__unsaved" title={t('settings_unsaved_hint')}>

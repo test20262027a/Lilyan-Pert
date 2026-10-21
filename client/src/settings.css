@@ -637,3 +637,195 @@
   .set-switch__track,
   .set-switch__track::after { transition: none; }
 }
+
+/* ========================================================================
+   Menu Settings tab — illustrated header, feature matrices, table modes
+   ======================================================================== */
+
+/* The menu section keeps the workspace hero but with its own blue sliders
+   badge, matching the reference's pale-blue settings icon. */
+.set-hero.is-menu .mhero__icon {
+  background: linear-gradient(180deg, #eef5ff, #e2edff);
+  color: #3b76d6;
+  border-color: rgba(59, 118, 214, 0.28);
+  box-shadow: 0 4px 12px rgba(59, 118, 214, 0.16), inset 0 1px 0 #ffffff;
+}
+[data-theme='dark'] .set-hero.is-menu .mhero__icon {
+  background: rgba(59, 118, 214, 0.22);
+  color: #9dc0f7;
+  border-color: rgba(157, 192, 247, 0.34);
+}
+
+.ms-art { width: 100%; max-width: 520px; height: auto; max-height: 132px; display: block; }
+
+/* ------------------------------------------------------- feature matrix */
+
+.ms-matrix { display: flex; flex-direction: column; }
+.ms-matrix__head,
+.ms-matrix__row {
+  display: grid;
+  grid-template-columns: minmax(0, 55fr) minmax(96px, 23fr) minmax(96px, 22fr);
+  align-items: center;
+  gap: 12px;
+}
+.ms-matrix__head { padding: 0 12px 9px; border-bottom: 1px solid var(--border); }
+.ms-matrix__col { font-size: 11.5px; font-weight: 650; color: var(--muted); text-align: center; }
+.ms-matrix__col:first-child { text-align: start; }
+
+.ms-matrix__row {
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--border);
+  transition: background 180ms ease;
+}
+.ms-matrix__row:last-child { border-bottom: none; }
+.ms-matrix__row:hover { background: color-mix(in srgb, var(--mint-soft) 42%, transparent); }
+.ms-matrix__title { font-size: 13.5px; font-weight: 650; color: var(--text); }
+.ms-matrix__hint { font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.55; }
+.ms-matrix__cell { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.ms-matrix__cell-label { display: none; font-size: 11px; font-weight: 600; color: var(--muted); }
+.ms-matrix__note {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 7px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #9a6a13;
+}
+.ms-matrix__foot-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 0;
+  margin-inline: -16px;
+  margin-bottom: -16px;
+  padding: 11px 16px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #9a6a13;
+  background: #fff9ec;
+  border-top: 1px solid #f2dcb0;
+}
+[data-theme='dark'] .ms-matrix__note { color: #f0c27b; }
+[data-theme='dark'] .ms-matrix__foot-note {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.34);
+  color: #f0c27b;
+}
+
+/* --------------------------------------------------------- table modes */
+
+.ms-modes { display: flex; flex-direction: column; gap: 10px; }
+.ms-mode {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 13px 15px;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+.ms-mode:hover:not(.is-active) { border-color: #c8d5c9; background: var(--surface-2); }
+.ms-mode input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.ms-mode__dot {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border-radius: 50%;
+  border: 2px solid #cfd8d1;
+  background: #ffffff;
+  display: grid;
+  place-items: center;
+  transition: border-color 180ms ease;
+}
+.ms-mode__dot::after {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 180ms ease;
+}
+.ms-mode.is-active {
+  border-color: #7bc98a;
+  background: #f2fbf4;
+  box-shadow: 0 4px 14px rgba(46, 164, 79, 0.12), inset 0 1px 0 #ffffff;
+}
+.ms-mode.is-active .ms-mode__dot { border-color: #2ea44f; }
+.ms-mode.is-active .ms-mode__dot::after { background: #2ea44f; }
+.ms-mode.is-disabled { opacity: 0.6; cursor: not-allowed; }
+.ms-mode input:focus-visible + .ms-mode__dot { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ms-mode__text { min-width: 0; }
+.ms-mode__title { display: block; font-size: 13.5px; font-weight: 700; color: var(--text); }
+.ms-mode__hint { display: block; font-size: 11.5px; color: var(--muted); margin-top: 3px; line-height: 1.55; }
+[data-theme='dark'] .ms-mode.is-active {
+  background: rgba(46, 164, 79, 0.16);
+  border-color: rgba(122, 211, 143, 0.55);
+}
+[data-theme='dark'] .ms-mode__dot { background: #262a33; border-color: #444b53; }
+
+/* ------------------------------------------------ customer menu additions */
+
+.menu-item.is-openable { cursor: pointer; }
+.menu-item.is-openable:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.product-detail { display: flex; flex-direction: column; gap: 12px; }
+.product-detail__media {
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--surface-2);
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+}
+.product-detail__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.product-detail__empty { color: var(--muted); padding: 26px; }
+.product-detail__desc { margin: 0; font-size: 13px; color: var(--text-soft); line-height: 1.7; }
+.product-detail__price { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.cart-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid #f2dcb0;
+  background: #fff9ec;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #9a6a13;
+}
+[data-theme='dark'] .cart-note {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.34);
+  color: #f0c27b;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 760px) {
+  .ms-matrix__head { display: none; }
+  .ms-matrix__row {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 8px 14px;
+    padding: 12px 2px;
+  }
+  .ms-matrix__cell { flex-direction: column; gap: 4px; }
+  .ms-matrix__cell-label { display: block; white-space: nowrap; }
+  .ms-matrix__foot-note { margin-inline: -14px; margin-bottom: -14px; padding-inline: 14px; }
+  .set-hero.is-menu .mhero { min-height: 128px; padding: 14px 16px; }
+}
+
+@media (max-width: 430px) {
+  .ms-mode { padding: 11px 12px; }
+  .ms-matrix__row { gap: 8px 10px; }
+  .ms-matrix__cell-label { font-size: 10.5px; }
+}
