@@ -1,5 +1,5 @@
 import Icon from '../Icon';
-import { Alert, Badge, SwitchRow } from '../ui';
+import { Alert, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 import { playSound, SOUND_OPTIONS, DEFAULT_SOUND } from '../../sound';
@@ -29,21 +29,20 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
         </span>
         <div className="card__titles">
           <div className="card__title">{t('dash_notification_settings')}</div>
-          <div className="card__subtitle">{t('dash_notification_hint')}</div>
         </div>
-        <Badge kind={soundOn || push.subscribed ? 'active' : 'inactive'}>
-          {soundOn || push.subscribed ? t('label_active') : t('label_inactive')}
-        </Badge>
       </header>
 
       <div className="card__body">
         <SwitchRow
+          icon="volume"
           title={t('dash_sound_new_order')}
           hint={t('dash_new_orders_only')}
           checked={soundOn}
           onChange={(v) => onChange({ sound_enabled: v })}
         />
         <SwitchRow
+          icon="bell"
+          iconClass="switch-row__icon--muted"
           title={t('dash_push')}
           hint={pushHint}
           checked={push.subscribed}

@@ -11,7 +11,7 @@ function Kpi({ tone, icon, label, value, hint, hintTone }) {
   return (
     <article className={`kpi kpi--${tone}`}>
       <span className="kpi__icon">
-        <Icon name={icon} size={18} />
+        <Icon name={icon} size={19} />
       </span>
       <span className="kpi__label">{label}</span>
       <span className="kpi__value">{value}</span>
@@ -24,6 +24,11 @@ function Kpi({ tone, icon, label, value, hint, hintTone }) {
  * Four pastel headline metrics — total (blue), today (amber), completed
  * (green) and cancelled (pink), in that right-to-left order. Every number is
  * aggregated by the dashboard endpoint from this business's own orders.
+ *
+ * "Today" is the only metric whose displayed value is a single day, so it is
+ * the only one carrying a day-over-day comparison. The two cumulative counts
+ * show their share of all orders instead, which is comparable to what they
+ * display and never invents a growth figure.
  */
 export default function KpiCards({ kpi = {}, locale }) {
   const { t } = useI18n();
@@ -34,26 +39,25 @@ export default function KpiCards({ kpi = {}, locale }) {
   const cancelled = num(kpi.cancelled_orders);
 
   const delta = yesterday > 0 ? Math.round(((today - yesterday) / yesterday) * 100) : null;
-  const deltaHint =
-    delta === null
-      ? `${t('dash_yesterday')}: ${fmtNumber(yesterday, locale)}`
-      : `${delta > 0 ? '▲' : delta < 0 ? '▼' : '•'} ${fmtNumber(Math.abs(delta), locale)}% ${t('dash_vs_yesterday')}`;
+  const todayHint =
+    delta === null ? (
+      `${t('dash_yesterday')}: ${fmtNumber(yesterday, locale)}`
+    ) : (
+      <>
+        <strong>{`${delta > 0 ? '▲' : delta < 0 ? '▼' : '•'} ${fmtNumber(Math.abs(delta), locale)}%`}</strong>
+        {` ${t('dash_vs_yesterday')}`}
+      </>
+    );
 
   return (
     <div className="kpi-row">
-      <Kpi
-        tone="blue"
-        icon="clipboard"
-        label={t('dash_orders_total')}
-        value={fmtNumber(total, locale)}
-        hint={`${fmtNumber(share(today, total), locale)}% ${t('dash_of_total')}`}
-      />
+      <Kpi tone="blue" icon="clipboard" label={t('dash_orders_total')} value={fmtNumber(total, locale)} />
       <Kpi
         tone="amber"
         icon="cart"
         label={t('dash_orders_today')}
         value={fmtNumber(today, locale)}
-        hint={deltaHint}
+        hint={todayHint}
         hintTone={delta === null ? null : delta > 0 ? 'up' : delta < 0 ? 'down' : null}
       />
       <Kpi
@@ -61,14 +65,24 @@ export default function KpiCards({ kpi = {}, locale }) {
         icon="checkCircle"
         label={t('dash_orders_completed')}
         value={fmtNumber(completed, locale)}
-        hint={`${fmtNumber(share(completed, total), locale)}% ${t('dash_of_total')}`}
+        hint={
+          <>
+            <strong>{fmtNumber(share(completed, total), locale)}%</strong>
+            {` ${t('dash_of_total')}`}
+          </>
+        }
       />
       <Kpi
         tone="pink"
         icon="xCircle"
         label={t('dash_orders_cancelled')}
         value={fmtNumber(cancelled, locale)}
-        hint={`${fmtNumber(share(cancelled, total), locale)}% ${t('dash_of_total')}`}
+        hint={
+          <>
+            <strong>{fmtNumber(share(cancelled, total), locale)}%</strong>
+            {` ${t('dash_of_total')}`}
+          </>
+        }
       />
     </div>
   );

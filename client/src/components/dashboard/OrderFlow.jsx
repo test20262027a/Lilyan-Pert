@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState, SectionCard } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtMonth, fmtNumber } from '../../format';
+import { fmtDate, fmtMonth, fmtNumber } from '../../format';
 
-const HEIGHT = 190;
-const PAD = { top: 12, right: 12, bottom: 26, left: 28 };
+const HEIGHT = 200;
+const PAD = { top: 14, right: 12, bottom: 26, left: 30 };
 
 const labelFor = (point, unit, locale, timeZone) => {
   if (unit === 'hour') return point.t;
@@ -12,6 +12,35 @@ const labelFor = (point, unit, locale, timeZone) => {
   if (unit === 'month') return fmtMonth(point.t, locale, timeZone);
   return String(Number(String(point.t).slice(8, 10)));
 };
+
+const tipFor = (point, unit, locale, timeZone) => {
+  if (unit === 'hour') return `${point.t}:00`;
+  if (unit === 'year') return String(point.t).slice(0, 4);
+  if (unit === 'month') return `${fmtMonth(point.t, locale, timeZone)} ${String(point.t).slice(0, 4)}`;
+  return fmtDate(point.t, locale, timeZone, { short: true });
+};
+
+/** Catmull-Rom smoothing; control points are clamped to the plot area so a
+ *  peak can never be drawn above the axis or below zero. */
+function smoothPath(pts, top, bottom) {
+  if (!pts.length) return '';
+  if (pts.length < 3) return pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const clampY = (v) => Math.min(bottom, Math.max(top, v));
+  let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i += 1) {
+    const p0 = pts[i - 1] || pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] || p2;
+    const t = 0.18;
+    const c1x = p1[0] + (p2[0] - p0[0]) * t;
+    const c1y = clampY(p1[1] + (p2[1] - p0[1]) * t);
+    const c2x = p2[0] - (p3[0] - p1[0]) * t;
+    const c2y = clampY(p2[1] - (p3[1] - p1[1]) * t);
+    d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+  }
+  return d;
+}
 
 /**
  * Order flow: real orders per hour, day or month depending on the selected
@@ -22,6 +51,7 @@ export default function OrderFlow({ series, locale, timeZone }) {
   const { t } = useI18n();
   const wrapRef = useRef(null);
   const [width, setWidth] = useState(420);
+  const [hover, setHover] = useState(null);
 
   useEffect(() => {
     const el = wrapRef.current;
@@ -43,13 +73,16 @@ export default function OrderFlow({ series, locale, timeZone }) {
   const count = points.length;
   const x = (i) => PAD.left + (count <= 1 ? innerW / 2 : (i * innerW) / (count - 1));
   const y = (value) => PAD.top + innerH - ((Number(value) || 0) / niceMax) * innerH;
-  const line = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.value).toFixed(1)}`).join(' ');
   const baseline = PAD.top + innerH;
+  const coords = points.map((p, i) => [x(i), y(p.value)]);
+  const line = smoothPath(coords, PAD.top, baseline);
+  const area = count > 0 && max > 0 ? `${line} L${x(count - 1).toFixed(1)},${baseline} L${x(0).toFixed(1)},${baseline} Z` : '';
   const step = count > 12 ? Math.ceil(count / 8) : 1;
+  const active = hover !== null && points[hover] ? hover : null;
 
   return (
     <SectionCard icon="trendUp" iconClass="ic-blue" title={t('dash_order_flow')} subtitle={t('dash_order_flow_hint')}>
-      <div ref={wrapRef}>
+      <div className="chart-wrap" ref={wrapRef} onMouseLeave={() => setHover(null)}>
         {count === 0 ? (
           <EmptyState icon="chart" title={t('dash_no_data')} />
         ) : (
@@ -75,30 +108,60 @@ export default function OrderFlow({ series, locale, timeZone }) {
             })}
 
             <line className="chart__axis" x1={PAD.left} x2={width - PAD.right} y1={baseline} y2={baseline} />
-            <line className="chart__axis" x1={PAD.left} x2={PAD.left} y1={PAD.top} y2={baseline} />
 
-            {max > 0 ? (
-              <path
-                className="chart__area"
-                d={`${line} L${x(count - 1).toFixed(1)},${baseline} L${x(0).toFixed(1)},${baseline} Z`}
-              />
-            ) : null}
+            {area ? <path className="chart__area" d={area} /> : null}
             <path className="chart__line" d={line} />
 
             {points.map((point, i) => (
-              <g key={`${point.t}-${i}`}>
-                {(i % step === 0 || i === count - 1) && (
-                  <text className="chart__x" x={x(i)} y={HEIGHT - 8}>
-                    {labelFor(point, unit, locale, timeZone)}
-                  </text>
-                )}
-                <circle className="chart__dot" cx={x(i)} cy={y(point.value)} r={3}>
-                  <title>{`${labelFor(point, unit, locale, timeZone)} · ${t('dash_orders')}: ${fmtNumber(point.value, locale)}`}</title>
-                </circle>
-              </g>
+              <circle
+                key={`dot-${point.t}-${i}`}
+                className={`chart__dot ${active === i ? 'is-active' : ''}`}
+                cx={x(i)}
+                cy={y(point.value)}
+                r={active === i ? 5 : 3}
+              />
             ))}
+
+            {/* Larger invisible hit areas sit on top so hovering is comfortable. */}
+            {points.map((point, i) => (
+              <circle
+                key={`hit-${point.t}-${i}`}
+                className="chart__hit"
+                cx={x(i)}
+                cy={y(point.value)}
+                r={Math.max(6, innerW / Math.max(count, 1) / 2)}
+                tabIndex={0}
+                role="img"
+                aria-label={`${tipFor(point, unit, locale, timeZone)} · ${t('dash_orders')}: ${fmtNumber(point.value, locale)}`}
+                onMouseEnter={() => setHover(i)}
+                onFocus={() => setHover(i)}
+                onBlur={() => setHover(null)}
+              />
+            ))}
+
+            {points.map((point, i) =>
+              i % step === 0 || i === count - 1 ? (
+                <text className="chart__x" x={x(i)} y={HEIGHT - 8} key={`label-${point.t}-${i}`}>
+                  {labelFor(point, unit, locale, timeZone)}
+                </text>
+              ) : null,
+            )}
           </svg>
         )}
+
+        {active !== null ? (
+          <div
+            className="chart__tip"
+            /* Kept inside the card so a peak point never clips its own tooltip. */
+            style={{
+              left: Math.min(Math.max(x(active), 48), Math.max(48, width - 48)),
+              top: Math.max(38, y(points[active].value)),
+            }}
+          >
+            {tipFor(points[active], unit, locale, timeZone)} · <span>{t('dash_orders')}</span>{' '}
+            {fmtNumber(points[active].value, locale)}
+          </div>
+        ) : null}
       </div>
     </SectionCard>
   );

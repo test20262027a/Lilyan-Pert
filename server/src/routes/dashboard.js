@@ -79,7 +79,17 @@ router.get(
       preViews = `viewed_on BETWEEN $${viewParams.length - 1}::date AND $${viewParams.length}::date`;
     }
 
-    const [flow, bestSelling, newOrders, kpiRow, financeRow, viewsRow, firstRow] = await Promise.all([
+    /*
+     * The insight queries reuse the window placeholders above. "All time" has
+     * no window placeholders, so its own parameter list is built explicitly —
+     * every placeholder is typed exactly once.
+     */
+    /* Each insight query gets exactly the placeholders it references — pg
+       rejects a statement that receives parameters it never uses. */
+    const windowParams = win.from ? [b, timezone, win.from, win.to] : [b];
+    const hourParams = win.from ? [b, timezone, win.from, win.to] : [b, timezone];
+
+    const [flow, bestSelling, newOrders, kpiRow, financeRow, viewsRow, firstRow, topProductRow, peakHourRow] = await Promise.all([
       q(`SELECT status, count(*)::int AS c FROM orders WHERE business_id = $1 GROUP BY status`, [b]),
       q(
         `SELECT i.name, sum(i.quantity)::int AS units, sum(i.line_total)::numeric(12,2) AS revenue
@@ -125,6 +135,23 @@ router.get(
       q(
         `SELECT min((created_at AT TIME ZONE $2::text)::date)::text AS first_day FROM orders WHERE business_id = $1`,
         [b, timezone],
+      ),
+      /* Insights are grounded in the same window as the financial cards. */
+      q(
+        `SELECT i.name, sum(i.quantity)::int AS units
+           FROM order_items i JOIN orders o ON o.id = i.order_id
+          WHERE i.business_id = $1 AND o.status <> 'cancelled'
+            ${curOrder ? `AND ${curOrder}` : ''}
+          GROUP BY i.name ORDER BY units DESC, i.name ASC LIMIT 1`,
+        windowParams,
+      ),
+      q(
+        `SELECT extract(hour FROM created_at AT TIME ZONE $2::text)::int AS hour, count(*)::int AS c
+           FROM orders
+          WHERE business_id = $1 AND status <> 'cancelled'
+            ${curOrder ? `AND ${curOrder}` : ''}
+          GROUP BY 1 ORDER BY c DESC, hour ASC LIMIT 1`,
+        hourParams,
       ),
     ]);
 
@@ -208,6 +235,19 @@ router.get(
         orders_pct: pctChange(finance.orders, finance.orders_prev),
       },
       series: { unit, points },
+      /*
+       * Only the raw, verified facts of the selected window are returned here;
+       * the dashboard turns them into localized sentences. Nothing is invented
+       * when a figure is missing — the client omits that insight instead.
+       */
+      insights: {
+        top_product: topProductRow.rows[0]
+          ? { name: topProductRow.rows[0].name, units: Number(topProductRow.rows[0].units) || 0 }
+          : null,
+        busiest_hour: peakHourRow.rows[0]
+          ? { hour: Number(peakHourRow.rows[0].hour), count: Number(peakHourRow.rows[0].c) || 0 }
+          : null,
+      },
       hours: (() => {
         const now = zonedNow(biz.timezone);
         return {

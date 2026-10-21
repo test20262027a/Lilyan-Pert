@@ -139,6 +139,7 @@ export default function Dashboard() {
       {/* ---- Financial overview ---- */}
       <FinanceOverview
         finance={data.finance}
+        insights={data.insights}
         range={range}
         onRange={setRange}
         custom={custom}

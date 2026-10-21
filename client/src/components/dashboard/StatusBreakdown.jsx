@@ -16,7 +16,11 @@ const STATUSES = [
   { key: 'cancelled', icon: 'xCircle', tone: 'pink' },
 ];
 
-/** Five compact pastel tiles showing how many orders sit in each status. */
+/**
+ * Five compact pastel tiles showing how many orders sit in each status. They
+ * are informational only — the tiles are not links, so they never look
+ * clickable, and they never trigger external push notifications.
+ */
 export default function StatusBreakdown({ flow = {} }) {
   const { t, locale } = useI18n();
 
@@ -28,10 +32,10 @@ export default function StatusBreakdown({ flow = {} }) {
             <span className="status-tile__icon">
               <Icon name={s.icon} size={17} />
             </span>
-            <span className="status-tile__value">{fmtNumber(flow[s.key] || 0, locale)}</span>
             <span className="status-tile__label" title={t(`status_${s.key}`)}>
               {t(`status_${s.key}`)}
             </span>
+            <span className="status-tile__value">{fmtNumber(flow[s.key] || 0, locale)}</span>
           </article>
         ))}
       </div>

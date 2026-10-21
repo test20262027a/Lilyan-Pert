@@ -29,7 +29,6 @@ export default function DateHours({ hours, timeZone, locale }) {
         </span>
         <div className="card__titles">
           <div className="card__title">{t('dash_date_hours')}</div>
-          <div className="card__subtitle">{fmtDate(new Date(), locale, timeZone, { weekday: true })}</div>
         </div>
         <Badge kind={badge.kind}>
           <span className={`live-dot ${hours?.is_open ? '' : 'live-dot--off'}`} />
@@ -43,11 +42,8 @@ export default function DateHours({ hours, timeZone, locale }) {
             <Icon name="calendar" size={13} />
             {t('dash_range_today')}
           </span>
-          <span className="hours-card__value">{fmtDate(new Date(), locale, timeZone, { short: true })}</span>
-          <span className="hours-card__label">
-            <Icon name="clock" size={13} />
-            {t('dash_live_time')}
-          </span>
+          <span className="hours-card__date">{fmtDate(new Date(), locale, timeZone, { weekday: true })}</span>
+          {/* Only this isolated component re-renders on every clock tick. */}
           <span className="hours-card__value hours-card__value--green hours-card__value--lg">
             <LiveClock timeZone={timeZone} />
           </span>
@@ -60,15 +56,13 @@ export default function DateHours({ hours, timeZone, locale }) {
             <Icon name="clock" size={13} className="ic-green" />
             {t('dash_today_hours')}
           </span>
-          <span className="hours-card__value hours-card__value--green hours-card__value--lg">
+          <span className="hours-card__value hours-card__value--green hours-card__value--lg hours-card__value--range">
             {/* Times must read start-first in every language. */}
             {range ? (
               <span className="hours-card__times" dir="ltr">
                 {range}
               </span>
-            ) : (
-              closedToday ? t('settings_closed_today') : t('dash_hours_unknown')
-            )}
+            ) : closedToday ? t('settings_closed_today') : t('dash_hours_unknown')}
             {overnight && range ? (
               <span className="hours-card__overnight" title={t('dash_overnight')}>
                 +1

@@ -141,9 +141,14 @@ export function Switch({ checked, onChange, label, hint, disabled = false, ariaL
   );
 }
 
-export function SwitchRow({ title, hint, checked, onChange, disabled }) {
+export function SwitchRow({ title, hint, checked, onChange, disabled, icon, iconClass = '' }) {
   return (
     <div className="switch-row">
+      {icon ? (
+        <span className={`switch-row__icon ${iconClass}`} aria-hidden="true">
+          <Icon name={icon} size={15} />
+        </span>
+      ) : null}
       <div className="switch-row__text">
         <div className="switch-row__title">{title}</div>
         {hint ? <div className="switch-row__hint">{hint}</div> : null}

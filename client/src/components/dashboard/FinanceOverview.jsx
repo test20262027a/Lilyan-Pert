@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Icon from '../Icon';
 import { Alert, Field, Modal } from '../ui';
+import BusinessInsights from './BusinessInsights';
 import { useI18n } from '../../i18n';
 import { fmtMoney, fmtNumber } from '../../format';
 
@@ -20,7 +21,7 @@ function Stat({ icon, label, value, delta }) {
   return (
     <div className="fstat">
       <span className="fstat__icon">
-        <Icon name={icon} size={17} />
+        <Icon name={icon} size={16} />
       </span>
       <span className="fstat__label">{label}</span>
       <span className="fstat__value">{value}</span>
@@ -36,12 +37,23 @@ function Stat({ icon, label, value, delta }) {
 }
 
 /**
- * Business overview: the period filter and four financial metrics. The figures
- * are recomputed by the API for the chosen window (business timezone) — the
- * client never calculates money, and comparisons come from the API too, so a
- * period with no previous data shows nothing instead of an invented -100%.
+ * Business overview: the period filter, four financial metrics and the
+ * period's insights. The figures are recomputed by the API for the chosen
+ * window (business timezone) — the client never calculates money, and
+ * comparisons come from the API too, so a period with no previous data shows
+ * nothing instead of an invented -100%.
  */
-export default function FinanceOverview({ finance, range, onRange, custom, onCustom, busy, currency, locale }) {
+export default function FinanceOverview({
+  finance,
+  insights,
+  range,
+  onRange,
+  custom,
+  onCustom,
+  busy,
+  currency,
+  locale,
+}) {
   const { t } = useI18n();
   const f = finance || {};
   const [picker, setPicker] = useState(null); // { from, to } | null
@@ -67,14 +79,17 @@ export default function FinanceOverview({ finance, range, onRange, custom, onCus
 
   return (
     <section className="card finance">
-      <header className="card__head finance__head">
+      <header className="card__head">
         <span className="card__icon ic-blue">
-          <Icon name="chart" size={18} />
+          <Icon name="chartBars" size={18} />
         </span>
         <div className="card__titles">
           <div className="card__title">{t('dash_business_overview')}</div>
         </div>
-        <div className="finance-filters" role="group" aria-label={t('dash_business_overview')}>
+      </header>
+
+      <div className="card__body">
+        <div className="finance__filters" role="group" aria-label={t('dash_business_overview')}>
           {RANGES.map((item) => (
             <button
               key={item.key}
@@ -89,16 +104,15 @@ export default function FinanceOverview({ finance, range, onRange, custom, onCus
             </button>
           ))}
         </div>
-      </header>
 
-      <div className="card__body">
-        <div className="fstat-row">
+        <div className="fstat-row" style={{ marginTop: 12 }}>
           <Stat
             icon="banknote"
             label={t('dash_revenue_label')}
             value={fmtMoney(f.revenue, currency, locale)}
+            delta={f.revenue_pct}
           />
-          <Stat icon="cart" label={t('dash_orders')} value={fmtNumber(f.orders || 0, locale)} />
+          <Stat icon="cart" label={t('dash_orders')} value={fmtNumber(f.orders || 0, locale)} delta={f.orders_pct} />
           <Stat
             icon="eye"
             label={t('dash_menu_views')}
@@ -111,6 +125,8 @@ export default function FinanceOverview({ finance, range, onRange, custom, onCus
             value={fmtMoney(f.avg_order, currency, locale)}
           />
         </div>
+
+        <BusinessInsights insights={insights} finance={f} locale={locale} />
       </div>
 
       {picker ? (

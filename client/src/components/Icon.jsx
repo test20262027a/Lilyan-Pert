@@ -76,6 +76,7 @@ const PATHS = {
   crown: <><path d="M3 8l3.4 2.6L12 4.5l5.6 6.1L21 8l-1.6 8.5H4.6z" /><path d="M5.5 20h13" /></>,
   trophy: <><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" /><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" /><path d="M4 22h16" /><path d="M10 14.7V17c0 .6-.5 1-1 1.2-1.2.5-2 2-2 3.8" /><path d="M14 14.7V17c0 .6.5 1 1 1.2 1.2.5 2 2 2 3.8" /><path d="M18 2H6v7a6 6 0 0 0 12 0z" /></>,
   trendUp: <><path d="M22 7 13.5 15.5l-5-5L2 17" /><path d="M16 7h6v6" /></>,
+  bulb: <><path d="M9 18h6" /><path d="M10 21.5h4" /><path d="M12 3a6 6 0 0 0-3.6 10.8c.6.4.9 1 .9 1.7V17h5.4v-1.5c0-.7.3-1.3.9-1.7A6 6 0 0 0 12 3z" /></>,
   banknote: <><rect x="2" y="6" width="20" height="12" rx="2" /><circle cx="12" cy="12" r="2.4" /><path d="M6 12h.01M18 12h.01" /></>,
   volume: <><path d="M11 5 6 9H3v6h3l5 4z" /><path d="M15.5 8.6a5 5 0 0 1 0 6.8" /><path d="M18.6 5.4a9 9 0 0 1 0 13.2" /></>,
   volumeOff: <><path d="M11 5 6 9H3v6h3l5 4z" /><path d="m16 9.5 5 5M21 9.5l-5 5" /></>,
