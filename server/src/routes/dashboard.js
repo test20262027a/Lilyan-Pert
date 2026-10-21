@@ -262,6 +262,101 @@ router.get(
   }),
 );
 
+/*
+ * Statistics page summary. It reads the same tables and applies the same
+ * definitions as the dashboard above — revenue only counts orders that were not
+ * cancelled, visits are unique sessions per local day, and every boundary is a
+ * business-timezone calendar day. Nothing is calculated on the client.
+ *
+ *   totals   lifetime visits / revenue plus today's and this week's visits
+ *   revenue  the fixed today / this week / this month windows
+ *   daily    the seven most recent local days, zero-filled, oldest first
+ *   best     the five most ordered products by units sold
+ */
+router.get(
+  '/statistics',
+  withBusiness('staff'),
+  ah(async (req, res) => {
+    const b = req.businessId;
+    const biz = (await q('SELECT currency, timezone FROM businesses WHERE id = $1', [b])).rows[0];
+    const timezone = safeZone(biz.timezone);
+    const today = localDay(timezone);
+    const weekFrom = rangeWindow('week', timezone).from;
+    const monthFrom = rangeWindow('month', timezone).from;
+    const days = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+    const from = days[0];
+
+    const [viewsRow, revenueRow, dayOrders, dayViews, best] = await Promise.all([
+      q(
+        `SELECT count(*)::int AS views,
+                count(*) FILTER (WHERE viewed_on = $2::date)::int AS today,
+                count(*) FILTER (WHERE viewed_on BETWEEN $3::date AND $2::date)::int AS week
+           FROM business_views WHERE business_id = $1`,
+        [b, today, weekFrom],
+      ),
+      q(
+        `SELECT coalesce(sum(total) FILTER (WHERE status <> 'cancelled'), 0)::numeric(12,2) AS total,
+                coalesce(sum(total) FILTER (WHERE status <> 'cancelled'
+                  AND (created_at AT TIME ZONE $2::text)::date = $3::date), 0)::numeric(12,2) AS today,
+                coalesce(sum(total) FILTER (WHERE status <> 'cancelled'
+                  AND (created_at AT TIME ZONE $2::text)::date BETWEEN $4::date AND $3::date), 0)::numeric(12,2) AS week,
+                coalesce(sum(total) FILTER (WHERE status <> 'cancelled'
+                  AND (created_at AT TIME ZONE $2::text)::date BETWEEN $5::date AND $3::date), 0)::numeric(12,2) AS month
+           FROM orders WHERE business_id = $1`,
+        [b, timezone, today, weekFrom, monthFrom],
+      ),
+      q(
+        `SELECT to_char((created_at AT TIME ZONE $2::text)::date, 'YYYY-MM-DD') AS day, count(*)::int AS c
+           FROM orders
+          WHERE business_id = $1
+            AND (created_at AT TIME ZONE $2::text)::date BETWEEN $3::date AND $4::date
+          GROUP BY 1`,
+        [b, timezone, from, today],
+      ),
+      q(
+        `SELECT viewed_on::text AS day, count(*)::int AS c
+           FROM business_views
+          WHERE business_id = $1 AND viewed_on BETWEEN $2::date AND $3::date
+          GROUP BY 1`,
+        [b, from, today],
+      ),
+      q(
+        `SELECT i.name, sum(i.quantity)::int AS units
+           FROM order_items i JOIN orders o ON o.id = i.order_id
+          WHERE i.business_id = $1 AND o.status <> 'cancelled'
+          GROUP BY i.name ORDER BY units DESC, i.name ASC LIMIT 5`,
+        [b],
+      ),
+    ]);
+
+    const views = viewsRow.rows[0] || {};
+    const money = revenueRow.rows[0] || {};
+    const ordersByDay = new Map(dayOrders.rows.map((r) => [r.day, Number(r.c) || 0]));
+    const viewsByDay = new Map(dayViews.rows.map((r) => [r.day, Number(r.c) || 0]));
+
+    res.json({
+      business: { currency: biz.currency, timezone: biz.timezone },
+      totals: {
+        views: Number(views.views) || 0,
+        views_today: Number(views.today) || 0,
+        views_week: Number(views.week) || 0,
+        revenue: Number(money.total) || 0,
+      },
+      revenue: {
+        today: Number(money.today) || 0,
+        week: Number(money.week) || 0,
+        month: Number(money.month) || 0,
+      },
+      daily: days.map((day) => ({
+        day,
+        visits: viewsByDay.get(day) || 0,
+        orders: ordersByDay.get(day) || 0,
+      })),
+      best_selling: best.rows,
+    });
+  }),
+);
+
 /**
  * Notification preferences are per business but editable by every member, so
  * they get their own whitelisted endpoint instead of the manager-only profile
