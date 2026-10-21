@@ -134,6 +134,8 @@ export default {
   dash_best_selling: 'پرفروش‌ترین محصولات',
   dash_status_notifications: 'اعلان‌های وضعیت سفارش',
   dash_new_orders: 'سفارش‌های جدید',
+  dash_orders_showing: 'نمایش {shown} از {total} سفارش',
+  dash_orders_error: 'بارگذاری سفارش‌ها ممکن نشد',
   dash_daily_views_orders: 'بازدید و سفارش روزانه',
   dash_most_ordered: 'پرسفارش‌ترین محصولات',
   dash_revenue: 'آمار درآمد',

@@ -134,6 +134,8 @@ export default {
   dash_best_selling: 'زۆرترین فرۆشراوەکان',
   dash_status_notifications: 'ئاگادارکردنەوەی دۆخی داواکاری',
   dash_new_orders: 'داواکارییە نوێیەکان',
+  dash_orders_showing: 'پیشاندانی {shown} لە {total} داواکاری',
+  dash_orders_error: 'نەتوانرا داواکارییەکان باربکرێن',
   dash_daily_views_orders: 'بینەر و داواکاری ڕۆژانە',
   dash_most_ordered: 'زۆرترین داواکراوەکان',
   dash_revenue: 'ئاماری داهات',

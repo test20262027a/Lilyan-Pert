@@ -134,6 +134,8 @@ export default {
   dash_best_selling: 'الأكثر مبيعاً',
   dash_status_notifications: 'إشعارات حالة الطلب',
   dash_new_orders: 'الطلبات الجديدة',
+  dash_orders_showing: 'عرض {shown} من {total} طلباً',
+  dash_orders_error: 'تعذّر تحميل الطلبات',
   dash_daily_views_orders: 'المشاهدات والطلبات اليومية',
   dash_most_ordered: 'الأكثر طلباً',
   dash_revenue: 'إحصاءات الإيرادات',

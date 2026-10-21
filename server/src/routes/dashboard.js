@@ -93,7 +93,7 @@ router.get(
                 t.name AS table_name,
                 (SELECT coalesce(sum(i.quantity), 0)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
            FROM orders o LEFT JOIN tables t ON t.id = o.table_id
-          WHERE o.business_id = $1 ORDER BY o.created_at DESC LIMIT 6`,
+          WHERE o.business_id = $1 ORDER BY o.created_at DESC, o.id DESC LIMIT 6`,
         [b],
       ),
       q(

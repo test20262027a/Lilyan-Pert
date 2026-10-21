@@ -163,9 +163,12 @@ export default function Dashboard() {
       {/* ---- Newest orders ---- */}
       <NewOrders
         orders={data.new_orders}
+        total={data.kpi?.total_orders || 0}
         currency={currency}
         locale={locale}
         timeZone={timeZone}
+        failed={failed}
+        onRetry={() => load(false)}
       />
 
       <ScrollTop />

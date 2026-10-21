@@ -1,15 +1,24 @@
 import { Link } from 'react-router-dom';
 import Icon from '../Icon';
-import { EmptyState, SectionCard, StatusBadge } from '../ui';
+import { SectionCard } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtDateTime, fmtMoney, fmtNumber } from '../../format';
+import { fmtNumber } from '../../format';
+import OrdersTable from './OrdersTable';
 
 /**
  * The newest orders for this business. Rows are keyed by order id, so a poll
  * that returns the same order twice can never duplicate it, and every row
  * opens the real order detail page where the permitted actions live.
  */
-export default function NewOrders({ orders = [], currency, locale, timeZone }) {
+export default function NewOrders({
+  orders = [],
+  total = 0,
+  currency,
+  locale,
+  timeZone,
+  failed = false,
+  onRetry,
+}) {
   const { t } = useI18n();
 
   return (
@@ -23,28 +32,25 @@ export default function NewOrders({ orders = [], currency, locale, timeZone }) {
           {t('action_view')}
         </Link>
       }
+      footer={
+        !failed && orders.length > 0 ? (
+          <div className="orders-table__foot">
+            {t('dash_orders_showing', {
+              shown: fmtNumber(orders.length, locale),
+              total: fmtNumber(Math.max(total, orders.length), locale),
+            })}
+          </div>
+        ) : null
+      }
     >
-      {orders.length === 0 ? (
-        <EmptyState icon="receipt" title={t('dash_no_data')} />
-      ) : (
-        <div className="new-orders">
-          {orders.map((o) => (
-            <Link className="new-order" to={`/orders/${o.id}`} key={o.id}>
-              <span className="new-order__no">#{o.order_number}</span>
-              <span className="new-order__meta">
-                <Icon name="table" size={13} />
-                {o.table_name || o.customer_name || '—'}
-              </span>
-              <span className="new-order__meta">{fmtDateTime(o.created_at, locale, timeZone)}</span>
-              <span className="new-order__meta">
-                {fmtNumber(o.item_count || 0, locale)} {t('dash_items')}
-              </span>
-              <StatusBadge status={o.status} />
-              <strong className="new-order__total">{fmtMoney(o.total, currency, locale)}</strong>
-            </Link>
-          ))}
-        </div>
-      )}
+      <OrdersTable
+        orders={orders}
+        currency={currency}
+        locale={locale}
+        timeZone={timeZone}
+        failed={failed}
+        onRetry={onRetry}
+      />
     </SectionCard>
   );
 }

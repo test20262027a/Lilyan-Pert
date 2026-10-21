@@ -134,6 +134,8 @@ export default {
   dash_best_selling: 'Best-Selling Products',
   dash_status_notifications: 'Order Status Notifications',
   dash_new_orders: 'New Orders',
+  dash_orders_showing: 'Showing {shown} of {total} orders',
+  dash_orders_error: 'Could not load orders',
   dash_daily_views_orders: 'Daily Views and Orders',
   dash_most_ordered: 'Most Ordered Products',
   dash_revenue: 'Revenue Statistics',
