@@ -1,32 +1,43 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
-import {
-  Alert,
-  Badge,
-  ConfirmDialog,
-  EmptyState,
-  Loading,
-  Marker,
-  Modal,
-  SectionCard,
-  useToast,
-} from '../components/ui';
+import { Alert, ConfirmDialog, Loading, Modal, useToast } from '../components/ui';
+import PageHeroBanner from '../components/menu/PageHeroBanner';
+import BackupArtwork from '../components/backups/BackupArtwork';
+import FullBackupPanel from '../components/backups/FullBackupPanel';
+import SelectiveBackupPanel from '../components/backups/SelectiveBackupPanel';
+import BackupCard from '../components/backups/BackupCard';
+import RestoreDialog from '../components/backups/RestoreDialog';
+import { sectionLabel } from '../components/backups/backupMeta';
 import { useI18n } from '../i18n';
-import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
-import { del, get, post } from '../api';
-import { fmtBytes, fmtDateTime, fmtNumber, zoneFor } from '../format';
+import { del, get, getBusinessId, post } from '../api';
+import { fmtNumber, zoneFor } from '../format';
+import '../backups.css';
 
-const DANGER_GROUPS = ['orders', 'backups'];
-
-/**
- * Backups and restore. Sample-data reset is its own page (`/reset-sample`), so
- * this screen only ever creates, downloads and restores backups.
+/*
+ * Backup & Restore.
+ *
+ * The page never invents a backup: the server builds the archive, stores it and
+ * returns its manifest with real record counts and the saved file size. A
+ * restore is previewed by the server before it may run, and a delete only ever
+ * removes the selected archive — never business data.
  */
+
+const ERROR_KEYS = {
+  CROSS_BUSINESS_RESTORE: 'backup_cross_business',
+  INCOMPATIBLE_FORMAT: 'backup_incompatible',
+  INTEGRITY_FAILED: 'backup_integrity_failed',
+  BACKUP_TOO_LARGE: 'backup_too_large',
+  NO_MODULES_SELECTED: 'backup_nothing_selected',
+  INVALID_MANIFEST: 'backup_upload_invalid',
+  INVALID_BACKUP_FILE: 'backup_upload_invalid',
+  NO_KNOWN_MODULES: 'backup_upload_invalid',
+  BACKUP_NOT_FOUND: 'backup_not_found',
+};
+
 export default function Backups() {
   const { t, locale } = useI18n();
   const { business } = useBusiness();
-  const { isOwner } = useAuth();
   const toast = useToast();
   const timeZone = zoneFor(locale, business?.timezone);
 
@@ -34,16 +45,22 @@ export default function Backups() {
   const [backups, setBackups] = useState([]);
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [confirm, setConfirm] = useState(null);
-  const [restoreResult, setRestoreResult] = useState(null);
+  const [removeTarget, setRemoveTarget] = useState(null);
+  const [restoreTarget, setRestoreTarget] = useState(null);
+  const [result, setResult] = useState(null);
+  const [uploadError, setUploadError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFailed(false);
     try {
       const [reg, list] = await Promise.all([get('/backups/modules'), get('/backups')]);
       setRegistry(reg);
       setBackups(list.backups || []);
+    } catch {
+      setFailed(true);
     } finally {
       setLoading(false);
     }
@@ -53,448 +70,332 @@ export default function Backups() {
     load();
   }, [load]);
 
+  const categories = registry?.categories || [];
+  const sections = registry?.sections || [];
   const modules = registry?.modules || [];
-  const groups = registry?.groups || [];
-  const created = backups.filter((b) => b.backup_type !== 'uploaded');
-  const uploaded = backups.filter((b) => b.backup_type === 'uploaded');
 
-  const byGroup = useMemo(() => {
-    const map = {};
-    for (const g of groups) map[g.key] = modules.filter((m) => m.group === g.key);
-    return map;
-  }, [groups, modules]);
+  const created = useMemo(() => backups.filter((b) => b.backup_type !== 'uploaded'), [backups]);
+  const uploaded = useMemo(() => backups.filter((b) => b.backup_type === 'uploaded'), [backups]);
 
-  const createFull = async () => {
+  const errorText = (err) => t(ERROR_KEYS[err?.code] || 'error_generic');
+
+  const createBackup = async (body) => {
     setBusy(true);
     try {
-      await post('/backups', { mode: 'full' });
+      await post('/backups', body);
       toast.success(t('backup_created'));
+      if (body.mode === 'custom') setSelected([]);
       await load();
-    } catch {
-      toast.error(t('error_generic'));
+    } catch (err) {
+      toast.error(errorText(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const createCustom = async () => {
-    setBusy(true);
+  const download = async (backup) => {
     try {
-      await post('/backups', { mode: 'custom', modules: selected });
-      toast.success(t('backup_created'));
-      setSelected([]);
-      await load();
-    } catch (err) {
-      toast.error(err.code === 'NO_MODULES_SELECTED' ? t('backup_selected_count') : t('error_generic'));
-    } finally {
-      setBusy(false);
+      const headers = getBusinessId() ? { 'X-Business-Id': getBusinessId() } : {};
+      const response = await fetch(`/api/backups/${backup.id}/download`, {
+        credentials: 'include',
+        headers,
+      });
+      if (!response.ok) throw new Error('DOWNLOAD_FAILED');
+      const blob = await response.blob();
+      const disposition = response.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="([^"]+)"/);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = match ? match[1] : 'lilyan-backup.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch {
+      toast.error(t('backup_download_failed'));
     }
   };
 
   const upload = async (file) => {
     setBusy(true);
+    setUploadError(null);
     try {
       const text = await file.text();
-      const parsed = JSON.parse(text);
-      await post('/backups/upload', { file: parsed, name: file.name });
-      toast.success(t('backup_created'));
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw Object.assign(new Error('INVALID_BACKUP_FILE'), { code: 'INVALID_BACKUP_FILE' });
+      }
+      const data = await post('/backups/upload', { file: parsed, name: file.name });
+      if (data?.checksum_verified === false) setUploadError(t('backup_integrity_unverified'));
+      toast.success(t('backup_uploaded_ok'));
       await load();
     } catch (err) {
-      const map = {
-        CROSS_BUSINESS_RESTORE: t('backup_cross_business'),
-        INCOMPATIBLE_FORMAT: t('backup_incompatible'),
-        INVALID_MANIFEST: t('error_generic'),
-        INVALID_BACKUP_FILE: t('error_generic'),
-      };
-      toast.error(map[err.code] || t('error_generic'));
+      setUploadError(errorText(err));
+      toast.error(errorText(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const restore = async (id) => {
+  const restore = async ({ pre_restore_backup }) => {
+    if (!restoreTarget) return;
     setBusy(true);
     try {
-      const res = await post(`/backups/${id}/restore`, {});
-      setRestoreResult(res);
+      const data = await post(`/backups/${restoreTarget.id}/restore`, {
+        confirm: true,
+        pre_restore_backup,
+      });
+      setResult(data);
+      setRestoreTarget(null);
       toast.success(t('backup_restored'));
-      setConfirm(null);
       await load();
     } catch (err) {
-      const map = {
-        CROSS_BUSINESS_RESTORE: t('backup_cross_business'),
-        INCOMPATIBLE_FORMAT: t('backup_incompatible'),
-      };
-      toast.error(map[err.code] || t('error_generic'));
+      toast.error(errorText(err));
     } finally {
       setBusy(false);
     }
   };
 
-  const remove = async (id) => {
+  const remove = async () => {
+    if (!removeTarget) return;
     setBusy(true);
     try {
-      await del(`/backups/${id}`);
-      setConfirm(null);
+      await del(`/backups/${removeTarget.id}`);
+      setRemoveTarget(null);
+      toast.success(t('backup_deleted'));
       await load();
-    } catch {
-      toast.error(t('error_generic'));
+    } catch (err) {
+      toast.error(errorText(err));
     } finally {
       setBusy(false);
     }
   };
 
-  if (loading && !registry) return <Loading />;
-
-  if (!isOwner) {
-    return (
-      <>
-        <div className="page-head">
-          <div className="page-head__text">
-            <h1>{t('backup_title')}</h1>
-            <p>{t('backup_subtitle')}</p>
-          </div>
-        </div>
-        <Alert kind="warning">{t('user_view_only')}</Alert>
-      </>
-    );
-  }
+  const toggle = (key) =>
+    setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
 
   return (
-    <>
-      <div className="page-head">
-        <div className="page-head__text">
-          <h1>{t('backup_title')}</h1>
-          <p>{t('backup_subtitle')}</p>
-        </div>
-        <div className="page-head__actions">
-          <button className="btn btn--primary" onClick={createFull} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="database" size={16} />}
-            {t('backup_full')}
-          </button>
-        </div>
-      </div>
-
-      <Alert kind="info" icon="shield">
-        {t('backup_excluded')} · {t('backup_format')} {registry?.format_version} · {registry?.schema_version}
-      </Alert>
-
-      <SectionCard
-        icon="layers"
-        iconClass="ic-indigo"
-        title={t('backup_custom')}
-        subtitle={t('backup_full_hint')}
-        actions={
-          <>
-            <button className="btn btn--sm" onClick={() => setSelected(modules.map((m) => m.key))}>
-              {t('action_select_all')}
-            </button>
-            <button className="btn btn--sm" onClick={() => setSelected([])}>
-              {t('action_clear_all')}
-            </button>
-            <button className="btn btn--primary btn--sm" onClick={createCustom} disabled={busy || selected.length === 0}>
-              <Icon name="check" size={15} />
-              {t('backup_create_selected')} ({selected.length})
-            </button>
-          </>
-        }
-      >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {groups.map((g) => {
-            const groupModules = byGroup[g.key] || [];
-            if (!groupModules.length) return null;
-            const allOn = groupModules.every((m) => selected.includes(m.key));
-            const someOn = groupModules.some((m) => selected.includes(m.key));
-            return (
-              <div key={g.key}>
-                {/* Group header marker selects/deselects every module in the group. */}
-                <button
-                  className={`select-card ${someOn ? 'is-selected' : ''} ${DANGER_GROUPS.includes(g.key) ? 'is-danger' : ''}`}
-                  style={{ width: '100%', flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}
-                  onClick={() =>
-                    setSelected((prev) =>
-                      allOn
-                        ? prev.filter((k) => !groupModules.some((m) => m.key === k))
-                        : [...new Set([...prev, ...groupModules.map((m) => m.key)])],
-                    )
-                  }
-                  aria-pressed={allOn}
-                >
-                  <Marker on={allOn} danger={DANGER_GROUPS.includes(g.key)} />
-                  <span className="select-card__name">{t(g.labelKey)}</span>
-                  <span className="chip">{groupModules.length}</span>
-                </button>
-
-                <div className="md-grid">
-                  {groupModules.map((m) => {
-                    const on = selected.includes(m.key);
-                    return (
-                      /* Individual module cards toggle selection — no default checkboxes. */
-                      <button
-                        key={m.key}
-                        className={`select-card ${on ? 'is-selected' : ''}`}
-                        onClick={() =>
-                          setSelected((prev) => (on ? prev.filter((k) => k !== m.key) : [...prev, m.key]))
-                        }
-                        aria-pressed={on}
-                      >
-                        <div className="select-card__row">
-                          <Marker on={on} />
-                          <span className="select-card__name">{t(`module_${m.key}`)}</span>
-                        </div>
-                        <div className="select-card__row">
-                          <Badge kind={on ? 'active' : undefined}>
-                            <Icon name="database" size={11} />
-                            {fmtNumber(m.record_count, locale)} {t('label_records')}
-                          </Badge>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </SectionCard>
-
-      <SectionCard
+    <div className="bk-page">
+      <PageHeroBanner
         icon="database"
-        iconClass="ic-teal"
-        title={t('backup_created_list')}
-        subtitle={`${created.length}`}
-      >
-        {created.length === 0 ? (
-          <EmptyState icon="database" title={t('backup_no_backups')} />
-        ) : (
-          <div className="bk-grid">
-            {created.map((b) => (
-              <BackupCard
-                key={b.id}
-                backup={b}
-                locale={locale}
-                timeZone={timeZone}
-                t={t}
-                onDownload={() => window.open(`/api/backups/${b.id}/download`, '_blank')}
-                onRestore={() => setConfirm({ kind: 'restore', backup: b })}
-                onDelete={() => setConfirm({ kind: 'delete', backup: b })}
-              />
-            ))}
-          </div>
-        )}
-      </SectionCard>
+        title={t('backup_title')}
+        subtitle={t('backup_subtitle')}
+        art={<BackupArtwork />}
+      />
 
-      {/* Upload action lives in the same section as the uploaded list. */}
-      <SectionCard
-        icon="upload"
-        iconClass="ic-blue"
-        title={t('backup_uploaded_list')}
-        subtitle={`${uploaded.length}`}
-        actions={
-          <label className="btn btn--sm" style={{ cursor: 'pointer' }}>
-            {busy ? <span className="spinner" /> : <Icon name="upload" size={15} />}
-            {t('backup_upload')}
-            <input
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = '';
-                if (file) upload(file);
-              }}
-            />
-          </label>
-        }
-      >
-        {uploaded.length === 0 ? (
-          <div className="empty" style={{ padding: '18px' }}>
-            <span className="empty__title">{t('backup_no_uploaded')}</span>
-          </div>
-        ) : (
-          <div className="bk-grid">
-            {uploaded.map((b) => (
-              <BackupCard
-                key={b.id}
-                backup={b}
-                locale={locale}
-                timeZone={timeZone}
-                t={t}
-                onDownload={() => window.open(`/api/backups/${b.id}/download`, '_blank')}
-                onRestore={() => setConfirm({ kind: 'restore', backup: b })}
-                onDelete={() => setConfirm({ kind: 'delete', backup: b })}
-              />
-            ))}
-          </div>
-        )}
-      </SectionCard>
-
-      {confirm?.kind === 'restore' ? (
-        <RestoreConfirm
-          backup={confirm.backup}
-          t={t}
-          busy={busy}
-          onCancel={() => setConfirm(null)}
-          onConfirm={() => restore(confirm.backup.id)}
-        />
+      {failed ? (
+        <Alert kind="error">
+          {t('error_generic')}{' '}
+          <button type="button" className="btn btn--sm" onClick={load}>
+            {t('action_retry')}
+          </button>
+        </Alert>
       ) : null}
 
-      {confirm?.kind === 'delete' ? (
+      {loading && !registry ? <Loading /> : null}
+
+      {registry ? (
+        <>
+          <FullBackupPanel
+            categories={categories}
+            sections={sections}
+            busy={busy}
+            onCreate={() => createBackup({ mode: 'full' })}
+          />
+
+          <SelectiveBackupPanel
+            categories={categories}
+            sections={sections}
+            selected={selected}
+            busy={busy}
+            onToggle={toggle}
+            onSelectAll={() => setSelected(categories.map((c) => c.key))}
+            onClear={() => setSelected([])}
+            onCreate={() => createBackup({ mode: 'custom', categories: selected })}
+          />
+
+          <section className="bk-panel">
+            <header className="bk-panel__head">
+              <span className="bk-panel__ico">
+                <Icon name="history" size={21} />
+              </span>
+              <div className="bk-panel__titles">
+                <h2 className="bk-panel__title">
+                  {t('backup_history_title')}
+                  <span className="bk-badge">
+                    {fmtNumber(created.length, locale)} {t('backup_count_unit')}
+                  </span>
+                </h2>
+                <p className="bk-panel__sub">{t('backup_history_subtitle')}</p>
+              </div>
+            </header>
+
+            <div className="bk-panel__body">
+              <div className="bk-subhead">
+                <Icon name="database" size={14} />
+                <span>{t('backup_created_list')}</span>
+              </div>
+
+              {created.length ? (
+                <div className="bk-hist-grid">
+                  {created.map((backup) => (
+                    <BackupCard
+                      key={backup.id}
+                      backup={backup}
+                      registryModules={modules}
+                      registrySections={sections}
+                      locale={locale}
+                      timeZone={timeZone}
+                      t={t}
+                      busy={busy}
+                      onDownload={() => download(backup)}
+                      onRestore={() => setRestoreTarget(backup)}
+                      onDelete={() => setRemoveTarget(backup)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bk-empty">{t('backup_no_backups')}</div>
+              )}
+            </div>
+          </section>
+
+          <section className="bk-panel">
+            <header className="bk-panel__head">
+              <span className="bk-panel__ico">
+                <Icon name="folder" size={21} />
+              </span>
+              <div className="bk-panel__titles">
+                <h2 className="bk-panel__title">
+                  {t('backup_uploaded_list')}
+                  <span className="bk-badge">
+                    {fmtNumber(uploaded.length, locale)} {t('backup_count_unit')}
+                  </span>
+                </h2>
+                <p className="bk-panel__sub">{t('backup_uploaded_subtitle')}</p>
+              </div>
+              <label className={`bk-btn bk-btn--green ${busy ? 'is-busy' : ''}`}>
+                {busy ? <span className="bk-spin" /> : <Icon name="upload" size={15} />}
+                {t('backup_upload')}
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  hidden
+                  disabled={busy}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.target.value = '';
+                    if (file) upload(file);
+                  }}
+                />
+              </label>
+            </header>
+
+            <div className="bk-panel__body">
+              {uploadError ? (
+                <div className="bk-inline-error" role="alert">
+                  <Icon name="alert" size={14} />
+                  <span>{uploadError}</span>
+                  <button
+                    type="button"
+                    className="bk-inline-error__close"
+                    onClick={() => setUploadError(null)}
+                    aria-label={t('action_close')}
+                  >
+                    <Icon name="close" size={12} />
+                  </button>
+                </div>
+              ) : null}
+
+              {uploaded.length ? (
+                <div className="bk-hist-grid">
+                  {uploaded.map((backup) => (
+                    <BackupCard
+                      key={backup.id}
+                      backup={backup}
+                      registryModules={modules}
+                      registrySections={sections}
+                      locale={locale}
+                      timeZone={timeZone}
+                      t={t}
+                      busy={busy}
+                      onDownload={() => download(backup)}
+                      onRestore={() => setRestoreTarget(backup)}
+                      onDelete={() => setRemoveTarget(backup)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="bk-empty bk-empty--dashed">
+                  <Icon name="folder" size={15} />
+                  <span>{t('backup_no_uploaded')}</span>
+                </div>
+              )}
+            </div>
+          </section>
+        </>
+      ) : null}
+
+      {removeTarget ? (
         <ConfirmDialog
-          title={t('backup_delete_confirm')}
-          message={confirm.backup.name}
+          title={t('backup_delete_title')}
+          message={`${t('backup_delete_body')} ${removeTarget.name}`}
           danger
           busy={busy}
           confirmLabel={t('action_delete')}
-          onCancel={() => setConfirm(null)}
-          onConfirm={() => remove(confirm.backup.id)}
+          onCancel={() => setRemoveTarget(null)}
+          onConfirm={remove}
         />
       ) : null}
 
-      {restoreResult ? (
+      {restoreTarget ? (
+        <RestoreDialog
+          backup={restoreTarget}
+          business={business}
+          busy={busy}
+          onCancel={() => setRestoreTarget(null)}
+          onConfirm={restore}
+        />
+      ) : null}
+
+      {result ? (
         <Modal
           title={t('backup_restore_summary')}
-          onClose={() => setRestoreResult(null)}
+          onClose={() => setResult(null)}
           footer={
-            <button className="btn btn--primary" onClick={() => setRestoreResult(null)}>
+            <button type="button" className="btn btn--primary" onClick={() => setResult(null)}>
               {t('action_close')}
             </button>
           }
         >
-          <div className="table-wrap">
-            <table className="data">
-              <thead>
-                <tr>
-                  <th>{t('backup_modules')}</th>
-                  <th>{t('backup_records')}</th>
-                  <th>{t('label_status')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(restoreResult.summary || []).map((row) => (
-                  <tr key={row.key}>
-                    <td>{t(`module_${row.key}`)}</td>
-                    <td>
-                      {row.restored} / {row.restored + row.skipped}
-                    </td>
-                    <td>
-                      <Badge kind={row.skipped === 0 ? 'active' : 'pending'}>
-                        {row.skipped === 0 ? t('state_saved') : `${row.skipped} skipped`}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bk-result">
+            <ul className="bk-result__list">
+              {(result.summary || []).map((row) => (
+                <li key={row.key}>
+                  <span>{sectionLabel(t, row.section || row.key)}</span>
+                  <span className={row.skipped ? 'is-warn' : 'is-ok'}>
+                    {fmtNumber(row.restored, locale)}
+                    {row.skipped ? ` · ${fmtNumber(row.skipped, locale)} ${t('backup_rows_skipped')}` : ''}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {(result.skipped_sections || []).length ? (
+              <p className="bk-result__note">{t('backup_restore_skipped')}</p>
+            ) : null}
+            {(result.warnings || []).length ? (
+              <p className="bk-result__note">{t('backup_restore_relations')}</p>
+            ) : null}
+            {result.pre_restore_backup_id ? (
+              <p className="bk-result__note bk-result__note--ok">{t('backup_restore_safety_created')}</p>
+            ) : null}
           </div>
-          {(restoreResult.warnings || []).length ? (
-            <div style={{ marginTop: 12 }}>
-              <Alert kind="warning">{restoreResult.warnings.join(', ')}</Alert>
-            </div>
-          ) : null}
         </Modal>
       ) : null}
-    </>
-  );
-}
-
-function RestoreConfirm({ backup, t, busy, onCancel, onConfirm }) {
-  const manifest = backup.manifest || {};
-  return (
-    <Modal
-      title={t('backup_restore')}
-      onClose={onCancel}
-      footer={
-        <>
-          <button className="btn" onClick={onCancel} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button className="btn btn--danger" onClick={onConfirm} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="refresh" size={16} />}
-            {t('backup_restore')}
-          </button>
-        </>
-      }
-    >
-      <Alert kind="warning">{t('backup_restore_confirm')}</Alert>
-      <div style={{ marginTop: 12, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-        {(manifest.modules || []).map((m) => (
-          <span className="chip" key={m.key}>
-            {t(`module_${m.key}`)} · {m.record_count}
-          </span>
-        ))}
-      </div>
-      <div className="totals" style={{ marginTop: 14 }}>
-        <div className="totals__row">
-          <span>{t('backup_format')}</span>
-          <span>{manifest.format_version}</span>
-        </div>
-        <div className="totals__row">
-          <span>{t('backup_created_on')}</span>
-          <span>{manifest.created_at}</span>
-        </div>
-        <div className="totals__row">
-          <span>{t('backup_creator')}</span>
-          <span>{manifest.created_by_name}</span>
-        </div>
-      </div>
-    </Modal>
-  );
-}
-
-function BackupCard({ backup, locale, timeZone, t, onDownload, onRestore, onDelete }) {
-  const manifest = backup.manifest || {};
-  const modules = manifest.modules || [];
-  return (
-    <article className="card" style={{ display: 'flex', flexDirection: 'column' }}>
-      <header className="card__head">
-        <span className={`card__icon ${backup.backup_type === 'full' ? 'ic-indigo' : 'ic-teal'}`}>
-          <Icon name={backup.backup_type === 'full' ? 'database' : 'layers'} size={17} />
-        </span>
-        <div className="card__titles">
-          <div className="card__title" style={{ fontSize: 13.5 }}>{backup.name}</div>
-          <div className="card__subtitle">{fmtDateTime(backup.created_at, locale, timeZone)}</div>
-        </div>
-      </header>
-      <div className="card__body" style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: '1 1 auto' }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <Badge kind={backup.backup_type === 'full' ? 'completed' : 'pending'}>
-            {backup.backup_type === 'full' ? t('backup_full') : backup.backup_type === 'uploaded' ? t('backup_uploaded_list') : t('backup_custom')}
-          </Badge>
-          <Badge>{fmtBytes(backup.size_bytes, locale)}</Badge>
-          <Badge kind={backup.status === 'restored' ? 'completed' : undefined}>
-            {backup.status === 'restored' ? t('backup_restored') : t('state_saved')}
-          </Badge>
-        </div>
-
-        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-          {modules.slice(0, 6).map((m) => (
-            <span className="chip" key={m.key}>
-              {t(`module_${m.key}`)} · {m.record_count}
-            </span>
-          ))}
-          {modules.length > 6 ? <span className="chip">+{modules.length - 6}</span> : null}
-        </div>
-
-        <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-          <Icon name="users" size={12} /> {backup.created_by_name || '—'}
-        </div>
-
-        <div className="product-card__actions" style={{ marginTop: 'auto' }}>
-          <button className="btn btn--sm" onClick={onDownload}>
-            <Icon name="download" size={14} />
-            {t('action_download')}
-          </button>
-          <button className="btn btn--sm" onClick={onRestore}>
-            <Icon name="refresh" size={14} />
-            {t('backup_restore')}
-          </button>
-          <button className="btn btn--sm btn--danger-soft" onClick={onDelete}>
-            <Icon name="trash" size={14} />
-            {t('action_delete')}
-          </button>
-        </div>
-      </div>
-    </article>
+    </div>
   );
 }
