@@ -8,12 +8,18 @@ import SidebarNav from './SidebarNav';
 import { NAV, groupFor, titleKeyFor } from '../nav/navConfig';
 
 const COLLAPSE_KEY = 'lilyan.sidebar.collapsed';
+const EXPANDED_WIDTH = '280px';
+const COLLAPSED_WIDTH = '72px';
 
 /*
  * The admin panel rail: brand, scrollable navigation tree and the collapse
  * control. It owns the two preferences it is responsible for — the collapsed
  * rail and which groups are open — so the shell only has to track the mobile
  * drawer.
+ *
+ * The wrapper `.sidebar-shell` is the fixed, full-viewport column; the inner
+ * `<aside>` clips its own content so the navigation scrolls on its own while
+ * the branding and footer stay put.
  */
 export default function Sidebar({ open = false, onNavigate }) {
   const { t } = useI18n();
@@ -30,6 +36,14 @@ export default function Sidebar({ open = false, onNavigate }) {
   });
 
   const currentKey = titleKeyFor(location.pathname);
+
+  // The page content is offset by the rail's real width, so the nav never
+  // overlaps the dashboard and follows the collapse state.
+  useEffect(() => {
+    const root = document.documentElement;
+    root.style.setProperty('--admin-sidebar-width', collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH);
+    return () => root.style.removeProperty('--admin-sidebar-width');
+  }, [collapsed]);
 
   // Reaching a page opens the group that holds it, so the tree always explains
   // where the member currently is — without closing the groups they opened.
@@ -57,17 +71,42 @@ export default function Sidebar({ open = false, onNavigate }) {
   const membership = memberships.find((m) => m.business_id === businessId);
 
   return (
-    <aside className={`sidebar ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
-      <div className="brand">
-        <span className="brand__mark">
-          <Icon name="qr" size={22} />
-        </span>
-        <span className="brand__text">
-          <span className="brand__name">{business?.name_en || business?.name || t('app_name')}</span>
-          <span className="brand__sub">{t('nav_brand_title')}</span>
-        </span>
-      </div>
+    <div className={`sidebar-shell ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
+      <aside className={`sidebar ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
+        <div className="brand">
+          <span className="brand__mark">
+            <Icon name="qr" size={22} />
+          </span>
+          <span className="brand__text">
+            <span className="brand__name">{business?.name_en || business?.name || t('app_name')}</span>
+            <span className="brand__sub">{t('nav_brand_title')}</span>
+          </span>
+        </div>
 
+        <nav className="sidebar__nav">
+          <SidebarNav
+            items={NAV}
+            roles={{ isManager, isOwner }}
+            currentKey={currentKey}
+            collapsed={collapsed}
+            openGroups={openGroups}
+            onToggleGroup={toggleGroup}
+            previewHref={business ? `/m/${business.slug}` : ''}
+            onNavigate={onNavigate}
+          />
+        </nav>
+
+        {membership ? (
+          <div className="sidebar__user">
+            <span className="sidebar__role">
+              <Icon name="shield" size={12} />
+              {t(`role_${membership.role}`)}
+            </span>
+          </div>
+        ) : null}
+      </aside>
+
+      {/* Straddles the rail's outer edge, so it never scrolls with the tree. */}
       <button
         type="button"
         className="nav-collapse"
@@ -77,28 +116,6 @@ export default function Sidebar({ open = false, onNavigate }) {
       >
         <Icon name="chevronsLeft" size={15} className={collapsed ? 'icon--dir' : ''} />
       </button>
-
-      <nav className="sidebar__nav">
-        <SidebarNav
-          items={NAV}
-          roles={{ isManager, isOwner }}
-          currentKey={currentKey}
-          collapsed={collapsed}
-          openGroups={openGroups}
-          onToggleGroup={toggleGroup}
-          previewHref={business ? `/m/${business.slug}` : ''}
-          onNavigate={onNavigate}
-        />
-      </nav>
-
-      {membership ? (
-        <div className="sidebar__user">
-          <span className="sidebar__role">
-            <Icon name="shield" size={12} />
-            {t(`role_${membership.role}`)}
-          </span>
-        </div>
-      ) : null}
-    </aside>
+    </div>
   );
 }

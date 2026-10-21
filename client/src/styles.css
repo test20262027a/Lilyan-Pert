@@ -22,10 +22,12 @@
    * layout never shifts — only `--primary` follows the business theme.
    */
   --navy: #0d1b29;
-  --navy-2: #152230;
-  --navy-line: rgba(255, 255, 255, 0.1);
-  --navy-ink: #e8eef8;
-  --navy-muted: #9db0cc;
+  --navy-2: #112232;
+  --navy-line: #263747;
+  --navy-ink: #e1e7eb;
+  --navy-muted: #aeb9c2;
+  --navy-active: #194d35;
+  --navy-scroll: #344857;
   --mint: #43c45b;
   /* Deeper green for filled controls that carry white text (5:1, readable). */
   --mint-deep: #1b7f42;
@@ -101,8 +103,8 @@
 
   /* Sidebar keeps its navy chrome; mint and the pastel tones deepen. */
   --navy: #0d1b29;
-  --navy-2: #152230;
-  --navy-line: rgba(255, 255, 255, 0.09);
+  --navy-2: #112232;
+  --navy-line: #263747;
   --mint: #3fbe86;
   --mint-deep: #2f9e6b;
   --mint-ink: #7ddcae;
@@ -155,24 +157,74 @@ a { color: var(--primary); }
 
 /* ------------------------------------------------------------------ shell */
 
-.app-shell { display: flex; min-height: 100dvh; align-items: stretch; }
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: stretch;
+  padding-inline-start: var(--admin-sidebar-width, 280px);
+  transition: padding-inline-start 0.18s ease;
+}
 
-/* Dark navy navigation rail — it sits on the right in RTL, the left in LTR. */
+/*
+ * Dark navy navigation column — a fixed, full-viewport rail: top edge to
+ * bottom edge, no outer margin or corner rounding. It sits on the physical
+ * right in RTL and the physical left in LTR through logical insets.
+ * The wrapper stays unclipped so the collapse control can straddle the edge.
+ */
+.sidebar-shell {
+  position: fixed;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  width: var(--admin-sidebar-width, 280px);
+  height: 100vh;
+  height: 100dvh;
+  z-index: 50;
+  transition: width 0.18s ease, transform 0.22s ease;
+}
+
 .sidebar {
-  width: 250px;
-  flex: none;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   background: var(--navy);
   border-inline-end: 1px solid var(--navy-line);
   color: var(--navy-ink);
-  padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
-  position: sticky;
-  top: 0;
-  align-self: flex-start;
-  max-height: 100dvh;
-  overflow-y: auto;
+  border-radius: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Branding stays pinned at the top while the tree below it scrolls. */
+.sidebar .brand {
+  flex: none;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--navy-line);
+  background: var(--navy);
+}
+
+/* The only scrolling region: the navigation tree itself. */
+.sidebar__nav {
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
+  padding: 10px 12px calc(24px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--navy-scroll) transparent;
+}
+.sidebar__nav::-webkit-scrollbar { width: 8px; }
+.sidebar__nav::-webkit-scrollbar-track { background: transparent; }
+.sidebar__nav::-webkit-scrollbar-thumb {
+  background: var(--navy-scroll);
+  border-radius: var(--radius-pill);
 }
 
 .brand {
@@ -219,7 +271,7 @@ a { color: var(--primary); }
 .sidebar .nav-link { color: var(--navy-muted); }
 .sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
 .sidebar .nav-link.is-active {
-  background: color-mix(in srgb, var(--mint) 30%, transparent);
+  background: var(--navy-active);
   color: #d8f6e6;
   border-color: color-mix(in srgb, var(--mint) 48%, transparent);
 }
@@ -230,7 +282,14 @@ a { color: var(--primary); }
 }
 .sidebar .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
 .sidebar .btn--primary { background: var(--mint); border-color: var(--mint); color: #ffffff; }
-.sidebar__user { font-size: 11.5px; color: var(--navy-muted); padding-inline: 4px; }
+.sidebar__user {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--navy-muted);
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--navy-line);
+  background: var(--navy-2);
+}
 
 .sidebar__spacer { flex: 1 1 auto; min-height: 12px; }
 
@@ -883,12 +942,13 @@ table.data tr:hover td { background: var(--surface-2); }
 .nav-collapse {
   width: 26px; height: 26px; border-radius: 50%; flex: none;
   display: grid; place-items: center; cursor: pointer; padding: 0;
-  background: color-mix(in srgb, var(--mint) 22%, transparent);
-  border: 1px solid color-mix(in srgb, var(--mint) 45%, transparent);
-  color: #d8f6e6;
+  background: var(--mint);
+  border: 2px solid var(--navy);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(6, 14, 22, 0.35);
 }
 .nav-collapse:hover {
-  background: color-mix(in srgb, var(--mint) 34%, transparent);
+  background: color-mix(in srgb, var(--mint) 85%, #ffffff);
   color: #ffffff;
 }
 
@@ -897,8 +957,15 @@ table.data tr:hover td { background: var(--surface-2); }
 
 /* The rail collapses on desktop only — on mobile it stays a full drawer. */
 @media (min-width: 1001px) {
-  .nav-collapse { display: grid; }
-  .sidebar.is-collapsed { width: 84px; }
+  /* Straddles the outer edge of the rail, above the clipped navigation. */
+  .nav-collapse {
+    display: grid;
+    position: absolute;
+    inset-inline-end: -13px;
+    inset-block-start: 76px;
+    z-index: 3;
+  }
+  .sidebar-shell.is-collapsed { width: 72px; }
   .sidebar.is-collapsed .brand { justify-content: center; padding-inline: 0; }
   .sidebar.is-collapsed .brand__text,
   .sidebar.is-collapsed .nav-link span,
@@ -907,6 +974,7 @@ table.data tr:hover td { background: var(--surface-2); }
   .sidebar.is-collapsed .sidebar__user { display: none; }
   .sidebar.is-collapsed .nav-link,
   .sidebar.is-collapsed .nav-group { justify-content: center; padding-inline: 0; }
+  .sidebar.is-collapsed .sidebar__nav { padding-inline: 8px; }
 }
 
 /* ------------------------------------------------------------ responsive */
@@ -914,17 +982,21 @@ table.data tr:hover td { background: var(--surface-2); }
 .sidebar-mobile-toggle { display: none; }
 
 @media (max-width: 1000px) {
-  .app-shell { flex-direction: column; }
-  .sidebar {
-    position: fixed; inset-block: 0; inset-inline-start: 0;
-    width: 264px; z-index: 70; transform: translateX(-102%);
-    transition: transform 0.22s ease; box-shadow: var(--shadow-lg);
+  .app-shell { flex-direction: column; padding-inline-start: 0; transition: none; }
+  /* Full-height sliding drawer, still edge to edge — never sized to content. */
+  .sidebar-shell {
+    width: min(84vw, 288px);
+    z-index: 70;
+    transform: translateX(-102%);
+    transition: transform 0.22s ease;
   }
-  [dir='rtl'] .sidebar { transform: translateX(102%); }
-  .sidebar.is-open { transform: translateX(0); }
+  [dir='rtl'] .sidebar-shell { transform: translateX(102%); }
+  .sidebar-shell.is-open { transform: translateX(0); box-shadow: var(--shadow-lg); }
   .sidebar-mobile-toggle { display: grid; }
   .sidebar-scrim { position: fixed; inset: 0; background: rgba(10, 12, 20, 0.5); z-index: 65; }
 }
+
+body.nav-drawer-open { overflow: hidden; }
 
 @media (max-width: 720px) {
   .page { padding: 13px; gap: 13px; }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Icon from './Icon';
 import { Badge } from './ui';
@@ -14,6 +14,12 @@ import Sidebar from './sidebar/Sidebar';
  */
 function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // An open mobile drawer owns the screen, so the page behind it must not scroll.
+  useEffect(() => {
+    document.body.classList.toggle('nav-drawer-open', menuOpen);
+    return () => document.body.classList.remove('nav-drawer-open');
+  }, [menuOpen]);
 
   return (
     <div className="app-shell">
