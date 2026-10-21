@@ -178,3 +178,35 @@ export function PrintPortal({ children }) {
   if (!node) return null;
   return createPortal(children, node);
 }
+
+/**
+ * Page geometry for the printed receipt, taken from the saved print settings.
+ * It is mounted inside the print portal, so it only exists while printing and
+ * leaves the on-screen stylesheet untouched. Missing or invalid values fall
+ * back to the historical 80 mm / 100% / 4 mm behaviour.
+ */
+export function ReceiptPrintStyle({ settings }) {
+  const clamp = (value, min, max, fallback) => {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  };
+  const paper = String(settings?.paper_width || '80mm');
+  const width =
+    paper === '58mm' ? 58 : paper === 'custom' ? clamp(settings?.custom_width, 40, 120, 80) : 80;
+  const scale = clamp(settings?.print_scale, 50, 150, 100) / 100;
+  const left = clamp(settings?.margin_left, 0, 20, 4);
+  const right = clamp(settings?.margin_right, 0, 20, 4);
+  const bottom = clamp(settings?.margin_bottom, 0, 20, 4);
+
+  return (
+    <style>{`
+      @page { size: ${width}mm auto; margin: ${bottom}mm ${right}mm ${bottom}mm ${left}mm; }
+      #print-root .receipt-paper {
+        width: ${(width / scale).toFixed(2)}mm;
+        max-width: none;
+        zoom: ${scale};
+      }
+    `}</style>
+  );
+}

@@ -62,10 +62,10 @@ export default function App() {
         <Route path="/reset-sample" element={<Backups focus="reset" />} />
         <Route path="/users" element={<Users />} />
         <Route path="/settings" element={<Settings />} />
-        {/* Menu settings and editable text are the Settings tabs of the same
-            name; these addresses open them directly. */}
+        {/* Menu settings and editable menu text both live in the Customer Menu
+            tab of the same workspace; these addresses open it directly. */}
         <Route path="/menu-settings" element={<Settings initialTab="menu" />} />
-        <Route path="/text-editor" element={<Settings initialTab="text" />} />
+        <Route path="/text-editor" element={<Settings initialTab="menu" />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

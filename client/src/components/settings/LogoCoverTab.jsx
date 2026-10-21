@@ -16,6 +16,7 @@ const MAX_BYTES = 8 * 1024 * 1024;
 function MediaField({
   label,
   hint,
+  uploadLabel,
   value,
   onChange,
   canManage,
@@ -54,33 +55,33 @@ function MediaField({
     <div className={`set-media-field set-media-field--${shape}`}>
       <div className="set-media-field__head">
         <span className="set-media-field__label">{label}</span>
+      </div>
+
+      <div className={`set-media ${value ? 'has-image' : ''}`}>
+        {value ? <img src={value} alt="" /> : null}
+        {!value ? (
+          <span className="set-media__empty">
+            <Icon name="image" size={26} />
+          </span>
+        ) : null}
+        {/* The remove control sits on the picture itself, as in the reference. */}
         {value && canManage ? (
           <button
             type="button"
-            className="set-media-field__remove"
+            className="set-media__remove"
             onClick={() => setConfirm(true)}
             title={t('menu_remove_image')}
-            aria-label={t('menu_remove_image')}
+            aria-label={removeTitle}
           >
             <Icon name="close" size={13} />
           </button>
         ) : null}
       </div>
 
-      <div className={`set-media ${value ? 'has-image' : ''}`}>
-        {value ? (
-          <img src={value} alt="" />
-        ) : (
-          <span className="set-media__empty">
-            <Icon name="image" size={26} />
-          </span>
-        )}
-      </div>
-
       <div className="set-media-field__foot">
-        <label className={`btn btn--sm ${busy || !canManage ? 'is-disabled' : ''}`} style={{ cursor: canManage ? 'pointer' : 'not-allowed' }}>
+        <label className="btn btn--sm" style={{ cursor: canManage && !busy ? 'pointer' : 'not-allowed', opacity: canManage ? 1 : 0.55 }}>
           {busy ? <span className="spinner" /> : <Icon name="upload" size={14} />}
-          {value ? t('settings_upload_cover') : t('action_upload')}
+          {uploadLabel}
           <input type="file" accept="image/*" hidden disabled={!canManage || busy} onChange={pick} />
         </label>
         <span className="set-media-field__hint">{hint}</span>
@@ -113,9 +114,11 @@ export default function LogoCoverTab({ draft, setVal, canManage }) {
       subtitle={t('settings_branding_hint')}
     >
       <div className="set-media-grid">
+        {/* Cover first: it is the wider cell on the physical right in RTL. */}
         <MediaField
           label={t('settings_cover')}
           hint={t('settings_cover_hint')}
+          uploadLabel={t('settings_upload_cover')}
           value={draft.cover_url}
           onChange={(value) => setVal('cover_url', value)}
           canManage={canManage}
@@ -126,6 +129,7 @@ export default function LogoCoverTab({ draft, setVal, canManage }) {
         <MediaField
           label={t('settings_logo')}
           hint={t('settings_logo_hint')}
+          uploadLabel={t('action_upload')}
           value={draft.logo_url}
           onChange={(value) => setVal('logo_url', value)}
           canManage={canManage}

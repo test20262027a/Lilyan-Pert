@@ -1,4 +1,6 @@
 export const PRESETS = {
+  /* The golden amber identity the brand shipped with, offered as "Default". */
+  default: { label: 'Default', primary: '#D9A227' },
   midnight: { label: 'Midnight', primary: '#7C67E4' },
   sunset: { label: 'Sunset', primary: '#F2784B' },
   forest: { label: 'Forest', primary: '#16A34A' },

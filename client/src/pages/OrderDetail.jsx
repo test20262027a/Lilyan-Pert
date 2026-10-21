@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { PrintPortal, ReceiptPaper } from '../components/Receipt';
+import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../components/Receipt';
 import {
   Alert,
   Badge,
@@ -458,6 +458,8 @@ export default function OrderDetail() {
       {/* The printed receipt: one continuous flow, audit info per the setting. */}
       {printing ? (
         <PrintPortal>
+          {/* Paper width, scale and margins come from the saved print settings. */}
+          <ReceiptPrintStyle settings={data.business?.receipt_settings} />
           <ReceiptPaper data={receiptData} locale={locale} t={t} showChangeInfo />
         </PrintPortal>
       ) : null}
