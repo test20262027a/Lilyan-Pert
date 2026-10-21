@@ -135,7 +135,8 @@ export const BACKUP_MODULES = [
     exportMode: 'rows',
     table: 'promotions',
     columns: [
-      'id', 'product_id', 'discount_type', 'discount_value', 'starts_at', 'ends_at',
+      'id', 'code', 'product_id', 'category_id', 'target_type', 'discount_type', 'discount_value',
+      'min_order', 'max_uses', 'used_count', 'starts_at', 'ends_at',
       'active', 'title_ku', 'title_fa', 'title_ar', 'title_en',
     ],
   },

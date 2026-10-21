@@ -1,116 +1,287 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Icon from '../Icon';
-import { Alert, Field, Modal, Select, Switch } from '../ui';
+import { Alert } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { promotionsErrorText } from './errorText';
+import { PromotionModalArtwork } from './PromotionsArtwork';
+
+const BLANK = {
+  code: '',
+  discount_type: 'percent',
+  discount_value: 10,
+  target_type: 'order',
+  product_id: '',
+  category_id: '',
+  min_order: 0,
+  max_uses: 100,
+  starts_at: '',
+  ends_at: '',
+  active: true,
+};
 
 /*
- * Create / edit one promotion. The form only sends the fields the promotions
- * module supports; prices, validity and the redemption limit are all validated
- * again on the server.
+ * Create / edit one promotion, in the order the design asks for: code, type and
+ * value, minimum order and maximum uses, the validity window, the active switch
+ * and the discount target.
+ *
+ * The modal only collects values — every rule (unique code, value range, date
+ * order, target membership) is validated again on the server, which also
+ * recalculates the discount at checkout.
  */
-export default function PromotionFormModal({ modal, products, busy, error, onClose, onSave }) {
+export default function PromotionFormModal({ modal, products, categories, busy, error, onClose, onSave }) {
   const { t, locale } = useI18n();
-  const [values, setValues] = useState({
-    product_id: modal.values.product_id || '',
-    discount_type: modal.values.discount_type || 'percent',
-    discount_value: modal.values.discount_value ?? 10,
-    starts_at: modal.values.starts_at || '',
-    ends_at: modal.values.ends_at || '',
-    max_uses: modal.values.max_uses ?? '',
-    active: modal.values.active !== false,
-    title_en: modal.values.title_en || '',
-    title_ku: modal.values.title_ku || '',
-    title_fa: modal.values.title_fa || '',
-    title_ar: modal.values.title_ar || '',
-  });
+  const [values, setValues] = useState(() => ({ ...BLANK, ...modal.values }));
+  const [localError, setLocalError] = useState(null);
 
   const set = (key, value) => setValues((state) => ({ ...state, [key]: value }));
 
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [onClose]);
+
+  const submit = () => {
+    if (!String(values.code).trim()) {
+      setLocalError('CODE_REQUIRED');
+      return;
+    }
+    if (values.target_type === 'product' && !values.product_id) {
+      setLocalError('INVALID_PRODUCT');
+      return;
+    }
+    if (values.target_type === 'category' && !values.category_id) {
+      setLocalError('INVALID_CATEGORY');
+      return;
+    }
+    setLocalError(null);
+    onSave({ ...values, code: String(values.code).trim() }, modal.id);
+  };
+
+  const shownError = localError || error;
+
   return (
-    <Modal
-      title={modal.id ? t('marketing_edit_promotion') : t('disc_add')}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
+    <div
+      className="promo-modal-backdrop"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      }}
+    >
+      <div
+        className="promo-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label={modal.id ? t('marketing_edit_promotion') : t('disc_add')}
+      >
+        <header className="promo-modal__head">
+          <div className="promo-modal__titlewrap">
+            <span className="promo-modal__icon" aria-hidden="true">
+              <Icon name="tag" size={22} />
+            </span>
+            <h2 className="promo-modal__title">
+              {modal.id ? t('marketing_edit_promotion') : t('disc_add')}
+            </h2>
+          </div>
+          <div className="promo-modal__art-wrap" aria-hidden="true">
+            <PromotionModalArtwork />
+          </div>
+          <button
+            type="button"
+            className="promo-modal__close"
+            onClick={onClose}
+            aria-label={t('action_close')}
+            title={t('action_close')}
+          >
+            <Icon name="close" size={16} />
           </button>
-          <button className="btn btn--primary" onClick={() => onSave(values, modal.id)} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
+        </header>
+
+        <div className="promo-modal__body">
+          {/* 1 — discount code */}
+          <label className="promo-field">
+            <span className="promo-label promo-label--marked">
+              {t('disc_code')}
+              <i className="promo-req" aria-hidden="true">*</i>
+            </span>
+            <input
+              className="promo-input"
+              dir="ltr"
+              value={values.code}
+              maxLength={40}
+              placeholder="SUMMER20"
+              onChange={(event) => set('code', event.target.value)}
+              autoFocus
+            />
+          </label>
+
+          {/* 2 — type + value */}
+          <div className="promo-row">
+            <label className="promo-field">
+              <span className="promo-label">{t('marketing_promotion_type')}</span>
+              <select
+                className="promo-input promo-select"
+                value={values.discount_type}
+                onChange={(event) => set('discount_type', event.target.value)}
+              >
+                <option value="percent">{t('marketing_discount_percent')}</option>
+                <option value="fixed">{t('marketing_discount_fixed')}</option>
+              </select>
+            </label>
+            <label className="promo-field">
+              <span className="promo-label">
+                {t('disc_value')}
+                <i className="promo-req" aria-hidden="true">*</i>
+              </span>
+              <input
+                className="promo-input"
+                type="number"
+                min="0"
+                step="0.01"
+                value={values.discount_value}
+                onChange={(event) => set('discount_value', event.target.value)}
+              />
+            </label>
+          </div>
+
+          {/* 3 — minimum order + maximum uses */}
+          <div className="promo-row">
+            <label className="promo-field">
+              <span className="promo-label">{t('disc_min_order')}</span>
+              <input
+                className="promo-input"
+                type="number"
+                min="0"
+                step="1"
+                value={values.min_order}
+                onChange={(event) => set('min_order', event.target.value)}
+              />
+            </label>
+            <label className="promo-field">
+              <span className="promo-label">{t('disc_max_uses')}</span>
+              <input
+                className="promo-input"
+                type="number"
+                min="1"
+                step="1"
+                placeholder={t('disc_unlimited')}
+                value={values.max_uses ?? ''}
+                onChange={(event) => set('max_uses', event.target.value)}
+              />
+            </label>
+          </div>
+
+          {/* 4 — validity window */}
+          <div className="promo-row">
+            <label className="promo-field">
+              <span className="promo-label">{t('disc_starts_at')}</span>
+              <span className="promo-date">
+                <input
+                  className="promo-input"
+                  type="date"
+                  value={values.starts_at || ''}
+                  onChange={(event) => set('starts_at', event.target.value)}
+                />
+                <Icon name="calendar" size={16} />
+              </span>
+            </label>
+            <label className="promo-field">
+              <span className="promo-label">{t('disc_ends_at')}</span>
+              <span className="promo-date">
+                <input
+                  className="promo-input"
+                  type="date"
+                  value={values.ends_at || ''}
+                  onChange={(event) => set('ends_at', event.target.value)}
+                />
+                <Icon name="calendar" size={16} />
+              </span>
+            </label>
+          </div>
+
+          {/* 5 — active switch */}
+          <label className="promo-switch-row">
+            <span className="promo-switch-row__label">{t('label_active')}</span>
+            <span className="switch">
+              <input
+                type="checkbox"
+                checked={values.active !== false}
+                onChange={(event) => set('active', event.target.checked)}
+                aria-label={t('label_active')}
+              />
+              <span className="switch__track" />
+            </span>
+          </label>
+
+          {/* 6 — discount target */}
+          <label className="promo-field">
+            <span className="promo-label promo-label--marked">{t('disc_target')}</span>
+            <select
+              className="promo-input promo-select"
+              value={values.target_type}
+              onChange={(event) => set('target_type', event.target.value)}
+            >
+              <option value="order">{t('disc_target_order')}</option>
+              <option value="category">{t('disc_target_category')}</option>
+              <option value="product">{t('disc_target_product')}</option>
+            </select>
+          </label>
+
+          {values.target_type === 'category' ? (
+            <label className="promo-field">
+              <span className="promo-label">{t('disc_choose_category')}</span>
+              <select
+                className="promo-input promo-select"
+                value={values.category_id || ''}
+                onChange={(event) => set('category_id', event.target.value)}
+              >
+                <option value="">—</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {localized(category, 'name', locale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {values.target_type === 'product' ? (
+            <label className="promo-field">
+              <span className="promo-label">{t('disc_choose_product')}</span>
+              <select
+                className="promo-input promo-select"
+                value={values.product_id || ''}
+                onChange={(event) => set('product_id', event.target.value)}
+              >
+                <option value="">—</option>
+                {products.map((product) => (
+                  <option key={product.id} value={product.id}>
+                    {localized(product, 'name', locale)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+
+          {shownError ? <Alert kind="error">{promotionsErrorText(shownError, t)}</Alert> : null}
+        </div>
+
+        <footer className="promo-modal__foot">
+          <button type="button" className="promo-save" onClick={submit} disabled={busy}>
+            {busy ? <span className="spinner" /> : null}
             {t('action_save')}
           </button>
-        </>
-      }
-    >
-      <div className="form-grid">
-        <Field label={t('marketing_promotion_product')}>
-          <Select
-            value={values.product_id}
-            onChange={(v) => set('product_id', v)}
-            options={products.map((p) => ({ value: p.id, label: localized(p, 'name', locale) }))}
-          />
-        </Field>
-        <Field label={t('marketing_promotion_type')}>
-          <Select
-            value={values.discount_type}
-            onChange={(v) => set('discount_type', v)}
-            options={[
-              { value: 'percent', label: t('marketing_discount_percent') },
-              { value: 'fixed', label: t('marketing_discount_fixed') },
-            ]}
-          />
-        </Field>
-        <Field label={t('marketing_discount_value')}>
-          <input
-            className="input"
-            type="number"
-            min="0"
-            value={values.discount_value}
-            onChange={(e) => set('discount_value', e.target.value)}
-          />
-        </Field>
-        <Field label={t('disc_max_uses')} hint={t('disc_max_uses_hint')}>
-          <input
-            className="input"
-            type="number"
-            min="1"
-            placeholder={t('disc_unlimited')}
-            value={values.max_uses}
-            onChange={(e) => set('max_uses', e.target.value)}
-          />
-        </Field>
-        <Field label={t('marketing_starts_at')}>
-          <input className="input" type="date" value={values.starts_at} onChange={(e) => set('starts_at', e.target.value)} />
-        </Field>
-        <Field label={t('marketing_ends_at')}>
-          <input className="input" type="date" value={values.ends_at} onChange={(e) => set('ends_at', e.target.value)} />
-        </Field>
+          <button type="button" className="promo-cancel" onClick={onClose} disabled={busy}>
+            {t('action_cancel')}
+          </button>
+        </footer>
       </div>
-
-      {error ? <Alert kind="error">{promotionsErrorText(error, t)}</Alert> : null}
-
-      <div className="form-grid" style={{ marginTop: 14 }}>
-        {['en', 'ku', 'fa', 'ar'].map((code) => (
-          <Field key={code} label={`${t('label_name')} · ${code.toUpperCase()}`}>
-            <input
-              className="input"
-              dir={code === 'en' ? 'ltr' : 'rtl'}
-              value={values[`title_${code}`]}
-              onChange={(e) => set(`title_${code}`, e.target.value)}
-            />
-          </Field>
-        ))}
-      </div>
-
-      <div style={{ marginTop: 14 }}>
-        <Switch
-          checked={values.active}
-          onChange={(v) => set('active', v)}
-          label={t('label_active')}
-          ariaLabel={t('label_active')}
-        />
-      </div>
-    </Modal>
+    </div>
   );
 }

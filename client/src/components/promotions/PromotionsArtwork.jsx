@@ -1,57 +1,110 @@
 /*
- * Illustrated banner for the Promotions & Discounts page: a golden gift box,
- * discount tags and confetti over a warm cream backdrop.
+ * Illustrated artwork for the Promotions module: a golden gift box, discount
+ * tags, leaves and confetti over a warm cream backdrop with pale yellow and
+ * pale green hills.
  *
- * Self-contained like the other page artworks, and purely decorative
- * (`aria-hidden`) — the page title and controls live outside it.
+ * Two shapes of the same picture:
+ *   - the page banner (`PromotionsArtwork`, wide),
+ *   - the Add / Edit Promotion modal header (`PromotionModalArtwork`, compact).
+ *
+ * Both are purely decorative (`aria-hidden`): every title, number and control
+ * is rendered as real DOM outside the picture.
  */
 export default function PromotionsArtwork() {
   return (
     <svg className="mart" viewBox="0 0 620 150" aria-hidden="true" focusable="false">
-      {/* warm backdrop */}
-      <circle cx="312" cy="62" r="46" fill="#fdf0cc" />
-      <circle cx="312" cy="62" r="30" fill="#f9df9c" opacity="0.6" />
+      {/* warm glow behind the gift */}
+      <circle cx="310" cy="58" r="52" fill="#fdf1cf" />
+      <circle cx="310" cy="58" r="33" fill="#f9e2a6" opacity="0.6" />
 
-      {/* confetti */}
-      <path d="M120 44l4 12 12 4-12 4-4 12-4-12-12-4 12-4z" fill="#f6d87a" />
-      <path d="M508 34l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#f3c96b" opacity="0.85" />
-      <circle cx="176" cy="86" r="4" fill="#f2c76a" opacity="0.7" />
-      <circle cx="452" cy="92" r="5" fill="#f4d183" opacity="0.7" />
+      {/* soft landscape */}
+      <path d="M0 112c74 0 118-18 184-18s96 16 152 16 92-20 150-20 84 12 134 12v48H0z" fill="#fdf2cb" />
+      <path d="M0 130c72-9 128 8 200 8s136-14 214-9 132 3 206-3v24H0z" fill="#e9f3d7" />
 
-      {/* soft ground */}
-      <path d="M0 118c70 0 96-14 152-14s78 12 128 12 84-16 132-16 108 10 208 10v40H0z" fill="#f7ecd2" />
-      <path d="M0 136c70-8 128 6 196 6s132-12 208-8 120 2 216-4v20H0z" fill="#f1e2c0" opacity="0.85" />
+      {/* leaves */}
+      <path d="M104 80c-14-1-23-9-26-22 13 0 22 8 26 22z" fill="#cfe8bd" />
+      <path d="M516 86c14-1 23-9 26-22-13 0-22 8-26 22z" fill="#cfe8bd" />
+      <path d="M120 96c-11 0-18-6-20-16 10 0 17 6 20 16z" fill="#dff0d0" />
+      <path d="M500 100c11 0 18-6 20-16-10 0-17 6-20 16z" fill="#dff0d0" />
+
+      {/* confetti and percentage accents */}
+      <path d="M170 40l3 9 9 3-9 3-3 9-3-9-9-3 9-3z" fill="#f6d87a" />
+      <path d="M452 32l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="#f3c96b" opacity="0.9" />
+      <circle cx="214" cy="60" r="4" fill="#f2c76a" opacity="0.75" />
+      <circle cx="412" cy="62" r="5" fill="#f4d183" opacity="0.75" />
+      <text x="368" y="52" fontSize="17" fontWeight="800" fill="#e8c375">%</text>
+      <text x="234" y="46" fontSize="14" fontWeight="800" fill="#ead0a0">%</text>
 
       {/* gift box */}
       <g>
-        <ellipse cx="312" cy="134" rx="58" ry="8" fill="#e8d9b4" />
-        <rect x="252" y="70" width="120" height="62" rx="10" fill="#e9b34b" />
-        <rect x="252" y="70" width="120" height="62" rx="10" fill="none" stroke="#d19b32" strokeWidth="2.4" />
-        <rect x="252" y="70" width="120" height="18" rx="8" fill="#f7d27a" />
-        <rect x="306" y="70" width="12" height="62" fill="#f4c96a" />
-        <path d="M312 70c-14-14-34-16-40-4-5 11 14 14 40 4z" fill="#f5cd72" stroke="#d19b32" strokeWidth="2" />
-        <path d="M312 70c14-14 34-16 40-4 5 11-14 14-40 4z" fill="#f5cd72" stroke="#d19b32" strokeWidth="2" />
-        <circle cx="312" cy="70" r="7" fill="#fbe6ad" stroke="#d19b32" strokeWidth="2" />
-        <path d="M262 88h20" stroke="#f7d27a" strokeWidth="3" strokeLinecap="round" />
+        <ellipse cx="310" cy="132" rx="60" ry="8" fill="#ecdcb6" />
+        <rect x="250" y="68" width="120" height="62" rx="10" fill="#eab54d" />
+        <rect x="250" y="68" width="120" height="62" rx="10" fill="none" stroke="#d19b32" strokeWidth="2.4" />
+        <rect x="250" y="68" width="120" height="18" rx="8" fill="#f8d47c" />
+        <rect x="304" y="68" width="12" height="62" fill="#f5cb6d" />
+        <path d="M310 68c-14-14-34-16-40-4-5 11 14 14 40 4z" fill="#f6ce74" stroke="#d19b32" strokeWidth="2" />
+        <path d="M310 68c14-14 34-16 40-4 5 11-14 14-40 4z" fill="#f6ce74" stroke="#d19b32" strokeWidth="2" />
+        <circle cx="310" cy="68" r="7" fill="#fbe7ae" stroke="#d19b32" strokeWidth="2" />
+        <path d="M260 88h20M340 88h20" stroke="#f8d47c" strokeWidth="3" strokeLinecap="round" />
       </g>
 
       {/* discount tag, left */}
-      <g transform="rotate(-16 190 96)">
-        <path d="M158 78h52l22 22-28 28-46-46z" fill="#fff6df" stroke="#e2b34e" strokeWidth="2.6" />
-        <circle cx="208" cy="104" r="6" fill="#e9b34b" />
-        <text x="176" y="100" fontSize="16" fontWeight="700" fill="#c98f24">%</text>
+      <g transform="rotate(-15 188 92)">
+        <path d="M156 74h52l22 22-28 28-46-46z" fill="#fffaf0" stroke="#e2b34e" strokeWidth="2.6" />
+        <circle cx="206" cy="100" r="6" fill="#eab54d" />
+        <text x="174" y="96" fontSize="16" fontWeight="800" fill="#c98f24">%</text>
       </g>
 
       {/* discount tag, right */}
-      <g transform="rotate(14 436 94)">
-        <path d="M410 76h52l22 22-28 28-46-46z" fill="#fff6df" stroke="#e2b34e" strokeWidth="2.6" />
-        <circle cx="460" cy="102" r="6" fill="#e9b34b" />
-        <text x="428" y="98" fontSize="16" fontWeight="700" fill="#c98f24">%</text>
+      <g transform="rotate(14 434 90)">
+        <path d="M408 72h52l22 22-28 28-46-46z" fill="#fffaf0" stroke="#e2b34e" strokeWidth="2.6" />
+        <circle cx="458" cy="98" r="6" fill="#eab54d" />
+        <text x="426" y="94" fontSize="16" fontWeight="800" fill="#c98f24">%</text>
       </g>
 
       {/* ribbon curls */}
-      <path d="M240 128c-16 6-30 4-40-4" stroke="#e9b34b" strokeWidth="3" strokeLinecap="round" fill="none" />
-      <path d="M384 128c16 6 30 4 40-4" stroke="#e9b34b" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M240 126c-16 6-30 4-40-4" stroke="#eab54d" strokeWidth="3" strokeLinecap="round" fill="none" />
+      <path d="M380 126c16 6 30 4 40-4" stroke="#eab54d" strokeWidth="3" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+/** The compact version used as the illustrated header of the promotion form. */
+export function PromotionModalArtwork() {
+  return (
+    <svg className="promo-modal__art" viewBox="0 0 260 118" aria-hidden="true" focusable="false">
+      <path d="M0 92c36 0 58-12 92-12s50 10 78 10 46-12 74-12 40 6 56 6v34H0z" fill="#fdf2cb" />
+      <path d="M0 106c34-7 62 6 98 6s64-10 100-6 40 2 62-2v14H0z" fill="#e9f3d7" />
+
+      <path d="M34 58c-9-1-15-6-17-15 8 0 14 5 17 15z" fill="#cfe8bd" />
+      <path d="M226 62c9-1 15-6 17-15-8 0-14 5-17 15z" fill="#cfe8bd" />
+
+      <text x="46" y="34" fontSize="13" fontWeight="800" fill="#ead0a0">%</text>
+      <text x="204" y="42" fontSize="15" fontWeight="800" fill="#e8c375">%</text>
+      <path d="M186 20l2 6 6 2-6 2-2 6-2-6-6-2 6-2z" fill="#f6d87a" />
+      <circle cx="70" cy="18" r="3" fill="#f2c76a" opacity="0.8" />
+
+      <g>
+        <ellipse cx="130" cy="98" rx="40" ry="5" fill="#ecdcb6" />
+        <rect x="92" y="50" width="76" height="46" rx="7" fill="#eab54d" />
+        <rect x="92" y="50" width="76" height="46" rx="7" fill="none" stroke="#d19b32" strokeWidth="2" />
+        <rect x="92" y="50" width="76" height="13" rx="6" fill="#f8d47c" />
+        <rect x="125" y="50" width="9" height="46" fill="#f5cb6d" />
+        <path d="M130 50c-9-9-21-10-25-2-3 7 9 9 25 2z" fill="#f6ce74" stroke="#d19b32" strokeWidth="1.8" />
+        <path d="M130 50c9-9 21-10 25-2 3 7-9 9-25 2z" fill="#f6ce74" stroke="#d19b32" strokeWidth="1.8" />
+        <circle cx="130" cy="50" r="4.5" fill="#fbe7ae" stroke="#d19b32" strokeWidth="1.8" />
+      </g>
+
+      <g transform="rotate(-14 66 72)">
+        <path d="M44 60h30l14 14-18 18-26-26z" fill="#fffaf0" stroke="#e2b34e" strokeWidth="2" />
+        <circle cx="74" cy="76" r="4" fill="#eab54d" />
+        <text x="55" y="76" fontSize="11" fontWeight="800" fill="#c98f24">%</text>
+      </g>
+      <g transform="rotate(13 196 76)">
+        <path d="M180 62h30l14 14-18 18-26-26z" fill="#fffaf0" stroke="#e2b34e" strokeWidth="2" />
+        <circle cx="210" cy="78" r="4" fill="#eab54d" />
+        <text x="191" y="78" fontSize="11" fontWeight="800" fill="#c98f24">%</text>
+      </g>
     </svg>
   );
 }

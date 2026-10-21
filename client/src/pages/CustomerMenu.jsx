@@ -148,7 +148,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     });
   };
 
-  const placeOrder = async ({ customer_name, customer_phone, notes }) => {
+  const placeOrder = async ({ customer_name, customer_phone, notes, promotion_code }) => {
     setBusy(true);
     try {
       const items = cartLines.map((l) => ({ product_id: l.product.id, quantity: l.qty }));
@@ -158,11 +158,14 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         res = await post('/orders', { table_id: tableId, customer_name, customer_phone, notes, items });
         res = { order: res.order };
       } else {
+        // The code is only a hint: the server re-reads the promotion and
+        // recalculates the discount, so the amount is never taken from here.
         res = await post(`/public/orders/${key}`, {
           table_token: data?.table?.qr_token || null,
           customer_name,
           customer_phone,
           notes,
+          promotion_code: promotion_code ? promotion_code.trim() : null,
           items,
         });
       }
@@ -171,7 +174,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       setCartOpen(false);
       toast.success(t('customer_menu_order_placed'));
     } catch (err) {
-      toast.error(err.code === 'MENU_DISABLED' ? t('customer_menu_unavailable') : t('error_generic'));
+      if (err.code === 'MENU_DISABLED') toast.error(t('customer_menu_unavailable'));
+      else if (err.code === 'PROMO_MIN_ORDER') toast.error(t('customer_promo_min_order'));
+      else if (String(err.code || '').startsWith('PROMO_')) toast.error(t('customer_promo_invalid'));
+      else toast.error(t('error_generic'));
     } finally {
       setBusy(false);
     }
@@ -552,7 +558,7 @@ function ReviewSection({ reviews, onSubmit, timeZone }) {
 
 function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit }) {
   const { t } = useI18n();
-  const [form, setForm] = useState({ customer_name: '', customer_phone: '', notes: '' });
+  const [form, setForm] = useState({ customer_name: '', customer_phone: '', notes: '', promotion_code: '' });
   const total = lines.reduce((s, l) => s + l.total, 0);
 
   return (
@@ -617,6 +623,16 @@ function CartModal({ lines, currency, busy, onClose, onQty, onClear, onSubmit })
                 dir="ltr"
                 value={form.customer_phone}
                 onChange={(e) => setForm((f) => ({ ...f, customer_phone: e.target.value }))}
+              />
+            </div>
+            <div className="field span-2">
+              <span className="field__label">{t('customer_promo_code')}</span>
+              <input
+                className="input"
+                dir="ltr"
+                value={form.promotion_code}
+                placeholder="SUMMER20"
+                onChange={(e) => setForm((f) => ({ ...f, promotion_code: e.target.value }))}
               />
             </div>
             <div className="field span-2">

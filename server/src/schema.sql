@@ -331,6 +331,33 @@ CREATE UNIQUE INDEX IF NOT EXISTS tables_business_number_key
 ALTER TABLE promotions ADD COLUMN IF NOT EXISTS max_uses integer CHECK (max_uses > 0);
 ALTER TABLE promotions ADD COLUMN IF NOT EXISTS used_count integer NOT NULL DEFAULT 0;
 
+-- Code-based promotions. A promotion now carries a redemption code the guest
+-- types at checkout, a minimum order value and a target (the whole order, one
+-- category or one product). Additive: promotions created before this keep
+-- `code` NULL and behave exactly as before — their price is applied
+-- automatically on the customer menu. `target_type` defaults to 'product'
+-- because that is what every existing row is.
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS code text;
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS min_order numeric(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS target_type text NOT NULL DEFAULT 'product';
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS category_id uuid REFERENCES categories(id) ON DELETE SET NULL;
+
+ALTER TABLE promotions DROP CONSTRAINT IF EXISTS promotions_target_type_check;
+ALTER TABLE promotions ADD CONSTRAINT promotions_target_type_check
+  CHECK (target_type IN ('order', 'category', 'product'));
+
+-- One code per business, compared without case so SAVE5K and save5k collide.
+CREATE UNIQUE INDEX IF NOT EXISTS promotions_business_code_key
+  ON promotions (business_id, upper(code)) WHERE code IS NOT NULL;
+
+-- A promotion with neither a code nor a product is a whole-order promotion.
+UPDATE promotions SET target_type = 'order'
+ WHERE target_type = 'product' AND product_id IS NULL AND code IS NULL;
+
+-- The promotion code frozen with the order that redeemed it, so editing or
+-- deleting a promotion never rewrites the history of a completed order.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS promotion_code text;
+
 -- Admin activity log: authorized changes to business-owned modules that were not
 -- audited anywhere else (menu, tables, promotions, ads, reviews, users, settings,
 -- backups). Append-only; order status changes and receipt prints keep their own

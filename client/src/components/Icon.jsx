@@ -32,6 +32,7 @@ const PATHS = {
   print: <><path d="M6 9V2h12v7" /><rect x="4" y="9" width="16" height="8" rx="2" /><path d="M6 14h12v8H6z" /></>,
   image: <><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="1.6" /><path d="m21 15-5-5L5 21" /></>,
   tag: <><path d="M20.6 13.4 12.4 21.6a2 2 0 0 1-2.8 0l-8-8A2 2 0 0 1 1 12.2V4a2 2 0 0 1 2-2h8.2a2 2 0 0 1 1.4.6l8 8a2 2 0 0 1 0 2.8z" /><circle cx="7" cy="7" r="1.4" /></>,
+  percent: <><path d="M19 5 5 19" /><circle cx="7.5" cy="7.5" r="2.5" /><circle cx="16.5" cy="16.5" r="2.5" /></>,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
   calendar: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 10h18" /></>,
   pin: <><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" /><circle cx="12" cy="10" r="3" /></>,

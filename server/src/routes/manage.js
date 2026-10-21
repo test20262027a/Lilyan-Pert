@@ -401,8 +401,12 @@ router.get(
   ah(async (req, res) => {
     const { rows } = await q(
       `SELECT p.*, pr.name_en AS product_name_en, pr.name_ku AS product_name_ku,
-              pr.name_fa AS product_name_fa, pr.name_ar AS product_name_ar
-         FROM promotions p LEFT JOIN products pr ON pr.id = p.product_id
+              pr.name_fa AS product_name_fa, pr.name_ar AS product_name_ar,
+              c.name_en AS category_name_en, c.name_ku AS category_name_ku,
+              c.name_fa AS category_name_fa, c.name_ar AS category_name_ar
+         FROM promotions p
+         LEFT JOIN products pr ON pr.id = p.product_id
+         LEFT JOIN categories c ON c.id = p.category_id
         WHERE p.business_id = $1 ORDER BY p.created_at DESC`,
       [req.businessId],
     );
@@ -429,33 +433,125 @@ function usageLimit(raw) {
   return n;
 }
 
+const PROMO_TARGETS = ['order', 'category', 'product'];
+
+/** The guest-facing redemption code: trimmed, 2–40 letters, digits, dash or underscore. */
+function promoCode(raw) {
+  const code = String(raw ?? '').trim().slice(0, 40);
+  if (!code) throw bad('CODE_REQUIRED');
+  if (!/^[A-Za-z0-9_-]{2,40}$/.test(code)) throw bad('INVALID_CODE');
+  return code;
+}
+
+/** Codes are unique per business, compared without case: SAVE5K and save5k collide. */
+async function assertUniqueCode(businessId, code, excludeId) {
+  const { rows } = await q(
+    `SELECT id FROM promotions
+      WHERE business_id = $1 AND upper(code) = upper($2)
+        AND ($3::uuid IS NULL OR id <> $3::uuid)`,
+    [businessId, code, excludeId || null],
+  );
+  if (rows[0]) throw conflict('DUPLICATE_CODE');
+}
+
+async function assertCategory(businessId, categoryId) {
+  if (!categoryId || !isUuid(categoryId)) throw bad('INVALID_CATEGORY');
+  const { rows } = await q('SELECT id FROM categories WHERE id = $1 AND business_id = $2', [
+    categoryId,
+    businessId,
+  ]);
+  if (!rows[0]) throw bad('INVALID_CATEGORY');
+  return categoryId;
+}
+
+/** A non-negative money amount (discount value, minimum order). */
+function promoMoney(raw, code) {
+  const n = Number(raw ?? 0);
+  if (!Number.isFinite(n) || n < 0) throw bad(code);
+  return Math.round(n * 100) / 100;
+}
+
+/** ISO timestamp for a submitted date; an end date covers its whole day. */
+function promoDate(raw, endOfDay = false) {
+  if (raw === undefined || raw === null || raw === '') return null;
+  const text = String(raw);
+  const iso = /^\d{4}-\d{2}-\d{2}$/.test(text)
+    ? new Date(`${text}T${endOfDay ? '23:59:59.999' : '00:00:00.000'}Z`)
+    : new Date(text);
+  if (Number.isNaN(iso.getTime())) throw bad('INVALID_DATE');
+  return iso.toISOString();
+}
+
+/**
+ * Every value the Add / Edit Promotion form sends, validated once so create and
+ * update can never disagree. The stored code keeps the owner's own casing; only
+ * the uniqueness check is case-insensitive.
+ */
+async function promotionInput(businessId, body, excludeId) {
+  const type = body.discount_type === 'fixed' ? 'fixed' : 'percent';
+  const value = promoMoney(body.discount_value, 'INVALID_DISCOUNT');
+  if (value <= 0) throw bad('INVALID_DISCOUNT');
+  if (type === 'percent' && value > 100) throw bad('INVALID_DISCOUNT');
+
+  const target = PROMO_TARGETS.includes(body.target_type) ? body.target_type : 'order';
+  let productId = null;
+  let categoryId = null;
+  if (target === 'product') {
+    productId = await assertProduct(businessId, body.product_id || null);
+    if (!productId) throw bad('INVALID_PRODUCT');
+  }
+  if (target === 'category') categoryId = await assertCategory(businessId, body.category_id || null);
+
+  const startsAt = promoDate(body.starts_at);
+  const endsAt = promoDate(body.ends_at, true);
+  if (startsAt && endsAt && new Date(startsAt) > new Date(endsAt)) throw bad('INVALID_DATE_RANGE');
+
+  const code = promoCode(body.code);
+  await assertUniqueCode(businessId, code, excludeId);
+
+  return {
+    code,
+    type,
+    value,
+    target,
+    productId,
+    categoryId,
+    startsAt,
+    endsAt,
+    minOrder: promoMoney(body.min_order, 'INVALID_MIN_ORDER'),
+    maxUses: usageLimit(body.max_uses),
+    active: body.active === undefined ? true : Boolean(body.active),
+  };
+}
+
 router.post(
   '/promotions',
   withBusiness('manager'),
   ah(async (req, res) => {
     const b = req.body || {};
-    const type = b.discount_type === 'fixed' ? 'fixed' : 'percent';
-    const value = Number(b.discount_value);
-    if (!Number.isFinite(value) || value < 0) throw bad('INVALID_DISCOUNT');
-    if (type === 'percent' && value > 100) throw bad('INVALID_DISCOUNT');
-    const productId = await assertProduct(req.businessId, b.product_id || null);
+    const input = await promotionInput(req.businessId, b);
     const { rows } = await q(
-      `INSERT INTO promotions (business_id, product_id, discount_type, discount_value,
-                               starts_at, ends_at, active, title_ku, title_fa, title_ar, title_en, max_uses)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) RETURNING *`,
+      `INSERT INTO promotions (business_id, code, product_id, category_id, target_type,
+                               discount_type, discount_value, min_order, starts_at, ends_at,
+                               active, title_ku, title_fa, title_ar, title_en, max_uses)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
       [
         req.businessId,
-        productId,
-        type,
-        value,
-        b.starts_at || null,
-        b.ends_at || null,
-        b.active === undefined ? true : Boolean(b.active),
+        input.code,
+        input.productId,
+        input.categoryId,
+        input.target,
+        input.type,
+        input.value,
+        input.minOrder,
+        input.startsAt,
+        input.endsAt,
+        input.active,
         b.title_ku || null,
         b.title_fa || null,
         b.title_ar || null,
         b.title_en || null,
-        usageLimit(b.max_uses),
+        input.maxUses,
       ],
     );
     res.status(201).json({ promotion: rows[0] });
@@ -467,33 +563,36 @@ router.put(
   withBusiness('manager'),
   ah(async (req, res) => {
     const b = req.body || {};
-    if (b.product_id !== undefined) await assertProduct(req.businessId, b.product_id || null);
+    if (!isUuid(req.params.id)) throw notFound('PROMOTION_NOT_FOUND');
+    // The edit form edits the SAME record, so the code is excluded from its own
+    // uniqueness check and no second promotion is ever created.
+    const input = await promotionInput(req.businessId, b, req.params.id);
     const { rows } = await q(
       `UPDATE promotions
-          SET product_id = COALESCE($3, product_id),
-              discount_type = COALESCE($4, discount_type),
-              discount_value = COALESCE($5, discount_value),
-              starts_at = $6, ends_at = $7,
-              active = COALESCE($8, active),
-              title_ku = COALESCE($9, title_ku), title_fa = COALESCE($10, title_fa),
-              title_ar = COALESCE($11, title_ar), title_en = COALESCE($12, title_en),
-              max_uses = $13
+          SET code = $3, product_id = $4, category_id = $5, target_type = $6,
+              discount_type = $7, discount_value = $8, min_order = $9,
+              starts_at = $10, ends_at = $11, active = $12, max_uses = $13,
+              title_ku = COALESCE($14, title_ku), title_fa = COALESCE($15, title_fa),
+              title_ar = COALESCE($16, title_ar), title_en = COALESCE($17, title_en)
         WHERE id = $1 AND business_id = $2 RETURNING *`,
       [
         req.params.id,
         req.businessId,
-        b.product_id || null,
-        b.discount_type === undefined ? null : b.discount_type === 'fixed' ? 'fixed' : 'percent',
-        b.discount_value === undefined ? null : Math.max(0, Number(b.discount_value) || 0),
-        b.starts_at || null,
-        b.ends_at || null,
-        b.active === undefined ? null : Boolean(b.active),
+        input.code,
+        input.productId,
+        input.categoryId,
+        input.target,
+        input.type,
+        input.value,
+        input.minOrder,
+        input.startsAt,
+        input.endsAt,
+        input.active,
+        input.maxUses,
         b.title_ku || null,
         b.title_fa || null,
         b.title_ar || null,
         b.title_en || null,
-        // Sent explicitly by the form; an unlimited promotion keeps max_uses NULL.
-        usageLimit(b.max_uses),
       ],
     );
     if (!rows[0]) throw notFound('PROMOTION_NOT_FOUND');

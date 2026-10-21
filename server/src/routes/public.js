@@ -20,6 +20,24 @@ function promoUnitPrice(product, promotion) {
   return round2(Math.max(0, base - Number(promotion.discount_value)));
 }
 
+/**
+ * The part of the order a promotion applies to: everything, one category or one
+ * product. Derived from the stored lines, never from the request body.
+ */
+function promotionBaseAmount(promotion, lines, subtotal) {
+  if (promotion.target_type === 'category') {
+    return round2(
+      lines.filter((l) => l.category_id === promotion.category_id).reduce((sum, l) => sum + l.line_total, 0),
+    );
+  }
+  if (promotion.target_type === 'product') {
+    return round2(
+      lines.filter((l) => l.product_id === promotion.product_id).reduce((sum, l) => sum + l.line_total, 0),
+    );
+  }
+  return subtotal;
+}
+
 async function loadBusiness(key) {
   const col = isUuid(key) ? 'id' : 'slug';
   const { rows } = await q(`SELECT * FROM businesses WHERE ${col} = $1`, [key]);
@@ -67,7 +85,10 @@ router.get(
             AND (starts_at IS NULL OR starts_at <= now())
             AND (ends_at IS NULL OR ends_at >= now())
             -- A promotion that used up its redemptions stops being advertised.
-            AND (max_uses IS NULL OR used_count < max_uses)`,
+            AND (max_uses IS NULL OR used_count < max_uses)
+            -- Code-based promotions are redeemed by the guest at checkout, never
+            -- applied silently to the menu price.
+            AND code IS NULL`,
         [business.id],
       ),
       q(
@@ -203,8 +224,8 @@ router.post(
       if (!ids.length) throw bad('INVALID_ITEMS');
 
       const found = await c.query(
-        `SELECT p.id, p.price, p.name_en, p.name_ku, p.name_fa, p.name_ar, p.active, p.available,
-                c.active AS category_active
+        `SELECT p.id, p.price, p.category_id, p.name_en, p.name_ku, p.name_fa, p.name_ar,
+                p.active, p.available, c.active AS category_active
            FROM products p LEFT JOIN categories c ON c.id = p.category_id
           WHERE p.business_id = $1 AND p.id = ANY($2::uuid[])`,
         [business.id, ids],
@@ -247,6 +268,7 @@ router.post(
         subtotal = round2(subtotal + lineTotal);
         lines.push({
           product_id: product.id,
+          category_id: product.category_id,
           name: product.name_en || product.name_ku || product.name_fa || product.name_ar,
           unit_price: unitPrice,
           quantity,
@@ -255,11 +277,51 @@ router.post(
         });
       }
 
+      /*
+       * A promotion code is validated here, on the authoritative side, against
+       * the stored promotion: active flag, validity window, redemption cap,
+       * minimum order and target — then the discount is recalculated from the
+       * stored lines. The client cannot influence the amount it gets back.
+       */
+      let codePromotion = null;
+      let discount = 0;
+      const submittedCode = String(req.body?.promotion_code || '').trim().slice(0, 40);
+      if (submittedCode) {
+        const found = await c.query(
+          'SELECT * FROM promotions WHERE business_id = $1 AND upper(code) = upper($2)',
+          [business.id, submittedCode],
+        );
+        const promotion = found.rows[0];
+        if (!promotion) throw bad('PROMO_NOT_FOUND');
+        if (!promotion.active) throw bad('PROMO_INACTIVE');
+        const now = Date.now();
+        if (promotion.starts_at && new Date(promotion.starts_at).getTime() > now) {
+          throw bad('PROMO_NOT_STARTED');
+        }
+        if (promotion.ends_at && new Date(promotion.ends_at).getTime() < now) {
+          throw bad('PROMO_EXPIRED');
+        }
+        if (promotion.max_uses !== null && Number(promotion.used_count) >= Number(promotion.max_uses)) {
+          throw bad('PROMO_EXHAUSTED');
+        }
+        if (Number(promotion.min_order || 0) > subtotal) throw bad('PROMO_MIN_ORDER');
+        const base = promotionBaseAmount(promotion, lines, subtotal);
+        if (base <= 0) throw bad('PROMO_NOT_APPLICABLE');
+        discount =
+          promotion.discount_type === 'percent'
+            ? round2((base * Number(promotion.discount_value)) / 100)
+            : round2(Number(promotion.discount_value));
+        discount = round2(Math.min(discount, subtotal));
+        if (discount <= 0) throw bad('PROMO_NOT_APPLICABLE');
+        codePromotion = promotion;
+      }
+
       const taxRate = Number(business.tax_rate || 0);
       const serviceRate = Number(business.service_charge_rate || 0);
-      const tax = round2((subtotal * taxRate) / 100);
-      const service = round2((subtotal * serviceRate) / 100);
-      const total = round2(subtotal + tax + service);
+      const taxable = round2(Math.max(0, subtotal - discount));
+      const tax = round2((taxable * taxRate) / 100);
+      const service = round2((taxable * serviceRate) / 100);
+      const total = round2(taxable + tax + service);
 
       const seq = await c.query(
         'UPDATE businesses SET order_seq = order_seq + 1 WHERE id = $1 RETURNING order_seq',
@@ -270,8 +332,8 @@ router.post(
       const order = await c.query(
         `INSERT INTO orders (business_id, table_id, table_name, order_number, status, channel, customer_name,
                              customer_phone, notes, subtotal, discount, tax, service_charge, total,
-                             promotion_id, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,'pending','customer',$5,$6,$7,$8,0,$9,$10,$11,$12,now(),now())
+                             promotion_id, promotion_code, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,'pending','customer',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now(),now())
          RETURNING *`,
         [
           business.id,
@@ -282,14 +344,17 @@ router.post(
           req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,
           req.body?.notes ? String(req.body.notes).slice(0, 500) : null,
           subtotal,
+          discount,
           tax,
           service,
           total,
-          [...appliedPromotions][0] || null,
+          codePromotion?.id || [...appliedPromotions][0] || null,
+          codePromotion?.code || null,
         ],
       );
 
       // One redemption per promotion actually applied by this order.
+      if (codePromotion) appliedPromotions.add(codePromotion.id);
       for (const promotionId of appliedPromotions) {
         await c.query(
           'UPDATE promotions SET used_count = used_count + 1 WHERE id = $1 AND business_id = $2',

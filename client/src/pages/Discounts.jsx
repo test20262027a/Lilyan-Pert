@@ -15,16 +15,15 @@ import '../menu.css';
 import '../promotions.css';
 
 /*
- * Promotions & Discounts.
+ * Promotions.
  *
  * The illustrated banner (with Add Promotion inside it) and the responsive grid
- * of one card per real promotion of the signed-in business: the product it
- * applies to, the discount itself, the validity window and how many redemptions
- * are left.
+ * of one card per real promotion of the signed-in business: its code, value,
+ * redemptions used, the validity window and how many uses are left.
  *
  * Every record comes from `/manage/promotions`, which the API scopes to the
  * authenticated business, and every write goes back through the same
- * business-scoped routes — the discount is recalculated again on the server at
+ * business-scoped routes. The discount is recalculated again on the server at
  * checkout, so nothing here is trusted for the money.
  */
 export default function Discounts() {
@@ -37,6 +36,7 @@ export default function Discounts() {
 
   const [promotions, setPromotions] = useState([]);
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -47,9 +47,14 @@ export default function Discounts() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, catalog] = await Promise.all([get('/manage/promotions'), get('/catalog/products')]);
+      const [list, catalog, cats] = await Promise.all([
+        get('/manage/promotions'),
+        get('/catalog/products'),
+        get('/catalog/categories'),
+      ]);
       setPromotions(list.promotions || []);
       setProducts(catalog.products || []);
+      setCategories(cats.categories || []);
       setFailed(false);
     } catch {
       setFailed(true);
@@ -64,7 +69,7 @@ export default function Discounts() {
 
   const openCreate = () => {
     setFormError(null);
-    setModal({ values: { discount_type: 'percent', discount_value: 10, active: true } });
+    setModal({ values: {} });
   };
 
   const openEdit = (promotion) => {
@@ -72,11 +77,18 @@ export default function Discounts() {
     setModal({
       id: promotion.id,
       values: {
-        ...promotion,
+        code: promotion.code || '',
+        discount_type: promotion.discount_type || 'percent',
+        discount_value: promotion.discount_value ?? 10,
+        target_type: promotion.target_type || (promotion.product_id ? 'product' : 'order'),
+        product_id: promotion.product_id || '',
+        category_id: promotion.category_id || '',
+        min_order: promotion.min_order ?? 0,
+        max_uses: promotion.max_uses ?? '',
         // The date inputs need a bare day, while the API stores full timestamps.
         starts_at: promotion.starts_at ? String(promotion.starts_at).slice(0, 10) : '',
         ends_at: promotion.ends_at ? String(promotion.ends_at).slice(0, 10) : '',
-        max_uses: promotion.max_uses ?? '',
+        active: promotion.active !== false,
       },
     });
   };
@@ -86,11 +98,17 @@ export default function Discounts() {
     setFormError(null);
     try {
       const payload = {
-        ...values,
-        product_id: values.product_id || null,
+        code: String(values.code).trim(),
+        discount_type: values.discount_type,
+        discount_value: values.discount_value === '' ? 0 : values.discount_value,
+        target_type: values.target_type,
+        product_id: values.target_type === 'product' ? values.product_id || null : null,
+        category_id: values.target_type === 'category' ? values.category_id || null : null,
+        min_order: values.min_order === '' ? 0 : values.min_order,
+        max_uses: values.max_uses === '' ? null : values.max_uses,
         starts_at: values.starts_at || null,
         ends_at: values.ends_at || null,
-        max_uses: values.max_uses === '' ? null : values.max_uses,
+        active: values.active !== false,
       };
       if (id) await put(`/manage/promotions/${id}`, payload);
       else await post('/manage/promotions', payload);
@@ -119,9 +137,6 @@ export default function Discounts() {
     }
   };
 
-  const productOf = (promotion) =>
-    promotion.product_id ? products.find((p) => p.id === promotion.product_id) : undefined;
-
   return (
     <div className="promos-page">
       <PageHeroBanner
@@ -130,13 +145,7 @@ export default function Discounts() {
         subtitle={t('disc_subtitle')}
         art={<PromotionsArtwork />}
       >
-        <button
-          type="button"
-          className="promo-add"
-          onClick={openCreate}
-          disabled={!isManager || products.length === 0}
-          title={products.length === 0 ? t('disc_no_products_hint') : t('disc_add')}
-        >
+        <button type="button" className="promo-add" onClick={openCreate} disabled={!isManager}>
           <span className="promo-add__dot" aria-hidden="true">
             <Icon name="plus" size={15} />
           </span>
@@ -158,18 +167,13 @@ export default function Discounts() {
           </button>
         </Alert>
       ) : promotions.length === 0 ? (
-        <EmptyState
-          icon="tag"
-          title={t('disc_empty')}
-          hint={products.length === 0 ? t('disc_no_products_hint') : t('disc_empty_hint')}
-        />
+        <EmptyState icon="tag" title={t('disc_empty')} hint={t('disc_empty_hint')} />
       ) : (
         <div className="promo-grid">
           {promotions.map((promotion) => (
             <PromotionCard
               key={promotion.id}
               promotion={promotion}
-              product={productOf(promotion)}
               currency={currency}
               locale={locale}
               timeZone={timeZone}
@@ -185,6 +189,7 @@ export default function Discounts() {
         <PromotionFormModal
           modal={modal}
           products={products}
+          categories={categories}
           busy={busy}
           error={formError}
           onClose={() => setModal(null)}
