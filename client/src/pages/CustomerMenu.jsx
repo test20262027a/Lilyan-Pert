@@ -15,6 +15,7 @@ import { useAuth } from '../context/AuthContext';
 import { get, post } from '../api';
 import { applyTheme } from '../theme';
 import { zoneFor } from '../format';
+import CustomerAds from '../components/ads/CustomerAds';
 
 const sessionKey = () => {
   let key = localStorage.getItem('lilyan.session');
@@ -217,6 +218,34 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const showAdminReturn =
     adminMode && biz.menu_settings?.show_admin_return !== false && biz.menu_settings?.show_customer_menu !== false;
 
+  /*
+   * Advertisements arrive already filtered by the API (enabled AND inside their
+   * schedule) and ordered by priority; the placement decides where each strip
+   * sits, so it never covers the category bar or the ordering controls.
+   */
+  const ads = data.advertisements || [];
+  const adsBelowHeader = ads.filter((ad) => (ad.placement || 'below_header') === 'below_header');
+  const adsMenuEnd = ads.filter((ad) => ad.placement === 'menu_end');
+
+  /* A tap reveals the related product's category, the related category, or the
+     stored http(s) destination. Nothing else is treated as a link. */
+  const openAd = (ad) => {
+    const product = ad.product_id ? (data.products || []).find((p) => p.id === ad.product_id) : null;
+    const targetId = product?.category_id
+      ? `cat-${product.category_id}`
+      : ad.category_id
+        ? `cat-${ad.category_id}`
+        : null;
+    const target = targetId ? document.getElementById(targetId) : null;
+    if (target) {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (ad.link_url && /^https?:\/\//i.test(ad.link_url)) {
+      window.open(ad.link_url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   return (
     <div className="customer-shell">
       <header className="customer-header" ref={headerRef}>
@@ -303,31 +332,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           ) : null}
         </div>
 
-        {(data.advertisements || []).length > 0 ? (
-          <section className="card">
-            <header className="card__head">
-              <span className="card__icon ic-coral">
-                <Icon name="megaphone" size={18} />
-              </span>
-              <div className="card__titles">
-                <div className="card__title">{t('marketing_ads')}</div>
-              </div>
-            </header>
-            <div className="card__body">
-              <div className="ads-grid">
-                {data.advertisements.map((ad) => (
-                  <div className="ad-card" key={ad.id}>
-                    {ad.image_url ? <img className="ad-card__img" src={ad.image_url} alt="" loading="lazy" /> : null}
-                    <div className="ad-card__scrim">
-                      <div className="ad-card__title">{localized(ad, 'title', locale)}</div>
-                      <div className="ad-card__sub">{localized(ad, 'subtitle', locale)}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-        ) : null}
+        <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
 
         {products.length === 0 ? (
           <EmptyState icon="coffee" title={t('customer_menu_no_products')} />
@@ -390,6 +395,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
               ))}
           </div>
         )}
+
+        <CustomerAds ads={adsMenuEnd} locale={locale} onOpen={openAd} />
 
         <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} timeZone={timeZone} />
 

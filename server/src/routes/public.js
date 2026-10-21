@@ -91,11 +91,27 @@ router.get(
             AND code IS NULL`,
         [business.id],
       ),
+      /*
+       * Only advertisements a guest may really see: enabled, inside their
+       * schedule (an expired but still enabled advertisement is not shown) and
+       * inside a placement the menu renders. Higher priority first.
+       */
       q(
-        `SELECT id, image_url, link_url, title_ku, title_fa, title_ar, title_en,
-                subtitle_ku, subtitle_fa, subtitle_ar, subtitle_en, sort_order
-           FROM advertisements WHERE business_id = $1 AND active = true
-          ORDER BY sort_order, created_at`,
+        `SELECT a.id, a.image_url, a.link_url, a.category_id, a.product_id, a.placement,
+                a.title_ku, a.title_fa, a.title_ar, a.title_en,
+                a.subtitle_ku, a.subtitle_fa, a.subtitle_ar, a.subtitle_en,
+                a.sort_order AS priority,
+                pr.name_ku AS product_name_ku, pr.name_fa AS product_name_fa,
+                pr.name_ar AS product_name_ar, pr.name_en AS product_name_en,
+                c.name_ku AS category_name_ku, c.name_fa AS category_name_fa,
+                c.name_ar AS category_name_ar, c.name_en AS category_name_en
+           FROM advertisements a
+           LEFT JOIN products pr ON pr.id = a.product_id AND pr.business_id = a.business_id
+           LEFT JOIN categories c ON c.id = a.category_id AND c.business_id = a.business_id
+          WHERE a.business_id = $1 AND a.active = true
+            AND (a.starts_at IS NULL OR a.starts_at <= now())
+            AND (a.ends_at IS NULL OR a.ends_at >= now())
+          ORDER BY a.sort_order DESC, a.created_at DESC`,
         [business.id],
       ),
       q(

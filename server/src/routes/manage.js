@@ -314,40 +314,201 @@ router.delete(
 
 /* ---------------------------------------------------- ads & promotions */
 
+/*
+ * Advertisements.
+ *
+ * One row per advertisement of the signed-in business. The four localized
+ * title and description pairs live in the same record (title_* / subtitle_*),
+ * the link to a menu product or category is a real foreign key inside the
+ * business, and the schedule is stored as absolute instants converted from the
+ * business's own timezone. `sort_order` carries the owner's priority inside one
+ * placement: higher first, newest first on a tie.
+ */
+
+const AD_LANGS = ['ku', 'fa', 'ar', 'en'];
+
+/** The positions the customer menu actually renders. */
+const AD_PLACEMENTS = ['below_header', 'menu_end'];
+
+const AD_SELECT = `
+  SELECT a.*,
+         pr.name_ku AS product_name_ku, pr.name_fa AS product_name_fa,
+         pr.name_ar AS product_name_ar, pr.name_en AS product_name_en,
+         c.name_ku  AS category_name_ku, c.name_fa AS category_name_fa,
+         c.name_ar  AS category_name_ar, c.name_en AS category_name_en
+    FROM advertisements a
+    LEFT JOIN products pr ON pr.id = a.product_id AND pr.business_id = a.business_id
+    LEFT JOIN categories c ON c.id = a.category_id AND c.business_id = a.business_id
+`;
+
+/** Trimmed free text, null when the owner left it empty. */
+function adText(raw, max = 1000) {
+  if (raw === undefined || raw === null) return null;
+  const value = String(raw).trim().slice(0, max);
+  return value || null;
+}
+
+/** A stored picture reference: an uploaded media URL or an absolute web URL. */
+function adImage(raw) {
+  const value = String(raw ?? '').trim().slice(0, 1000);
+  if (!value) return null;
+  if (value.startsWith('/') || /^https?:\/\//i.test(value)) return value;
+  throw bad('INVALID_IMAGE');
+}
+
+/** An optional destination: http(s) only, so a script URL can never be stored. */
+function adLink(raw) {
+  const value = String(raw ?? '').trim();
+  if (!value) return null;
+  const candidate = /^[a-z][a-z0-9+.-]*:/i.test(value) ? value : `https://${value}`;
+  let parsed;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw bad('INVALID_URL');
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') throw bad('INVALID_URL');
+  return candidate.slice(0, 1000);
+}
+
+/** The business's IANA zone; every schedule is written through it. */
+async function businessZone(businessId) {
+  const { rows } = await q('SELECT timezone FROM businesses WHERE id = $1', [businessId]);
+  return rows[0]?.timezone || 'UTC';
+}
+
+/**
+ * The absolute instant of a submitted wall-clock time ("2026-10-21T18:30") in
+ * the business timezone, so a schedule means the same clock time the owner set.
+ * An absolute timestamp (already carrying a zone) is kept as it is.
+ */
+function zonedInstant(raw, timeZone) {
+  if (raw instanceof Date) return raw.toISOString();
+  const value = String(raw ?? '').trim();
+  if (!value) return null;
+  const local = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2}))?$/.exec(value);
+  let date;
+  if (local) {
+    const [, y, mo, d, h, mi, s = '00'] = local;
+    const wall = Date.UTC(+y, +mo - 1, +d, +h, +mi, +s);
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit',
+    }).formatToParts(new Date(wall));
+    const at = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+    const shown = Date.UTC(+at.year, +at.month - 1, +at.day, +at.hour % 24, +at.minute, +at.second);
+    date = new Date(wall - (shown - wall));
+  } else {
+    date = new Date(value);
+  }
+  if (Number.isNaN(date.getTime())) throw bad('INVALID_DATE');
+  return date.toISOString();
+}
+
+/** Priority inside one placement: a whole number, 0 when unset. */
+function adPriority(raw) {
+  if (raw === undefined || raw === null || raw === '') return 0;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < -100000 || n > 100000) throw bad('INVALID_PRIORITY');
+  return n;
+}
+
+/** Every value the Add / Edit Advertisement form sends, validated once. */
+async function adInput(businessId, body) {
+  const timeZone = await businessZone(businessId);
+  const productId = body.product_id ? await assertProduct(businessId, body.product_id) : null;
+  let categoryId = body.category_id ? await assertCategory(businessId, body.category_id) : null;
+
+  // A product already belongs to a category: that is the relationship stored,
+  // so the saved pair can never contradict the menu.
+  if (productId) {
+    const { rows } = await q('SELECT category_id FROM products WHERE id = $1 AND business_id = $2', [
+      productId,
+      businessId,
+    ]);
+    if (rows[0]?.category_id) categoryId = rows[0].category_id;
+  }
+
+  const startsAt = zonedInstant(body.starts_at, timeZone);
+  const endsAt = zonedInstant(body.ends_at, timeZone);
+  if (startsAt && endsAt && startsAt > endsAt) throw bad('INVALID_DATE_RANGE');
+
+  const titles = {};
+  const texts = {};
+  for (const code of AD_LANGS) {
+    titles[code] = adText(body[`title_${code}`], 160);
+    texts[code] = adText(body[`subtitle_${code}`], 1000);
+  }
+  if (!AD_LANGS.some((code) => titles[code])) throw bad('AD_TITLE_REQUIRED');
+
+  return {
+    image_url: adImage(body.image_url),
+    link_url: adLink(body.link_url),
+    category_id: categoryId,
+    product_id: productId,
+    starts_at: startsAt,
+    ends_at: endsAt,
+    placement: AD_PLACEMENTS.includes(body.placement) ? body.placement : 'below_header',
+    active: body.active === undefined ? true : Boolean(body.active),
+    priority: adPriority(body.priority),
+    titles,
+    texts,
+  };
+}
+
+const AD_COLUMNS = [
+  'image_url', 'link_url', 'category_id', 'product_id',
+  'title_ku', 'title_fa', 'title_ar', 'title_en',
+  'subtitle_ku', 'subtitle_fa', 'subtitle_ar', 'subtitle_en',
+  'starts_at', 'ends_at', 'placement', 'active', 'sort_order',
+];
+
+function adValues(input) {
+  return [
+    input.image_url,
+    input.link_url,
+    input.category_id,
+    input.product_id,
+    ...AD_LANGS.map((code) => input.titles[code]),
+    ...AD_LANGS.map((code) => input.texts[code]),
+    input.starts_at,
+    input.ends_at,
+    input.placement,
+    input.active,
+    input.priority,
+  ];
+}
+
 router.get(
   '/ads',
   withBusiness('staff'),
   ah(async (req, res) => {
     const { rows } = await q(
-      'SELECT * FROM advertisements WHERE business_id = $1 ORDER BY sort_order, created_at',
+      `${AD_SELECT} WHERE a.business_id = $1 ORDER BY a.sort_order DESC, a.created_at DESC`,
       [req.businessId],
     );
     res.json({ ads: rows });
   }),
 );
 
-const adColumns = [
-  'image_url', 'link_url', 'title_ku', 'title_fa', 'title_ar', 'title_en',
-  'subtitle_ku', 'subtitle_fa', 'subtitle_ar', 'subtitle_en',
-];
-
 router.post(
   '/ads',
   withBusiness('manager'),
   ah(async (req, res) => {
-    const b = req.body || {};
+    const input = await adInput(req.businessId, req.body || {});
     const { rows } = await q(
-      `INSERT INTO advertisements (business_id, ${adColumns.join(', ')}, active, sort_order)
-       VALUES ($1, ${adColumns.map((_, i) => `$${i + 2}`).join(', ')}, $${adColumns.length + 2}, $${adColumns.length + 3})
-       RETURNING *`,
-      [
-        req.businessId,
-        ...adColumns.map((c) => (b[c] === undefined || b[c] === null ? null : String(b[c]).slice(0, 1000))),
-        b.active === undefined ? true : Boolean(b.active),
-        Number(b.sort_order) || 0,
-      ],
+      `INSERT INTO advertisements (business_id, ${AD_COLUMNS.join(', ')})
+       VALUES ($1, ${AD_COLUMNS.map((_, i) => `$${i + 2}`).join(', ')})
+       RETURNING id`,
+      [req.businessId, ...adValues(input)],
     );
-    res.status(201).json({ ad: rows[0] });
+    const saved = await q(`${AD_SELECT} WHERE a.id = $1 AND a.business_id = $2`, [
+      rows[0].id,
+      req.businessId,
+    ]);
+    res.status(201).json({ ad: saved.rows[0] });
   }),
 );
 
@@ -355,30 +516,34 @@ router.put(
   '/ads/:id',
   withBusiness('manager'),
   ah(async (req, res) => {
-    const b = req.body || {};
-    const sets = [];
-    const values = [req.params.id, req.businessId];
-    for (const col of adColumns) {
-      if (col in b) {
-        values.push(b[col] === null ? null : String(b[col]).slice(0, 1000));
-        sets.push(`${col} = $${values.length}`);
-      }
-    }
-    if ('active' in b) {
-      values.push(Boolean(b.active));
-      sets.push(`active = $${values.length}`);
-    }
-    if ('sort_order' in b) {
-      values.push(Number(b.sort_order) || 0);
-      sets.push(`sort_order = $${values.length}`);
-    }
-    if (!sets.length) return res.json({ ok: true, unchanged: true });
-    const { rows } = await q(
-      `UPDATE advertisements SET ${sets.join(', ')} WHERE id = $1 AND business_id = $2 RETURNING *`,
-      values,
+    const found = await q('SELECT * FROM advertisements WHERE id = $1 AND business_id = $2', [
+      req.params.id,
+      req.businessId,
+    ]);
+    const current = found.rows[0];
+    if (!current) throw notFound('AD_NOT_FOUND');
+
+    // A partial update keeps every field the caller did not send, so an edit
+    // can never silently clear data it does not own.
+    const body = req.body || {};
+    const input = await adInput(req.businessId, {
+      ...current,
+      ...body,
+      priority: 'priority' in body ? body.priority : current.sort_order,
+    });
+
+    await q(
+      `UPDATE advertisements
+          SET ${AD_COLUMNS.map((col, i) => `${col} = $${i + 3}`).join(', ')}, updated_at = now()
+        WHERE id = $1 AND business_id = $2`,
+      [req.params.id, req.businessId, ...adValues(input)],
     );
-    if (!rows[0]) throw notFound('AD_NOT_FOUND');
-    res.json({ ad: rows[0] });
+
+    const saved = await q(`${AD_SELECT} WHERE a.id = $1 AND a.business_id = $2`, [
+      req.params.id,
+      req.businessId,
+    ]);
+    res.json({ ad: saved.rows[0] });
   }),
 );
 

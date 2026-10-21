@@ -162,3 +162,24 @@ export function addDaysToDay(ymd, days) {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
+
+/**
+ * An absolute instant as the `yyyy-mm-ddThh:mm` value a datetime-local input
+ * needs, read on the business's own clock — so reopening an advertisement shows
+ * the very time its owner set, not the server's UTC one.
+ */
+export function toZonedInput(value, timeZone) {
+  const d = toDate(value);
+  if (!d) return '';
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timeZone || 'UTC',
+    hour12: false,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).formatToParts(d);
+  const at = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return `${at.year}-${at.month}-${at.day}T${at.hour === '24' ? '00' : at.hour}:${at.minute}`;
+}

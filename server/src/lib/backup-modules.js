@@ -124,8 +124,10 @@ export const BACKUP_MODULES = [
     exportMode: 'rows',
     table: 'advertisements',
     columns: [
-      'id', 'image_url', 'link_url', 'title_ku', 'title_fa', 'title_ar', 'title_en',
-      'subtitle_ku', 'subtitle_fa', 'subtitle_ar', 'subtitle_en', 'active', 'sort_order',
+      'id', 'image_url', 'link_url', 'category_id', 'product_id',
+      'title_ku', 'title_fa', 'title_ar', 'title_en',
+      'subtitle_ku', 'subtitle_fa', 'subtitle_ar', 'subtitle_en',
+      'starts_at', 'ends_at', 'placement', 'active', 'sort_order',
     ],
   },
   {

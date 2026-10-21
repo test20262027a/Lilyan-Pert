@@ -1,36 +1,75 @@
 import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, ConfirmDialog, EmptyState, Loading, SectionCard, useToast } from '../components/ui';
+import { Alert, ConfirmDialog, EmptyState, Loading, useToast } from '../components/ui';
+import PageHeroBanner from '../components/menu/PageHeroBanner';
+import AdsArtwork from '../components/ads/AdsArtwork';
+import AdCard from '../components/ads/AdCard';
 import AdFormModal from '../components/ads/AdFormModal';
-import { localized, useI18n } from '../i18n';
+import AdPreviewModal from '../components/ads/AdPreviewModal';
+import { adErrorText } from '../components/ads/errorText';
+import { useI18n } from '../i18n';
+import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { del, get, post, put } from '../api';
+import { zoneFor } from '../format';
+import '../menu.css';
+import '../ads.css';
 
 /*
  * Advertisements.
  *
- * One card per real advertisement of the signed-in business, with its stored
- * picture (served as a background so the card keeps its shape), its localized
- * title and subtitle and its active flag. The records come from `/manage/ads`,
- * scoped to the authenticated business by the API.
+ * The illustrated banner (with Add Advertisement inside it) and the three-column
+ * grid of one card per real advertisement of the signed-in business: picture or
+ * mint placeholder, state badge, localized title and description, schedule,
+ * related menu product or category, and the Preview / Edit / Delete footer.
+ *
+ * Every record comes from `/manage/ads`, scoped to the authenticated business by
+ * the API, and every write goes back through the same business-scoped routes.
+ * The public visibility rule is not decided here: the customer menu only ever
+ * receives advertisements that are enabled AND inside their schedule.
  */
+
+/** The four localized title / description pairs, trimmed, empty as null. */
+function localizedPayload(values) {
+  const payload = {};
+  for (const code of ['ku', 'fa', 'ar', 'en']) {
+    const title = String(values[`title_${code}`] || '').trim();
+    const text = String(values[`subtitle_${code}`] || '').trim();
+    payload[`title_${code}`] = title || null;
+    payload[`subtitle_${code}`] = text || null;
+  }
+  return payload;
+}
+
 export default function Advertisements() {
   const { t, locale } = useI18n();
+  const { business } = useBusiness();
   const { isManager } = useAuth();
   const toast = useToast();
+  const timeZone = zoneFor(locale, business?.timezone);
 
   const [ads, setAds] = useState([]);
+  const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [modal, setModal] = useState(null);
+  const [preview, setPreview] = useState(null);
   const [confirm, setConfirm] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await get('/manage/ads');
-      setAds(res.ads || []);
+      const [list, catalog, cats] = await Promise.all([
+        get('/manage/ads'),
+        get('/catalog/products'),
+        get('/catalog/categories'),
+      ]);
+      setAds(list.ads || []);
+      setProducts(catalog.products || []);
+      setCategories(cats.categories || []);
       setFailed(false);
     } catch {
       setFailed(true);
@@ -43,16 +82,41 @@ export default function Advertisements() {
     load();
   }, [load]);
 
+  const openCreate = () => {
+    setFormError(null);
+    setModal({ values: {} });
+  };
+
+  const openEdit = (ad) => {
+    setFormError(null);
+    setModal({ id: ad.id, values: { ...ad } });
+  };
+
   const save = async (values, id) => {
     setBusy(true);
+    setFormError(null);
     try {
-      if (id) await put(`/manage/ads/${id}`, values);
-      else await post('/manage/ads', values);
+      const payload = {
+        ...localizedPayload(values),
+        image_url: values.image_url || null,
+        link_url: values.link_url || null,
+        category_id: values.category_id || null,
+        product_id: values.product_id || null,
+        starts_at: values.starts_at || null,
+        ends_at: values.ends_at || null,
+        placement: values.placement,
+        priority: values.priority === '' ? 0 : Number(values.priority),
+        active: values.active !== false,
+      };
+      if (id) await put(`/manage/ads/${id}`, payload);
+      else await post('/manage/ads', payload);
       setModal(null);
       await load();
       toast.success(t('state_saved'));
-    } catch {
-      toast.error(t('error_generic'));
+    } catch (err) {
+      // The dialog stays open with the entered values and an accurate message.
+      setFormError(err?.code || 'ERROR');
+      toast.error(adErrorText(err?.code, t) || t('error_generic'));
     } finally {
       setBusy(false);
     }
@@ -73,72 +137,73 @@ export default function Advertisements() {
   };
 
   return (
-    <>
-      <div className="page-head">
-        <div className="page-head__text">
-          <h1>{t('ads_title')}</h1>
-          <p>{t('ads_subtitle')}</p>
-        </div>
-        <div className="page-head__actions">
-          <button
-            className="btn btn--primary btn--sm"
-            onClick={() => setModal({ values: {} })}
-            disabled={!isManager}
-          >
+    <div className="ads-page">
+      <PageHeroBanner
+        icon="megaphone"
+        title={t('ads_title')}
+        subtitle={t('ads_subtitle')}
+        art={<AdsArtwork />}
+      >
+        <button type="button" className="ad-add" onClick={openCreate} disabled={!isManager}>
+          <span className="ad-add__label">{t('ads_add')}</span>
+          <span className="ad-add__dot" aria-hidden="true">
             <Icon name="plus" size={15} />
-            {t('marketing_create_ad')}
-          </button>
-        </div>
-      </div>
+          </span>
+        </button>
+      </PageHeroBanner>
 
       {!isManager ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
 
-      <SectionCard icon="megaphone" iconClass="ic-coral" title={t('marketing_ads')}>
-        {loading ? (
+      {loading ? (
+        <div className="ads-loading">
           <Loading />
-        ) : failed ? (
-          <Alert kind="error">
-            {t('state_error')}{' '}
-            <button type="button" className="btn btn--sm" onClick={load}>
-              {t('action_retry')}
-            </button>
-          </Alert>
-        ) : ads.length === 0 ? (
-          <EmptyState icon="image" title={t('marketing_no_ads')} />
-        ) : (
-          /* One advertisement keeps one card's width and starts at the grid start. */
-          <div className="ads-grid">
-            {ads.map((ad) => (
-              <div className="ad-card" key={ad.id}>
-                {ad.image_url ? <img className="ad-card__img" src={ad.image_url} alt="" loading="lazy" /> : null}
-                <div className="ad-card__scrim">
-                  <div className="ad-card__title">{localized(ad, 'title', locale) || t('marketing_ads')}</div>
-                  <div className="ad-card__sub">{localized(ad, 'subtitle', locale)}</div>
-                  <div className="btn-row" style={{ marginTop: 8 }}>
-                    <span className={`badge badge--${ad.active ? 'active' : 'inactive'}`}>
-                      {ad.active ? t('label_active') : t('label_inactive')}
-                    </span>
-                    {isManager ? (
-                      <>
-                        <button className="btn btn--sm" onClick={() => setModal({ id: ad.id, values: { ...ad } })}>
-                          <Icon name="pencil" size={13} />
-                          {t('action_edit')}
-                        </button>
-                        <button className="btn btn--sm btn--danger-soft" onClick={() => setConfirm(ad)}>
-                          <Icon name="trash" size={13} />
-                        </button>
-                      </>
-                    ) : null}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </SectionCard>
+        </div>
+      ) : failed ? (
+        <Alert kind="error">
+          {t('state_error')}{' '}
+          <button type="button" className="btn btn--sm" onClick={load}>
+            {t('action_retry')}
+          </button>
+        </Alert>
+      ) : ads.length === 0 ? (
+        <EmptyState icon="megaphone" title={t('ads_empty')} hint={t('ads_empty_hint')} />
+      ) : (
+        <div className="ad-grid">
+          {ads.map((ad) => (
+            <AdCard
+              key={ad.id}
+              ad={ad}
+              locale={locale}
+              timeZone={timeZone}
+              canManage={isManager}
+              onPreview={setPreview}
+              onEdit={openEdit}
+              onDelete={(row) => setConfirm(row)}
+            />
+          ))}
+        </div>
+      )}
 
       {modal ? (
-        <AdFormModal modal={modal} busy={busy} onClose={() => setModal(null)} onSave={save} />
+        <AdFormModal
+          modal={modal}
+          products={products}
+          categories={categories}
+          timeZone={timeZone}
+          busy={busy}
+          error={formError}
+          onClose={() => setModal(null)}
+          onSave={save}
+        />
+      ) : null}
+
+      {preview ? (
+        <AdPreviewModal
+          ad={preview}
+          locale={locale}
+          timeZone={timeZone}
+          onClose={() => setPreview(null)}
+        />
       ) : null}
 
       {confirm ? (
@@ -152,6 +217,6 @@ export default function Advertisements() {
           onConfirm={() => remove(confirm)}
         />
       ) : null}
-    </>
+    </div>
   );
 }

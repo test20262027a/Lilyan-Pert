@@ -185,12 +185,18 @@ CREATE TABLE IF NOT EXISTS advertisements (
   business_id   uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
   image_url     text,
   link_url      text,
+  category_id   uuid REFERENCES categories(id) ON DELETE SET NULL,
+  product_id    uuid REFERENCES products(id) ON DELETE SET NULL,
   title_ku      text, title_fa text, title_ar text, title_en text,
   subtitle_ku   text, subtitle_fa text, subtitle_ar text, subtitle_en text,
+  starts_at     timestamptz,
+  ends_at       timestamptz,
+  placement     text NOT NULL DEFAULT 'below_header',
   active        boolean NOT NULL DEFAULT true,
   sort_order    integer NOT NULL DEFAULT 0,
   is_sample     boolean NOT NULL DEFAULT false,
-  created_at    timestamptz NOT NULL DEFAULT now()
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  updated_at    timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS ads_business_idx ON advertisements(business_id);
 
@@ -384,3 +390,30 @@ UPDATE tables
    SET name_ku = name, name_fa = name, name_ar = name, name_en = name
  WHERE name IS NOT NULL
    AND name_ku IS NULL AND name_fa IS NULL AND name_ar IS NULL AND name_en IS NULL;
+
+-- Advertisement scheduling, placement and menu relations. Additive: an older
+-- advertisement keeps its picture, text and active flag, gains `below_header`
+-- placement, no schedule (always eligible while active) and no relation, so it
+-- keeps appearing exactly where it always did.
+--
+-- `starts_at` / `ends_at` are absolute instants written by the server from the
+-- business's own timezone. An advertisement is publicly eligible only while it
+-- is active AND inside that window — an enabled but expired advertisement stays
+-- visible to its owners here and disappears from the customer menu.
+--
+-- `placement` is one of the positions the customer menu really renders
+-- ('below_header', 'menu_end'); `sort_order` is the owner's priority within a
+-- placement (higher first, newest first on a tie).
+ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS category_id uuid REFERENCES categories(id) ON DELETE SET NULL;
+ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS product_id uuid REFERENCES products(id) ON DELETE SET NULL;
+ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS starts_at timestamptz;
+ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS ends_at timestamptz;
+ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS placement text NOT NULL DEFAULT 'below_header';
+ALTER TABLE advertisements ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
+
+ALTER TABLE advertisements DROP CONSTRAINT IF EXISTS advertisements_placement_check;
+ALTER TABLE advertisements ADD CONSTRAINT advertisements_placement_check
+  CHECK (placement IN ('below_header', 'menu_end'));
+
+CREATE INDEX IF NOT EXISTS ads_public_idx
+  ON advertisements (business_id, placement, starts_at, ends_at) WHERE active;
