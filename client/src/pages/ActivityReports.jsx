@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, EmptyState, Loading, SectionCard, Select, StatusBadge, useToast } from '../components/ui';
+import { Alert, ConfirmDialog, EmptyState, useToast } from '../components/ui';
+import PageHeroBanner from '../components/menu/PageHeroBanner';
+import ActivityArtwork from '../components/activity/ActivityArtwork';
+import ActivityFilters from '../components/activity/ActivityFilters';
+import ActivityCard from '../components/activity/ActivityCard';
 import { useI18n } from '../i18n';
+import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
-import { get } from '../api';
-import { fmtDateTime, fmtNumber, zoneFor } from '../format';
+import { del, get } from '../api';
+import { fmtNumber, zoneFor } from '../format';
+import '../menu.css';
+import '../activity.css';
 
 /*
  * Activity Reports.
@@ -13,64 +20,69 @@ import { fmtDateTime, fmtNumber, zoneFor } from '../format';
  * authorized admin changes (`activity_log`), every order status change
  * (`order_status_history`) and every receipt print (`receipt_prints`). Nothing
  * is back-filled or invented — the rows are the records the business itself
- * produced, and every filter below is applied server-side.
+ * produced, and the search, module, type, member and date filters are all
+ * resolved by the API over the whole dataset, not over the rendered page.
+ *
+ * Removing a row archives it from this report only (`activity_hidden`); the
+ * authoritative audit record stays in place, and protected streams are never
+ * offered for removal.
  */
 
-const KINDS = ['activity', 'order_status', 'print'];
-
-/* Entity labels reuse the module names the backup picker already translates. */
-const ENTITY_KEYS = {
-  category: 'module_menu_categories',
-  product: 'module_menu_products',
-  table: 'module_tables',
-  promotion: 'module_promotions',
-  ad: 'module_advertisements',
-  review: 'module_reviews',
-  user: 'nav_users',
-  settings: 'module_business_settings',
-  backup: 'backup_title',
-  reset: 'backup_reset_sample',
-  order: 'module_orders',
-  print: 'module_receipt_prints',
-};
-
-const PAGE = 25;
+const PAGE = 20;
+const DEBOUNCE = 320;
 
 export default function ActivityReports() {
   const { t, locale } = useI18n();
   const { business } = useBusiness();
+  const { isManager } = useAuth();
   const toast = useToast();
   const timeZone = zoneFor(locale, business?.timezone);
 
+  const [term, setTerm] = useState('');
+  const [query, setQuery] = useState('');
   const [kind, setKind] = useState('all');
   const [entity, setEntity] = useState('all');
   const [actor, setActor] = useState('all');
+  const [range, setRange] = useState('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
   const [entries, setEntries] = useState([]);
   const [total, setTotal] = useState(0);
   const [actors, setActors] = useState([]);
+  const [entities, setEntities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [more, setMore] = useState(false);
   const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [pending, setPending] = useState(null);
+
+  /* Typing stays instant; the request only follows once the term settles. */
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(term.trim()), DEBOUNCE);
+    return () => clearTimeout(id);
+  }, [term]);
 
   const load = useCallback(
-    async (offset) => {
-      if (offset === 0) setLoading(true);
-      else setMore(true);
+    async (offset, { silent = false } = {}) => {
+      if (offset === 0 && !silent) setLoading(true);
+      if (offset > 0) setMore(true);
       try {
-        const params = new URLSearchParams({ limit: String(PAGE), offset: String(offset) });
+        const params = new URLSearchParams({ limit: String(PAGE), offset: String(offset), range });
+        if (query) params.set('q', query);
         if (kind !== 'all') params.set('kind', kind);
         if (entity !== 'all') params.set('entity', entity);
         if (actor !== 'all') params.set('actor', actor);
-        if (from) params.set('from', from);
-        if (to) params.set('to', to);
+        if (range === 'custom') {
+          if (from) params.set('from', from);
+          if (to) params.set('to', to);
+        }
 
         const res = await get(`/activity?${params.toString()}`);
         setEntries((previous) => (offset === 0 ? res.entries || [] : [...previous, ...(res.entries || [])]));
-        setTotal(res.total || 0);
+        setTotal(Number(res.total) || 0);
         setActors(res.actors || []);
+        setEntities(res.entities || []);
         setFailed(false);
       } catch {
         setFailed(true);
@@ -79,158 +91,156 @@ export default function ActivityReports() {
         setMore(false);
       }
     },
-    [kind, entity, actor, from, to],
+    [query, kind, entity, actor, range, from, to],
   );
 
   useEffect(() => {
     load(0);
   }, [load]);
 
+  const dirty =
+    term.trim() !== '' || kind !== 'all' || entity !== 'all' || actor !== 'all' || range !== 'all';
+
   const clearFilters = () => {
+    setTerm('');
+    setQuery('');
     setKind('all');
     setEntity('all');
     setActor('all');
+    setRange('all');
     setFrom('');
     setTo('');
   };
 
-  const entityLabel = (value) => t(ENTITY_KEYS[value] || value);
+  const remove = async () => {
+    if (!pending) return;
+    setBusy(true);
+    try {
+      await del(`/activity/${pending.kind}/${pending.id}`);
+      setPending(null);
+      await load(0, { silent: true });
+      toast.success(t('act_deleted'));
+    } catch (err) {
+      toast.error(err?.code === 'ACTIVITY_PROTECTED' ? t('act_protected_hint') : t('act_delete_failed'));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <>
-      <div className="page-head">
-        <div className="page-head__text">
-          <h1>{t('act_title')}</h1>
-          <p>{t('act_subtitle')}</p>
-        </div>
+    <div className="activity-page">
+      <PageHeroBanner
+        icon="history"
+        title={t('act_title')}
+        subtitle={t('act_subtitle')}
+        art={<ActivityArtwork />}
+      />
+
+      {!isManager ? <Alert kind="warning">{t('act_no_permission')}</Alert> : null}
+
+      <ActivityFilters
+        term={term}
+        onTerm={setTerm}
+        kind={kind}
+        onKind={setKind}
+        entity={entity}
+        onEntity={setEntity}
+        actor={actor}
+        onActor={setActor}
+        range={range}
+        onRange={setRange}
+        from={from}
+        onFrom={setFrom}
+        to={to}
+        onTo={setTo}
+        actors={actors}
+        entities={entities}
+        dirty={dirty}
+        onClear={clearFilters}
+      />
+
+      <div className="av-head">
+        <span className="av-head__icon">
+          <Icon name="history" size={16} />
+        </span>
+        <h2 className="av-head__title">{t('act_list_title')}</h2>
+        {!loading && !failed ? (
+          <span className="av-count">{t('act_count', { count: fmtNumber(total, locale) })}</span>
+        ) : null}
       </div>
 
       {failed ? (
         <Alert kind="error">
-          {t('state_error')}{' '}
+          {t('act_load_error')}{' '}
           <button type="button" className="btn btn--sm" onClick={() => load(0)}>
             {t('action_retry')}
           </button>
         </Alert>
-      ) : null}
-
-      <SectionCard
-        icon="history"
-        iconClass="ic-indigo"
-        title={t('act_title')}
-        subtitle={`${fmtNumber(total, locale)} ${t('label_records')}`}
-        actions={
-          <button className="btn btn--sm" onClick={clearFilters}>
-            <Icon name="refresh" size={14} />
-            {t('action_clear_all')}
-          </button>
-        }
-      >
-        <div className="form-grid" style={{ marginBottom: 12 }}>
-          <Select
-            value={kind}
-            onChange={setKind}
-            aria-label={t('act_filter_kind')}
-            options={[
-              { value: 'all', label: `${t('act_filter_kind')}: ${t('label_all')}` },
-              ...KINDS.map((k) => ({ value: k, label: t(`act_kind_${k}`) })),
-            ]}
-          />
-          <Select
-            value={entity}
-            onChange={setEntity}
-            aria-label={t('act_filter_entity')}
-            options={[
-              { value: 'all', label: `${t('act_filter_entity')}: ${t('label_all')}` },
-              ...Object.keys(ENTITY_KEYS).map((e) => ({ value: e, label: entityLabel(e) })),
-            ]}
-          />
-          <Select
-            value={actor}
-            onChange={setActor}
-            aria-label={t('act_filter_actor')}
-            options={[
-              { value: 'all', label: `${t('act_filter_actor')}: ${t('label_all')}` },
-              ...actors.map((a) => ({ value: a.id, label: a.name || a.id })),
-            ]}
-          />
-          <label className="field">
-            <span className="field__label">{t('act_filter_from')}</span>
-            <input className="input" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </label>
-          <label className="field">
-            <span className="field__label">{t('act_filter_to')}</span>
-            <input className="input" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </label>
+      ) : loading ? (
+        <div className="av-list" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((row) => (
+            <div className="av-card av-card--skeleton" key={row}>
+              <span className="av-skel av-skel--icon" />
+              <div className="av-card__body">
+                <span className="av-skel" style={{ width: '38%', height: 13 }} />
+                <span className="av-skel" style={{ width: '64%', height: 11, marginTop: 9 }} />
+                <span className="av-skel" style={{ width: '46%', height: 10, marginTop: 10 }} />
+              </div>
+            </div>
+          ))}
         </div>
-
-        {loading ? (
-          <Loading />
-        ) : entries.length === 0 ? (
-          <EmptyState icon="history" title={t('act_empty')} />
-        ) : (
-          <>
-            <div className="table-wrap">
-              <table className="data">
-                <thead>
-                  <tr>
-                    <th>{t('label_date')}</th>
-                    <th>{t('order_changed_by')}</th>
-                    <th>{t('act_filter_kind')}</th>
-                    <th>{t('act_detail')}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((row) => (
-                    <tr key={`${row.kind}-${row.id}`}>
-                      <td style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(row.at, locale, timeZone)}</td>
-                      <td>{row.actor_name || '—'}</td>
-                      <td>
-                        <span className="chip">
-                          <Icon
-                            name={row.kind === 'print' ? 'print' : row.kind === 'order_status' ? 'cart' : 'pencil'}
-                            size={12}
-                          />
-                          {t(`act_kind_${row.kind}`)}
-                        </span>
-                      </td>
-                      <td>
-                        {row.kind === 'order_status' ? (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            {row.from_status ? <StatusBadge status={row.from_status} /> : null}
-                            <Icon name="arrowRight" size={13} className="icon--dir" />
-                            <StatusBadge status={row.to_status} />
-                            {row.order_number ? <span className="chip">#{row.order_number}</span> : null}
-                          </span>
-                        ) : (
-                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <strong>{entityLabel(row.entity)}</strong>
-                            <span>{t(`act_action_${row.action}`)}</span>
-                            {row.entity_label ? <span className="chip">{row.entity_label}</span> : null}
-                            {row.order_number ? <span className="chip">#{row.order_number}</span> : null}
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="btn-row" style={{ marginTop: 12, justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>
-                {t('act_showing', { shown: fmtNumber(entries.length, locale), total: fmtNumber(total, locale) })}
-              </span>
-              {entries.length < total ? (
-                <button className="btn btn--sm" disabled={more} onClick={() => load(entries.length)}>
-                  {more ? <span className="spinner" /> : <Icon name="chevronDown" size={14} />}
-                  {t('order_load_more')}
+      ) : entries.length === 0 ? (
+        <div className="av-empty">
+          <EmptyState
+            icon="history"
+            title={dirty ? t('act_empty_filtered') : t('act_empty')}
+            hint={dirty ? t('act_empty_hint') : undefined}
+            action={
+              dirty ? (
+                <button type="button" className="btn btn--sm" onClick={clearFilters}>
+                  <Icon name="refresh" size={14} />
+                  {t('act_clear_filters')}
                 </button>
-              ) : null}
-            </div>
-          </>
-        )}
-      </SectionCard>
-    </>
+              ) : null
+            }
+          />
+        </div>
+      ) : (
+        <>
+          <div className="av-list">
+            {entries.map((row) => (
+              <ActivityCard
+                key={`${row.kind}-${row.id}`}
+                row={row}
+                locale={locale}
+                timeZone={timeZone}
+                canManage={isManager}
+                busy={busy}
+                onDelete={setPending}
+              />
+            ))}
+          </div>
+
+          {entries.length < total ? (
+            <button type="button" className="av-more" disabled={more} onClick={() => load(entries.length)}>
+              {more ? <span className="spinner" /> : <Icon name="chevronDown" size={14} />}
+              {t('act_load_more')}
+            </button>
+          ) : null}
+        </>
+      )}
+
+      {pending ? (
+        <ConfirmDialog
+          title={t('act_delete_title')}
+          message={t('act_delete_message')}
+          confirmLabel={t('action_delete')}
+          danger
+          busy={busy}
+          onCancel={() => setPending(null)}
+          onConfirm={remove}
+        />
+      ) : null}
+    </div>
   );
 }

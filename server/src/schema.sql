@@ -382,6 +382,23 @@ CREATE TABLE IF NOT EXISTS activity_log (
 );
 CREATE INDEX IF NOT EXISTS activity_log_business_idx ON activity_log(business_id, created_at DESC);
 
+-- Report-level archival of activity entries. An authorized member can remove a
+-- logged change from the activity report, which writes one row here; the
+-- authoritative `activity_log` row itself is never deleted. Protected audit
+-- streams (order status history, receipt prints, permission and backup events)
+-- are never written here at all.
+CREATE TABLE IF NOT EXISTS activity_hidden (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id    uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  kind           text NOT NULL,
+  entry_id       uuid NOT NULL,
+  hidden_by      uuid REFERENCES users(id) ON DELETE SET NULL,
+  hidden_by_name text,
+  hidden_at      timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (business_id, kind, entry_id)
+);
+CREATE INDEX IF NOT EXISTS activity_hidden_business_idx ON activity_hidden(business_id, kind, entry_id);
+
 -- One-time fill of the localized names for tables created before the four
 -- languages existed: they start as the single name they already carry in every
 -- language, and a table that already has any localized name is left untouched so

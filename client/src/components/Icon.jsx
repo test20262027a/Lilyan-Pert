@@ -83,6 +83,7 @@ const PATHS = {
   volumeOff: <><path d="M11 5 6 9H3v6h3l5 4z" /><path d="m16 9.5 5 5M21 9.5l-5 5" /></>,
   chevronsUp: <><path d="m7 14 5-5 5 5" /><path d="m7 20 5-5 5 5" /></>,
   chevronsLeft: <><path d="m11 7-5 5 5 5" /><path d="m17 7-5 5 5 5" /></>,
+  lock: <><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>,
 };
 
 export default function Icon({ name, size = 18, className = '', style, title }) {
