@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
 import {
   Alert,
@@ -18,28 +18,17 @@ import { del, get, post } from '../api';
 import { fmtBytes, fmtDateTime, fmtNumber, zoneFor } from '../format';
 
 const DANGER_GROUPS = ['orders', 'backups'];
-const RESET_GROUPS = ['menu', 'orders', 'operations', 'marketing', 'analytics', 'backups'];
-
-const RESET_META = {
-  menu: { icon: 'book', danger: false },
-  orders: { icon: 'receipt', danger: true },
-  operations: { icon: 'table', danger: false },
-  marketing: { icon: 'megaphone', danger: false },
-  analytics: { icon: 'chart', danger: false },
-  backups: { icon: 'database', danger: true },
-};
 
 /**
- * Backups and restore. `focus="reset"` opens the page on its sample-data
- * section, which is the destination of the sidebar's Reset Sample Data entry.
+ * Backups and restore. Sample-data reset is its own page (`/reset-sample`), so
+ * this screen only ever creates, downloads and restores backups.
  */
-export default function Backups({ focus }) {
+export default function Backups() {
   const { t, locale } = useI18n();
   const { business } = useBusiness();
   const { isOwner } = useAuth();
   const toast = useToast();
   const timeZone = zoneFor(locale, business?.timezone);
-  const resetRef = useRef(null);
 
   const [registry, setRegistry] = useState(null);
   const [backups, setBackups] = useState([]);
@@ -48,7 +37,6 @@ export default function Backups({ focus }) {
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(null);
   const [restoreResult, setRestoreResult] = useState(null);
-  const [resetGroups, setResetGroups] = useState([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -64,13 +52,6 @@ export default function Backups({ focus }) {
   useEffect(() => {
     load();
   }, [load]);
-
-  // The sidebar's Reset Sample Data entry lands on that section, not the top.
-  useEffect(() => {
-    if (focus === 'reset' && !loading) {
-      resetRef.current?.scrollIntoView({ block: 'start' });
-    }
-  }, [focus, loading]);
 
   const modules = registry?.modules || [];
   const groups = registry?.groups || [];
@@ -158,24 +139,6 @@ export default function Backups({ focus }) {
       await load();
     } catch {
       toast.error(t('error_generic'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const resetSample = async () => {
-    setBusy(true);
-    try {
-      const res = await post('/backups/reset-sample', { groups: resetGroups });
-      const kept = res.still_present || {};
-      toast.success(
-        `${t('backup_reset_done')} · ${t('role_owner')}: ${kept.owners ?? '—'} · ${t('sec_general')}: ${kept.business ?? '—'}`,
-      );
-      setConfirm(null);
-      setResetGroups([]);
-      await load();
-    } catch (err) {
-      toast.error(err.code === 'NO_GROUPS_SELECTED' ? t('backup_selected_count') : t('error_generic'));
     } finally {
       setBusy(false);
     }
@@ -366,60 +329,6 @@ export default function Backups({ focus }) {
         )}
       </SectionCard>
 
-      {/* Reset sample data: clearly separated and never touches real access data. */}
-      <div ref={resetRef}>
-      <SectionCard
-        icon="alert"
-        iconClass="ic-coral"
-        title={t('backup_reset_sample')}
-        subtitle={t('backup_protected_notice')}
-        actions={
-          <>
-            <button className="btn btn--sm" onClick={() => setResetGroups(RESET_GROUPS)}>
-              {t('action_select_all')}
-            </button>
-            <button className="btn btn--sm" onClick={() => setResetGroups([])}>
-              {t('action_clear_all')}
-            </button>
-            <button
-              className="btn btn--danger btn--sm"
-              disabled={busy || resetGroups.length === 0}
-              onClick={() => setConfirm({ kind: 'reset' })}
-            >
-              <Icon name="trash" size={15} />
-              {t('backup_reset_sample')} ({resetGroups.length})
-            </button>
-          </>
-        }
-      >
-        <div className="md-grid">
-          {RESET_GROUPS.map((g) => {
-            const on = resetGroups.includes(g);
-            const danger = RESET_META[g].danger;
-            return (
-              <button
-                key={g}
-                className={`select-card ${on ? 'is-selected' : ''} ${danger ? 'is-danger' : ''}`}
-                onClick={() => setResetGroups((prev) => (on ? prev.filter((x) => x !== g) : [...prev, g]))}
-                aria-pressed={on}
-              >
-                <div className="select-card__row">
-                  <Marker on={on} danger={danger} />
-                  <Icon name={RESET_META[g].icon} size={16} />
-                  <span className="select-card__name">{t(`group_${g}`)}</span>
-                </div>
-                {danger ? (
-                  <span className="field__hint" style={{ color: 'var(--danger)' }}>
-                    {t('backup_danger_group')}
-                  </span>
-                ) : null}
-              </button>
-            );
-          })}
-        </div>
-      </SectionCard>
-      </div>
-
       {confirm?.kind === 'restore' ? (
         <RestoreConfirm
           backup={confirm.backup}
@@ -439,18 +348,6 @@ export default function Backups({ focus }) {
           confirmLabel={t('action_delete')}
           onCancel={() => setConfirm(null)}
           onConfirm={() => remove(confirm.backup.id)}
-        />
-      ) : null}
-
-      {confirm?.kind === 'reset' ? (
-        <ConfirmDialog
-          title={t('backup_reset_sample')}
-          message={t('backup_reset_confirm')}
-          danger
-          busy={busy}
-          confirmLabel={t('action_delete')}
-          onCancel={() => setConfirm(null)}
-          onConfirm={resetSample}
         />
       ) : null}
 

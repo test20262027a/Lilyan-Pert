@@ -26,7 +26,16 @@ const ROUTES = [
   { re: /^\/api\/manage\/reviews/, entity: 'review' },
   { re: /^\/api\/manage\/users/, entity: 'user' },
   { re: /^\/api\/business/, entity: 'settings' },
-  { re: /^\/api\/backups\/reset-sample/, entity: 'reset', action: 'deleted' },
+  // A reset logs the modules it touched — never the records it removed.
+  {
+    re: /^\/api\/backups\/reset-sample/,
+    entity: 'reset',
+    action: 'deleted',
+    label: (body) =>
+      Array.isArray(body?.modules)
+        ? body.modules.filter((k) => typeof k === 'string').slice(0, 10).join(', ').slice(0, 120)
+        : null,
+  },
   { re: /^\/api\/backups\/[^/]+\/restore/, entity: 'backup', action: 'restored' },
   { re: /^\/api\/backups\/upload/, entity: 'backup', action: 'created' },
   { re: /^\/api\/backups/, entity: 'backup' },
@@ -96,7 +105,7 @@ export function activityLogger(req, res, next) {
       entity: route.entity,
       action: route.action || ACTIONS[req.method],
       entityId: req.params?.id || null,
-      entityLabel: route.entity === 'settings' ? labelFrom(req.body) : null,
+      entityLabel: route.label ? route.label(req.body) : route.entity === 'settings' ? labelFrom(req.body) : null,
       path: req.path,
     });
   });

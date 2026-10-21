@@ -1,5 +1,5 @@
 import express from 'express';
-import { q, tx } from '../db.js';
+import { pool, q, tx } from '../db.js';
 import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, isUuid, notFound } from '../lib/http.js';
 import {
@@ -10,6 +10,7 @@ import {
   moduleByKey,
   sortByDependencies,
 } from '../lib/backup-modules.js';
+import { EXECUTION_ORDER, PROTECTED, moduleByKey as resetModule, resetStats } from '../lib/reset-modules.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -359,57 +360,89 @@ router.post(
 
 /* ------------------------------------------------- reset sample data */
 
-const SAMPLE_GROUPS = {
-  menu: { tables: ['categories', 'products'] },
-  orders: { tables: ['orders'] }, // items/history/prints cascade
-  operations: { tables: ['tables', 'reviews'] },
-  marketing: { tables: ['advertisements', 'promotions'] },
-  analytics: { tables: ['business_views'] },
-  backups: { tables: ['backups'] },
+/*
+ * What may be removed lives in lib/reset-modules.js — one entry per card of the
+ * Reset Sample Data page, every one of them scoped to `is_sample = true`. This
+ * route only validates the request, re-counts inside the transaction, runs the
+ * selected modules and reports exactly what happened.
+ */
+
+// A prepared reset is submitted with a request id. A double click or a network
+// retry of the same confirmation must not remove data twice, so a repeat of the
+// same id answers with the first run's result instead of deleting again.
+const RUN_TTL_MS = 5 * 60 * 1000;
+const recentRuns = new Map();
+
+const rememberRun = (key, result) => {
+  const now = Date.now();
+  for (const [id, entry] of recentRuns) if (now - entry.at > RUN_TTL_MS) recentRuns.delete(id);
+  recentRuns.set(key, { at: now, result });
 };
 
-const PROTECTED = [
-  'users',
-  'memberships',
-  'businesses',
-];
+/** Modules of one business with their live eligible / blocked / total counts. */
+router.get(
+  '/reset-sample',
+  perm('reset_sample.full'),
+  ah(async (req, res) => {
+    res.json({
+      modules: await resetStats(pool, req.businessId),
+      protected: PROTECTED,
+    });
+  }),
+);
 
 router.post(
   '/reset-sample',
   perm('reset_sample.full'),
   ah(async (req, res) => {
-    const requested = Array.isArray(req.body?.groups) ? req.body.groups : [];
-    const groups = requested.filter((g) => SAMPLE_GROUPS[g]);
-    if (!groups.length) throw bad('NO_GROUPS_SELECTED');
+    const requested = Array.isArray(req.body?.modules) ? req.body.modules : [];
+    const keys = [...new Set(requested.filter((k) => typeof k === 'string' && resetModule(k)))];
+    if (!keys.length) throw bad('NO_MODULES_SELECTED');
 
-    const deleted = {};
+    const requestId = typeof req.body?.request_id === 'string' ? req.body.request_id.slice(0, 80) : '';
+    const runKey = requestId ? `${req.businessId}:${requestId}` : null;
+    if (runKey && recentRuns.has(runKey)) {
+      const hit = recentRuns.get(runKey);
+      if (Date.now() - hit.at <= RUN_TTL_MS) return res.json({ ...hit.result, duplicate: true });
+    }
+
+    // One transaction: either every selected module really ran, or nothing was
+    // removed and the client is told which modules were affected by the failure.
+    const results = [];
     await tx(async (c) => {
-      for (const group of groups) {
-        for (const table of SAMPLE_GROUPS[group].tables) {
-          if (PROTECTED.includes(table)) continue; // belt and braces
-          const { rowCount } = await c.query(
-            `DELETE FROM ${table} WHERE business_id = $1 AND is_sample = true`,
-            [req.businessId],
-          );
-          deleted[table] = rowCount;
+      for (const key of EXECUTION_ORDER) {
+        if (!keys.includes(key)) continue;
+        const mod = resetModule(key);
+        const { eligible = 0, blocked = 0 } = await mod.stats(c, req.businessId);
+        if (!eligible) {
+          results.push({ key, status: blocked ? 'blocked' : 'empty', removed: 0, blocked });
+          continue;
         }
+        results.push({ key, status: 'done', removed: await mod.remove(c, req.businessId), blocked });
       }
     });
 
+    // Proof the protected core survived, read back from the database.
     const alive = await q(
       `SELECT
          (SELECT count(*)::int FROM businesses WHERE id = $1) AS business,
+         (SELECT count(*)::int FROM memberships WHERE business_id = $1 AND role = 'owner') AS owners,
          (SELECT count(*)::int FROM users WHERE id IN (SELECT user_id FROM memberships WHERE business_id = $1)) AS members,
-         (SELECT count(*)::int FROM memberships WHERE business_id = $1 AND role = 'owner') AS owners`,
+         (SELECT count(*)::int FROM activity_log WHERE business_id = $1) AS audit`,
       [req.businessId],
     );
 
-    res.json({
+    const payload = {
       ok: true,
-      deleted,
+      results,
+      removed: results.reduce((sum, r) => sum + r.removed, 0),
+      blocked: results.filter((r) => r.status === 'blocked').map((r) => r.key),
       protected: PROTECTED,
       still_present: alive.rows[0],
-    });
+      modules: await resetStats(pool, req.businessId),
+    };
+    if (runKey) rememberRun(runKey, payload);
+    res.json(payload);
   }),
 );
 

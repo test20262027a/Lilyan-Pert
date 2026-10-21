@@ -16,6 +16,7 @@ import Advertisements from './pages/Advertisements';
 import Statistics from './pages/Statistics';
 import ActivityReports from './pages/ActivityReports';
 import Backups from './pages/Backups';
+import ResetSampleData from './pages/ResetSampleData';
 import Users from './pages/Users';
 import Settings from './pages/Settings';
 import TextEditor from './pages/TextEditor';
@@ -73,9 +74,9 @@ export default function App() {
         <Route path="/statistics" element={<RequirePermission perm="statistics.view"><Statistics /></RequirePermission>} />
         <Route path="/activity" element={<RequirePermission perm="activity.view"><ActivityReports /></RequirePermission>} />
         <Route path="/backups" element={<RequirePermission perm="backup.full"><Backups /></RequirePermission>} />
-        {/* The sample-data reset is the section at the end of Backups; this
-            address opens the same page scrolled to it. */}
-        <Route path="/reset-sample" element={<RequirePermission perm="reset_sample.full"><Backups focus="reset" /></RequirePermission>} />
+        {/* Sample-data reset: its own page, guarded by the same elevated
+            permission the reset API enforces. */}
+        <Route path="/reset-sample" element={<RequirePermission perm="reset_sample.full"><ResetSampleData /></RequirePermission>} />
         <Route path="/users" element={<RequirePermission perm="users.view"><Users /></RequirePermission>} />
         <Route path="/settings" element={<RequirePermission perm="settings.view"><Settings /></RequirePermission>} />
         {/* Menu settings live in the settings workspace; the text editor is

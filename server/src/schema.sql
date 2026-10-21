@@ -62,6 +62,11 @@ CREATE TABLE IF NOT EXISTS memberships (
   UNIQUE (business_id, user_id)
 );
 ALTER TABLE memberships ADD COLUMN IF NOT EXISTS permissions jsonb;
+-- Sample/demo staff memberships. The demo seed flags the members it creates, so
+-- "Reset Sample Data" can remove exactly those; a membership created through
+-- User Management is never flagged and is therefore never part of a reset.
+-- The owner membership is always excluded by the reset itself, whatever the flag.
+ALTER TABLE memberships ADD COLUMN IF NOT EXISTS is_sample boolean NOT NULL DEFAULT false;
 CREATE INDEX IF NOT EXISTS memberships_user_idx ON memberships(user_id);
 CREATE INDEX IF NOT EXISTS memberships_business_idx ON memberships(business_id);
 

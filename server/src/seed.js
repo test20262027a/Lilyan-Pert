@@ -160,7 +160,7 @@ export async function seed() {
       ['manager@lilyan.app', hashPassword('manager1234'), 'Dilan Manager', '+964 750 444 5566'],
     );
     await c.query(
-      `INSERT INTO memberships (business_id, user_id, role) VALUES ($1,$2,'manager')`,
+      `INSERT INTO memberships (business_id, user_id, role, is_sample) VALUES ($1,$2,'manager',true)`,
       [businessId, manager.rows[0].id],
     );
     const staff = await c.query(
@@ -169,7 +169,7 @@ export async function seed() {
       ['staff@lilyan.app', hashPassword('staff1234'), 'Aram Staff', '+964 750 777 8899'],
     );
     await c.query(
-      `INSERT INTO memberships (business_id, user_id, role) VALUES ($1,$2,'staff')`,
+      `INSERT INTO memberships (business_id, user_id, role, is_sample) VALUES ($1,$2,'staff',true)`,
       [businessId, staff.rows[0].id],
     );
 
