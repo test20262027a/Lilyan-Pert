@@ -15,6 +15,7 @@ import CustomerStats from '../components/customer/CustomerStats';
 import CustomerHours from '../components/customer/CustomerHours';
 import CustomerCategoryNav from '../components/customer/CustomerCategoryNav';
 import CustomerProductCard from '../components/customer/CustomerProductCard';
+import CustomerCarousel from '../components/customer/CustomerCarousel';
 import ProductDetailModal from '../components/customer/ProductDetailModal';
 import CustomerAbout from '../components/customer/CustomerAbout';
 import CustomerPanel from '../components/customer/CustomerPanel';
@@ -400,15 +401,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
 
         {featuredProducts.length > 0 ? (
-          <section className="menu-section">
-            <div className="cui-sec__head">
-              <span className="cui-sec__icon">
-                <Icon name="sparkles" size={17} />
-              </span>
-              <h2 className="cui-sec__title">{t('customer_menu_featured')}</h2>
-              <span className="cui-sec__count">{fmtNumber(featuredProducts.length, locale)}</span>
-            </div>
-            <div className="cui-grid">
+          <CustomerPanel
+            className="cui-panel--products"
+            icon="sparkles"
+            title={t('customer_menu_featured')}
+            count={fmtNumber(featuredProducts.length, locale)}
+          >
+            <CustomerCarousel trackClassName="cui-grid" count={featuredProducts.length}>
               {featuredProducts.map((p) => (
                 <CustomerProductCard
                   key={p.id}
@@ -426,8 +425,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
-            </div>
-          </section>
+            </CustomerCarousel>
+          </CustomerPanel>
         ) : null}
 
         {bestProducts.length > 0 ? (
@@ -437,7 +436,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             title={t('customer_menu_best_sellers')}
             count={fmtNumber(bestProducts.length, locale)}
           >
-            <div className="cui-grid">
+            <CustomerCarousel trackClassName="cui-grid" count={bestProducts.length}>
               {bestProducts.map((p) => (
                 <CustomerProductCard
                   key={p.id}
@@ -456,7 +455,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
-            </div>
+            </CustomerCarousel>
           </CustomerPanel>
         ) : null}
 

@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import CustomerCarousel from '../customer/CustomerCarousel';
 import { localized, useI18n } from '../../i18n';
 import '../../customer-ads.css';
 
@@ -43,7 +44,7 @@ export default function CustomerAds({ ads, locale, onOpen }) {
         </h2>
       </header>
 
-      <div className="cui-ads__grid">
+      <CustomerCarousel className="cui-car--ads" trackClassName="cui-ads__grid" count={ads.length}>
         {ads.map((ad) => {
           const title = localized(ad, 'title', locale) || t('marketing_ads');
           const description = localized(ad, 'subtitle', locale);
@@ -122,7 +123,7 @@ export default function CustomerAds({ ads, locale, onOpen }) {
             </article>
           );
         })}
-      </div>
+      </CustomerCarousel>
     </section>
   );
 }
