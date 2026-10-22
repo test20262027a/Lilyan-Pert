@@ -1213,4 +1213,22 @@ export default {
   reset_dep_staff: 'تُحذف العضويات النموذجية فقط؛ حساب الدخول والمالك يبقيان دون تغيير.',
   reset_dep_suggestions: 'الأكثر مبيعاً يُحسب من الطلبات — تُزال شارة المقترح المميز فقط.',
 
+  /* Header notification feed */
+  dash_notifications: 'الإشعارات',
+  notif_tab_all: 'الكل',
+  notif_tab_orders: 'الطلبات',
+  notif_tab_reviews: 'التقييمات',
+  notif_tab_activities: 'الأنشطة',
+  notif_mark_all: 'تعليم الكل كمقروء',
+  notif_order_new: 'طلب جديد',
+  notif_order_status: 'تغيير الحالة',
+  notif_review_new: 'تقييم جديد',
+  notif_empty_all: 'لا توجد إشعارات بعد',
+  notif_empty_orders: 'لا توجد إشعارات طلبات بعد',
+  notif_empty_reviews: 'لا توجد إشعارات تقييمات بعد',
+  notif_empty_activities: 'لا توجد إشعارات أنشطة بعد',
+  notif_load_failed: 'تعذّر تحميل الإشعارات',
+  notif_no_access: 'ليس لديك صلاحية الوصول إلى هذا القسم',
+  settings_dash_show_date_hours: 'التاريخ وساعات العمل',
+
 };

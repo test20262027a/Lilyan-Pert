@@ -287,6 +287,25 @@ router.post(
        VALUES ($1,$2,$3,$4,$5,'pending') RETURNING id, created_at`,
       [business.id, req.body?.order_id || null, name, rating, comment],
     );
+    /*
+     * One review notification per submitted review — the row id above is the
+     * deduplication key, so a retried request creates its own review and its
+     * own notification rather than a duplicate of an existing one. Best-effort:
+     * a feed failure never fails the guest's review.
+     */
+    try {
+      await q(
+        `INSERT INTO notifications (business_id, type, title, body)
+         VALUES ($1,'review',$2,$3)`,
+        [
+          business.id,
+          name || '',
+          `★ ${rating}/5${comment ? ` — ${comment.slice(0, 140)}` : ''}`,
+        ],
+      );
+    } catch (err) {
+      console.warn('[notifications] review feed:', err?.message || err);
+    }
     res.status(201).json({ review: rows[0], moderated: true });
   }),
 );

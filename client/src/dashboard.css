@@ -49,12 +49,29 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 3px 8px rgba(25, 55, 35, 0.07);
 }
 
-.dash-row { display: grid; gap: 14px; }
+.dash-row { display: grid; gap: 14px; align-items: stretch; }
 /* Date & working hours (60%) and notification settings (40%) share one row. */
 .dash-row--info { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
-.dash-row--analytics { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: stretch; }
+.dash-row--analytics { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
 .dash-row--analytics > .card { display: flex; flex-direction: column; }
 .dash-row--analytics > .card > .card__body { flex: 1 1 auto; }
+
+/*
+ * A section hidden in Business Settings is not rendered at all, so a surviving
+ * card is the row's only child — it takes the whole row instead of leaving an
+ * empty column behind. Both cards stretch to the same outer height, which is
+ * what keeps the clock and the sound selector on one baseline.
+ */
+.dash-row > :only-child { grid-column: 1 / -1; }
+.dash-row--info > .card { display: flex; flex-direction: column; }
+.dash-row--info > .card > .card__body { flex: 1 1 auto; }
+/* The notification card stacks its settings and pushes the sound picker down;
+   the hours card keeps its own two-column body (see .hours-card__body). */
+.notif-card > .card__body { display: flex; flex-direction: column; }
+
+/* A lone card keeps its controls from stretching across the whole width. */
+.notif-card:only-child .switch-row,
+.notif-card:only-child .sound-picker { max-width: 660px; }
 
 /* ------------------------------------------------------- welcome banner */
 
@@ -116,7 +133,13 @@
 /* ------------------------------------------- date / working hours card */
 
 .hours-card__body { display: flex; align-items: stretch; gap: 18px; }
-.hours-card__group { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1 1 0; justify-content: center; }
+/* Both columns stack their labels on top and push the large value to the
+   bottom of the card, so the clock and the hours range share one baseline. */
+.hours-card__col {
+  display: flex; flex-direction: column; gap: 4px;
+  min-width: 0; flex: 1 1 0;
+}
+.hours-card__col > .hours-card__value--lg { margin-top: auto; padding-top: 10px; }
 .hours-card__label {
   font-size: 11.5px; font-weight: 650; color: var(--muted);
   display: inline-flex; align-items: center; gap: 6px;
@@ -158,9 +181,18 @@
   color: var(--muted);
 }
 
+/* The sound controls sit at the bottom of the card, level with the clock next
+   door: `margin-top: auto` absorbs whatever height the switches leave. */
 .sound-picker {
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--glass-line);
+  margin-top: auto; padding-top: 14px; border-top: 1px solid var(--glass-line);
   display: flex; flex-direction: column; gap: 7px;
+}
+
+/* The new-order sound switch keeps the warm golden reference accent, so it
+   reads apart from the browser-push switch right below it. */
+.notif-card .card__body > .switch-row:first-child .switch input:checked + .switch__track {
+  background: linear-gradient(180deg, #f0b844, #dda22f);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 .sound-picker__label {
   font-size: 11.5px; font-weight: 650; color: var(--muted);

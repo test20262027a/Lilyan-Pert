@@ -126,22 +126,27 @@ export default function Dashboard() {
 
       {failed ? <Alert kind="error">{t('error_generic')}</Alert> : null}
 
-      {/* ---- Date and working hours, then notification settings ---- */}
-      <div className="dash-row dash-row--info">
-        <DateHours hours={data.hours} timeZone={timeZone} locale={locale} />
-        {show('show_notification_settings') ? (
-          <NotificationSettings
-            /* The business record is the single source of truth for notification
-               settings, so a change made from the header shows up here at once. */
-            settings={business?.notification_settings || data.notification_settings}
-            onChange={updateSettings}
-            push={push}
-            onPushToggle={onPushToggle}
-            pushError={pushError}
-            locale={locale}
-          />
-        ) : null}
-      </div>
+      {/* ---- Date and working hours, then notification settings ----
+          Both cards are conditionally rendered, never hidden with opacity: the
+          surviving card stretches to the full row through the grid's
+          `:only-child` rule, and when both are off the row itself disappears. */}
+      {show('show_date_hours') || show('show_notification_settings') ? (
+        <div className="dash-row dash-row--info">
+          {show('show_date_hours') ? <DateHours hours={data.hours} timeZone={timeZone} locale={locale} /> : null}
+          {show('show_notification_settings') ? (
+            <NotificationSettings
+              /* The business record is the single source of truth for notification
+                 settings, so a change made from the header shows up here at once. */
+              settings={business?.notification_settings || data.notification_settings}
+              onChange={updateSettings}
+              push={push}
+              onPushToggle={onPushToggle}
+              pushError={pushError}
+              locale={locale}
+            />
+          ) : null}
+        </div>
+      ) : null}
 
       {/* ---- Four pastel order metrics ---- */}
       {show('show_overview') ? <KpiCards kpi={data.kpi} locale={locale} /> : null}

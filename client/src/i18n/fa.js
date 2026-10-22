@@ -1214,4 +1214,22 @@ export default {
   reset_dep_staff: 'فقط عضویت‌های نمونه حذف می‌شوند؛ حساب ورود و مالک کسب‌وکار دست‌نخورده می‌مانند.',
   reset_dep_suggestions: 'پرفروش‌ها از سفارش‌ها محاسبه می‌شوند؛ فقط نشان پیشنهاد ویژه پاک می‌شود.',
 
+  /* Header notification feed */
+  dash_notifications: 'اعلان‌ها',
+  notif_tab_all: 'همه',
+  notif_tab_orders: 'سفارش‌ها',
+  notif_tab_reviews: 'نظرات',
+  notif_tab_activities: 'فعالیت‌ها',
+  notif_mark_all: 'همه خوانده شد',
+  notif_order_new: 'سفارش جدید',
+  notif_order_status: 'تغییر وضعیت',
+  notif_review_new: 'نظر جدید',
+  notif_empty_all: 'هنوز اعلانی وجود ندارد',
+  notif_empty_orders: 'هنوز اعلان سفارشی وجود ندارد',
+  notif_empty_reviews: 'هنوز اعلان نظری وجود ندارد',
+  notif_empty_activities: 'هنوز اعلان فعالیتی وجود ندارد',
+  notif_load_failed: 'بارگذاری اعلان‌ها ممکن نشد',
+  notif_no_access: 'دسترسی به این بخش ندارید',
+  settings_dash_show_date_hours: 'تاریخ و ساعات کاری',
+
 };

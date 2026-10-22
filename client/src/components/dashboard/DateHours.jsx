@@ -9,6 +9,10 @@ import { fmtDate } from '../../format';
  * business configuration: `hours.is_open` is the server's authoritative
  * open/closed verdict for the configured timezone, and a missing or malformed
  * schedule is reported as unknown rather than assumed open.
+ *
+ * Layout: date and hours labels sit at the top of their columns, the two large
+ * values are pushed to the bottom of the card so the live clock and the
+ * working-hours range share one baseline.
  */
 export default function DateHours({ hours, timeZone, locale }) {
   const { t } = useI18n();
@@ -37,21 +41,21 @@ export default function DateHours({ hours, timeZone, locale }) {
       </header>
 
       <div className="card__body hours-card__body">
-        <div className="hours-card__group">
+        <div className="hours-card__col">
           <span className="hours-card__label">
             <Icon name="calendar" size={13} />
             {t('dash_range_today')}
           </span>
           <span className="hours-card__date">{fmtDate(new Date(), locale, timeZone, { weekday: true })}</span>
           {/* Only this isolated component re-renders on every clock tick. */}
-          <span className="hours-card__value hours-card__value--green hours-card__value--lg">
+          <span className="hours-card__value hours-card__value--green hours-card__value--lg hours-card__value--clock">
             <LiveClock timeZone={timeZone} />
           </span>
         </div>
 
         <span className="hours-card__divider" aria-hidden="true" />
 
-        <div className="hours-card__group">
+        <div className="hours-card__col">
           <span className="hours-card__label">
             <Icon name="clock" size={13} className="ic-green" />
             {t('dash_today_hours')}

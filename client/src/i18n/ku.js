@@ -1215,4 +1215,22 @@ export default {
   reset_dep_staff: 'تەنها ئەندامێتی نموونە دەسڕدرێتەوە؛ هەژماری چوونەژوورەوە و خاوەن دەستکاری ناکرێن.',
   reset_dep_suggestions: 'زۆرترین فرۆش لە داواکارییەکانەوە هەژمار دەکرێت؛ تەنها نیشانەی پێشنیاری تایبەت پاک دەکرێتەوە.',
 
+  /* Header notification feed */
+  dash_notifications: 'ئاگادارکردنەوەکان',
+  notif_tab_all: 'هەموو',
+  notif_tab_orders: 'داواکارییەکان',
+  notif_tab_reviews: 'هەڵسەنگاندنەکان',
+  notif_tab_activities: 'چالاکییەکان',
+  notif_mark_all: 'هەموو بخوێنەرەوە',
+  notif_order_new: 'داواکاری نوێ',
+  notif_order_status: 'گۆڕینی دۆخ',
+  notif_review_new: 'هەڵسەنگاندنی نوێ',
+  notif_empty_all: 'هیچ ئاگادارکردنەوەیەک نییە',
+  notif_empty_orders: 'هیچ ئاگادارکردنەوەیەکی داواکاری نییە',
+  notif_empty_reviews: 'هیچ ئاگادارکردنەوەیەکی هەڵسەنگاندن نییە',
+  notif_empty_activities: 'هیچ ئاگادارکردنەوەیەکی چالاکی نییە',
+  notif_load_failed: 'نەتوانرا ئاگادارکردنەوەکان باربکرێن',
+  notif_no_access: 'دەستگەیشتن بۆ ئەم بەشە نییە',
+  settings_dash_show_date_hours: 'بەروار و کاتژمێری کار',
+
 };

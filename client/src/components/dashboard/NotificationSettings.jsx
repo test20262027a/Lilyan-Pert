@@ -56,6 +56,8 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
           </div>
         ) : null}
 
+        {/* Pushed to the bottom of the card so it lines up with the clock in the
+            neighbouring Date & working hours card. */}
         <div className="sound-picker">
           <span className="sound-picker__label">
             <Icon name="volume" size={13} />

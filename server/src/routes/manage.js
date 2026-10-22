@@ -1160,23 +1160,71 @@ router.get(
 
 /* --------------------------------------------------- notifications/push */
 
+/*
+ * Notification feed, grouped by the three dashboard priorities.
+ *
+ * The stored `type` is the only thing that decides a category — orders
+ * (`new_order`, `status_change`), reviews and activities. Counts are computed
+ * from the same scoped rows the list is built from, so the badge can never
+ * disagree with what the panel shows. Everything stays inside this business.
+ */
+const NOTIF_CATEGORY_SQL = {
+  orders: "type IN ('new_order','status_change')",
+  reviews: "type = 'review'",
+  activities: "type = 'activity'",
+};
+
+/** Newest rows per category, so one busy stream can never hide another. */
+const NOTIF_LIMIT = 30;
+
 router.get(
   '/notifications',
   withBusiness('staff'),
   ah(async (req, res) => {
-    const [list, unread] = await Promise.all([
+    const [orders, reviews, activities, counts] = await Promise.all([
       q(
         `SELECT n.*, o.order_number FROM notifications n
            LEFT JOIN orders o ON o.id = n.order_id
-          WHERE n.business_id = $1 ORDER BY n.created_at DESC LIMIT 40`,
+          WHERE n.business_id = $1 AND ${NOTIF_CATEGORY_SQL.orders}
+          ORDER BY n.created_at DESC LIMIT ${NOTIF_LIMIT}`,
         [req.businessId],
       ),
       q(
-        'SELECT count(*)::int AS c FROM notifications WHERE business_id = $1 AND read_at IS NULL',
+        `SELECT n.*, o.order_number FROM notifications n
+           LEFT JOIN orders o ON o.id = n.order_id
+          WHERE n.business_id = $1 AND ${NOTIF_CATEGORY_SQL.reviews}
+          ORDER BY n.created_at DESC LIMIT ${NOTIF_LIMIT}`,
+        [req.businessId],
+      ),
+      q(
+        `SELECT n.*, o.order_number FROM notifications n
+           LEFT JOIN orders o ON o.id = n.order_id
+          WHERE n.business_id = $1 AND ${NOTIF_CATEGORY_SQL.activities}
+          ORDER BY n.created_at DESC LIMIT ${NOTIF_LIMIT}`,
+        [req.businessId],
+      ),
+      q(
+        `SELECT
+           count(*) FILTER (WHERE read_at IS NULL AND ${NOTIF_CATEGORY_SQL.orders})::int AS orders,
+           count(*) FILTER (WHERE read_at IS NULL AND ${NOTIF_CATEGORY_SQL.reviews})::int AS reviews,
+           count(*) FILTER (WHERE read_at IS NULL AND ${NOTIF_CATEGORY_SQL.activities})::int AS activities
+         FROM notifications WHERE business_id = $1`,
         [req.businessId],
       ),
     ]);
-    res.json({ notifications: list.rows, unread: unread.rows[0].c });
+
+    const lists = { orders: orders.rows, reviews: reviews.rows, activities: activities.rows };
+    const unread = counts.rows[0];
+    const total = unread.orders + unread.reviews + unread.activities;
+
+    res.json({
+      // One merged, newest-first feed for the "All" tab.
+      notifications: [...lists.orders, ...lists.reviews, ...lists.activities].sort(
+        (a, b) => new Date(b.created_at) - new Date(a.created_at),
+      ),
+      lists,
+      unread: { ...unread, total },
+    });
   }),
 );
 

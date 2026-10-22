@@ -7,11 +7,12 @@ import { SettingsCard, SettingsToggleRow } from './SettingsCard';
  * A missing key means "shown", so an untouched business keeps its dashboard.
  */
 const SECTIONS = [
+  'show_date_hours',
+  'show_notification_settings',
   'show_overview',
   'show_insights',
   'show_order_notifications',
   'show_recent_orders',
-  'show_notification_settings',
 ];
 
 export default function DashboardTab({ draft, setJson, canManage }) {

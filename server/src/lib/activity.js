@@ -52,6 +52,15 @@ function labelFrom(body) {
   return null;
 }
 
+/**
+ * Which recorded changes also raise a notification in the header feed.
+ *
+ * Only changes an owner must not miss — access, business configuration,
+ * backups and sample-data resets — are delivered. Routine catalogue edits stay
+ * in the activity report alone, so the unread badge keeps meaning something.
+ */
+const NOTIFY_ENTITIES = new Set(['user', 'settings', 'backup', 'reset']);
+
 /** Writes one row. Best-effort: an audit failure never breaks the request. */
 export async function recordActivity({
   businessId,
@@ -78,6 +87,23 @@ export async function recordActivity({
         path ? String(path).slice(0, 200) : null,
       ],
     );
+
+    /*
+     * The notification stores the machine fields (`entity:action`) plus the
+     * record label, so the client renders it in the viewer's own language
+     * instead of freezing prose in one language for every reader.
+     */
+    if (NOTIFY_ENTITIES.has(entity)) {
+      await q(
+        `INSERT INTO notifications (business_id, type, title, body)
+         VALUES ($1,'activity',$2,$3)`,
+        [
+          businessId,
+          entityLabel ? String(entityLabel).slice(0, 120) : actorName || '',
+          `${entity}:${action}`,
+        ],
+      );
+    }
   } catch (err) {
     console.warn('[activity] could not record entry:', err?.message || err);
   }
