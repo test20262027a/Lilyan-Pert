@@ -6,10 +6,15 @@
    ========================================================================== */
 
 .promos-page {
-  --pr-green: #22a44c;
-  --pr-green-ink: #16803a;
-  --pr-green-soft: #e8f7ec;
-  --pr-green-line: #cbe8d5;
+  /* Accent actions (add, save, progress, focus, enabled switches) follow the
+     saved business theme; only the "active" status pill keeps a success hue. */
+  --pr-green: var(--theme-primary);
+  --pr-green-ink: var(--theme-primary-strong);
+  --pr-green-soft: var(--theme-primary-soft);
+  --pr-green-line: var(--theme-primary-line);
+  --pr-ok: var(--success);
+  --pr-ok-soft: var(--success-soft);
+  --pr-ok-ink: var(--success);
   --pr-pink-soft: #fdeef2;
   --pr-pink-line: #f7d3dd;
   --pr-pink-ink: #dd5468;
@@ -29,10 +34,7 @@
 }
 
 [data-theme='dark'] .promos-page {
-  --pr-green: #37b862;
-  --pr-green-ink: #8fe2a9;
-  --pr-green-soft: rgba(55, 184, 98, 0.14);
-  --pr-green-line: rgba(55, 184, 98, 0.32);
+  --pr-ok-ink: color-mix(in srgb, var(--success) 52%, #ffffff);
   --pr-pink-soft: rgba(221, 84, 104, 0.14);
   --pr-pink-line: rgba(221, 84, 104, 0.3);
   --pr-pink-ink: #f08b9c;
@@ -65,7 +67,7 @@
   border: 0;
   border-radius: 14px;
   background: var(--pr-green);
-  color: #ffffff;
+  color: var(--primary-ink);
   font: inherit;
   font-size: 14.5px;
   font-weight: 700;
@@ -86,8 +88,8 @@
   flex: none;
   display: grid;
   place-items: center;
-  background: #ffffff;
-  color: var(--pr-green);
+  background: var(--primary-ink);
+  color: var(--theme-primary);
 }
 .promo-add__label { white-space: nowrap; }
 
@@ -142,7 +144,7 @@
 .promo-card__mark.is-fixed {
   background: var(--pr-cream);
   border-color: var(--pr-cream-line);
-  color: #b58a2c;
+  color: var(--theme-primary-strong);
 }
 
 .promo-card__ident {
@@ -180,7 +182,7 @@
   flex: none;
 }
 .promo-pill__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-.promo-pill--active { background: var(--pr-green-soft); color: var(--pr-green-ink); }
+.promo-pill--active { background: var(--pr-ok-soft); color: var(--pr-ok-ink); }
 .promo-pill--inactive { background: var(--surface-2); color: var(--pr-muted); }
 .promo-pill--expired,
 .promo-pill--exhausted { background: var(--pr-red-soft); color: var(--pr-red); }
@@ -509,7 +511,7 @@
   border: 0;
   border-radius: 12px;
   background: var(--pr-green);
-  color: #ffffff;
+  color: var(--primary-ink);
   font: inherit;
   font-size: 14px;
   font-weight: 700;

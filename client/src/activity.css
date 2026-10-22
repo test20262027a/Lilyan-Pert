@@ -12,7 +12,7 @@
   --av-mint: var(--theme-primary-soft);
   --av-cream: #fff9e8;
   --av-green: var(--theme-primary);
-  --av-green-deep: #2f9b47;
+  --av-green-deep: var(--theme-primary-strong);
   --av-ink: #242724;
   --av-text: #46494a;
   --av-muted: #858b85;
@@ -31,7 +31,7 @@
   --av-mint: color-mix(in srgb, var(--theme-primary) 12%, transparent);
   --av-cream: rgba(246, 185, 43, 0.12);
   --av-green: var(--theme-primary);
-  --av-green-deep: #8fe2a9;
+  --av-green-deep: var(--theme-primary-strong);
   --av-ink: var(--text);
   --av-text: var(--text-soft);
   --av-muted: var(--muted);
@@ -51,12 +51,12 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: linear-gradient(180deg, #faf6ff, #f1e8ff);
-  border: 1px solid #e0d0f8;
+  background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+  border: 1px solid var(--theme-primary-line);
   color: var(--theme-primary);
   box-shadow:
-    inset 0 1px 0 #ffffff,
-    0 8px 16px -8px rgba(122, 76, 216, 0.45);
+    inset 0 1px 0 color-mix(in srgb, #ffffff 60%, transparent),
+    0 8px 16px -8px color-mix(in srgb, var(--theme-primary) 45%, transparent);
 }
 .activity-page .mhero__icon .icon {
   fill: none;
@@ -325,14 +325,14 @@
   color: #7b837c;
 }
 .av-card__icon.is-green {
-  background: #f0faf2;
-  border-color: #d6eeda;
-  color: #35a44c;
+  background: var(--pastel-green);
+  border-color: var(--pastel-green-line);
+  color: var(--pastel-green-ink);
 }
 .av-card__icon.is-blue {
-  background: #eff5ff;
-  border-color: #d8e6fb;
-  color: #3b7bd4;
+  background: var(--pastel-blue);
+  border-color: var(--pastel-blue-line);
+  color: var(--pastel-blue-ink);
 }
 .av-card__icon.is-red {
   background: #fff1f1;
@@ -340,25 +340,23 @@
   color: #e14b4b;
 }
 .av-card__icon.is-purple {
-  background: #f6f0ff;
-  border-color: #e6d9fa;
-  color: var(--theme-primary);
+  background: var(--pastel-lavender);
+  border-color: var(--pastel-lavender-line);
+  color: var(--pastel-lavender-ink);
 }
 .av-card__icon.is-orange {
-  background: #fff8e8;
-  border-color: #f6e7c2;
-  color: #d08a17;
+  background: var(--pastel-amber);
+  border-color: var(--pastel-amber-line);
+  color: var(--pastel-amber-ink);
 }
 
 [data-theme='dark'] .av-card__icon {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--av-line);
 }
-[data-theme='dark'] .av-card__icon.is-green { background: color-mix(in srgb, var(--theme-primary) 14%, transparent); border-color: color-mix(in srgb, var(--theme-primary) 28%, transparent); color: #7fd894; }
-[data-theme='dark'] .av-card__icon.is-blue { background: rgba(88, 148, 232, 0.16); border-color: rgba(88, 148, 232, 0.3); color: #8fbcf4; }
+/* The theme tones and pastel surfaces already adapt to dark mode; only the
+   destructive red needs its own dark value. */
 [data-theme='dark'] .av-card__icon.is-red { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.3); color: #f0a3a3; }
-[data-theme='dark'] .av-card__icon.is-purple { background: rgba(122, 76, 216, 0.18); border-color: rgba(122, 76, 216, 0.34); color: #c3a8f2; }
-[data-theme='dark'] .av-card__icon.is-orange { background: rgba(208, 138, 23, 0.16); border-color: rgba(208, 138, 23, 0.3); color: var(--theme-primary); }
 
 .av-card__body {
   flex: 1 1 auto;
@@ -392,22 +390,18 @@
   line-height: 1.7;
   white-space: nowrap;
 }
-.av-badge.is-green { background: var(--theme-primary-soft); border-color: #d9efe0; color: #2f9b47; }
-.av-badge.is-blue { background: #eff5ff; border-color: #dce9fb; color: #3e77c7; }
-.av-badge.is-amber { background: #fff8e8; border-color: #f5e6bc; color: #a9761d; }
-.av-badge.is-orange { background: #fff3e6; border-color: #f8dfc2; color: #c47816; }
-.av-badge.is-purple { background: #f6f0ff; border-color: #e6d9fa; color: var(--theme-primary); }
+.av-badge.is-green { background: var(--pastel-green); border-color: var(--pastel-green-line); color: var(--pastel-green-ink); }
+.av-badge.is-blue { background: var(--pastel-blue); border-color: var(--pastel-blue-line); color: var(--pastel-blue-ink); }
+.av-badge.is-amber { background: var(--pastel-amber); border-color: var(--pastel-amber-line); color: var(--pastel-amber-ink); }
+.av-badge.is-orange { background: var(--pastel-amber); border-color: var(--pastel-amber-line); color: var(--pastel-amber-ink); }
+.av-badge.is-purple { background: var(--pastel-lavender); border-color: var(--pastel-lavender-line); color: var(--pastel-lavender-ink); }
 
 [data-theme='dark'] .av-badge {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--av-line);
   color: var(--av-muted);
 }
-[data-theme='dark'] .av-badge.is-green { background: color-mix(in srgb, var(--theme-primary) 14%, transparent); border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent); color: #8fe2a9; }
-[data-theme='dark'] .av-badge.is-blue { background: rgba(88, 148, 232, 0.16); border-color: rgba(88, 148, 232, 0.3); color: #a9caf6; }
-[data-theme='dark'] .av-badge.is-amber { background: rgba(246, 185, 43, 0.16); border-color: rgba(246, 185, 43, 0.3); color: #e6c37e; }
-[data-theme='dark'] .av-badge.is-orange { background: rgba(208, 138, 23, 0.16); border-color: rgba(208, 138, 23, 0.3); color: var(--theme-primary); }
-[data-theme='dark'] .av-badge.is-purple { background: rgba(122, 76, 216, 0.18); border-color: rgba(122, 76, 216, 0.34); color: #c3a8f2; }
+/* Badge tones derive from the pastel tokens, which already adapt per mode. */
 
 .av-card__desc {
   margin: 5px 0 0;

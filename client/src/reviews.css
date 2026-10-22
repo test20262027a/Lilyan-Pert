@@ -10,11 +10,11 @@
 
 .reviews-page {
   --rv-surface: #ffffff;
-  --rv-mint: #f1fbf4;
-  --rv-cream: #fff9e8;
+  --rv-mint: var(--theme-primary-soft);
+  --rv-cream: var(--theme-primary-soft);
   --rv-green: var(--theme-primary);
-  --rv-green-deep: #2f9b47;
-  --rv-star: #39bf59;
+  --rv-green-deep: var(--theme-primary-strong);
+  --rv-star: var(--theme-primary);
   --rv-gold: #f6b92b;
   --rv-ink: #252525;
   --rv-text: #46494a;
@@ -35,7 +35,7 @@
   --rv-mint: color-mix(in srgb, var(--theme-primary) 12%, transparent);
   --rv-cream: rgba(246, 185, 43, 0.14);
   --rv-green: var(--theme-primary);
-  --rv-green-deep: #8fe2a9;
+  --rv-green-deep: var(--theme-primary-strong);
   --rv-star: var(--theme-primary);
   --rv-ink: var(--text);
   --rv-text: var(--text-soft);
@@ -57,18 +57,16 @@
   width: 55px;
   height: 55px;
   border-radius: 15px;
-  background: linear-gradient(180deg, #fff5e6, #fdecda);
-  border: 1px solid #f3d3a3;
-  color: #e08a2e;
-  box-shadow: inset 0 1px 0 #ffffff, 0 8px 16px -8px rgba(224, 138, 46, 0.45);
+  background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+  border: 1px solid var(--theme-primary-line);
+  color: var(--theme-primary-strong);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 60%, transparent), 0 8px 16px -8px color-mix(in srgb, var(--theme-primary) 45%, transparent);
 }
 .reviews-page .mhero__icon .icon {
   fill: none;
   stroke-width: 1.9;
 }
 [data-theme='dark'] .reviews-page .mhero__icon {
-  background: rgba(224, 138, 46, 0.16);
-  border-color: rgba(224, 138, 46, 0.34);
   box-shadow: none;
 }
 

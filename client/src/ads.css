@@ -7,10 +7,16 @@
    ========================================================================== */
 
 .ads-page {
-  --ad-green: #22a44c;
-  --ad-green-ink: #16803a;
+  /* Every ordinary accent (add, save, focus, dropzone, switches, banners)
+     follows the saved theme. Only the ad's Active status keeps a success hue. */
+  --ad-green: var(--theme-primary);
+  --ad-green-ink: var(--theme-primary-strong);
   --ad-green-soft: var(--theme-primary-soft);
-  --ad-green-line: #cbe8d5;
+  --ad-green-line: var(--theme-primary-line);
+  --ad-ok: var(--success);
+  --ad-ok-soft: var(--success-soft);
+  --ad-ok-line: color-mix(in srgb, var(--success) 28%, var(--border));
+  --ad-ok-ink: var(--success);
   --ad-cream: var(--theme-primary-soft);
   --ad-cream-line: #f3e6c8;
   --ad-orange: #e08a2e;
@@ -31,10 +37,7 @@
 }
 
 [data-theme='dark'] .ads-page {
-  --ad-green: #37b862;
-  --ad-green-ink: #8fe2a9;
-  --ad-green-soft: rgba(55, 184, 98, 0.14);
-  --ad-green-line: rgba(55, 184, 98, 0.32);
+  --ad-ok-ink: color-mix(in srgb, var(--success) 52%, #ffffff);
   --ad-cream: rgba(233, 179, 75, 0.12);
   --ad-cream-line: rgba(233, 179, 75, 0.26);
   --ad-orange-soft: rgba(224, 138, 46, 0.16);
@@ -56,10 +59,10 @@
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: var(--ad-orange-soft);
-  border: 1px solid var(--ad-orange-line);
-  color: var(--ad-orange);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 6px 14px rgba(224, 138, 46, 0.16);
+  background: var(--ad-green-soft);
+  border: 1px solid var(--ad-green-line);
+  color: var(--ad-green-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 6px 14px color-mix(in srgb, var(--theme-primary) 18%, transparent);
 }
 [data-theme='dark'] .ads-page .mhero__icon {
   box-shadow: none;
@@ -93,7 +96,7 @@
   border: 0;
   border-radius: 14px;
   background: var(--ad-green);
-  color: #ffffff;
+  color: var(--primary-ink);
   font: inherit;
   font-size: 14.5px;
   font-weight: 700;
@@ -115,8 +118,8 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #ffffff;
-  color: var(--ad-green);
+  background: var(--primary-ink);
+  color: var(--theme-primary);
 }
 
 .ads-loading { display: grid; place-items: center; padding: 26px 0; }
@@ -193,7 +196,7 @@
   box-shadow: 0 2px 6px rgba(23, 26, 43, 0.1);
 }
 .ad2-card__media-badge.is-inactive { background: #eef0ef; color: #6f7773; }
-.ad2-card__media-badge.is-active { background: var(--ad-green-soft); color: var(--ad-green-ink); }
+.ad2-card__media-badge.is-active { background: var(--ad-ok-soft); color: var(--ad-ok-ink); }
 .ad2-card__media-badge.is-scheduled { background: var(--theme-primary-soft); color: var(--theme-primary-strong); }
 .ad2-card__media-badge.is-expired { background: #f3f0f0; color: #8b7f7f; }
 [data-theme='dark'] .ad2-card__media-badge.is-inactive,
@@ -242,7 +245,7 @@
 }
 .ad2-state__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .ad2-state.is-inactive { background: var(--ad-cream); border-color: var(--ad-orange-line); color: #c08425; }
-.ad2-state.is-active { background: var(--ad-green-soft); border-color: var(--ad-green-line); color: var(--ad-green-ink); }
+.ad2-state.is-active { background: var(--ad-ok-soft); border-color: var(--ad-ok-line); color: var(--ad-ok-ink); }
 .ad2-state.is-scheduled { background: var(--theme-primary-soft); border-color: #f0dcae; color: var(--theme-primary-strong); }
 .ad2-state.is-expired { background: var(--surface-2); border-color: var(--border); color: var(--ad-muted); }
 [data-theme='dark'] .ad2-state.is-scheduled { background: rgba(233, 179, 75, 0.16); border-color: rgba(233, 179, 75, 0.3); color: var(--theme-primary); }
@@ -277,7 +280,7 @@
   border-color: var(--border);
   color: var(--ad-muted);
 }
-.ad2-card__dates > svg { flex: none; color: color-mix(in srgb, var(--ad-green) 70%, #4d6a4f); }
+.ad2-card__dates > svg { flex: none; color: var(--ad-green-ink); }
 .ad2-card__dates .is-muted { opacity: 0.62; }
 .ad2-card__arrow { color: color-mix(in srgb, var(--ad-muted) 55%, transparent); }
 [dir='rtl'] .ad2-card__arrow { transform: scaleX(-1); }
@@ -290,7 +293,7 @@
   font-size: 12.5px;
   color: var(--ad-muted);
 }
-.ad2-card__related > svg { flex: none; color: color-mix(in srgb, var(--ad-green) 75%, #5c7a61); }
+.ad2-card__related > svg { flex: none; color: var(--ad-green-ink); }
 .ad2-card__related-label {
   min-width: 0;
   overflow: hidden;
@@ -697,7 +700,7 @@
   border: 0;
   border-radius: 12px;
   background: var(--ad-green);
-  color: #ffffff;
+  color: var(--primary-ink);
   font: inherit;
   font-size: 14px;
   font-weight: 700;

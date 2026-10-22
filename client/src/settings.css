@@ -116,23 +116,22 @@
   border: 1px solid var(--mint-line);
   box-shadow: inset 0 1px 0 #ffffff, 0 2px 6px rgba(23, 26, 43, 0.05);
 }
-.set-card__icon.is-amber { background: #fff7e8; color: #b57512; border-color: #f6e6c4; }
-.set-card__icon.is-blue { background: #eef4ff; color: #2f6fd0; border-color: #dce8fc; }
-.set-card__icon.is-purple { background: #f6f0ff; color: #7a4fd0; border-color: #eaddfb; }
-.set-card__icon.is-teal { background: #e9f8f5; color: #0d9488; border-color: #cfefea; }
-.set-card__icon.is-pink { background: #fff1f5; color: #c2447a; border-color: #f8dce8; }
-.set-card__icon.is-coral { background: #fff2ec; color: #d1592f; border-color: #f8ddcf; }
+/*
+ * Card glyph tints are decoration, so every variant is a different strength of
+ * the active theme instead of a fixed amber / blue / purple / teal / pink
+ * palette. Mixed with the surface, they adapt to light and dark on their own.
+ */
+.set-card__icon.is-amber { background: var(--pastel-amber); color: var(--pastel-amber-ink); border-color: var(--pastel-amber-line); }
+.set-card__icon.is-blue { background: var(--pastel-blue); color: var(--pastel-blue-ink); border-color: var(--pastel-blue-line); }
+.set-card__icon.is-purple { background: var(--pastel-lavender); color: var(--pastel-lavender-ink); border-color: var(--pastel-lavender-line); }
+.set-card__icon.is-teal { background: var(--pastel-green); color: var(--pastel-green-ink); border-color: var(--pastel-green-line); }
+.set-card__icon.is-pink { background: var(--pastel-pink); color: var(--pastel-pink-ink); border-color: var(--pastel-pink-line); }
+.set-card__icon.is-coral { background: var(--pastel-pink); color: var(--pastel-pink-ink); border-color: var(--pastel-pink-line); }
 [data-theme='dark'] .set-card__icon {
   background: color-mix(in srgb, var(--theme-primary) 16%, transparent);
   border-color: color-mix(in srgb, var(--theme-primary) 24%, transparent);
   color: color-mix(in srgb, var(--theme-primary) 45%, #ffffff);
 }
-[data-theme='dark'] .set-card__icon.is-amber { background: rgba(217, 119, 6, 0.18); color: var(--theme-primary); border-color: rgba(217, 119, 6, 0.32); }
-[data-theme='dark'] .set-card__icon.is-blue { background: rgba(37, 99, 235, 0.2); color: #9dc0f7; border-color: rgba(37, 99, 235, 0.36); }
-[data-theme='dark'] .set-card__icon.is-purple { background: rgba(124, 103, 228, 0.22); color: #c3a6f5; border-color: rgba(124, 103, 228, 0.38); }
-[data-theme='dark'] .set-card__icon.is-teal { background: rgba(13, 148, 136, 0.22); color: #7fe3d6; border-color: rgba(13, 148, 136, 0.38); }
-[data-theme='dark'] .set-card__icon.is-pink { background: rgba(219, 39, 119, 0.2); color: #f0a2c5; border-color: rgba(219, 39, 119, 0.36); }
-[data-theme='dark'] .set-card__icon.is-coral { background: rgba(232, 97, 60, 0.2); color: #f3ab90; border-color: rgba(232, 97, 60, 0.34); }
 
 .set-card__titles { flex: 1 1 auto; min-width: 0; }
 .set-card__title { font-size: 14.5px; font-weight: 700; color: var(--text); margin: 0; }

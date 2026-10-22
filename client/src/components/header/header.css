@@ -8,7 +8,10 @@
   position: sticky;
   top: 0;
   z-index: 30;
-  padding: 12px 18px 8px;
+  /* Same small inline margin as the page canvas, so the header card and the
+     page content share one edge at every width. */
+  padding-block: 12px 8px;
+  padding-inline: clamp(10px, 1.15vw, 20px);
   background: var(--bg);
 }
 
@@ -17,8 +20,8 @@
   align-items: center;
   gap: 12px;
   min-height: 70px;
-  max-width: var(--page-max);
-  margin-inline: auto;
+  width: 100%;
+  min-width: 0;
   padding: 10px 16px;
   border-radius: 24px;
   border: 1px solid color-mix(in srgb, var(--mint) 16%, var(--border));

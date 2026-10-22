@@ -473,8 +473,8 @@
   flex: none;
   background: var(--muted);
 }
-.ostatus__dot--preparing { background: var(--accent-blue); }
-.ostatus__dot--ready { background: var(--accent-teal); }
+.ostatus__dot--preparing { background: var(--status-preparing); }
+.ostatus__dot--ready { background: var(--status-ready); }
 .ostatus__dot--completed { background: var(--success); }
 .ostatus__dot--cancelled { background: var(--danger); }
 .ostatus__item--cancelled { color: var(--danger); }

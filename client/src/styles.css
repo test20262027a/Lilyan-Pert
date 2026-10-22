@@ -6,15 +6,30 @@
 :root {
   --primary: #7c67e4;
   --primary-ink: #ffffff;
-  --accent-green: #16a34a;
-  --accent-amber: #d97706;
-  --accent-blue: #2563eb;
-  --accent-coral: #e8613c;
-  --accent-purple: #7c67e4;
-  --accent-teal: #0d9488;
-  --accent-indigo: #4f46e5;
-  --accent-pink: #db2777;
-  --accent-slate: #64748b;
+  /*
+   * Decorative accent aliases. They used to be a fixed green / amber / blue /
+   * purple palette, which is why some cards stayed green or purple after a
+   * theme switch. They now derive from `--primary`, keeping a light-to-strong
+   * ramp so neighbouring icon containers still read apart — but inside the
+   * selected theme's hue, never a foreign one.
+   */
+  --accent-green: var(--primary);
+  --accent-amber: color-mix(in srgb, var(--primary) 58%, var(--text));
+  --accent-blue: var(--theme-primary-strong);
+  --accent-coral: color-mix(in srgb, var(--primary) 76%, var(--text));
+  --accent-purple: var(--primary);
+  --accent-teal: color-mix(in srgb, var(--primary) 68%, var(--text));
+  --accent-indigo: color-mix(in srgb, var(--primary) 86%, var(--text));
+  --accent-pink: color-mix(in srgb, var(--primary) 48%, var(--text));
+  --accent-slate: var(--muted);
+
+  /* Order status colours are meaning, not decoration: they never follow the
+     business theme, and they stay identical in light and dark mode. */
+  --status-pending: #2563eb;
+  --status-preparing: #d97706;
+  --status-ready: #7c3aed;
+  --status-completed: #16a34a;
+  --status-cancelled: #dc2626;
 
   /*
    * ---------------------------------------------------------------- theme --
@@ -74,22 +89,27 @@
   --mint-soft: var(--theme-primary-soft);
   --mint-line: var(--theme-primary-line);
 
-  /* Pastel KPI / status tones. */
-  --pastel-blue: #eef4ff;
-  --pastel-blue-ink: #2f6fd0;
-  --pastel-blue-line: #dfe9fc;
-  --pastel-amber: #fffbea;
-  --pastel-amber-ink: #a9721a;
-  --pastel-amber-line: #f7edcb;
-  --pastel-green: #effbf2;
-  --pastel-green-ink: #1f8a4c;
-  --pastel-green-line: #ddefe3;
-  --pastel-pink: #fff2f3;
-  --pastel-pink-ink: #c2413f;
-  --pastel-pink-line: #f8dfe1;
-  --pastel-lavender: #f9f2ff;
-  --pastel-lavender-ink: #7a4fd0;
-  --pastel-lavender-line: #eee0fb;
+  /*
+   * Pastel surfaces: KPI tiles, category glyphs, contextual icon containers.
+   * Each one is a different strength of the SAME theme primary, so the family
+   * stays varied without ever carrying a leftover green / blue / pink accent.
+   * They are mixed with `--surface`, so light and dark mode follow for free.
+   */
+  --pastel-blue: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  --pastel-blue-ink: var(--theme-primary-strong);
+  --pastel-blue-line: color-mix(in srgb, var(--primary) 20%, var(--border));
+  --pastel-amber: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  --pastel-amber-ink: color-mix(in srgb, var(--primary) 62%, var(--text));
+  --pastel-amber-line: color-mix(in srgb, var(--primary) 14%, var(--border));
+  --pastel-green: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  --pastel-green-ink: var(--theme-primary-strong);
+  --pastel-green-line: color-mix(in srgb, var(--primary) 24%, var(--border));
+  --pastel-pink: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  --pastel-pink-ink: color-mix(in srgb, var(--primary) 80%, var(--text));
+  --pastel-pink-line: color-mix(in srgb, var(--primary) 17%, var(--border));
+  --pastel-lavender: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  --pastel-lavender-ink: var(--theme-primary-strong);
+  --pastel-lavender-line: color-mix(in srgb, var(--primary) 27%, var(--border));
 
   --bg: #fafbf9;
   --bg-soft: #f3f5f3;
@@ -151,21 +171,10 @@
   --mint-ink: color-mix(in srgb, var(--primary) 62%, #ffffff);
   --mint-soft: color-mix(in srgb, var(--primary) 16%, var(--surface));
   --mint-line: color-mix(in srgb, var(--primary) 26%, var(--surface));
-  --pastel-blue: #172232;
-  --pastel-blue-ink: #9dc0f7;
-  --pastel-blue-line: #24334a;
-  --pastel-amber: #2e2513;
-  --pastel-amber-ink: #eec586;
-  --pastel-amber-line: #453720;
-  --pastel-green: #142a1e;
-  --pastel-green-ink: #82d9a8;
-  --pastel-green-line: #22402f;
-  --pastel-pink: #2e1a24;
-  --pastel-pink-ink: #f0a2c5;
-  --pastel-pink-line: #46283a;
-  --pastel-lavender: #241b33;
-  --pastel-lavender-ink: #c3a6f5;
-  --pastel-lavender-line: #362a4a;
+  /*
+   * The pastel tones need no dark values of their own: they are mixed from
+   * `--primary` and `--surface`, and the surface turns dark with the mode.
+   */
 }
 
 * { box-sizing: border-box; }
@@ -311,10 +320,12 @@ a { color: var(--primary); }
 /* Navy rail overrides: muted labels, soft green active highlight. */
 .sidebar .nav-link { color: var(--navy-muted); }
 .sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+/* Active rail item: a tinted navy plate, the theme accent label and a thin
+   accent edge — all three follow the saved appearance. */
 .sidebar .nav-link.is-active {
   background: var(--navy-active);
-  color: #d8f6e6;
-  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  color: color-mix(in srgb, var(--primary) 38%, #ffffff);
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
 }
 .sidebar .btn {
   background: rgba(255, 255, 255, 0.07);
@@ -343,12 +354,19 @@ a { color: var(--primary); }
 
 /* The shared application header lives in components/header/header.css. */
 
+/*
+ * Admin page canvas. Every admin screen fills all the space left beside the
+ * rail: no centred max-width container, only a small equal inline margin that
+ * shrinks with the viewport. `min-width: 0` lets flex children and grids
+ * shrink instead of forcing the shell sideways. The public customer menu keeps
+ * its own centred `--page-max` column (see .customer-* rules below).
+ */
 .page {
-  padding: 18px;
-  padding-bottom: calc(28px + env(safe-area-inset-bottom));
+  padding-block: 18px calc(28px + env(safe-area-inset-bottom));
+  padding-inline: clamp(10px, 1.15vw, 20px);
   width: 100%;
-  max-width: var(--page-max);
-  margin: 0 auto;
+  max-width: none;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -644,8 +662,8 @@ a { color: var(--primary); }
   border: 1px solid transparent; white-space: nowrap;
 }
 .badge--pending { background: var(--warning-soft); color: var(--warning); }
-.badge--preparing { background: color-mix(in srgb, var(--accent-blue) 16%, transparent); color: var(--accent-blue); }
-.badge--ready { background: color-mix(in srgb, var(--accent-teal) 18%, transparent); color: var(--accent-teal); }
+.badge--preparing { background: color-mix(in srgb, var(--status-preparing) 16%, transparent); color: var(--status-preparing); }
+.badge--ready { background: color-mix(in srgb, var(--status-ready) 16%, transparent); color: var(--status-ready); }
 .badge--completed { background: var(--success-soft); color: var(--success); }
 .badge--cancelled { background: var(--danger-soft); color: var(--danger); }
 .badge--active { background: var(--success-soft); color: var(--success); }

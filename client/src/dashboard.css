@@ -85,9 +85,9 @@
   border-radius: var(--dash-radius);
   border: 1px solid var(--mint-line);
   background:
-    radial-gradient(120% 150% at 100% 0%, #fdf3dd 0%, transparent 62%),
+    radial-gradient(120% 150% at 100% 0%, color-mix(in srgb, var(--primary) 10%, var(--surface)) 0%, transparent 62%),
     radial-gradient(110% 140% at 0% 100%, var(--theme-primary-soft) 0%, transparent 60%),
-    linear-gradient(90deg, #fdfaf0, #fbf6e9);
+    linear-gradient(90deg, var(--theme-primary-soft), var(--surface));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 16%, transparent), var(--shadow-soft);
   min-height: 165px;
   display: flex;
@@ -103,17 +103,20 @@
 .welcome__title {
   font-size: clamp(17px, 2.4vw, 22px);
   font-weight: 800;
-  color: #443a24;
+  color: var(--text);
   letter-spacing: -0.01em;
 }
 .welcome__sub { font-size: 12.5px; color: var(--muted); }
 .welcome__art { flex: none; width: min(46%, 320px); height: auto; }
 
 [data-theme='dark'] .welcome {
-  background: linear-gradient(90deg, #1b1a15, #191c19);
+  background:
+    radial-gradient(120% 150% at 100% 0%, color-mix(in srgb, var(--primary) 14%, var(--surface)) 0%, transparent 62%),
+    radial-gradient(110% 140% at 0% 100%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(90deg, var(--surface), var(--surface-2));
   border-color: var(--mint-line);
 }
-[data-theme='dark'] .welcome__title { color: #f0e9d8; }
+[data-theme='dark'] .welcome__title { color: var(--text); }
 [data-theme='dark'] .welcome__sub { color: var(--muted); }
 [data-theme='dark'] .welcome__art { opacity: 0.9; }
 
@@ -217,7 +220,7 @@
 /* The new-order sound switch keeps the warm golden reference accent, so it
    reads apart from the browser-push switch right below it. */
 .notif-card .card__body > .switch-row:first-child .switch input:checked + .switch__track {
-  background: linear-gradient(180deg, #f0b844, #dda22f);
+  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-hover));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
 /* Setting descriptions are real information, so they stay readable — never
@@ -252,7 +255,7 @@
 .sound-play {
   width: 46px; height: 46px; border-radius: 50%; flex: none;
   display: grid; place-items: center; cursor: pointer; border: none;
-  background: var(--mint); color: #ffffff;
+  background: var(--mint); color: var(--primary-ink);
   box-shadow:
     0 4px 12px color-mix(in srgb, var(--mint) 35%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.35);
@@ -372,8 +375,8 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 24%, transparent);
 }
 .range-pill.is-active {
-  background: var(--mint-deep); border-color: var(--mint-deep); color: #ffffff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--mint-deep) 32%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  background: var(--theme-primary); border-color: var(--theme-primary); color: var(--primary-ink);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-primary) 32%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 /* A new period is loading: the figures fade instead of jumping to zero. */
 .finance.is-busy .fstat-row,
@@ -669,9 +672,9 @@
    a narrow screen never scrolls the whole dashboard sideways. */
 .orders-table__wrap {
   overflow-x: auto;
-  border: 1px solid #e8eeea;
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: #ffffff;
+  background: var(--surface);
   -webkit-overflow-scrolling: touch;
 }
 
@@ -681,19 +684,19 @@
   border-collapse: separate;
   border-spacing: 0;
   font-size: 12.5px;
-  color: #202525;
+  color: var(--text);
 }
 
 .orders-table th {
   height: 40px;
   padding: 0 12px;
-  background: #f8faf9;
-  color: #8a8d89;
+  background: var(--surface-2);
+  color: var(--muted);
   font-size: 12px;
   font-weight: 600;
   text-align: center;
   white-space: nowrap;
-  border-bottom: 1px solid #e8eeea;
+  border-bottom: 1px solid var(--border);
 }
 .orders-table th:first-child { border-start-start-radius: var(--radius-lg); }
 .orders-table th:last-child { border-start-end-radius: var(--radius-lg); }
@@ -701,7 +704,7 @@
 .orders-table td {
   height: 62px;
   padding: 6px 12px;
-  border-bottom: 1px solid #e8eeea;
+  border-bottom: 1px solid var(--border);
   vertical-align: middle;
   text-align: center;
 }
@@ -709,7 +712,7 @@
 
 .orders-table__row { cursor: pointer; transition: background 0.14s ease; }
 .orders-table__row:hover,
-.orders-table__row:focus-within { background: #f3fbf5; }
+.orders-table__row:focus-within { background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
 
 /* The order number is the row's real, keyboard-reachable destination. */
 .orders-table__col-no,
@@ -717,14 +720,14 @@
 .orders-table__no a {
   font-size: 13px;
   font-weight: 700;
-  color: #202525;
+  color: var(--text);
   text-decoration: none;
   white-space: nowrap;
 }
 .orders-table__no a:hover { color: var(--mint-ink); }
 .orders-table__no a:focus-visible { outline-offset: 2px; }
 
-.orders-table__when { color: #8a8d89; font-size: 11.5px; line-height: 1.35; white-space: nowrap; }
+.orders-table__when { color: var(--muted); font-size: 11.5px; line-height: 1.35; white-space: nowrap; }
 .orders-table__when > span { display: block; }
 
 .orders-table__ellipsis {
@@ -744,17 +747,25 @@
   font-weight: 650;
   white-space: nowrap;
 }
-.orders-table__status--pending { background: #e8f1ff; color: #2f6fd0; }
-.orders-table__status--preparing { background: #fff5dc; color: #a9721a; }
-.orders-table__status--ready { background: #f3ebff; color: #7a4fd0; }
-.orders-table__status--completed { background: #ddfbe7; color: #1cb54d; }
-.orders-table__status--cancelled { background: #ffe9e9; color: #c2413f; }
+/* Order statuses are meaning, not theme decoration: the five status tokens
+   keep their hue in every theme and every mode, tinted against the surface so
+   they stay legible on a dark card too. */
+.orders-table__status--pending { background: color-mix(in srgb, var(--status-pending) 14%, var(--surface)); color: var(--status-pending); }
+.orders-table__status--preparing { background: color-mix(in srgb, var(--status-preparing) 16%, var(--surface)); color: var(--status-preparing); }
+.orders-table__status--ready { background: color-mix(in srgb, var(--status-ready) 14%, var(--surface)); color: var(--status-ready); }
+.orders-table__status--completed { background: color-mix(in srgb, var(--status-completed) 14%, var(--surface)); color: var(--status-completed); }
+.orders-table__status--cancelled { background: color-mix(in srgb, var(--status-cancelled) 14%, var(--surface)); color: var(--status-cancelled); }
+[data-theme='dark'] .orders-table__status--pending { background: color-mix(in srgb, var(--status-pending) 26%, var(--surface)); color: color-mix(in srgb, var(--status-pending) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--preparing { background: color-mix(in srgb, var(--status-preparing) 26%, var(--surface)); color: color-mix(in srgb, var(--status-preparing) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--ready { background: color-mix(in srgb, var(--status-ready) 26%, var(--surface)); color: color-mix(in srgb, var(--status-ready) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--completed { background: color-mix(in srgb, var(--status-completed) 26%, var(--surface)); color: color-mix(in srgb, var(--status-completed) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--cancelled { background: color-mix(in srgb, var(--status-cancelled) 26%, var(--surface)); color: color-mix(in srgb, var(--status-cancelled) 45%, #ffffff); }
 
-.orders-table__total { font-size: 13px; font-weight: 700; color: #202525; white-space: nowrap; }
+.orders-table__total { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; }
 
 .orders-table__state {
   height: 96px;
-  color: #8a8d89;
+  color: var(--muted);
   vertical-align: middle;
 }
 .orders-table__state-inner {
@@ -766,7 +777,7 @@
 
 .orders-table__foot {
   font-size: 12px;
-  color: #8a8d89;
+  color: var(--muted);
   text-align: start;
 }
 
@@ -914,8 +925,8 @@
   overflow-y: auto;
   padding: 24px 24px 18px;
   border-radius: 20px;
-  border: 1px solid rgba(215, 228, 218, 0.9);
-  background: linear-gradient(160deg, #ffffff, #fbfdfb);
+  border: 1px solid var(--border);
+  background: linear-gradient(160deg, var(--surface), var(--surface-2));
   box-shadow:
     0 2px 6px rgba(20, 45, 30, 0.06),
     0 24px 60px rgba(20, 45, 30, 0.2),
@@ -953,7 +964,7 @@
   width: 100%; height: 46px;
   border-radius: 12px;
   border: 1px solid var(--border-strong);
-  background: linear-gradient(180deg, #ffffff, #fbfdfb);
+  background: var(--surface);
   padding-inline: 40px 12px;
   font-size: 14px; font-weight: 650; color: var(--text);
   box-shadow: inset 0 1px 2px rgba(25, 55, 35, 0.055);
@@ -1001,15 +1012,15 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
 }
 .dash-modal__btn--apply {
-  border-color: #7b5ceb; color: #ffffff;
-  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-strong));
+  border-color: var(--theme-primary); color: var(--primary-ink);
+  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-active));
   box-shadow:
-    0 6px 16px rgba(123, 92, 235, 0.34),
+    0 6px 16px color-mix(in srgb, var(--theme-primary) 34%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 .dash-modal__btn--apply:hover {
   box-shadow:
-    0 9px 22px rgba(123, 92, 235, 0.4),
+    0 9px 22px color-mix(in srgb, var(--theme-primary) 40%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
