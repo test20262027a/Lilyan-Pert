@@ -7,6 +7,10 @@ const router = express.Router();
 router.use(requireAuth);
 
 const catName = (n) => (n === null || n === undefined || n === '' ? null : String(n).slice(0, 300));
+
+/** A category's identity colour: only a plain #rrggbb value is ever stored. */
+const ink = (v) =>
+  /^#[0-9a-f]{6}$/i.test(String(v ?? '').trim()) ? String(v).trim().toLowerCase() : null;
 const desc = (n) => (n === null || n === undefined || n === '' ? null : String(n).slice(0, 1000));
 
 /** Optional whole number (calories, preparation minutes) — empty means "not set". */
@@ -86,11 +90,12 @@ router.post(
     if (!nameEn && !b.name_ku && !b.name_fa && !b.name_ar) throw bad('NAME_REQUIRED');
     // New categories default to Active.
     const { rows } = await q(
-      `INSERT INTO categories (business_id, icon, sort_order, active, name_ku, name_fa, name_ar, name_en)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      `INSERT INTO categories (business_id, icon, icon_color, sort_order, active, name_ku, name_fa, name_ar, name_en)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
       [
         req.businessId,
         b.icon ? String(b.icon).slice(0, 60) : 'utensils',
+        ink(b.icon_color),
         num(b.sort_order, 0),
         b.active === undefined ? true : Boolean(b.active),
         catName(b.name_ku),
@@ -113,12 +118,13 @@ router.put(
     const { rows } = await q(
       `UPDATE categories
           SET icon = COALESCE($3, icon),
-              sort_order = COALESCE($4, sort_order),
-              active = COALESCE($5, active),
-              name_ku = COALESCE($6, name_ku),
-              name_fa = COALESCE($7, name_fa),
-              name_ar = COALESCE($8, name_ar),
-              name_en = COALESCE($9, name_en),
+              icon_color = COALESCE($4, icon_color),
+              sort_order = COALESCE($5, sort_order),
+              active = COALESCE($6, active),
+              name_ku = COALESCE($7, name_ku),
+              name_fa = COALESCE($8, name_fa),
+              name_ar = COALESCE($9, name_ar),
+              name_en = COALESCE($10, name_en),
               updated_at = now()
         WHERE id = $1 AND business_id = $2
         RETURNING *`,
@@ -126,6 +132,7 @@ router.put(
         req.params.id,
         req.businessId,
         b.icon ? String(b.icon).slice(0, 60) : null,
+        ink(b.icon_color),
         b.sort_order === undefined ? null : num(b.sort_order, 0),
         b.active === undefined ? null : Boolean(b.active),
         catName(b.name_ku),

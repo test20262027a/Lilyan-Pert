@@ -6,7 +6,6 @@ import CategoryPanel from '../components/menu/CategoryPanel';
 import CategoryChips from '../components/menu/CategoryChips';
 import CategoryDrawer from '../components/menu/CategoryDrawer';
 import CategorySummary from '../components/menu/CategorySummary';
-import CategoryIdentityIcon from '../components/menu/CategoryIdentityIcon';
 import Icon from '../components/Icon';
 import ProductCard from '../components/menu/ProductCard';
 import CategoryFormModal from '../components/menu/CategoryFormModal';
@@ -352,7 +351,6 @@ export default function MenuManagement() {
         categories={listCategories}
         selectedId={selectedId}
         onSelect={setSelectedId}
-        onManage={() => setDrawerOpen(true)}
       />
 
       <div className="mworkspace">
@@ -360,21 +358,29 @@ export default function MenuManagement() {
         {categoryPanel({ className: 'mpanel--sidebar', onSelect: setSelectedId })}
 
         <section className="mproducts">
-          {/* Intermediate widths: the rail becomes an on-demand drawer. */}
+          {/*
+            Intermediate widths: the rail becomes an on-demand drawer. The glyph
+            is the *action*, never the selected category's identity — a list while
+            the navigation is closed, a close mark while it is open.
+          */}
           <button
             type="button"
-            className="mcat-toggle"
-            onClick={() => setDrawerOpen(true)}
+            className={`mcat-toggle ${drawerOpen ? 'is-open' : ''}`.trim()}
+            onClick={() => setDrawerOpen((open) => !open)}
             aria-haspopup="dialog"
+            aria-expanded={drawerOpen}
+            aria-label={
+              drawerOpen ? t('menu_categories_close') : t('menu_categories_open')
+            }
+            title={drawerOpen ? t('menu_categories_close') : t('menu_categories_open')}
           >
-            {selectedAppearance ? (
-              <CategoryIdentityIcon icon={selectedAppearance.icon} color={selectedAppearance.color} size={28} />
-            ) : null}
+            <span className="mcat-toggle__glyph">
+              <Icon name={drawerOpen ? 'close' : 'listFilter'} size={18} />
+            </span>
             <span className="mcat-toggle__text">
               <span className="mcat-toggle__label">{t('menu_tab_categories')}</span>
               {selectedName ? <span className="mcat-toggle__current">{selectedName}</span> : null}
             </span>
-            <Icon name="chevronDown" size={16} />
           </button>
 
           {summary ? (

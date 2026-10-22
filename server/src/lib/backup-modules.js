@@ -70,7 +70,7 @@ const MODULE_DEFS = {
   menu_categories: {
     exportMode: 'rows',
     table: 'categories',
-    columns: ['id', 'icon', 'sort_order', 'active', 'name_ku', 'name_fa', 'name_ar', 'name_en'],
+    columns: ['id', 'icon', 'icon_color', 'sort_order', 'active', 'name_ku', 'name_fa', 'name_ar', 'name_en'],
     orderBy: 'sort_order, created_at',
   },
   menu_products: {

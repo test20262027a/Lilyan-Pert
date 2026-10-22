@@ -517,24 +517,48 @@
   letter-spacing: -0.01em;
 }
 .msummary__sub { font-size: 11.5px; color: var(--mp-muted); margin-top: 2px; }
-.msummary__stats { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+/*
+ * The three product counters are one fixed three-column row: Total, Active and
+ * Inactive only read correctly side by side, so the group never wraps and no
+ * card may claim a minimum width that pushes its neighbour onto a second line.
+ */
+.msummary__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
 
 /* Compact counters: all three stay on the same line as the category identity. */
 .mpill {
-  display: inline-flex;
+  display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 5px 10px;
-  border-radius: var(--radius-pill);
+  min-width: 0;
+  padding: 5px 9px;
+  border-radius: 13px;
   border: 1px solid transparent;
   font-size: 10.5px;
   font-weight: 700;
+  line-height: 1.35;
   white-space: nowrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.7),
     0 4px 10px -8px rgba(24, 46, 30, 0.8);
 }
-.mpill__num { font-size: 13px; font-weight: 800; }
+.mpill__num { font-size: 13px; font-weight: 800; flex: none; }
+.mpill__icon { flex: none; }
+.mpill__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Full labels by default; the short forms take over on narrow phones. */
+.mpill__label--short { display: none; }
 .mpill--total {
   background: var(--mp-mint);
   border-color: color-mix(in srgb, var(--mp-green) 22%, transparent);
@@ -549,6 +573,25 @@
   background: var(--mp-red-soft);
   border-color: color-mix(in srgb, var(--mp-red) 22%, transparent);
   color: var(--mp-red);
+}
+
+/*
+ * Narrow phones: the labels shorten to their approved localized forms (کل /
+ * فعال / غیرفعال) instead of wrapping or shrinking the numbers — the counts stay
+ * whole, the three cards stay equal and the row stays one row.
+ */
+@media (max-width: 560px) {
+  .msummary { padding: 10px 12px; }
+  .mpill {
+    gap: 4px;
+    padding: 5px 6px;
+    font-size: 10px;
+    border-radius: 12px;
+  }
+  .mpill__num { font-size: 12.5px; }
+  .mpill__icon { width: 12px; height: 12px; }
+  .mpill__label--full { display: none; }
+  .mpill__label--short { display: inline; }
 }
 
 .mgrid { display: grid; gap: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -857,6 +900,23 @@
     border-color: color-mix(in srgb, var(--mp-green) 50%, var(--mp-line));
   }
   .mcat-toggle:active:not(:disabled) { transform: translateY(1px); }
+  /* The glyph is the action (open / close), never a category's identity. */
+  .mcat-toggle__glyph {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--mp-green) 12%, var(--surface));
+    color: var(--mp-green-ink);
+  }
+  .mcat-toggle.is-open {
+    border-color: color-mix(in srgb, var(--mp-green) 60%, var(--mp-line));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 0 0 3px color-mix(in srgb, var(--mp-green) 12%, transparent);
+  }
   .mcat-toggle__text {
     display: flex;
     flex-direction: column;
@@ -1044,18 +1104,49 @@
     text-overflow: ellipsis;
   }
 
-  .mchipbar__manage {
+  /* Physical scroll controls at both ends; only the chips between them scroll. */
+  .mchipbar__nav {
     flex: none;
-    width: 42px;
-    height: 42px;
+    width: 34px;
+    height: 34px;
     display: grid;
     place-items: center;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--mp-green) 26%, var(--mp-line));
-    background: color-mix(in srgb, var(--mp-green) 10%, var(--surface));
+    border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--mp-green) 24%, var(--mp-line));
+    background: linear-gradient(
+      180deg,
+      var(--surface),
+      color-mix(in srgb, var(--mp-mint) 75%, var(--surface))
+    );
     color: var(--mp-green-ink);
     cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 4px 9px -7px rgba(24, 46, 30, 0.75);
+    transition: border-color 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
   }
+  .mchipbar__nav:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mp-green) 52%, var(--mp-line));
+    transform: translateY(-1px);
+  }
+  .mchipbar__nav:active:not(:disabled) { transform: translateY(1px); }
+  .mchipbar__nav:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--mp-green) 60%, transparent);
+    outline-offset: 2px;
+  }
+  /* Nothing hidden on that side: the control is visibly unavailable. */
+  .mchipbar__nav:disabled {
+    opacity: 0.36;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  /* Physical left stays physically left in both writing directions. */
+  .mchipbar__nav--left { order: 1; }
+  .mchipbar__scroll { order: 2; }
+  .mchipbar__nav--right { order: 3; }
+  [dir='rtl'] .mchipbar__nav--left { order: 3; }
+  [dir='rtl'] .mchipbar__nav--right { order: 1; }
 
   /* The desktop rail never occupies space on a phone. */
   .mpanel--sidebar { display: none; }

@@ -8,7 +8,6 @@ import {
   CATEGORY_COLORS,
   CATEGORY_ICONS,
   appearanceOf,
-  categoryGlyph,
   resolveCategoryAppearance,
 } from './categoryIcons';
 import { catalogErrorText } from './errorText';
@@ -24,9 +23,11 @@ import { catalogErrorText } from './errorText';
  *
  * A category also carries an identity: its glyph (`icon`) and its own accent
  * (`icon_color`). For a NEW category both are proposed from the four names as
- * they are typed, and an existing category keeps exactly what it saved until the
- * administrator picks another glyph, another accent, or presses the explicit
- * auto-select action — so renaming a category never changes its identity.
+ * they are typed — "پیتزا" previews the pizza glyph before anything is saved —
+ * and an existing category keeps exactly what it saved until the administrator
+ * picks another glyph, another accent, or presses the explicit auto-select
+ * action. A manual choice switches the live suggestion off, so renaming a
+ * category never silently replaces an administrator's icon.
  *
  * The active flag is edited here and only here — the category list deliberately
  * has no independent status switch.
@@ -55,23 +56,47 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
     return Math.max(...categories.map((c) => Number(c.sort_order) || 0)) + 1;
   }, [categories, isCreate]);
 
-  const initial = useMemo(
-    () => ({
+  const initial = useMemo(() => {
+    const saved = appearanceOf(modal.values);
+    return {
       ku: modal.values.name_ku || '',
       fa: modal.values.name_fa || '',
       ar: modal.values.name_ar || '',
       en: modal.values.name_en || '',
-      icon: modal.values.icon || 'utensils',
+      icon: saved.icon,
+      color: saved.color,
       sortOrder: isCreate ? String(suggestedOrder) : String(modal.values.sort_order ?? 0),
       // New categories default to Active.
       active: modal.values.active !== false,
-    }),
-    [modal, isCreate, suggestedOrder],
-  );
+    };
+  }, [modal, isCreate, suggestedOrder]);
 
   const [values, setValues] = useState(initial);
   const [localError, setLocalError] = useState(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+
+  /*
+   * The identity the form would save right now. A new category follows its names
+   * live; an existing one keeps its saved identity (a stored icon counts as the
+   * administrator's own choice) until they ask for the automatic one again.
+   */
+  const [manual, setManual] = useState(!isCreate);
+  const names = useMemo(
+    () => CARDS.map((code) => values[code]),
+    [values.ku, values.fa, values.ar, values.en],
+  );
+  const suggestion = useMemo(
+    () => resolveCategoryAppearance(names, categories, { excludeId: modal.id }),
+    [names, categories, modal.id],
+  );
+  const appearance = manual
+    ? { icon: values.icon, color: values.color }
+    : { icon: suggestion.icon, color: suggestion.color };
+
+  const pickAppearance = (patch) => {
+    setValues((s) => ({ ...s, ...patch }));
+    setManual(true);
+  };
 
   // Editing a field also clears the local validation message it caused.
   const set = (key, value) => {
@@ -122,7 +147,8 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
         name_fa: names.fa,
         name_ar: names.ar,
         name_en: names.en,
-        icon: values.icon,
+        icon: appearance.icon,
+        icon_color: appearance.color,
         sort_order: Number(order),
         active: values.active,
       },
@@ -190,6 +216,70 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
               </div>
             );
           })}
+        </div>
+      </section>
+
+      {/* Identity: a live preview of the glyph + accent that will be saved. */}
+      <section className="mcmodal__section">
+        <div className="mcmodal__section-head">
+          <span className="mcmodal__bar" aria-hidden="true" />
+          <span className="mcmodal__label">{t('menu_category_icon')}</span>
+        </div>
+
+        <div className="mcappear">
+          <CategoryIdentityIcon
+            icon={appearance.icon}
+            color={appearance.color}
+            size={46}
+            variant="raised"
+          />
+          <div className="mcappear__text">
+            <div className="mcappear__name">
+              {trimmed(values[locale]) || trimmed(values.en) || trimmed(values.ku) || t('menu_category_icon')}
+            </div>
+            <p className="mcappear__hint">{t('menu_category_auto_hint')}</p>
+          </div>
+          <button
+            type="button"
+            className={`mcappear__auto ${manual ? '' : 'is-active'}`.trim()}
+            onClick={() => setManual(false)}
+            disabled={busy || !manual}
+            title={t('menu_category_auto')}
+          >
+            <Icon name="sparkles" size={14} />
+            {t('menu_category_auto')}
+          </button>
+        </div>
+
+        <div className="mcappear__grid" role="group" aria-label={t('menu_category_icon')}>
+          {CATEGORY_ICONS.map((glyph) => (
+            <button
+              key={glyph}
+              type="button"
+              className={`mcappear__glyph ${appearance.icon === glyph ? 'is-active' : ''}`.trim()}
+              onClick={() => pickAppearance({ icon: glyph })}
+              aria-pressed={appearance.icon === glyph}
+              aria-label={glyph}
+              title={glyph}
+            >
+              <Icon name={glyph} size={17} />
+            </button>
+          ))}
+        </div>
+
+        <div className="mcappear__colors" role="group" aria-label={t('menu_category_color')}>
+          {CATEGORY_COLORS.map((ink) => (
+            <button
+              key={ink}
+              type="button"
+              className={`mcappear__swatch ${appearance.color.toLowerCase() === ink ? 'is-active' : ''}`.trim()}
+              style={{ '--swatch': ink }}
+              onClick={() => pickAppearance({ color: ink })}
+              aria-pressed={appearance.color.toLowerCase() === ink}
+              aria-label={ink}
+              title={t('menu_category_color')}
+            />
+          ))}
         </div>
       </section>
 

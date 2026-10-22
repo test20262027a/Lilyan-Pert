@@ -4,8 +4,8 @@
  * A category has two pieces of identity: the glyph it shows and the colour of
  * that glyph. Both are *meaning*, never the business theme — an Ocean-themed
  * dashboard still shows a Fresh Juice category as an orange citrus, so a row, a
- * heading and a delete dialog all stay recognisable whatever appearance preset
- * is selected.
+ * heading, a mobile chip and a delete dialog all stay recognisable whatever
+ * appearance preset is selected.
  *
  *   icon        the glyph key (one of the `Icon` set)
  *   icon_color  the identity colour saved with the category ("#ea7317")
@@ -16,9 +16,13 @@
  * accent on every load, reorder, search or language switch).
  *
  * `resolveCategoryAppearance()` is the writer: it reads ALL four localized names
- * of a category, matches their meaning against a multilingual keyword catalogue
- * and proposes a glyph plus a distinguishable colour, avoiding accents already
- * taken by the business's other categories.
+ * of a category, understands their meaning through the multilingual catalogue
+ * below and proposes the glyph and accent that meaning owns.
+ *
+ * Name matching is deliberately *word* based: every name and every keyword is
+ * folded to the same letter set and compared as whole words or whole phrases,
+ * so "Steak" can never be read as "tea" and "Milkshake" always resolves to the
+ * milkshake glyph rather than the generic milk one.
  */
 
 /* ----------------------------------------------------------- palette ----- */
@@ -62,10 +66,9 @@ const FALLBACK_COLOR = INK.indigo;
  * Names arrive in Kurdish Sorani, Persian, Arabic and English — often with
  * joined or separated words (آبمیوه / آب میوه), ZWNJ, tatweel, harakat and the
  * Arabic/Persian letter variants (ي/ی, ك/ک, ة/ه, ە/ه, ۆ/و …). Everything is
- * folded to one compact lowercase form before matching so a spelling variant
- * still finds its meaning.
+ * folded once, to a single canonical letter set.
  */
-export function foldCategoryName(text) {
+function foldLetters(text) {
   return String(text ?? '')
     .normalize('NFKD')
     .toLowerCase()
@@ -80,16 +83,34 @@ export function foldCategoryName(text) {
     .replace(/ێ/g, 'ی')
     .replace(/ڵ/g, 'ل')
     .replace(/ڕ/g, 'ر')
-    .replace(/ڤ/g, 'ف')
-    .replace(/[^\p{L}\p{N}]+/gu, '');
+    .replace(/ڤ/g, 'ف');
+}
+
+/** Compact form: letters and digits only ("Cold Drinks" → "colddrinks"). */
+export function foldCategoryName(text) {
+  return foldLetters(text).replace(/[^\p{L}\p{N}]+/gu, '');
+}
+
+/** Word form: the same letters with single spaces kept, as a delimited phrase. */
+function foldPhrase(text) {
+  return foldLetters(text)
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+}
+
+function nameForm(text) {
+  const phrase = foldPhrase(text);
+  if (!phrase) return null;
+  const words = phrase.split(' ');
+  return { phrase: ` ${phrase} `, words, compact: words.join('') };
 }
 
 /* -------------------------------------------------------- icon keys ----- */
 
 /*
- * Legacy aliases: records created before the catalogue existed store short
- * icon keys ('juice', 'cold', 'desserts'). They keep resolving to the same
- * kind of glyph, so nothing saved is lost.
+ * Every glyph the category system may show. `GLYPH_ALIASES` also keeps the
+ * short keys records stored before the catalogue existed ('juice', 'cold',
+ * 'desserts') resolving to the same kind of glyph, so nothing saved is lost.
  */
 const GLYPH_ALIASES = {
   coffee: 'coffee',
@@ -122,7 +143,10 @@ const GLYPH_ALIASES = {
   leaf: 'leaf',
   bread: 'bread',
   bakery: 'bread',
-  breakfast: 'chefHat',
+  croissant: 'croissant',
+  breakfast: 'eggFried',
+  eggFried: 'eggFried',
+  cupSoda: 'cupSoda',
   lunch: 'utensils',
   dinner: 'utensils',
   grill: 'flame',
@@ -152,6 +176,7 @@ export const CATEGORY_ICONS = [
   'coffee',
   'teaCup',
   'glass',
+  'cupSoda',
   'citrus',
   'iceCream',
   'cake',
@@ -162,18 +187,20 @@ export const CATEGORY_ICONS = [
   'pizza',
   'leaf',
   'bread',
+  'croissant',
+  'eggFried',
   'chefHat',
-  'utensils',
-  'package',
   'flame',
+  'utensils',
 ];
 
 /* -------------------------------------------------- semantic catalogue -- */
 
 /*
- * One entry per meaning the platform recognises. `keys` are matched after
- * folding, in all four languages plus the common transliterations; a longer
- * keyword wins, so "ice cream" is never read as "cream" or "ice".
+ * One entry per meaning the platform recognises: the glyph it owns, the accent
+ * it owns, and every word that expresses it in Kurdish Sorani, Persian, Arabic
+ * and English, plus the usual transliterations. Order matters only as the final
+ * tie-break, so the specific meanings come before the generic ones.
  */
 const MEANINGS = [
   {
@@ -181,10 +208,23 @@ const MEANINGS = [
     icon: 'citrus',
     color: 'orange',
     keys: [
-      'juice', 'juices', 'fresh juice', 'fresh juices', 'smoothie', 'smoothies',
-      'ابمیوه', 'اب میوه', 'ابمیوه تازه', 'اب میوه تازه', 'ابپرتقال', 'اب پرتقال', 'اب سیب', 'اب هویج',
+      'juice', 'juices', 'fresh juice', 'fresh juices', 'orange juice', 'apple juice',
+      'carrot juice', 'fruit juice', 'smoothie', 'smoothies',
+      'ابمیوه', 'اب میوه', 'ابمیوه تازه', 'اب میوه تازه', 'ابپرتقال', 'اب پرتقال',
+      'اب سیب', 'اب هویج', 'اسموتی', 'اسموتی ها',
       'عصير', 'عصائر', 'عصير طازج', 'عصائر طازجة', 'عصير فواكه', 'عصير برتقال',
-      'شهربت', 'شهربتی', 'شهربتی نوێ', 'اوی میوه', 'ئاوی میوه', 'شهربتی میوه',
+      'شهربت', 'شهربتی', 'شهربتی نوێ', 'شهربتی میوه', 'اوی میوه', 'ئاوی میوه', 'ئیسمووزی',
+    ],
+  },
+  {
+    id: 'milkshake',
+    icon: 'bottle',
+    color: 'violet',
+    keys: [
+      'milkshake', 'milkshakes', 'milk shake', 'shake', 'shakes',
+      'میلک شیک', 'میلکشیک', 'شیک',
+      'ميلك شيك', 'مخفوق الحليب', 'ميلكشيك',
+      'میلک شێک', 'شێک',
     ],
   },
   {
@@ -193,10 +233,21 @@ const MEANINGS = [
     color: 'copper',
     keys: [
       'coffee', 'coffees', 'espresso', 'cappuccino', 'latte', 'americano', 'mocha',
-      'macchiato', 'frappe', 'frappuccino',
+      'macchiato', 'frappe', 'frappuccino', 'flat white', 'cortado',
       'قهوه', 'قهوه خانه', 'اسپرسو', 'کاپوچینو', 'لاته', 'امریکانو', 'موکا', 'فراپه', 'ماکیاتو',
       'قهوة', 'اسبريسو', 'كابتشينو', 'لاتيه', 'امريكانو', 'موكا', 'فرابيه',
-      'قاوه', 'ئیسپرسۆ', 'کاپوچینۆ', 'لاتێ', 'ئەمریکانۆ', 'قاوه‌خانه',
+      'قاوه', 'ئیسپرسۆ', 'کاپوچینۆ', 'لاتێ', 'ئەمریکانۆ', 'قاوەخانه',
+    ],
+  },
+  {
+    id: 'hotDrink',
+    icon: 'coffee',
+    color: 'copper',
+    keys: [
+      'hot drink', 'hot drinks', 'hot beverage', 'hot beverages', 'warm drinks',
+      'نوشیدنی گرم', 'نوشیدنی های گرم', 'نوشیدنی داغ', 'نوشیدنیها گرم',
+      'مشروب ساخن', 'مشروبات ساخنة', 'مشروبات ساخنه',
+      'خواردنەوەی گەرم', 'خواردنەوە گەرم', 'خواردنەوەی گەرمەکان',
     ],
   },
   {
@@ -205,32 +256,45 @@ const MEANINGS = [
     color: 'green',
     keys: [
       'tea', 'teas', 'infusion', 'infusions', 'herbal', 'matcha', 'chai',
+      'green tea', 'black tea',
       'چای', 'چایی', 'دمنوش', 'دمنوش ها', 'چای سبز',
       'شاي', 'شاى', 'اعشاب', 'أعشاب', 'شاي اخضر',
-      'چا', 'دەمنووس', 'دمنووس', 'چای سه وز',
-    ],
-  },
-  {
-    id: 'iceDrink',
-    icon: 'glass',
-    color: 'cyan',
-    keys: [
-      'ice drink', 'ice drinks', 'iced', 'iced coffee', 'iced tea', 'cold brew',
-      'نوشیدنی سرد', 'نوشیدنی های سرد', 'نوشیدنی خنک', 'ایس',
-      'مشروب بارد', 'مشروبات باردة', 'مشروب مثلج',
-      'خواردنەوەی سارد', 'خواردنەوە ساردەکان', 'شهربتی سارد',
+      'چا', 'دەمنووس', 'دمنووس',
     ],
   },
   {
     id: 'coldDrink',
     icon: 'glass',
+    color: 'cyan',
+    keys: [
+      'cold drink', 'cold drinks', 'iced drink', 'iced drinks', 'cold beverage',
+      'cold beverages', 'ice drink', 'ice drinks', 'refreshing drinks',
+      'نوشیدنی سرد', 'نوشیدنی های سرد', 'نوشیدنی خنک',
+      'مشروب بارد', 'مشروبات باردة', 'مشروبات بارده', 'مشروب مثلج',
+      'خواردنەوەی سارد', 'خواردنەوە ساردەکان', 'خواردنەوەی ساردەکان',
+    ],
+  },
+  {
+    id: 'softDrink',
+    icon: 'cupSoda',
     color: 'blue',
     keys: [
-      'cold drink', 'cold drinks', 'soft drink', 'soft drinks', 'soda', 'lemonade',
-      'mocktail', 'cocktail', 'refreshing', 'refreshments',
-      'نوشابه', 'لیموناد', 'کوکتل', 'اب سرد', 'نوشیدنی گازدار',
-      'مشروبات غازية', 'مشروبات بارده', 'ليموناضه', 'كوكتيل', 'ماء بارد',
-      'شهربتی سارد', 'خواردنەوەی گازدار',
+      'soft drink', 'soft drinks', 'soda', 'sodas', 'cola', 'pepsi', 'fanta', 'sprite',
+      'lemonade', 'mocktail', 'mocktails', 'cocktail', 'cocktails', 'fizzy drinks',
+      'نوشابه', 'نوشیدنی گازدار', 'لیموناد', 'کوکتل',
+      'مشروبات غازية', 'مشروبات غازيه', 'ليموناضه', 'كوكتيل', 'بيبسي',
+      'خواردنەوەی گازدار', 'خواردنەوە گازدارەکان',
+    ],
+  },
+  {
+    id: 'drinks',
+    icon: 'cupSoda',
+    color: 'teal',
+    keys: [
+      'drinks', 'beverages', 'drink menu', 'beverage list',
+      'نوشیدنی', 'نوشیدنی ها', 'نوشیدنیها',
+      'مشروبات', 'مشروب',
+      'خواردنەوە', 'خواردنەوەکان',
     ],
   },
   {
@@ -238,10 +302,11 @@ const MEANINGS = [
     icon: 'iceCream',
     color: 'pink',
     keys: [
-      'ice cream', 'icecream', 'ice creams', 'gelato', 'sorbet', 'sundae',
-      'بستنی', 'بستنی قیفی', 'بستنی سنتی',
-      'ايس كريم', 'ايسكريم', 'بوظة', 'مثلجات', 'جيلاتي',
-      'ئایسکریم', 'ئایس کریم', 'به‌ستنی', 'بەستنی',
+      'ice cream', 'icecream', 'ice creams', 'gelato', 'sundae', 'sundaes', 'sorbet',
+      'frozen yogurt',
+      'بستنی', 'بستنی ها', 'گلاسه',
+      'مثلجات', 'بوظة', 'ايس كريم', 'آيس كريم',
+      'بەستەنی', 'بەستنی', 'ئایس کریم',
     ],
   },
   {
@@ -249,10 +314,10 @@ const MEANINGS = [
     icon: 'cake',
     color: 'rose',
     keys: [
-      'cake', 'cakes', 'cheesecake', 'cupcake', 'cupcakes', 'brownie', 'tiramisu',
-      'کیک', 'کیک ها', 'چیزکیک', 'کاپ کیک',
-      'كيك', 'كيكه', 'كعك', 'تشيز كيك', 'براوني',
-      'کێک', 'کێکی', 'کیک', 'چیزکێک',
+      'cake', 'cakes', 'cheesecake', 'cupcake', 'cupcakes', 'cheese cake',
+      'کیک', 'کیک ها', 'چیزکیک',
+      'كيك', 'كيكة', 'تشيز كيك',
+      'کێک', 'کەیک',
     ],
   },
   {
@@ -260,24 +325,23 @@ const MEANINGS = [
     icon: 'cake',
     color: 'magenta',
     keys: [
-      'dessert', 'desserts', 'sweet', 'sweets', 'pudding', 'kunafa', 'baklava',
-      'chocolate', 'ice',
-      'دسر', 'دسرها', 'شیرینی', 'شیرینی جات', 'حلوا', 'کنافه', 'باقلوا', 'شکلات',
-      'حلويات', 'حلوى', 'كنافه', 'بقلاوه', 'شوكولاته', 'مهلبيه',
-      'شیرینی', 'شیرینیجات', 'حه لوا', 'کنافه', 'شوکولاته',
+      'dessert', 'desserts', 'sweet', 'sweets', 'sweet treats',
+      'دسر', 'دسرها', 'دسر ها', 'شیرینی',
+      'حلويات', 'حلوى', 'حلويات شرقية',
+      'شیرینی', 'شیرینیەکان', 'شیرینمه‌نی',
     ],
   },
   {
     id: 'waffle',
     icon: 'waffle',
     color: 'amber',
-    keys: ['waffle', 'waffles', 'وافل', 'وافل‌ها', 'وافڵ'],
+    keys: ['waffle', 'waffles', 'وافل', 'وافل ها', 'وافڵ'],
   },
   {
     id: 'pancake',
     icon: 'pancake',
     color: 'amber',
-    keys: ['pancake', 'pancakes', 'hotcake', 'hotcakes', 'پنکیک', 'پن کیک', 'بان كيك', 'بانكيك', 'پانکێک', 'په‌نکێک'],
+    keys: ['pancake', 'pancakes', 'hotcake', 'hotcakes', 'پنکیک', 'پن کیک', 'بان كيك', 'بانكيك', 'پانکێک'],
   },
   {
     id: 'crepe',
@@ -290,29 +354,30 @@ const MEANINGS = [
     icon: 'sandwich',
     color: 'coral',
     keys: [
-      'burger', 'burgers', 'hamburger', 'cheeseburger',
+      'burger', 'burgers', 'hamburger', 'hamburgers', 'cheeseburger', 'cheeseburgers',
       'برگر', 'همبرگر', 'چیزبرگر', 'برگرها',
       'برجر', 'همبرغر', 'برغر', 'تشيز برجر',
-      'به‌رگه‌ر', 'هه‌مبه‌رگه‌ر', 'بەرگەر', 'هەمبەرگەر',
+      'بهرگهر', 'ههمبهرگهر',
     ],
   },
   {
-    id: 'fastFood',
+    id: 'sandwich',
     icon: 'sandwich',
-    color: 'tomato',
+    color: 'amber',
     keys: [
-      'fast food', 'fastfood', 'sandwich', 'sandwiches', 'wrap', 'wraps',
-      'shawarma', 'fries', 'fried', 'hot dog', 'snack', 'snacks',
-      'فست فود', 'ساندویچ', 'ساندویچ ها', 'شاورما', 'سیب زمینی', 'هات داگ', 'پیش غذا', 'اسنک',
-      'وجبات سريعه', 'سندويش', 'سندويشات', 'شاورما', 'بطاطا مقلية', 'هوت دوغ', 'سناكس',
-      'فاست فوود', 'ساندویچ', 'شاورما', 'په‌تاته‌ سوورکراوه', 'ئاسنێک',
+      'sandwich', 'sandwiches', 'wrap', 'wraps', 'shawarma', 'fries', 'hot dog',
+      'hot dogs', 'snack', 'snacks', 'fast food', 'fastfood',
+      'ساندویچ', 'ساندویچ ها', 'شاورما', 'سیب زمینی', 'هات داگ', 'پیش غذا', 'اسنک',
+      'فست فود', 'فستفود',
+      'سندويش', 'سندويشات', 'شاورما', 'بطاطا مقلية', 'هوت دوغ', 'سناكس', 'وجبات سريعة',
+      'فاست فوود', 'پهتاته سوورکراوه', 'ئاسنێک',
     ],
   },
   {
     id: 'pizza',
     icon: 'pizza',
     color: 'tomato',
-    keys: ['pizza', 'pizzas', 'پیتزا', 'بيتزا', 'پیتزه'],
+    keys: ['pizza', 'pizzas', 'pitzza', 'pitzzas', 'pitza', 'پیتزا', 'پیتزه', 'پیزا', 'بيتزا', 'بيتزه', 'پيتزا'],
   },
   {
     id: 'salad',
@@ -322,29 +387,36 @@ const MEANINGS = [
       'salad', 'salads', 'vegetable', 'vegetables', 'healthy', 'vegan', 'vegetarian',
       'سالاد', 'سبزیجات', 'سبزی', 'گیاهی', 'تره بار',
       'سلطه', 'سلطات', 'خضار', 'نباتي', 'صحي',
-      'زه لاته', 'زەڵاتە', 'سالاد', 'سه وزه', 'ڕووه‌ک',
-    ],
-  },
-  {
-    id: 'hotDrink',
-    icon: 'coffee',
-    color: 'copper',
-    keys: [
-      'hot drink', 'hot drinks', 'hot beverage', 'hot beverages',
-      'نوشیدنی گرم', 'نوشیدنی های گرم', 'نوشیدنی داغ',
-      'مشروب ساخن', 'مشروبات ساخنة', 'مشروبات ساخنه',
-      'خواردنەوەی گەرم', 'خواردنەوەی گه‌رم',
+      'زەڵاتە', 'سەوزە', 'ڕووەک',
     ],
   },
   {
     id: 'breakfast',
-    icon: 'chefHat',
+    icon: 'eggFried',
     color: 'amber',
     keys: [
-      'breakfast', 'brunch', 'morning', 'omelette', 'omelet', 'eggs',
+      'breakfast', 'breakfasts', 'brunch', 'morning', 'omelette', 'omelet', 'omelettes',
+      'eggs', 'egg', 'fried egg',
       'صبحانه', 'املت', 'تخم مرغ', 'بوفه صبحانه',
-      'فطور', 'افطار', 'إفطار', 'عجه', 'بيض',
-      'به‌یانیان', 'بەیانیان', 'به‌یانی', 'ئۆملێت', 'هێلکه',
+      'فطور', 'افطار', 'إفطار', 'عجة', 'بيض',
+      'به‌یانیان', 'به‌یانی', 'ئۆملێت', 'هێلکه',
+    ],
+  },
+  {
+    id: 'croissant',
+    icon: 'croissant',
+    color: 'copper',
+    keys: ['croissant', 'croissants', 'کروسان', 'کروسانت', 'كرواسون', 'کرۆسان'],
+  },
+  {
+    id: 'bakery',
+    icon: 'bread',
+    color: 'copper',
+    keys: [
+      'bakery', 'bread', 'breads', 'bun', 'buns', 'toast', 'dough', 'patisserie',
+      'نانوایی', 'نان', 'نان ها', 'نان تازه', 'شیرینی خشک',
+      'مخبز', 'خبز', 'معجنات', 'توست',
+      'نانێ تازه',
     ],
   },
   {
@@ -354,56 +426,60 @@ const MEANINGS = [
     keys: [
       'main', 'mains', 'main meal', 'main meals', 'main course', 'meal', 'meals',
       'lunch', 'dinner', 'grill', 'grilled', 'kebab', 'steak', 'rice', 'chicken',
-      'غذای اصلی', 'غذا', 'غذاها', 'ناهار', 'شام', 'کباب', 'گریل', 'برنج', 'مرغ', 'استیک', 'خوراک',
+      'غذای اصلی', 'غذا', 'غذاها', 'ناهار', 'شام', 'کباب', 'گریل', 'برنج', 'مرغ',
+      'استیک', 'خوراک',
       'اطباق رئيسيه', 'طبق رئيسي', 'غداء', 'عشاء', 'كباب', 'مشاوي', 'ارز', 'دجاج', 'وجبه',
-      'خواردنی سه‌ره‌کی', 'خواردنی سەرەکی', 'نانی نیوه‌ڕۆ', 'نانی ئێواره', 'که‌باب', 'برنج', 'مریشک',
-    ],
-  },
-  {
-    id: 'bakery',
-    icon: 'bread',
-    color: 'copper',
-    keys: [
-      'bakery', 'bread', 'breads', 'croissant', 'croissants', 'bun', 'buns',
-      'toast', 'patisserie', 'dough',
-      'نانوایی', 'نان', 'نان ها', 'کروسان', 'شیرینی خشک', 'نان تازه',
-      'مخبز', 'خبز', 'كرواسون', 'معجنات', 'توست',
-      'نان', 'نانوایی', 'کروسان', 'نانێ تازه',
-    ],
-  },
-  {
-    id: 'milkshake',
-    icon: 'bottle',
-    color: 'violet',
-    keys: [
-      'milkshake', 'milkshakes', 'milk shake', 'shake', 'shakes',
-      'میلک شیک', 'میلک‌شیک', 'شیک', 'میلک',
-      'ميلك شيك', 'مخفوق الحليب', 'ميلك',
-      'میلکشیک', 'میلک شێک', 'شێک',
+      'خواردنی سەرەکی', 'نانی نیوەڕۆ', 'نانی ئێواره', 'کەباب', 'مریشک',
     ],
   },
 ];
 
-/** Folded keywords, computed once. */
-const FOLDED = MEANINGS.map((m) => ({ ...m, keys: m.keys.map(foldCategoryName).filter(Boolean) }));
+/** Folded keywords, computed once: `{ phrase:' pizza ', words:['pizza'], compact:'pizza' }`. */
+const FOLDED = MEANINGS.map((m) => ({
+  ...m,
+  keys: m.keys.map(nameForm).filter(Boolean),
+}));
 
 /**
- * Best meaning for a set of localized names.
- * The score is the total length of every keyword found, so a specific phrase
- * ("بستنی" / "ice cream") always outweighs a generic one ("ice").
+ * How strongly one name expresses one keyword.
+ *
+ * The strongest signal is the whole name being the concept ("پیتزا"). Next comes
+ * the concept as a whole phrase inside the name ("Fresh Juice Bar"), then a
+ * single word equal to it (which is how a joined spelling such as "آبمیوه" meets
+ * the keyword "آب میوه"), and only then a long prefix/suffix ("Sandwiches",
+ * "freshjuices"). Anything shorter is ignored, which is what keeps "Steak" from
+ * ever matching "tea".
+ */
+function keyScore(name, key) {
+  if (name.compact === key.compact) return 4000 + key.compact.length;
+  if (name.phrase.includes(key.phrase)) return 1000 + key.compact.length;
+
+  const joined = key.words.join('');
+  const long = joined.length >= 5;
+  if (name.words.some((word) => word === joined)) return 500 + joined.length;
+  if (long && name.words.some((word) => word.startsWith(joined) || word.endsWith(joined))) {
+    return 250 + joined.length;
+  }
+  return 0;
+}
+
+/**
+ * Best meaning for a set of localized names — each name contributes its own best
+ * keyword score, so a category recognized in two languages outranks a coincidental
+ * single-word hit elsewhere.
  */
 export function matchCategoryMeaning(names = []) {
-  const haystacks = (Array.isArray(names) ? names : [names])
-    .map(foldCategoryName)
-    .filter(Boolean);
-  if (!haystacks.length) return null;
+  const forms = (Array.isArray(names) ? names : [names]).map(nameForm).filter(Boolean);
+  if (!forms.length) return null;
 
   let best = null;
   let bestScore = 0;
   for (const meaning of FOLDED) {
     let score = 0;
-    for (const key of meaning.keys) {
-      if (haystacks.some((name) => name.includes(key))) score += key.length;
+    for (const name of forms) {
+      let nameBest = 0;
+      for (const key of meaning.keys) nameBest = Math.max(nameBest, keyScore(name, key));
+      score += nameBest;
     }
     if (score > bestScore) {
       bestScore = score;
@@ -438,9 +514,10 @@ function seedOf(names) {
 }
 
 /**
- * First accent around the preferred one that no other category of this business
- * uses yet. Once the whole palette is taken, a stable lighter/darker variant of
- * the preferred accent keeps the new category distinguishable.
+ * For a category whose name says nothing the catalogue knows: first accent
+ * around the neutral one that no other category of this business uses yet. Once
+ * the whole palette is taken, a stable lighter/darker variant keeps the new
+ * category distinguishable.
  */
 function pickColor(preferredKey, usedInks, seed) {
   const preferred = INK[preferredKey] || FALLBACK_COLOR;
@@ -462,7 +539,8 @@ function pickColor(preferredKey, usedInks, seed) {
 
 /** Glyph for any stored icon key, including the legacy short aliases. */
 export function categoryGlyph(icon) {
-  return GLYPH_ALIASES[String(icon ?? '').trim()] || GLYPH_ALIASES[String(icon ?? '').toLowerCase()] || FALLBACK_ICON;
+  const key = String(icon ?? '').trim();
+  return GLYPH_ALIASES[key] || GLYPH_ALIASES[key.toLowerCase()] || FALLBACK_ICON;
 }
 
 /* Stable accent for a category whose colour was never saved (older records). */
@@ -474,6 +552,7 @@ const LEGACY_COLORS = {
   cold: INK.cyan,
   water: INK.cyan,
   glass: INK.cyan,
+  cupSoda: INK.blue,
   juice: INK.orange,
   citrus: INK.orange,
   milkshake: INK.violet,
@@ -488,13 +567,15 @@ const LEGACY_COLORS = {
   waffle: INK.amber,
   pancake: INK.amber,
   crepe: INK.teal,
-  sandwich: INK.coral,
+  sandwich: INK.amber,
   burger: INK.coral,
   pizza: INK.tomato,
   salad: INK.emerald,
   leaf: INK.emerald,
   bread: INK.copper,
+  croissant: INK.copper,
   breakfast: INK.amber,
+  eggFried: INK.amber,
   lunch: INK.indigo,
   dinner: INK.indigo,
   grill: INK.tomato,
@@ -554,17 +635,16 @@ function usedColors(categories = [], excludeId) {
  *   resolveCategoryAppearance(['آبمیوه تازه', 'Fresh Juice'], categories)
  *   → { icon: 'citrus', color: '#ea7317', meaning: 'juice' }
  *
- * A name with no confident match keeps a neutral menu glyph (`utensils`) and
- * still receives an accent no other category uses.
+ * A recognized meaning always keeps the glyph and accent that meaning owns, so
+ * Pizza is the pizza glyph in warm red and Coffee the coffee glyph in brown. A
+ * name with no confident match keeps a neutral menu glyph (`utensils`) and still
+ * receives an accent no other category uses.
  */
 export function resolveCategoryAppearance(names, existingCategories = [], options = {}) {
   const meaning = matchCategoryMeaning(names);
-  const seed = seedOf(names);
-  const color = pickColor(
-    meaning?.color || 'indigo',
-    usedColors(existingCategories, options.excludeId),
-    seed,
-  );
+  const color = meaning
+    ? INK[meaning.color]
+    : pickColor('indigo', usedColors(existingCategories, options.excludeId), seedOf(names));
   return {
     icon: meaning?.icon || FALLBACK_ICON,
     color,

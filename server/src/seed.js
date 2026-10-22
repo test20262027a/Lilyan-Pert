@@ -21,13 +21,15 @@ const WORKING_HOURS = {
   sun: { open: '10:00', close: '22:00', closed: false },
 };
 
+// [icon, identity colour, en, ku, fa, ar, sort_order] — the glyph and accent
+// the category's own name resolves to (see the client's categoryIcons registry).
 const CATEGORIES = [
-  ['coffee', 'Coffee', 'قاوە', 'قهوه', 'قهوة', 1],
-  ['tea', 'Tea & Infusions', 'چا و دەمنووس', 'چای و دمنوش', 'شاي وأعشاب', 2],
-  ['breakfast', 'Breakfast', 'بەیانیان', 'صبحانه', 'فطور', 3],
-  ['desserts', 'Desserts', 'شیرینی', 'دسر', 'حلويات', 4],
-  ['juice', 'Fresh Juices', 'شەربەتی نوێ', 'آبمیوه تازه', 'عصائر طازجة', 5],
-  ['sandwich', 'Sandwiches', 'ساندویچ', 'ساندویچ', 'سندويشات', 6],
+  ['coffee', '#a3602f', 'Coffee', 'قاوە', 'قهوه', 'قهوة', 1],
+  ['teaCup', '#2f9e5c', 'Tea & Infusions', 'چا و دەمنووس', 'چای و دمنوش', 'شاي وأعشاب', 2],
+  ['eggFried', '#d19407', 'Breakfast', 'بەیانیان', 'صبحانه', 'فطور', 3],
+  ['cake', '#d1478f', 'Desserts', 'شیرینی', 'دسر', 'حلويات', 4],
+  ['citrus', '#ea7317', 'Fresh Juices', 'شەربەتی نوێ', 'آبمیوه تازه', 'عصائر طازجة', 5],
+  ['sandwich', '#d19407', 'Sandwiches', 'ساندویچ', 'ساندویچ', 'سندويشات', 6],
 ];
 
 const PRODUCTS = [
@@ -174,11 +176,12 @@ export async function seed() {
     );
 
     const categoryIds = [];
-    for (const [icon, en, ku, fa, ar, order] of CATEGORIES) {
+    for (const [icon, color, en, ku, fa, ar, order] of CATEGORIES) {
       const r = await c.query(
-        `INSERT INTO categories (business_id, icon, sort_order, active, name_en, name_ku, name_fa, name_ar, is_sample)
-         VALUES ($1,$2,$3,true,$4,$5,$6,$7,true) RETURNING id`,
-        [businessId, icon, order, en, ku, fa, ar],
+        `INSERT INTO categories (business_id, icon, icon_color, sort_order, active,
+                                 name_en, name_ku, name_fa, name_ar, is_sample)
+         VALUES ($1,$2,$3,$4,true,$5,$6,$7,$8,true) RETURNING id`,
+        [businessId, icon, color, order, en, ku, fa, ar],
       );
       categoryIds.push(r.rows[0].id);
     }

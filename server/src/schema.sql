@@ -83,6 +83,12 @@ CREATE TABLE IF NOT EXISTS categories (
 );
 CREATE INDEX IF NOT EXISTS categories_business_idx ON categories(business_id);
 
+-- A category's identity colour, saved with its glyph so the same row keeps the
+-- same accent on every load and in every view (rows without one fall back to a
+-- stable accent derived from the icon key).
+ALTER TABLE categories ADD COLUMN IF NOT EXISTS icon_color text
+  CHECK (icon_color IS NULL OR icon_color ~ '^#[0-9a-fA-F]{6}$');
+
 CREATE TABLE IF NOT EXISTS products (
   id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id  uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,

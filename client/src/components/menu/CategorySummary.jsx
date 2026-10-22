@@ -4,12 +4,22 @@ import CategoryIdentityIcon from './CategoryIdentityIcon';
 
 /*
  * The single wide header card above the product grid: the selected category on
- * one side (its own icon and accent, bold name, supporting line) and the compact
- * product counters on the other. Every number comes from the caller's persisted
- * records, and the identity follows the selected row — never a fixed glyph.
+ * one side (its own icon and accent, bold name, supporting line) and the three
+ * compact product counters on the other.
+ *
+ * The counters are one fixed three-column row — they never wrap and never stack,
+ * because "Total / Active / Inactive" only reads correctly side by side. On
+ * narrow screens the labels switch to their short localized form while the
+ * numbers stay whole and fully visible.
  */
 export default function CategorySummary({ icon, color, title, subtitle, stats }) {
   const { t } = useI18n();
+
+  const counters = [
+    ['total', 'layers', stats.total, 'menu_total_products', 'menu_total_products_short'],
+    ['active', 'checkCircle', stats.active, 'menu_active_products', 'menu_active_products_short'],
+    ['inactive', 'xCircle', stats.inactive, 'menu_inactive_products', 'menu_inactive_products_short'],
+  ];
 
   return (
     <header className="msummary">
@@ -22,21 +32,14 @@ export default function CategorySummary({ icon, color, title, subtitle, stats })
       </div>
 
       <div className="msummary__stats">
-        <span className="mpill mpill--total">
-          <Icon name="layers" size={13} />
-          <span className="mpill__num">{stats.total}</span>
-          {t('menu_total_products')}
-        </span>
-        <span className="mpill mpill--active">
-          <Icon name="checkCircle" size={13} />
-          <span className="mpill__num">{stats.active}</span>
-          {t('menu_active_products')}
-        </span>
-        <span className="mpill mpill--inactive">
-          <Icon name="xCircle" size={13} />
-          <span className="mpill__num">{stats.inactive}</span>
-          {t('menu_inactive_products')}
-        </span>
+        {counters.map(([kind, glyph, value, longKey, shortKey]) => (
+          <span key={kind} className={`mpill mpill--${kind}`}>
+            <Icon name={glyph} size={13} className="mpill__icon" />
+            <span className="mpill__num">{value}</span>
+            <span className="mpill__label mpill__label--full">{t(longKey)}</span>
+            <span className="mpill__label mpill__label--short">{t(shortKey)}</span>
+          </span>
+        ))}
       </div>
     </header>
   );

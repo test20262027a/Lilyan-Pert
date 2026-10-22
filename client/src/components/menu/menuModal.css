@@ -613,6 +613,14 @@
   color: var(--mm-green);
 }
 .mcappear__auto:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Automatic mode is already applied: the action reads as the current state. */
+.mcappear__auto.is-active,
+.mcappear__auto.is-active:disabled {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--mm-green) 45%, var(--mm-line));
+  color: var(--mm-green);
+  cursor: default;
+}
 
 .mcappear__grid {
   display: grid;
