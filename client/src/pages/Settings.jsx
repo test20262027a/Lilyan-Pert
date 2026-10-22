@@ -23,6 +23,7 @@ import AppearanceTab from '../components/settings/AppearanceTab';
 import { validateDraft } from '../components/settings/validate';
 import '../menu.css';
 import '../settings.css';
+import '../settingsProfile.css';
 
 /*
  * Business Settings — one workspace, ten tabs.
