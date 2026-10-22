@@ -22,7 +22,7 @@ export const ENTITY_VISUALS = {
   product: {
     icon: 'package',
     tone: 'coral',
-    titleKey: 'delete_title_generic',
+    titleKey: 'delete_title_product',
     messageKey: 'delete_generic_question',
   },
   order: {
@@ -40,19 +40,19 @@ export const ENTITY_VISUALS = {
   table: {
     icon: 'table',
     tone: 'violet',
-    titleKey: 'delete_title_generic',
+    titleKey: 'delete_title_table',
     messageKey: 'delete_generic_question',
   },
   promotion: {
     icon: 'percent',
     tone: 'green',
-    titleKey: 'delete_title_generic',
+    titleKey: 'delete_title_discount',
     messageKey: 'delete_generic_question',
   },
   ad: {
     icon: 'megaphone',
     tone: 'violet',
-    titleKey: 'delete_title_generic',
+    titleKey: 'delete_title_advertisement',
     messageKey: 'delete_generic_question',
   },
   review: {
@@ -76,7 +76,7 @@ export const ENTITY_VISUALS = {
   backup: {
     icon: 'database',
     tone: 'blue',
-    titleKey: 'delete_title_generic',
+    titleKey: 'delete_title_backup',
     messageKey: 'delete_generic_question',
   },
   reset: {
