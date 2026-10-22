@@ -1182,14 +1182,14 @@
   text-decoration: none;
   text-align: center;
   cursor: pointer;
-  transition: transform 240ms cubic-bezier(0.22, 0.75, 0.3, 1), box-shadow 240ms ease,
-    border-color 240ms ease, background-color 240ms ease;
+  transition: transform 220ms cubic-bezier(0.22, 0.75, 0.3, 1), box-shadow 220ms ease,
+    border-color 220ms ease, background-color 220ms ease;
 }
 /* Hover lifts the whole card and deepens its shadow — the box itself never
    changes size, so neighbours cannot shift. */
 @media (hover: hover) {
   .cui-link:hover {
-    transform: translateY(-5px);
+    transform: translateY(-4px);
     border-color: color-mix(in srgb, var(--primary) 34%, var(--cui-line));
     background: linear-gradient(
       180deg,
@@ -1200,7 +1200,7 @@
       0 3px 8px rgba(16, 30, 22, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);
   }
   .cui-link:hover .cui-link__icon {
-    transform: translateY(-2px) scale(1.08);
+    transform: translateY(-2px) scale(1.07);
     box-shadow: 0 16px 26px -12px rgba(16, 30, 22, 0.42), 0 3px 7px rgba(16, 30, 22, 0.16),
       inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 5px rgba(0, 0, 0, 0.14);
   }
@@ -1313,83 +1313,105 @@
 /* ------------------------------------------------ section carousels ---- */
 
 /*
- * The advertisement, featured and best-seller lists become horizontal
- * carousels on tablet and phone. The track keeps the section's own layout
- * class, so from 1024px up nothing changes at all — the grid, the gaps and the
- * card sizes stay exactly as they were.
+ * One carousel mechanism for the advertisement, featured and best-seller
+ * sections on every screen size. The caller declares how many cards one
+ * viewport holds per breakpoint; each card then gets exactly one slot of
+ * `(track width - gaps) / capacity`. Because the width comes from the capacity
+ * and never from the number of cards, a section with fewer cards keeps its
+ * normal card sizes and simply leaves the remaining slots empty — no stretched
+ * card, no placeholder, no duplicated product.
  */
-.cui-car { position: relative; min-width: 0; }
-.cui-car__track { min-width: 0; }
-.cui-car__nav { display: none; }
-
+.cui-car {
+  position: relative;
+  min-width: 0;
+  --car-gap: 18px;
+  --car-cols: var(--car-cols-desktop, 4);
+}
 @media (max-width: 1023px) {
-  .cui-car > .cui-car__track {
-    display: flex;
-    align-items: stretch;
-    gap: 14px;
-    padding: 6px 2px 10px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
-    overscroll-behavior-x: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-  }
-  .cui-car > .cui-car__track::-webkit-scrollbar { display: none; }
-  .cui-car > .cui-car__track > * {
-    flex: 0 0 auto;
-    width: 46%;
-    scroll-snap-align: start;
-  }
-  /* the advertisement track owns its own padding and gap in grid mode */
-  .cui-car > .cui-car__track.cui-ads__grid { padding: 8px 2px 12px; gap: 14px; }
+  .cui-car { --car-gap: 14px; --car-cols: var(--car-cols-tablet, 2); }
+}
+@media (max-width: 767px) {
+  .cui-car { --car-gap: 12px; --car-cols: var(--car-cols-mobile, 1); }
+}
 
-  .cui-car__nav {
-    position: absolute;
-    top: 50%;
-    margin-top: -19px;
-    z-index: 3;
-    width: 38px;
-    height: 38px;
-    display: grid;
-    place-items: center;
-    padding: 0;
-    border-radius: 50%;
-    cursor: pointer;
-    color: color-mix(in srgb, var(--primary) 80%, var(--text));
-    background: color-mix(in srgb, var(--surface) 68%, transparent);
-    backdrop-filter: blur(10px) saturate(150%);
-    -webkit-backdrop-filter: blur(10px) saturate(150%);
-    border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--cui-line));
-    box-shadow: 0 10px 22px -10px rgba(16, 30, 22, 0.5), 0 2px 4px rgba(16, 30, 22, 0.08),
-      inset 0 1px 0 rgba(255, 255, 255, 0.75);
-    transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
-  }
-  .cui-car__nav--left { left: 2px; }
-  .cui-car__nav--right { right: 2px; }
-  .cui-car__nav:hover:not(:disabled) {
-    transform: scale(1.06);
-    box-shadow: 0 14px 28px -12px color-mix(in srgb, var(--primary) 55%, transparent),
-      0 2px 6px rgba(16, 30, 22, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
-  }
-  .cui-car__nav:active:not(:disabled) { transform: scale(0.94); }
-  .cui-car__nav:disabled { opacity: 0.32; cursor: default; }
-  .cui-car__nav:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent),
-      0 10px 22px -10px rgba(16, 30, 22, 0.4);
-  }
-  [data-theme='dark'] .cui-car__nav {
-    background: color-mix(in srgb, var(--surface) 78%, transparent);
-    box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-  }
+.cui-car > .cui-car__track {
+  display: flex;
+  align-items: stretch;
+  gap: var(--car-gap);
+  padding: 6px 2px 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.cui-car > .cui-car__track::-webkit-scrollbar { display: none; }
+.cui-car > .cui-car__track > * {
+  flex: 0 0 calc((100% - (var(--car-cols) - 1) * var(--car-gap)) / var(--car-cols));
+  width: calc((100% - (var(--car-cols) - 1) * var(--car-gap)) / var(--car-cols));
+  max-width: calc((100% - (var(--car-cols) - 1) * var(--car-gap)) / var(--car-cols));
+  min-width: 0;
+  scroll-snap-align: start;
+}
+/* The ad strip keeps the section's own gutter, like its other padding. */
+.cui-car > .cui-car__track.cui-ads__grid { padding: 20px; }
+@media (max-width: 1023px) {
+  .cui-car > .cui-car__track.cui-ads__grid { padding: 16px; }
+}
+@media (max-width: 767px) {
+  .cui-car > .cui-car__track.cui-ads__grid { padding: 14px; }
+}
+.cui-car > .cui-car__track:focus-visible {
+  outline: none;
+  border-radius: 16px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+.cui-car__nav {
+  position: absolute;
+  top: 50%;
+  margin-top: -19px;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--primary) 80%, var(--text));
+  background: color-mix(in srgb, var(--surface) 68%, transparent);
+  backdrop-filter: blur(10px) saturate(150%);
+  -webkit-backdrop-filter: blur(10px) saturate(150%);
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--cui-line));
+  box-shadow: 0 10px 22px -10px rgba(16, 30, 22, 0.5), 0 2px 4px rgba(16, 30, 22, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  transition: transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
+}
+/* Physical sides: the left control always sits (and moves) left, in RTL too. */
+.cui-car__nav--left { left: 2px; }
+.cui-car__nav--right { right: 2px; }
+.cui-car__nav:hover:not(:disabled) {
+  transform: scale(1.06);
+  box-shadow: 0 14px 28px -12px color-mix(in srgb, var(--primary) 55%, transparent),
+    0 2px 6px rgba(16, 30, 22, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+.cui-car__nav:active:not(:disabled) { transform: scale(0.94); }
+.cui-car__nav:disabled { opacity: 0.32; cursor: default; }
+.cui-car__nav:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent),
+    0 10px 22px -10px rgba(16, 30, 22, 0.4);
+}
+[data-theme='dark'] .cui-car__nav {
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 767px) {
-  .cui-car > .cui-car__track { gap: 12px; }
-  .cui-car > .cui-car__track > * { width: 84%; }
   .cui-car__nav { width: 34px; height: 34px; margin-top: -17px; }
 }
 

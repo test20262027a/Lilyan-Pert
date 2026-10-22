@@ -3,11 +3,12 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 
 /*
- * A section's card list that becomes a horizontal carousel on tablet and phone
- * while keeping its desktop layout exactly as it was. Nothing here decides the
- * column count: the caller passes the section's own layout class as
- * `trackClassName` (a grid on desktop), and the stylesheet switches that same
- * element to a snapping scroller below 1024px.
+ * A section's card list as a horizontal, snapping carousel on every screen
+ * size. The caller declares how many cards one carousel viewport holds at each
+ * breakpoint (`capacity`); the stylesheet turns those numbers into fixed slot
+ * widths, so a card is always exactly one slot wide no matter how many cards
+ * exist. Two products in a four-slot section therefore keep their four-up
+ * width instead of stretching across the section.
  *
  * Arrows are *physical*: the left button always moves the cards leftwards and
  * the right one rightwards, in RTL too. `scrollBy` follows the browser's own
@@ -17,7 +18,15 @@ import { useI18n } from '../../i18n';
  * Each button is disabled at the end it cannot move towards, and both are
  * hidden entirely when the cards already fit the available width.
  */
-export default function CustomerCarousel({ children, trackClassName = '', className = '', count = 0 }) {
+const DEFAULT_CAPACITY = { desktop: 4, tablet: 2, mobile: 1 };
+
+export default function CustomerCarousel({
+  children,
+  trackClassName = '',
+  className = '',
+  count = 0,
+  capacity = DEFAULT_CAPACITY,
+}) {
   const { t, rtl } = useI18n();
   const track = useRef(null);
   const [edges, setEdges] = useState({ more: false, left: false, right: false });
@@ -49,6 +58,8 @@ export default function CustomerCarousel({ children, trackClassName = '', classN
     if (!el) return undefined;
     el.addEventListener('scroll', measure, { passive: true });
     window.addEventListener('resize', measure);
+    /* A breakpoint change resizes the track without a window resize event in
+       every case, so the slot count and the arrow edges follow the box too. */
     const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(measure) : null;
     observer?.observe(el);
     return () => {
@@ -59,7 +70,7 @@ export default function CustomerCarousel({ children, trackClassName = '', classN
   }, [measure, count]);
 
   /* One card per click, measured from the real first card plus the track gap,
-     so the step follows whatever card width the current breakpoint uses. */
+     so the step follows whatever slot width the current breakpoint uses. */
   const step = (direction) => {
     const el = track.current;
     const card = el?.firstElementChild;
@@ -70,7 +81,14 @@ export default function CustomerCarousel({ children, trackClassName = '', classN
   };
 
   return (
-    <div className={`cui-car ${className}`.trim()}>
+    <div
+      className={`cui-car ${className}`.trim()}
+      style={{
+        '--car-cols-desktop': capacity.desktop,
+        '--car-cols-tablet': capacity.tablet,
+        '--car-cols-mobile': capacity.mobile,
+      }}
+    >
       {edges.more ? (
         <button
           type="button"
@@ -83,7 +101,12 @@ export default function CustomerCarousel({ children, trackClassName = '', classN
         </button>
       ) : null}
 
-      <div className={`cui-car__track ${trackClassName}`.trim()} ref={track}>
+      <div
+        className={`cui-car__track ${trackClassName}`.trim()}
+        ref={track}
+        tabIndex={edges.more ? 0 : -1}
+        role="group"
+      >
         {children}
       </div>
 

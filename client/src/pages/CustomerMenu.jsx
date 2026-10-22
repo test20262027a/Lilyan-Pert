@@ -407,7 +407,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             title={t('customer_menu_featured')}
             count={fmtNumber(featuredProducts.length, locale)}
           >
-            <CustomerCarousel trackClassName="cui-grid" count={featuredProducts.length}>
+            <CustomerCarousel
+              count={featuredProducts.length}
+              capacity={{ desktop: 4, tablet: 2, mobile: 1 }}
+            >
               {featuredProducts.map((p) => (
                 <CustomerProductCard
                   key={p.id}
@@ -436,7 +439,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             title={t('customer_menu_best_sellers')}
             count={fmtNumber(bestProducts.length, locale)}
           >
-            <CustomerCarousel trackClassName="cui-grid" count={bestProducts.length}>
+            <CustomerCarousel
+              count={bestProducts.length}
+              capacity={{ desktop: 4, tablet: 2, mobile: 1 }}
+            >
               {bestProducts.map((p) => (
                 <CustomerProductCard
                   key={p.id}

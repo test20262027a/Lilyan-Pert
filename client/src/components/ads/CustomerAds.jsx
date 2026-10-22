@@ -48,7 +48,12 @@ export default function CustomerAds({ ads, locale, onOpen }) {
         <span className="cui-count">{fmtNumber(ads.length, locale)}</span>
       </header>
 
-      <CustomerCarousel className="cui-car--ads" trackClassName="cui-ads__grid" count={ads.length}>
+      <CustomerCarousel
+        className="cui-car--ads"
+        trackClassName="cui-ads__grid"
+        count={ads.length}
+        capacity={{ desktop: 2, tablet: 2, mobile: 1 }}
+      >
         {ads.map((ad) => {
           const title = localized(ad, 'title', locale) || t('marketing_ads');
           const description = localized(ad, 'subtitle', locale);
