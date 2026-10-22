@@ -12,16 +12,19 @@
    deliberately (e.g. `scrollbar-width: none` on strips that have their own
    arrows / swipe) without specificity fights.
 
+   Thickness never changes: the bar is `--sb-size` in every state. Hover and
+   drag only shift the thumb's colour and its glossy highlight — never its
+   width, so nothing reflows under the pointer.
+
    Tokens (override per-surface if ever needed):
-     --sb-size        idle thickness            (4px)
-     --sb-size-hover  hover / drag thickness    (6px max)
-     --sb-thumb       idle thumb colour
-     --sb-thumb-hover hover thumb colour
-     --sb-thumb-active drag thumb colour
-     --sb-track       track colour              (transparent)
+     --sb-size         thumb thickness, idle / hover / drag   (4px)
+     --sb-thumb        idle thumb colour
+     --sb-thumb-hover  hover thumb colour (a little stronger)
+     --sb-thumb-active drag thumb colour  (full theme colour)
+     --sb-track        track colour       (transparent)
 
    Browser notes
-     • Chromium / Edge / Safari (desktop): exact 4px → 6px via ::-webkit-scrollbar.
+     • Chromium / Edge / Safari (desktop): exact 4px via ::-webkit-scrollbar.
      • Firefox: only `scrollbar-width: thin` + `scrollbar-color` exist, so the
        width is the browser's thin size (≈8px) and hover width is not
        configurable; colours still follow the theme.
@@ -31,16 +34,29 @@
 
 :root {
   --sb-size: 4px;
-  --sb-size-hover: 6px;
   --sb-track: transparent;
-  --sb-thumb: color-mix(in srgb, var(--primary, #7c67e4) 45%, transparent);
-  --sb-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 75%, transparent);
-  --sb-thumb-active: var(--primary, #7c67e4);
+  --sb-thumb: color-mix(in srgb, var(--primary, #7c67e4) 42%, transparent);
+  --sb-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 72%, transparent);
+  --sb-thumb-active: color-mix(in srgb, var(--primary, #7c67e4) 92%, transparent);
+  /* The soft top-lit sheen that gives the pill its restrained depth. */
+  --sb-gloss: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.55),
+    rgba(255, 255, 255, 0.08) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 [data-theme='dark'] {
-  --sb-thumb: color-mix(in srgb, var(--primary, #7c67e4) 55%, transparent);
-  --sb-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 82%, transparent);
+  --sb-thumb: color-mix(in srgb, var(--primary, #7c67e4) 52%, transparent);
+  --sb-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 80%, transparent);
+  --sb-thumb-active: var(--primary, #7c67e4);
+  --sb-gloss: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.34),
+    rgba(255, 255, 255, 0.06) 55%,
+    rgba(255, 255, 255, 0) 100%
+  );
 }
 
 /* Everything except primarily-touch devices: those keep native overlay bars. */
@@ -67,15 +83,11 @@
       scrollbar-color: auto;
     }
 
+    /* One thickness for every state — idle, hover and dragging alike. */
     :where(*)::-webkit-scrollbar {
       width: var(--sb-size);
       height: var(--sb-size);
       background: transparent;
-    }
-
-    :where(*)::-webkit-scrollbar:hover {
-      width: var(--sb-size-hover);
-      height: var(--sb-size-hover);
     }
 
     :where(*)::-webkit-scrollbar-track,
@@ -87,18 +99,38 @@
 
     :where(*)::-webkit-scrollbar-thumb {
       background-color: var(--sb-thumb);
+      background-image: var(--sb-gloss);
+      background-clip: padding-box;
       border-radius: 999px;
       border: 0;
       min-height: 32px;
       min-width: 32px;
     }
 
+    /* Hover only deepens the colour and the sheen; the width is untouched. */
     :where(*)::-webkit-scrollbar-thumb:hover {
       background-color: var(--sb-thumb-hover);
+      background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.72),
+        rgba(255, 255, 255, 0.16) 55%,
+        rgba(255, 255, 255, 0) 100%
+      );
     }
 
     :where(*)::-webkit-scrollbar-thumb:active {
       background-color: var(--sb-thumb-active);
+      background-image: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.82),
+        rgba(255, 255, 255, 0.24) 60%,
+        rgba(255, 255, 255, 0) 100%
+      );
+    }
+
+    /* The element under the bar keeps its own background: no corner patches. */
+    :where(*)::-webkit-scrollbar-corner {
+      background: transparent;
     }
 
     /* No arrow buttons, no corner block. */
@@ -106,10 +138,6 @@
       display: none;
       width: 0;
       height: 0;
-    }
-
-    :where(*)::-webkit-scrollbar-corner {
-      background: transparent;
     }
   }
 }

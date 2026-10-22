@@ -1,4 +1,4 @@
-import Icon from '../Icon';
+import Icon, { hasIcon } from '../Icon';
 import BrandIcon, { hasBrandIcon } from './BrandIcon';
 import CustomerPanel from './CustomerPanel';
 import { useI18n } from '../../i18n';
@@ -102,7 +102,13 @@ export default function CustomerContact({ business, locale, onReview }) {
           const inner = (
             <>
               <span className={`cui-link__icon cui-link__icon--${tile.tone}`}>
-                {hasBrandIcon(tile.icon) ? <BrandIcon name={tile.icon} size={22} /> : <Icon name={tile.icon} size={21} />}
+                {hasBrandIcon(tile.icon) ? (
+                  <BrandIcon name={tile.icon} size={24} />
+                ) : (
+                  /* An unknown saved network still gets a link mark, never a
+                     blank coloured square. */
+                  <Icon name={hasIcon(tile.icon) ? tile.icon : 'link'} size={22} />
+                )}
               </span>
               <span className="cui-link__label">{tile.label}</span>
             </>

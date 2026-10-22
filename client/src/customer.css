@@ -1150,65 +1150,83 @@
 
 /* ---- contact icon grid ---- */
 
-/* Tiles fill the card width: flex-wrap plus a grow basis lets every row —
-   including a short final one — stretch to the edges instead of leaving the
-   items clustered in the middle with empty corners. */
+/* The tiles fill the card width: an auto-fitting grid gives every tile the same
+   width and stretches a short final row to the edges, so there is never an
+   empty corner beside the last card. */
 .cui-links {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 108px), 1fr));
   gap: 12px;
   width: 100%;
 }
 .cui-link {
-  flex: 1 1 118px;
+  position: relative;
   min-width: 0;
+  min-height: 116px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 12px 9px;
-  border: 1px solid color-mix(in srgb, var(--primary) 13%, var(--cui-line));
-  border-radius: 16px;
+  justify-content: center;
+  gap: 9px;
+  padding: 14px 10px 13px;
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--cui-line));
+  border-radius: 18px;
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--primary) 5%, var(--surface)),
+    color-mix(in srgb, var(--primary) 6%, var(--surface)),
     color-mix(in srgb, var(--primary) 2%, var(--surface))
   );
-  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   font: inherit;
   color: inherit;
   text-decoration: none;
   text-align: center;
   cursor: pointer;
-  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, background-color 170ms ease;
+  transition: transform 240ms cubic-bezier(0.22, 0.75, 0.3, 1), box-shadow 240ms ease,
+    border-color 240ms ease, background-color 240ms ease;
 }
-.cui-link:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--primary) 26%, var(--cui-line));
-  box-shadow: 0 10px 20px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+/* Hover lifts the whole card and deepens its shadow — the box itself never
+   changes size, so neighbours cannot shift. */
+@media (hover: hover) {
+  .cui-link:hover {
+    transform: translateY(-5px);
+    border-color: color-mix(in srgb, var(--primary) 34%, var(--cui-line));
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary) 10%, var(--surface)),
+      color-mix(in srgb, var(--primary) 4%, var(--surface))
+    );
+    box-shadow: 0 18px 32px -16px color-mix(in srgb, var(--primary) 48%, transparent),
+      0 3px 8px rgba(16, 30, 22, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  }
+  .cui-link:hover .cui-link__icon {
+    transform: translateY(-2px) scale(1.08);
+    box-shadow: 0 16px 26px -12px rgba(16, 30, 22, 0.42), 0 3px 7px rgba(16, 30, 22, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 -2px 5px rgba(0, 0, 0, 0.14);
+  }
 }
-.cui-link:active { transform: translateY(0) scale(0.97); }
+.cui-link:active { transform: translateY(-1px) scale(0.97); }
 .cui-link:focus-visible {
   outline: none;
-  background: color-mix(in srgb, var(--primary) 9%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 48%, var(--cui-line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent),
+    0 10px 22px -14px color-mix(in srgb, var(--primary) 45%, transparent);
 }
 .cui-link__icon {
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   flex: none;
-  border-radius: 13px;
+  border-radius: 15px;
   display: grid;
   place-items: center;
   color: #fff;
   background: linear-gradient(180deg, #7f8ea3, #5b6b80);
-  box-shadow: 0 5px 12px rgba(16, 30, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.38);
-  transition: box-shadow 170ms ease;
+  box-shadow: 0 9px 18px -7px rgba(16, 30, 22, 0.4), 0 2px 4px rgba(16, 30, 22, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45), inset 0 -2px 5px rgba(0, 0, 0, 0.16);
+  transition: transform 240ms cubic-bezier(0.22, 0.75, 0.3, 1), box-shadow 240ms ease;
 }
-.cui-link:hover .cui-link__icon {
-  box-shadow: 0 10px 20px rgba(16, 30, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.48);
-}
+/* The raised look of the tile's own sheen: a soft top highlight on the mark. */
+.cui-link__icon .brand { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.22)); }
 .cui-link__label {
   /* Two label lines are reserved so every tile keeps the same height even when
      only one label in the card wraps. */
@@ -1231,7 +1249,10 @@
 .cui-link__icon--facebook { background: linear-gradient(180deg, #4a90f7, #1877f2); }
 .cui-link__icon--tiktok { background: linear-gradient(180deg, #2f2f2f, #010101); }
 .cui-link__icon--youtube { background: linear-gradient(180deg, #ff5b5b, #d90000); }
-.cui-link__icon--x { background: linear-gradient(180deg, #2b2b2b, #111111); }
+.cui-link__icon--x,
+.cui-link__icon--twitter { background: linear-gradient(180deg, #2b2b2b, #0f0f0f); }
+.cui-link__icon--telegram { background: linear-gradient(180deg, #41b3ef, #1f93d6); }
+.cui-link__icon--snapchat { background: linear-gradient(180deg, #ffec63, #f5c400); color: #1a1a1a; }
 .cui-link__icon--website { background: linear-gradient(180deg, #8b9bb0, #5b6b80); }
 .cui-link__icon--review {
   background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 86%, #ffffff), var(--primary));
@@ -1240,12 +1261,12 @@
 
 @media (max-width: 900px) {
   .cui-links { gap: 10px; }
-  .cui-link { flex-basis: 106px; }
+  .cui-link { min-height: 112px; }
 }
 @media (max-width: 560px) {
-  .cui-links { gap: 9px; }
-  .cui-link { flex-basis: calc(33.333% - 6px); padding: 10px 6px; border-radius: 14px; }
-  .cui-link__icon { width: 42px; height: 42px; border-radius: 12px; }
+  .cui-links { gap: 9px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); }
+  .cui-link { min-height: 104px; padding: 12px 7px 11px; border-radius: 16px; gap: 8px; }
+  .cui-link__icon { width: 44px; height: 44px; border-radius: 13px; }
   .cui-panel__head { min-height: 58px; padding: 10px 14px; }
   .cui-panel__body { padding: 13px 14px 15px; }
   .cui-panel--products .cui-panel__body { padding: 14px; }
@@ -1381,6 +1402,7 @@
   .cui-cat,
   .cui-catbar__arrow,
   .cui-link,
+  .cui-link__icon,
   .cui-nav__cart,
   .cui-nav__back,
   .cui-hero__logo,
