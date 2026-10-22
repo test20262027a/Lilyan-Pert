@@ -923,63 +923,132 @@
   border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
 }
 .cui-block__head h2 { font-size: 14.5px; font-weight: 820; color: var(--text); }
-.cui-about__text { font-size: 13px; line-height: 1.9; color: var(--text-soft); }
+.cui-about__text { font-size: 13px; line-height: 1.85; color: var(--text-soft); }
 
-.cui-contact {
-  display: grid;
-  gap: 10px;
-  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+/* ---- content panels (About, Contact): one card, one tinted header ---- */
+
+/* The page body already spaces its own children; the two cards therefore keep
+   the same 18px rhythm without adding their own margin. */
+.cui-panel {
+  margin-top: 0;
+  border-radius: 20px;
+  border: 1px solid var(--cui-line);
+  background: var(--surface);
+  box-shadow: var(--cui-shadow-1), var(--cui-inset);
+  overflow: hidden;
 }
-.cui-contact__card {
+.cui-panel__head {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-width: 0;
-  padding: 10px;
-  border-radius: 15px;
-  border: 1px solid var(--cui-line);
-  background: color-mix(in srgb, var(--surface) 97%, var(--tone, var(--primary)));
+  min-height: 62px;
+  padding: 11px 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 13%, var(--surface)),
+    color-mix(in srgb, var(--primary) 6%, var(--surface))
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 16%, var(--cui-line));
+}
+.cui-panel__icon {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 13px;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--primary) 84%, #0b1220);
+  background: color-mix(in srgb, var(--surface) 86%, var(--primary));
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--primary) 18%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.cui-panel__title {
+  font-size: 14.5px;
+  font-weight: 820;
+  color: var(--text);
+  letter-spacing: 0.1px;
+}
+.cui-panel__body { padding: 14px 16px 16px; }
+
+/* ---- contact icon grid ---- */
+
+.cui-links {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, 84px);
+  justify-content: center;
+  gap: 16px 10px;
+}
+.cui-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: 14px;
+  background: none;
+  font: inherit;
   color: inherit;
   text-decoration: none;
-  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 170ms ease, background-color 170ms ease;
 }
-.cui-contact__card:hover {
-  transform: translateY(-2px);
-  border-color: color-mix(in srgb, var(--tone, var(--primary)) 34%, var(--cui-line));
-  box-shadow: var(--cui-shadow-2);
+.cui-link:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.cui-link:active { transform: translateY(0) scale(0.97); }
+.cui-link:focus-visible {
+  outline: none;
+  background: color-mix(in srgb, var(--primary) 9%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
 }
-.cui-contact__icon {
-  width: 36px;
-  height: 36px;
+.cui-link__icon {
+  width: 46px;
+  height: 46px;
   flex: none;
-  border-radius: 12px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   color: #fff;
-  box-shadow: 0 6px 14px color-mix(in srgb, currentColor 26%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  background: linear-gradient(180deg, #7f8ea3, #5b6b80);
+  box-shadow: 0 5px 12px rgba(16, 30, 22, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  transition: box-shadow 170ms ease;
 }
-.cui-contact__icon--blue,
-.cui-contact__icon--phone { background: linear-gradient(180deg, #56a6f7, #2f7fe0); }
-.cui-contact__icon--violet,
-.cui-contact__icon--email { background: linear-gradient(180deg, #9d7bf3, #7655e0); }
-.cui-contact__icon--rose,
-.cui-contact__icon--address { background: linear-gradient(180deg, #f58496, #e05a72); }
-.cui-contact__icon--whatsapp { background: linear-gradient(180deg, #45d97f, #22b45d); }
-.cui-contact__icon--instagram { background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af); }
-.cui-contact__icon--facebook { background: linear-gradient(180deg, #4a90f7, #1877f2); }
-.cui-contact__icon--tiktok { background: linear-gradient(180deg, #2b2b2b, #010101); }
-.cui-contact__icon--youtube { background: linear-gradient(180deg, #ff5b5b, #d90000); }
-.cui-contact__icon--x { background: linear-gradient(180deg, #2b2b2b, #111111); }
-.cui-contact__icon--website { background: linear-gradient(180deg, #7f8ea3, #5b6b80); }
-.cui-contact__text { display: flex; flex-direction: column; min-width: 0; }
-.cui-contact__text strong { font-size: 11px; font-weight: 750; color: var(--muted); }
-.cui-contact__text small {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.cui-link:hover .cui-link__icon {
+  box-shadow: 0 10px 20px rgba(16, 30, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.48);
+}
+.cui-link__label {
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--text-soft);
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.cui-link__icon--blue,
+.cui-link__icon--phone { background: linear-gradient(180deg, #56a6f7, #2f7fe0); }
+.cui-link__icon--violet,
+.cui-link__icon--email { background: linear-gradient(180deg, #9d7bf3, #7655e0); }
+.cui-link__icon--rose,
+.cui-link__icon--address { background: linear-gradient(180deg, #f58496, #e05a72); }
+.cui-link__icon--whatsapp { background: linear-gradient(180deg, #4fdb86, #22b45d); }
+.cui-link__icon--instagram { background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af); }
+.cui-link__icon--facebook { background: linear-gradient(180deg, #4a90f7, #1877f2); }
+.cui-link__icon--tiktok { background: linear-gradient(180deg, #2f2f2f, #010101); }
+.cui-link__icon--youtube { background: linear-gradient(180deg, #ff5b5b, #d90000); }
+.cui-link__icon--x { background: linear-gradient(180deg, #2b2b2b, #111111); }
+.cui-link__icon--website { background: linear-gradient(180deg, #8b9bb0, #5b6b80); }
+.cui-link__icon--review {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 86%, #ffffff), var(--primary));
+  color: var(--primary-ink);
+}
+
+@media (max-width: 900px) {
+  .cui-links { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 8px; }
+}
+@media (max-width: 560px) {
+  .cui-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 6px; }
+  .cui-panel__head { min-height: 58px; padding: 10px 14px; }
+  .cui-panel__body { padding: 13px 14px 15px; }
 }
 
 /* the order bar keeps its behaviour, restyled as a floating glass pill */
@@ -1026,7 +1095,7 @@
   .cui-prod__add,
   .cui-cat,
   .cui-catbar__arrow,
-  .cui-contact__card,
+  .cui-link,
   .cui-hero__cart,
   .cui-hero__back,
   .cui-hero__bg {

@@ -55,6 +55,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const [busy, setBusy] = useState(false);
   const [detail, setDetail] = useState(null);
   const [tableId, setTableId] = useState('');
+  /* One review sheet for the whole page: the reviews card and the contact grid
+     open the same form. */
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewBusy, setReviewBusy] = useState(false);
 
   const storageKey = `lilyan.cart.${key}`;
 
@@ -217,6 +221,15 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       await load();
     } catch {
       toast.error(t('error_generic'));
+    }
+  };
+
+  const sendReview = async (form) => {
+    setReviewBusy(true);
+    try {
+      await submitReview(form);
+    } finally {
+      setReviewBusy(false);
     }
   };
 
@@ -446,9 +459,18 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
         <CustomerAbout text={localized(biz, 'description', locale) || biz.description || ''} />
 
-        {showFeature('social') ? <CustomerContact business={biz} locale={locale} /> : null}
+        {showFeature('social') ? (
+          <CustomerContact business={biz} locale={locale} onReview={() => setReviewOpen(true)} />
+        ) : null}
 
-        <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} />
+        <ReviewSection
+          reviews={data.reviews || []}
+          onSubmit={sendReview}
+          busy={reviewBusy}
+          open={reviewOpen}
+          onOpen={() => setReviewOpen(true)}
+          onClose={() => setReviewOpen(false)}
+        />
       </main>
 
       {cartEnabled && cartCount > 0 && !placed ? (
@@ -539,19 +561,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
  * control that opens the illustrated review sheet. The form itself lives in
  * ReviewModal — nothing here invents a review or a success state.
  */
-function ReviewSection({ reviews, onSubmit }) {
+function ReviewSection({ reviews, onSubmit, busy, open, onOpen, onClose }) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-
-  const send = async (form) => {
-    setBusy(true);
-    try {
-      await onSubmit(form);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   return (
     <section className="cui-block">
@@ -581,14 +592,14 @@ function ReviewSection({ reviews, onSubmit }) {
         </ul>
       )}
 
-      <button type="button" className="cui-review__cta" onClick={() => setOpen(true)}>
+      <button type="button" className="cui-review__cta" onClick={onOpen}>
         <span className="cui-review__ctaicon">
           <Icon name="star" size={16} />
         </span>
         <span>{t('customer_menu_write_review')}</span>
       </button>
 
-      {open ? <ReviewModal busy={busy} onClose={() => setOpen(false)} onSubmit={send} /> : null}
+      {open ? <ReviewModal busy={busy} onClose={onClose} onSubmit={onSubmit} /> : null}
     </section>
   );
 }
