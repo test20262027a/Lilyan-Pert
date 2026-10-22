@@ -24,6 +24,8 @@ import CustomerCategoryNav from '../components/customer/CustomerCategoryNav';
 import CustomerProductCard from '../components/customer/CustomerProductCard';
 import CustomerAbout from '../components/customer/CustomerAbout';
 import CustomerContact from '../components/customer/CustomerContact';
+import CartPanel from '../components/customer/CartPanel';
+import ReviewModal from '../components/customer/ReviewModal';
 import { appearanceOf } from '../components/menu/categoryIcons';
 import '../customer.css';
 
@@ -452,7 +454,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
         {showFeature('social') ? <CustomerContact business={biz} locale={locale} /> : null}
 
-        <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} timeZone={timeZone} />
+        <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} />
       </main>
 
       {cartEnabled && cartCount > 0 && !placed ? (
@@ -468,13 +470,14 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       ) : null}
 
       {cartOpen ? (
-        <CartModal
+        <CartPanel
+          menuKey={key}
           lines={cartLines}
           currency={currency}
+          locale={locale}
           busy={busy}
           canCheckout={checkoutEnabled}
           canOrder={orderingEnabled}
-          tableMode={tableMode}
           tableMissing={!data.table && tableMode === 'qr'}
           needsTableChoice={needsTableChoice}
           tables={data.tables || []}
@@ -554,225 +557,62 @@ function CategoryHeading({ category, count }) {
     </div>
   );
 }
-function ReviewSection({ reviews, onSubmit, timeZone }) {
-  const { t, locale } = useI18n();
-  const [form, setForm] = useState({ customer_name: '', rating: 5, comment: '' });
-
-  return (
-    <SectionCard icon="star" iconClass="ic-amber" title={t('customer_menu_reviews')}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {reviews.length === 0 ? <EmptyState icon="star" title={t('review_no_reviews')} /> : null}
-        {reviews.slice(0, 6).map((r) => (
-          <div key={r.id} style={{ borderBottom: '1px solid var(--border)', paddingBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
-              <strong style={{ fontSize: 13.5 }}>{r.customer_name || t('review_customer')}</strong>
-              <span className="badge badge--pending">{r.rating}/5</span>
-            </div>
-            <p className="review-text" style={{ marginTop: 4 }}>{r.comment}</p>
-          </div>
-        ))}
-
-        <div className="form-grid">
-          <div className="field">
-            <span className="field__label">{t('customer_menu_review_name')}</span>
-            <input
-              className="input"
-              value={form.customer_name}
-              onChange={(e) => setForm((f) => ({ ...f, customer_name: e.target.value }))}
-            />
-          </div>
-          <div className="field">
-            <span className="field__label">{t('review_rating')}</span>
-            <select
-              className="select"
-              value={form.rating}
-              onChange={(e) => setForm((f) => ({ ...f, rating: Number(e.target.value) }))}
-            >
-              {[5, 4, 3, 2, 1].map((n) => (
-                <option key={n} value={n}>
-                  {n} / 5
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="field span-2">
-            <span className="field__label">{t('customer_menu_review_comment')}</span>
-            <textarea
-              className="textarea"
-              value={form.comment}
-              onChange={(e) => setForm((f) => ({ ...f, comment: e.target.value }))}
-            />
-          </div>
-        </div>
-        <div>
-          <button
-            className="btn btn--primary btn--sm"
-            onClick={async () => {
-              await onSubmit(form);
-              setForm({ customer_name: '', rating: 5, comment: '' });
-            }}
-            disabled={!form.comment.trim()}
-          >
-            <Icon name="check" size={15} />
-            {t('customer_menu_review_submit')}
-          </button>
-        </div>
-      </div>
-    </SectionCard>
-  );
-}
-
-function CartModal({
-  lines,
-  currency,
-  busy,
-  canCheckout,
-  canOrder,
-  tableMode,
-  tableMissing,
-  needsTableChoice,
-  tables,
-  tableId,
-  onTable,
-  onClose,
-  onQty,
-  onClear,
-  onSubmit,
-}) {
+/*
+ * The public review block: the reviews the API already published, plus the one
+ * control that opens the illustrated review sheet. The form itself lives in
+ * ReviewModal — nothing here invents a review or a success state.
+ */
+function ReviewSection({ reviews, onSubmit }) {
   const { t } = useI18n();
-  const [form, setForm] = useState({ customer_name: '', customer_phone: '', notes: '', promotion_code: '' });
-  const total = lines.reduce((s, l) => s + l.total, 0);
-  // A mode that requires choosing a table cannot submit without one.
-  const tableReady = !needsTableChoice || Boolean(tableId);
-  const canSubmit = canOrder && tableReady;
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const send = async (form) => {
+    setBusy(true);
+    try {
+      await onSubmit(form);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
-    <Modal
-      title={t('customer_menu_your_order')}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn" onClick={onClear} disabled={busy || lines.length === 0}>
-            <Icon name="trash" size={15} />
-            {t('customer_menu_clear_cart')}
-          </button>
-          {canSubmit ? (
-            <button className="btn btn--primary" onClick={() => onSubmit(form)} disabled={busy || lines.length === 0}>
-              {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-              {t('customer_menu_place_order')}
-            </button>
-          ) : null}
-        </>
-      }
-    >
-      {lines.length === 0 ? (
-        <EmptyState icon="cart" title={t('customer_menu_cart_empty')} />
+    <section className="cui-block">
+      <header className="cui-block__head">
+        <span className="cui-block__icon">
+          <Icon name="star" size={16} />
+        </span>
+        <h2>{t('customer_menu_reviews')}</h2>
+      </header>
+
+      {reviews.length === 0 ? (
+        <p className="cui-about__text">{t('review_no_reviews')}</p>
       ) : (
-        <>
-          {lines.map((l) => (
-            <div className="cart-line" key={l.product.id}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="product-name" style={{ fontSize: 13 }}>
-                  {l.product[`name_${'en'}`] || l.product.name_en}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>
-                  <Money value={l.unit} currency={currency} />
-                </div>
+        <ul className="cui-reviews">
+          {reviews.slice(0, 6).map((r) => (
+            <li key={r.id}>
+              <div className="cui-reviews__head">
+                <strong>{r.customer_name || t('review_customer')}</strong>
+                <span className="cui-reviews__score">
+                  <Icon name="star" size={12} />
+                  {r.rating}/5
+                </span>
               </div>
-              <span className="qty">
-                <button onClick={() => onQty(l.product, l.qty - 1)} aria-label="minus">
-                  <Icon name="chevronDown" size={14} />
-                </button>
-                <span>{l.qty}</span>
-                <button onClick={() => onQty(l.product, l.qty + 1)} aria-label="plus">
-                  <Icon name="plus" size={14} />
-                </button>
-              </span>
-              <strong style={{ fontSize: 13, whiteSpace: 'nowrap' }}>
-                <Money value={l.total} currency={currency} />
-              </strong>
-            </div>
+              {r.comment ? <p>{r.comment}</p> : null}
+            </li>
           ))}
-
-          {needsTableChoice ? (
-            <div className="field" style={{ marginTop: 12 }}>
-              <span className="field__label">{t('customer_table_select')}</span>
-              <select className="select" value={tableId} onChange={(e) => onTable(e.target.value)}>
-                <option value="">{t('customer_table_select_placeholder')}</option>
-                {tables.map((row) => (
-                  <option key={row.id} value={row.id}>
-                    {row.name}
-                    {row.zone ? ` · ${row.zone}` : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : null}
-          {tableMissing ? (
-            <p className="cart-note">
-              <Icon name="info" size={14} /> {t('customer_table_missing')}
-            </p>
-          ) : null}
-          {!canCheckout ? (
-            <p className="cart-note">
-              <Icon name="info" size={14} /> {t('customer_checkout_disabled')}
-            </p>
-          ) : null}
-          {canCheckout && !canOrder ? (
-            <p className="cart-note">
-              <Icon name="info" size={14} /> {t('customer_ordering_disabled')}
-            </p>
-          ) : null}
-
-          {canCheckout ? (
-          <div className="form-grid" style={{ marginTop: 12 }}>
-            <div className="field">
-              <span className="field__label">{t('label_customer_name')}</span>
-              <input
-                className="input"
-                value={form.customer_name}
-                onChange={(e) => setForm((f) => ({ ...f, customer_name: e.target.value }))}
-              />
-            </div>
-            <div className="field">
-              <span className="field__label">{t('label_customer_phone')}</span>
-              <input
-                className="input"
-                dir="ltr"
-                value={form.customer_phone}
-                onChange={(e) => setForm((f) => ({ ...f, customer_phone: e.target.value }))}
-              />
-            </div>
-            <div className="field span-2">
-              <span className="field__label">{t('customer_promo_code')}</span>
-              <input
-                className="input"
-                dir="ltr"
-                value={form.promotion_code}
-                placeholder="SUMMER20"
-                onChange={(e) => setForm((f) => ({ ...f, promotion_code: e.target.value }))}
-              />
-            </div>
-            <div className="field span-2">
-              <span className="field__label">{t('label_notes')}</span>
-              <textarea
-                className="textarea"
-                value={form.notes}
-                onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
-              />
-            </div>
-          </div>
-          ) : null}
-
-          <div className="totals" style={{ marginTop: 14 }}>
-            <div className="totals__row totals__row--grand">
-              <span>{t('order_grand_total')}</span>
-              <Money value={total} currency={currency} />
-            </div>
-          </div>
-        </>
+        </ul>
       )}
-    </Modal>
+
+      <button type="button" className="cui-review__cta" onClick={() => setOpen(true)}>
+        <span className="cui-review__ctaicon">
+          <Icon name="star" size={16} />
+        </span>
+        <span>{t('customer_menu_write_review')}</span>
+      </button>
+
+      {open ? <ReviewModal busy={busy} onClose={() => setOpen(false)} onSubmit={send} /> : null}
+    </section>
   );
 }
 

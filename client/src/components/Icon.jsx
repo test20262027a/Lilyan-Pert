@@ -18,6 +18,8 @@ const PATHS = {
   search: <><circle cx="11" cy="11" r="7" /><path d="m20.5 20.5-4.2-4.2" /></>,
   trash: <><path d="M3 6h18" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /><path d="M10 11v6M14 11v6" /><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" /></>,
   plus: <><path d="M12 5v14M5 12h14" /></>,
+  minus: <path d="M5 12h14" />,
+  send: <><path d="M22 2 11 13" /><path d="M22 2 15 22l-4-9-9-4z" /></>,
   pencil: <><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" /></>,
   close: <><path d="M18 6 6 18M6 6l12 12" /></>,
   check: <><path d="m20 6-11 11L4 12" /></>,
