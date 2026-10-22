@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, ConfirmDialog, EmptyState, Loading, Modal, useToast } from '../components/ui';
+import { Alert, EmptyState, Loading, Modal, useToast } from '../components/ui';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import MenuToolbar from '../components/menu/MenuToolbar';
 import CategoryPanel from '../components/menu/CategoryPanel';
@@ -8,7 +8,8 @@ import CategorySummary from '../components/menu/CategorySummary';
 import ProductCard from '../components/menu/ProductCard';
 import CategoryFormModal from '../components/menu/CategoryFormModal';
 import ProductFormModal from '../components/menu/ProductFormModal';
-import { categoryGlyph, categoryToneClass } from '../components/menu/categoryIcons';
+import { categoryDialogTone, categoryGlyph, categoryToneClass } from '../components/menu/categoryIcons';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import { localized, useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
@@ -199,7 +200,15 @@ export default function MenuManagement() {
     // A category holding products is never deleted silently — the consequence
     // is explained and the products must be moved or removed first.
     if (c.product_count > 0) setBlocked(c);
-    else setConfirm({ kind: 'category', id: c.id, name: localized(c, 'name', locale) });
+    else
+      setConfirm({
+        kind: 'category',
+        id: c.id,
+        name: localized(c, 'name', locale),
+        icon: categoryGlyph(c.icon),
+        tone: categoryDialogTone(c.icon),
+        productCount: Number(c.product_count) || 0,
+      });
   };
 
   if (loading && !categories.length) return <Loading />;
@@ -290,7 +299,16 @@ export default function MenuManagement() {
                     setProductModal({ mode: 'edit', id: p.id, values: { ...p } });
                   }}
                   onDelete={() =>
-                    setConfirm({ kind: 'product', id: p.id, name: localized(p, 'name', locale) })
+                    setConfirm({
+                      kind: 'product',
+                      id: p.id,
+                      name: localized(p, 'name', locale),
+                      image: p.image_url || null,
+                      categoryName:
+                        results
+                          ? localized(p, 'category_name', locale) || t('menu_uncategorized')
+                          : localized(selectedCategory, 'name', locale),
+                    })
                   }
                 />
               ))}
@@ -323,20 +341,21 @@ export default function MenuManagement() {
       ) : null}
 
       {confirm ? (
-        <ConfirmDialog
-          title={confirm.kind === 'category' ? t('menu_confirm_delete_category') : t('menu_confirm_delete_product')}
-          message={
-            <>
-              {confirm.name}
-              <br />
-              <span style={{ fontSize: 12.5 }}>
-                {confirm.kind === 'category' ? t('menu_delete_category_hint') : t('menu_delete_product_hint')}
-              </span>
-            </>
+        <DeleteConfirmationDialog
+          entityType={confirm.kind}
+          entityName={confirm.name}
+          entityImage={confirm.kind === 'product' ? confirm.image : null}
+          entityIcon={confirm.icon}
+          tone={confirm.tone}
+          entitySubtitle={
+            confirm.kind === 'category'
+              ? confirm.productCount > 0
+                ? `${confirm.productCount} ${t('menu_stats_products')}`
+                : undefined
+              : confirm.categoryName
           }
-          danger
+          warning={confirm.kind === 'category' ? t('menu_delete_category_hint') : t('menu_delete_product_hint')}
           busy={busy}
-          confirmLabel={t('action_delete')}
           onCancel={() => setConfirm(null)}
           onConfirm={() => (confirm.kind === 'category' ? removeCategory(confirm.id) : removeProduct(confirm.id))}
         />

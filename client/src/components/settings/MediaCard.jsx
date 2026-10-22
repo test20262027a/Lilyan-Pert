@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
-import { ConfirmDialog, useToast } from '../ui';
+import { useToast } from '../ui';
+import DeleteConfirmationDialog from '../confirm/DeleteConfirmationDialog';
 import { useI18n } from '../../i18n';
 import { uploadImage } from '../../api';
 
@@ -155,11 +156,13 @@ export default function MediaCard({
       </div>
 
       {confirm ? (
-        <ConfirmDialog
+        <DeleteConfirmationDialog
+          entityType="asset"
           title={removeTitle}
-          message={removeMessage}
+          description={removeMessage}
+          entityName={label}
+          entityImage={value || null}
           confirmLabel={t('menu_remove_image')}
-          danger
           onCancel={() => setConfirm(false)}
           onConfirm={() => {
             onChange(null);

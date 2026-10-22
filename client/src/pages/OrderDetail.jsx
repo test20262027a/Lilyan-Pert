@@ -15,6 +15,7 @@ import {
   StatusBadge,
   useToast,
 } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get, patch, post, put } from '../api';
@@ -436,23 +437,13 @@ export default function OrderDetail() {
       ) : null}
 
       {confirmDelete ? (
-        <Modal
-          title={t('order_delete_confirm')}
-          onClose={() => setConfirmDelete(false)}
-          footer={
-            <>
-              <button className="btn" onClick={() => setConfirmDelete(false)} disabled={busy}>
-                {t('action_cancel')}
-              </button>
-              <button className="btn btn--danger" onClick={removeOrder} disabled={busy}>
-                {busy ? <span className="spinner" /> : null}
-                {t('action_delete')}
-              </button>
-            </>
-          }
-        >
-          <p style={{ fontSize: 14 }}>#{order.order_number}</p>
-        </Modal>
+        <DeleteConfirmationDialog
+          entityType="order"
+          entityName={`#${order.order_number}`}
+          busy={busy}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={removeOrder}
+        />
       ) : null}
 
       {/* The printed receipt: one continuous flow, audit info per the setting. */}

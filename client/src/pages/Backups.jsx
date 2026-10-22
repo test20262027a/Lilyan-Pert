@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, ConfirmDialog, Loading, Modal, useToast } from '../components/ui';
+import { Alert, Loading, Modal, useToast } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import BackupArtwork from '../components/backups/BackupArtwork';
 import FullBackupPanel from '../components/backups/FullBackupPanel';
 import SelectiveBackupPanel from '../components/backups/SelectiveBackupPanel';
 import BackupCard from '../components/backups/BackupCard';
 import RestoreDialog from '../components/backups/RestoreDialog';
-import { sectionLabel } from '../components/backups/backupMeta';
+import { archiveSize, sectionLabel } from '../components/backups/backupMeta';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get, getBusinessId, post } from '../api';
-import { fmtNumber, zoneFor } from '../format';
+import { fmtDateTime, fmtNumber, zoneFor } from '../format';
 import '../backups.css';
 
 /*
@@ -340,12 +341,18 @@ export default function Backups() {
       ) : null}
 
       {removeTarget ? (
-        <ConfirmDialog
-          title={t('backup_delete_title')}
-          message={`${t('backup_delete_body')} ${removeTarget.name}`}
-          danger
+        <DeleteConfirmationDialog
+          entityType="backup"
+          entityName={removeTarget.name}
+          entitySubtitle={[
+            t(`backup_type_${removeTarget.backup_type === 'custom' ? 'selective' : removeTarget.backup_type}`),
+            archiveSize(removeTarget.size_bytes, locale),
+            fmtDateTime(removeTarget.created_at, locale, timeZone),
+          ]
+            .filter(Boolean)
+            .join(' · ')}
+          warning={t('backup_delete_body')}
           busy={busy}
-          confirmLabel={t('action_delete')}
           onCancel={() => setRemoveTarget(null)}
           onConfirm={remove}
         />

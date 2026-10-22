@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Alert, ConfirmDialog, EmptyState, useToast } from '../components/ui';
+import { Alert, EmptyState, useToast } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import ReviewsArtwork from '../components/reviews/ReviewsArtwork';
 import RatingOverview from '../components/reviews/RatingOverview';
@@ -24,6 +25,13 @@ import '../reviews.css';
  */
 
 const PAGE_SIZE = 20;
+
+/** A short, single-line excerpt of the review, for the confirmation preview. */
+function excerpt(text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!clean) return '';
+  return clean.length > 80 ? `${clean.slice(0, 80)}…` : clean;
+}
 
 export default function Reviews() {
   const { t, locale } = useI18n();
@@ -178,11 +186,11 @@ export default function Reviews() {
       )}
 
       {confirm ? (
-        <ConfirmDialog
-          title={t('review_delete_title')}
-          message={t('review_delete_message')}
-          confirmLabel={t('action_delete')}
-          danger
+        <DeleteConfirmationDialog
+          entityType="review"
+          entityName={String(confirm.customer_name || '').trim() || t('review_customer')}
+          entitySubtitle={excerpt(confirm.comment)}
+          warning={t('review_delete_message')}
           busy={busy}
           onCancel={() => setConfirm(null)}
           onConfirm={remove}

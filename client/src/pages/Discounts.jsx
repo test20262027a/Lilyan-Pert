@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, ConfirmDialog, EmptyState, Loading, useToast } from '../components/ui';
+import { Alert, EmptyState, Loading, useToast } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import PromotionsArtwork from '../components/promotions/PromotionsArtwork';
 import PromotionCard from '../components/promotions/PromotionCard';
 import PromotionFormModal from '../components/promotions/PromotionFormModal';
 import { promotionsErrorText } from '../components/promotions/errorText';
-import { useI18n } from '../i18n';
+import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { del, get, post, put } from '../api';
-import { zoneFor } from '../format';
+import { fmtMoney, zoneFor } from '../format';
 import '../menu.css';
 import '../promotions.css';
 
@@ -198,11 +199,15 @@ export default function Discounts() {
       ) : null}
 
       {confirm ? (
-        <ConfirmDialog
-          danger
-          title={t('action_delete')}
-          message={t('disc_delete_confirm')}
-          confirmLabel={t('action_delete')}
+        <DeleteConfirmationDialog
+          entityType="promotion"
+          entityName={confirm.code || localized(confirm, 'title', locale) || '—'}
+          entitySubtitle={
+            confirm.discount_type === 'percent'
+              ? `${Number(confirm.discount_value) || 0}%`
+              : `${fmtMoney(confirm.discount_value, currency, locale)}`
+          }
+          warning={t('disc_delete_confirm')}
           busy={busy}
           onCancel={() => setConfirm(null)}
           onConfirm={() => remove(confirm)}

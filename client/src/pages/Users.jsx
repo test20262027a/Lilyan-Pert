@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../components/Icon';
 import { Alert, ConfirmDialog, EmptyState, Field, Modal, Select, useToast } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
@@ -352,15 +353,26 @@ export default function Users() {
       ) : null}
 
       {confirm ? (
-        <ConfirmDialog
-          title={confirm.kind === 'delete' ? t('user_delete_confirm') : t('user_disable_confirm')}
-          message={confirm.user.full_name || confirm.user.email}
-          danger={confirm.kind === 'delete'}
-          busy={busy}
-          confirmLabel={confirm.kind === 'delete' ? t('action_delete') : t('user_deactivate')}
-          onCancel={() => setConfirm(null)}
-          onConfirm={applyConfirm}
-        />
+        confirm.kind === 'delete' ? (
+          <DeleteConfirmationDialog
+            entityType="user"
+            entityName={confirm.user.full_name || confirm.user.email}
+            entitySubtitle={confirm.user.full_name ? confirm.user.email : undefined}
+            description={t('user_delete_confirm')}
+            busy={busy}
+            onCancel={() => setConfirm(null)}
+            onConfirm={applyConfirm}
+          />
+        ) : (
+          <ConfirmDialog
+            title={t('user_disable_confirm')}
+            message={confirm.user.full_name || confirm.user.email}
+            busy={busy}
+            confirmLabel={t('user_deactivate')}
+            onCancel={() => setConfirm(null)}
+            onConfirm={applyConfirm}
+          />
+        )
       ) : null}
 
       {passwordOpen ? (

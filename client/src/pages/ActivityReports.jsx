@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, ConfirmDialog, EmptyState, useToast } from '../components/ui';
+import { Alert, EmptyState, useToast } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
+import { ENTITY_KEYS } from '../components/activity/activityMeta';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import ActivityArtwork from '../components/activity/ActivityArtwork';
 import ActivityFilters from '../components/activity/ActivityFilters';
@@ -231,11 +233,17 @@ export default function ActivityReports() {
       )}
 
       {pending ? (
-        <ConfirmDialog
-          title={t('act_delete_title')}
-          message={t('act_delete_message')}
-          confirmLabel={t('action_delete')}
-          danger
+        <DeleteConfirmationDialog
+          entityType="activity"
+          entityName={
+            pending.entity_label ||
+            (pending.order_number
+              ? t('act_order_ref', { number: pending.order_number })
+              : `#${String(pending.id).slice(0, 8)}`)
+          }
+          entitySubtitle={`${ENTITY_KEYS[pending.entity] ? t(ENTITY_KEYS[pending.entity]) : pending.entity} · ${
+            pending.actor_name || t('act_actor_system')
+          }`}
           busy={busy}
           onCancel={() => setPending(null)}
           onConfirm={remove}

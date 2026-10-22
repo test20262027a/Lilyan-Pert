@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
-import { Alert, ConfirmDialog, EmptyState, Loading, useToast } from '../components/ui';
+import { Alert, EmptyState, Loading, useToast } from '../components/ui';
+import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import AdsArtwork from '../components/ads/AdsArtwork';
 import AdCard from '../components/ads/AdCard';
 import AdFormModal from '../components/ads/AdFormModal';
 import AdPreviewModal from '../components/ads/AdPreviewModal';
 import { adErrorText } from '../components/ads/errorText';
-import { useI18n } from '../i18n';
+import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { del, get, post, put } from '../api';
@@ -207,11 +208,16 @@ export default function Advertisements() {
       ) : null}
 
       {confirm ? (
-        <ConfirmDialog
-          danger
-          title={t('action_delete')}
-          message={t('marketing_delete_ad_confirm')}
-          confirmLabel={t('action_delete')}
+        <DeleteConfirmationDialog
+          entityType="ad"
+          entityName={localized(confirm, 'title', locale) || t('ads_title')}
+          entityImage={confirm.image_url || null}
+          entitySubtitle={
+            [localized(confirm, 'product_name', locale), localized(confirm, 'category_name', locale)]
+              .filter(Boolean)
+              .join(' · ') || undefined
+          }
+          warning={t('marketing_delete_ad_confirm')}
           busy={busy}
           onCancel={() => setConfirm(null)}
           onConfirm={() => remove(confirm)}

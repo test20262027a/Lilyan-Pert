@@ -115,3 +115,22 @@ export function categoryTone(icon) {
 export function categoryToneClass(icon) {
   return `mtone--${categoryTone(icon)}`;
 }
+
+/*
+ * The same category identity expressed as a delete-dialog tone. The dialog
+ * derives its surfaces from the entity colour, so this keeps a category's saved
+ * colour recognisable inside its confirmation too.
+ */
+const DIALOG_TONES = {
+  orange: 'amber',
+  yellow: 'amber',
+  blue: 'blue',
+  pink: 'pink',
+  purple: 'violet',
+  green: 'green',
+  aqua: 'teal',
+};
+
+export function categoryDialogTone(icon) {
+  return DIALOG_TONES[categoryTone(icon)] || 'pink';
+}

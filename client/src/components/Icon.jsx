@@ -86,6 +86,8 @@ const PATHS = {
   chevronsUp: <><path d="m7 14 5-5 5 5" /><path d="m7 20 5-5 5 5" /></>,
   chevronsLeft: <><path d="m11 7-5 5 5 5" /><path d="m17 7-5 5 5 5" /></>,
   lock: <><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>,
+  message: <><path d="M21 11.5a8 8 0 0 1-8 8H8.2L3 22V11.5a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z" /><path d="M8.5 10.5h7M8.5 14h4.5" /></>,
+  userMinus: <><path d="M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M17 11h5" /></>,
   /* Menu category glyphs: one recognizable silhouette per kind of item, so a
      category keeps its identity instead of sharing one generic symbol. */
   teaCup: <><path d="M4 9.5h12.5V14a4.5 4.5 0 0 1-4.5 4.5H8.5A4.5 4.5 0 0 1 4 14z" /><path d="M16.5 11h1.3a2.2 2.2 0 0 1 0 4.4h-1.3" /><path d="M7 3.2v2.6M10.4 3.2v2.6M13.8 3.2v2.6" /></>,
