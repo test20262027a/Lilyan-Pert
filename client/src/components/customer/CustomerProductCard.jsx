@@ -1,15 +1,19 @@
 import Icon from '../Icon';
 import { Money } from '../ui';
 import { localized, useI18n } from '../../i18n';
+import { fmtMoneyParts } from '../../format';
 
 /*
- * One sellable product, as a guest sees it. The card is the tallest thing on the
- * page, so it leads with the photograph, keeps the name on one line and puts the
- * price and the add action together at the bottom — the same place in every
- * card, whatever the name's length.
+ * One sellable product, as a guest sees it: the photograph leads the card and a
+ * frosted glass panel overlaps its lower edge with the name, the category and
+ * availability, a price bar and a full-width Add to Cart button.
  *
- * Tapping the card opens the detail sheet when the owner enabled product details;
- * the add button is its own control and never opens the sheet.
+ * Every card in a row keeps the same height, and the button sits at the bottom
+ * edge of the panel whatever the name's length, so prices and actions line up
+ * across the grid.
+ *
+ * Tapping the card opens the detail sheet when the owner enabled product
+ * details; the add button is its own control and never opens the sheet.
  */
 export default function CustomerProductCard({
   product,
@@ -26,11 +30,13 @@ export default function CustomerProductCard({
 }) {
   const { t } = useI18n();
   const name = localized(product, 'name', locale);
+  const available = product.available !== false;
   const open = () => onOpen?.(product);
+  const amount = fmtMoneyParts(product.promo_price ?? product.price, currency, locale);
 
   return (
     <article
-      className={`cui-prod ${onOpen ? 'is-openable' : ''}`}
+      className={`cui-prod ${onOpen ? 'is-openable' : ''} ${available ? '' : 'is-out'}`}
       onClick={onOpen ? open : undefined}
       onKeyDown={
         onOpen
@@ -51,60 +57,74 @@ export default function CustomerProductCard({
           <img src={product.image_url} alt="" loading="lazy" />
         ) : (
           <span className="cui-prod__ph">
-            <Icon name="coffee" size={28} />
+            <Icon name="coffee" size={30} />
           </span>
         )}
-        <div className="cui-prod__badges">
-          {badge ? (
-            <span className="cui-prod__badge cui-prod__badge--star">
-              <Icon name="crown" size={11} />
-              {badge}
-            </span>
-          ) : null}
-          {product.promo_price ? (
-            <span className="cui-prod__badge cui-prod__badge--promo">
-              <Icon name="percent" size={11} />
-              {promoLabel}
-            </span>
-          ) : null}
-        </div>
+        {badge || product.promo_price ? (
+          <div className="cui-prod__badges">
+            {badge ? (
+              <span className="cui-prod__badge cui-prod__badge--star">
+                <Icon name="crown" size={11} />
+                {badge}
+              </span>
+            ) : null}
+            {product.promo_price ? (
+              <span className="cui-prod__badge cui-prod__badge--promo">
+                <Icon name="percent" size={11} />
+                {promoLabel}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      <div className="cui-prod__body">
-        {categoryName ? <span className="cui-prod__cat">{categoryName}</span> : null}
+      <div className="cui-prod__glass">
         <h3 className="cui-prod__name" title={name}>
           {name}
         </h3>
-        <div className="cui-prod__foot">
-          {showPrices ? (
-            <span className="cui-prod__price">
-              {product.promo_price ? (
-                <s>
-                  <Money value={product.price} currency={currency} />
-                </s>
-              ) : null}
-              <strong>
-                <Money value={product.promo_price ?? product.price} currency={currency} />
-              </strong>
+
+        {categoryName || available ? (
+          <div className="cui-prod__meta">
+            {categoryName ? <span className="cui-prod__cat">{categoryName}</span> : <span />}
+            {available ? (
+              <span className="cui-prod__stock">
+                <i aria-hidden="true" />
+                {t('customer_menu_in_stock')}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {showPrices ? (
+          <div className="cui-prod__pricebar">
+            <span className="cui-prod__priceicon" aria-hidden="true">
+              <Icon name="banknote" size={16} />
             </span>
-          ) : (
-            <span />
-          )}
-          {canAdd ? (
-            <button
-              type="button"
-              className="cui-prod__add"
-              onClick={(event) => {
-                event.stopPropagation();
-                onAdd(product);
-              }}
-              aria-label={`${addLabel} — ${name}`}
-              title={addLabel || t('customer_menu_add')}
-            >
-              <Icon name="plus" size={18} />
-            </button>
-          ) : null}
-        </div>
+            <span className="cui-prod__amount">{amount.number}</span>
+            <span className="cui-prod__curr">{amount.symbol}</span>
+            {product.promo_price ? (
+              <s className="cui-prod__was">
+                <Money value={product.price} currency={currency} />
+              </s>
+            ) : null}
+          </div>
+        ) : null}
+
+        {canAdd ? (
+          <button
+            type="button"
+            className="cui-prod__add"
+            disabled={!available}
+            onClick={(event) => {
+              event.stopPropagation();
+              onAdd(product);
+            }}
+            aria-label={`${addLabel || t('customer_menu_add_to_cart')} — ${name}`}
+          >
+            <Icon name="cart" size={17} />
+            <span>{addLabel || t('customer_menu_add_to_cart')}</span>
+          </button>
+        ) : null}
       </div>
     </article>
   );

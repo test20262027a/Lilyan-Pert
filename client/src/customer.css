@@ -464,11 +464,9 @@
 
 /* ---------------------------------------------------------- ordering ---- */
 
-.cui-order { display: grid; gap: 18px; margin-top: 16px; }
-/* Grid and flex children default to min-width:auto, which would let the chip
-   strip's scroll content widen the whole column on a phone. */
-.cui-order > * { min-width: 0; }
-.cui-feed { display: flex; flex-direction: column; gap: 22px; min-width: 0; max-width: 100%; }
+.cui-order { min-width: 0; margin-top: 14px; }
+/* One continuous browsing column: the sticky strip, then the product grid. */
+.cui-feed { min-width: 0; max-width: 100%; padding-top: 14px; scroll-margin-top: 118px; }
 
 .cui-sec__head {
   display: flex;
@@ -509,249 +507,172 @@
   padding: 3px 9px;
 }
 
-/* category identity glyph */
-.cui-cat-icon {
-  --cic: var(--primary);
-  width: 30px;
-  height: 30px;
-  flex: none;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  color: color-mix(in srgb, var(--cic) 82%, #0b1220);
-  background: color-mix(in srgb, var(--cic) 15%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--cic) 26%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-[data-theme='dark'] .cui-cat-icon { color: color-mix(in srgb, var(--cic) 76%, #ffffff); }
+/* ---------------------------------------------------- category strip ---- */
 
-/* desktop rail */
-.cui-rail { display: none; }
-.cui-rail__inner {
+/*
+ * One horizontal strip for every breakpoint: sticky under the header, a row of
+ * icon cards and a circular arrow at each end. It replaced the desktop rail,
+ * the tablet drawer and the mobile chips, so the products keep the full width.
+ */
+.cui-catbar {
   position: sticky;
-  top: calc(var(--cui-bar-h) + 14px);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px;
-  border-radius: 20px;
-  border: 1px solid var(--cui-line);
-  background: color-mix(in srgb, var(--surface) 96%, var(--primary));
-  box-shadow: var(--cui-shadow-2), var(--cui-inset);
-}
-.cui-rail__title {
+  top: 0;
+  z-index: 35;
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding-inline: 4px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.cui-rail__list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: calc(100dvh - 160px);
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-.cui-rail__row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 13px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-soft);
-  font-size: 13px;
-  font-weight: 700;
-  text-align: start;
-  cursor: pointer;
-  transition: background 170ms ease, color 170ms ease, border-color 170ms ease, box-shadow 170ms ease, transform 170ms ease;
-}
-.cui-rail__row:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); color: var(--text); }
-.cui-rail__row:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 24%, transparent);
-}
-.cui-rail__row.is-active {
-  color: var(--text);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 17%, var(--surface)),
-    color-mix(in srgb, var(--primary) 9%, var(--surface))
-  );
-  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 14%, transparent), var(--cui-inset);
-}
-.cui-rail__name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cui-rail__mark { color: var(--primary); flex: none; }
-
-/* tablet trigger + drawer */
-.cui-navbtn { display: none; }
-.cui-navbtn__btn {
-  position: sticky;
-  top: calc(var(--cui-bar-h) + 8px);
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  padding: 9px 14px 9px 10px;
-  border-radius: 16px;
-  border: 1px solid var(--cui-line);
-  background: color-mix(in srgb, var(--surface) 96%, var(--primary));
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 750;
-  cursor: pointer;
-  box-shadow: var(--cui-shadow-2), var(--cui-inset);
-  transition: border-color 160ms ease, box-shadow 160ms ease;
-}
-.cui-navbtn__btn:hover { border-color: color-mix(in srgb, var(--primary) 34%, var(--cui-line)); }
-.cui-navbtn__label { flex: 1 1 auto; min-width: 0; text-align: start; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cui-navbtn__hint { font-size: 11px; font-weight: 700; color: var(--muted); }
-
-.cui-drawer {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 12px;
-  background: rgba(8, 16, 13, 0.44);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  animation: cui-fade 170ms ease-out;
-}
-.cui-drawer__panel {
-  width: min(430px, 100%);
-  max-height: 78dvh;
-  overflow-y: auto;
-  padding: 10px;
-  border-radius: 24px;
-  border: 1px solid var(--cui-line);
-  background: var(--surface);
-  box-shadow: var(--cui-shadow-3);
-  animation: cui-rise 210ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.cui-drawer__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 6px 8px 10px;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text);
-}
-.cui-drawer__close {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  border: 1px solid var(--cui-line);
-  background: var(--surface-2);
-  color: var(--text-soft);
-}
-.cui-drawer__list { display: flex; flex-direction: column; gap: 4px; }
-
-/* mobile chips */
-.cui-chips {
-  min-width: 0;
-  max-width: 100%;
-  position: sticky;
-  top: var(--cui-bar-h);
-  z-index: 30;
-  margin: 0 -14px;
-  padding: 8px 14px;
+  gap: 8px;
+  margin: 0;
+  padding: 9px 0 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--bg) 97%, transparent),
-    color-mix(in srgb, var(--bg) 78%, transparent)
+    color-mix(in srgb, var(--bg) 88%, transparent)
   );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
-.cui-chips__scroll {
+
+.cui-catbar__scroll {
+  flex: 1 1 auto;
+  min-width: 0;
   display: flex;
+  align-items: stretch;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 2px;
+  padding: 3px 2px 5px;
   scrollbar-width: none;
+  -ms-overflow-style: none;
   -webkit-overflow-scrolling: touch;
 }
-.cui-chips__scroll::-webkit-scrollbar { display: none; }
-.cui-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+.cui-catbar__scroll::-webkit-scrollbar { display: none; }
+
+.cui-cat {
   flex: none;
-  padding: 6px 14px 6px 7px;
-  border-radius: 999px;
+  width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px 9px;
+  border-radius: 18px;
   border: 1px solid var(--cui-line);
   background: var(--surface);
   color: var(--text-soft);
-  font-size: 12.5px;
-  font-weight: 750;
+  font: inherit;
   cursor: pointer;
-  box-shadow: var(--cui-shadow-1);
-  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
+  box-shadow: var(--cui-shadow-1), var(--cui-inset);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease,
+    background 180ms ease, color 180ms ease;
 }
-.cui-chip:active { transform: scale(0.97); }
-.cui-chip.is-active {
+.cui-cat:hover { border-color: color-mix(in srgb, var(--primary) 28%, var(--cui-line)); }
+.cui-cat:active { transform: scale(0.97); }
+.cui-cat.is-active {
   color: var(--primary-ink);
   border-color: transparent;
-  background: linear-gradient(180deg, var(--theme-primary, var(--primary)), var(--theme-primary-active, var(--primary)));
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.32);
-}
-.cui-chip.is-active .cui-cat-icon {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.3);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 94%, #ffffff),
+    var(--theme-primary-active, var(--primary))
+  );
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--primary) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transform: translateY(-1px);
 }
 
-@media (min-width: 768px) {
-  .cui-chips { display: none; }
-  .cui-navbtn { display: block; }
-  .cui-drawer { align-items: center; }
+.cui-cat__icon {
+  --cic: var(--primary);
+  width: 46px;
+  height: 46px;
+  flex: none;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--cic) 82%, #0b1220);
+  background: color-mix(in srgb, var(--cic) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--cic) 24%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
 }
-@media (min-width: 1200px) {
-  .cui-navbtn { display: none; }
-  .cui-rail { display: block; }
-  .cui-order { grid-template-columns: 246px minmax(0, 1fr); align-items: start; gap: 22px; }
-  /* Without a rail the products take the whole width, never a narrow column. */
-  .cui-order.is-plain { grid-template-columns: minmax(0, 1fr); }
+[data-theme='dark'] .cui-cat__icon { color: color-mix(in srgb, var(--cic) 78%, #ffffff); }
+.cui-cat__icon--all {
+  color: color-mix(in srgb, var(--primary) 74%, #0b1220);
+  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 24%, transparent);
 }
+.cui-cat.is-active .cui-cat__icon {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.22);
+  border-color: rgba(255, 255, 255, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.cui-cat__label {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.cui-catbar__arrow {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid var(--cui-line);
+  background: color-mix(in srgb, var(--surface) 96%, var(--primary));
+  color: color-mix(in srgb, var(--primary) 74%, var(--text));
+  box-shadow: var(--cui-shadow-1), var(--cui-inset);
+  transition: transform 160ms ease, border-color 160ms ease, opacity 160ms ease;
+}
+.cui-catbar__arrow:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 30%, var(--cui-line));
+}
+.cui-catbar__arrow:disabled { opacity: 0.36; cursor: default; box-shadow: var(--cui-inset); }
+/* The arrows point at a physical direction, so they never mirror with the text
+   and they keep their side: left stays on the left in RTL too. */
+[dir='rtl'] .cui-catbar__arrow .icon--dir { transform: none; }
+[dir='rtl'] .cui-catbar__arrow--left { order: 3; }
+[dir='rtl'] .cui-catbar__scroll { order: 2; }
+[dir='rtl'] .cui-catbar__arrow--right { order: 1; }
 
 /* --------------------------------------------------------- product grid -- */
 
+/* Four cards on a wide desktop, three on a laptop, two on a tablet, one on a
+   phone — the photograph always has room to lead the card. */
 .cui-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 11px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  min-width: 0;
 }
-@media (min-width: 900px) { .cui-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; } }
+@media (min-width: 520px) { .cui-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .cui-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; } }
+@media (min-width: 1180px) { .cui-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; } }
 
 .cui-prod {
   position: relative;
   display: flex;
   flex-direction: column;
   min-width: 0;
+  padding: 7px;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: 24px;
   border: 1px solid var(--cui-line);
   background: var(--surface);
-  box-shadow: var(--cui-shadow-1), var(--cui-inset);
-  transition: transform 210ms ease, box-shadow 210ms ease, border-color 210ms ease;
+  box-shadow: 0 1px 2px rgba(16, 32, 26, 0.05), 0 14px 30px -18px rgba(16, 32, 26, 0.28),
+    var(--cui-inset);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 .cui-prod.is-openable { cursor: pointer; }
 .cui-prod:focus-visible {
@@ -766,11 +687,18 @@
   }
   .cui-prod:hover .cui-prod__media img { transform: scale(1.04); }
 }
+
+/* the photograph leads: full card width, rounded, cropped from the centre */
 .cui-prod__media {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: linear-gradient(140deg, color-mix(in srgb, var(--primary) 10%, var(--surface-2)), var(--surface-2));
+  border-radius: 18px;
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--primary) 10%, var(--surface-2)),
+    var(--surface-2)
+  );
 }
 .cui-prod__media img {
   width: 100%;
@@ -779,7 +707,12 @@
   display: block;
   transition: transform 420ms ease;
 }
-.cui-prod__ph { height: 100%; display: grid; place-items: center; color: color-mix(in srgb, var(--primary) 52%, var(--muted)); }
+.cui-prod__ph {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--primary) 52%, var(--muted));
+}
 .cui-prod__badges {
   position: absolute;
   inset-block-start: 8px;
@@ -810,66 +743,162 @@
   background: linear-gradient(180deg, var(--theme-primary, var(--primary)), var(--theme-primary-active, var(--primary)));
   box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 32%, transparent);
 }
-.cui-prod__body {
+
+/* The frosted panel overlaps the picture, so the photograph stays the hero
+   while every value sits on a calm, readable surface. */
+.cui-prod__glass {
+  position: relative;
+  z-index: 2;
+  margin: -40px 3px 0;
+  padding: 12px;
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding: 10px 12px 12px;
   flex: 1 1 auto;
+  flex-direction: column;
+  gap: 8px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--surface) 72%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 78%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 92%, transparent) 55%,
+    color-mix(in srgb, var(--surface) 97%, transparent) 100%
+  );
+  box-shadow: 0 -8px 22px -12px rgba(16, 32, 26, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+}
+[data-theme='dark'] .cui-prod__glass {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 82%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 96%, transparent) 100%
+  );
+  box-shadow: 0 -8px 22px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.cui-prod__name {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: 2.9em;
+  font-size: 14.5px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.cui-prod__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   min-width: 0;
 }
 .cui-prod__cat {
-  font-size: 10px;
-  font-weight: 750;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 700;
   color: var(--muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cui-prod__name {
-  font-size: 13.5px;
-  font-weight: 780;
-  color: var(--text);
-  line-height: 1.45;
+.cui-prod__stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--success) 26%, transparent);
+  background: color-mix(in srgb, var(--success) 13%, var(--surface));
+  color: color-mix(in srgb, var(--success) 82%, var(--text));
+  font-size: 10.5px;
+  font-weight: 800;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-.cui-prod__foot {
-  margin-top: auto;
-  padding-top: 8px;
+.cui-prod__stock i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+/* the price always reads as the strongest value in the card */
+.cui-prod__pricebar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
+  padding: 7px 10px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, transparent);
+  background: color-mix(in srgb, var(--primary) 8%, color-mix(in srgb, var(--surface) 82%, transparent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
-.cui-prod__price { display: flex; flex-direction: column; min-width: 0; line-height: 1.25; }
-.cui-prod__price s { font-size: 10.5px; color: var(--muted); }
-.cui-prod__price strong {
-  font-size: 13.5px;
-  font-weight: 850;
-  color: color-mix(in srgb, var(--primary) 66%, var(--text));
-  white-space: nowrap;
-}
-.cui-prod__add {
-  width: 34px;
-  height: 34px;
+.cui-prod__priceicon {
+  width: 26px;
+  height: 26px;
   flex: none;
-  border-radius: 12px;
   display: grid;
   place-items: center;
+  border-radius: 9px;
+  color: color-mix(in srgb, var(--primary) 78%, var(--text));
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+}
+.cui-prod__amount {
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--primary) 74%, var(--text));
+}
+.cui-prod__curr { font-size: 11.5px; font-weight: 750; color: var(--muted); }
+.cui-prod__was {
+  margin-inline-start: auto;
+  font-size: 11px;
+  color: var(--muted);
+  text-decoration-thickness: 1px;
+}
+
+.cui-prod__add {
+  margin-top: auto;
+  width: 100%;
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 52%, transparent);
   cursor: pointer;
-  border: 1px solid color-mix(in srgb, var(--primary) 46%, transparent);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 800;
   color: var(--primary-ink);
   background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 92%, #ffffff), var(--primary));
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 28%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  transition: transform 150ms ease, box-shadow 150ms ease;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
 }
-.cui-prod__add:hover { transform: translateY(-1px); box-shadow: 0 9px 20px color-mix(in srgb, var(--primary) 34%, transparent); }
-.cui-prod__add:active { transform: scale(0.94); }
-.cui-prod__add:focus-visible { outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent); }
+.cui-prod__add:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 13px 26px color-mix(in srgb, var(--primary) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+}
+.cui-prod__add:active:not(:disabled) { transform: translateY(1px); }
+.cui-prod__add:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.cui-prod__add:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.cui-prod__add span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ------------------------------------------------------------- blocks ---- */
 
@@ -994,10 +1023,10 @@
 @media (prefers-reduced-motion: reduce) {
   .cui-prod,
   .cui-prod__media img,
-  .cui-chip,
+  .cui-prod__add,
+  .cui-cat,
+  .cui-catbar__arrow,
   .cui-contact__card,
-  .cui-drawer,
-  .cui-drawer__panel,
   .cui-hero__cart,
   .cui-hero__back,
   .cui-hero__bg {

@@ -12,6 +12,20 @@ function activePromotionFor(promotions, productId) {
   return promotions.find((p) => p.product_id === productId) || null;
 }
 
+/*
+ * Product, cover and banner pictures are uploaded through the admin API, so
+ * they are stored as `/api/manage/media/<id>` — a URL only a signed-in member
+ * may read (a guest gets 401, which is why those pictures showed as broken in
+ * the public menu). The public payload rewrites the same reference to the
+ * public media route below, so a guest sees the very same stored file without
+ * gaining access to any other upload.
+ */
+function publicMediaUrl(url) {
+  if (typeof url !== 'string') return url;
+  const match = /^\/api\/manage\/media\/([0-9a-fA-F-]{36})$/.exec(url);
+  return match ? `/api/public/media/${match[1]}` : url;
+}
+
 async function loadBusiness(key) {
   const col = isUuid(key) ? 'id' : 'slug';
   const { rows } = await q(`SELECT * FROM businesses WHERE ${col} = $1`, [key]);
@@ -128,6 +142,7 @@ router.get(
       const promotion = activePromotionFor(promos.rows, p.id);
       return {
         ...p,
+        image_url: publicMediaUrl(p.image_url),
         promotion_id: promotion?.id || null,
         promo_price: promotion ? promoUnitPrice(p, promotion) : null,
         promotion_titles: promotion
@@ -195,8 +210,8 @@ router.get(
         name_ar: business.name_ar,
         name_en: business.name_en,
         description: business.description,
-        logo_url: business.logo_url,
-        cover_url: business.cover_url,
+        logo_url: publicMediaUrl(business.logo_url),
+        cover_url: publicMediaUrl(business.cover_url),
         phone: business.phone,
         email: business.email,
         website: business.website,
@@ -235,7 +250,9 @@ router.get(
       products,
       /* The advertisement module is untouched; its banners are simply withheld
          from a context where the owner turned them off. */
-      advertisements: menu.features.ads ? ads.rows : [],
+      advertisements: menu.features.ads
+        ? ads.rows.map((a) => ({ ...a, image_url: publicMediaUrl(a.image_url) }))
+        : [],
       reviews: reviews.rows,
       best_selling: bestSelling,
       featured_ids: featuredIds,
@@ -500,6 +517,36 @@ router.post(
       table: result.tableName,
       push,
     });
+  }),
+);
+
+/*
+ * A picture a guest is allowed to see: only an upload that is already attached
+ * to something this public menu shows — a product, a published advertisement,
+ * or the business's own logo / cover. The list of uploads is never exposed, and
+ * an unrelated id answers exactly like a missing one.
+ */
+router.get(
+  '/media/:id',
+  ah(async (req, res) => {
+    if (!isUuid(req.params.id)) throw notFound('MEDIA_NOT_FOUND');
+    const { rows } = await q(
+      `SELECT m.mime, m.data FROM media m
+        WHERE m.id = $1
+          AND (
+            EXISTS (SELECT 1 FROM products p
+                     WHERE p.business_id = m.business_id AND p.image_url = $2)
+            OR EXISTS (SELECT 1 FROM advertisements a
+                        WHERE a.business_id = m.business_id AND a.image_url = $2)
+            OR EXISTS (SELECT 1 FROM businesses b
+                        WHERE b.id = m.business_id AND (b.logo_url = $2 OR b.cover_url = $2))
+          )`,
+      [req.params.id, `/api/manage/media/${req.params.id}`],
+    );
+    if (!rows[0]) throw notFound('MEDIA_NOT_FOUND');
+    res.set('Content-Type', rows[0].mime);
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.send(Buffer.from(rows[0].data, 'base64'));
   }),
 );
 

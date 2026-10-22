@@ -26,7 +26,6 @@ import CustomerAbout from '../components/customer/CustomerAbout';
 import CustomerContact from '../components/customer/CustomerContact';
 import CartPanel from '../components/customer/CartPanel';
 import ReviewModal from '../components/customer/ReviewModal';
-import { appearanceOf } from '../components/menu/categoryIcons';
 import '../customer.css';
 
 const sessionKey = () => {
@@ -102,13 +101,19 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     post(`/public/views/${key}`, { session_key: sessionKey() }).catch(() => {});
   }, [data, key, adminMode]);
 
-  /* Picking a category filters the list to it and brings it into view; the rail,
-     the drawer and the chip strip all drive this one handler. */
-  const selectCategory = (id) => {
+  /*
+   * Picking a category filters the grid. The strip stays where it is, so the
+   * products are only brought back into view when the guest has already
+   * scrolled past them — never a jump on every tap.
+   */
+  const selectCategory = (id, { reveal = false } = {}) => {
     setActiveCat(id);
-    if (!id) return;
     window.requestAnimationFrame(() => {
-      document.getElementById(`cat-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const grid = document.getElementById('cui-products');
+      if (!grid) return;
+      if (reveal || grid.getBoundingClientRect().top < 0) {
+        grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   };
 
@@ -279,18 +284,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const adsBelowHeader = ads.filter((ad) => (ad.placement || 'below_header') === 'below_header');
   const adsMenuEnd = ads.filter((ad) => ad.placement === 'menu_end');
 
-  /* A tap reveals the related product's category, the related category, or the
-     stored http(s) destination. Nothing else is treated as a link. */
+  /* A tap narrows the grid to the related product's category, to the related
+     category, or opens the stored http(s) destination. Nothing else is a link. */
   const openAd = (ad) => {
     const product = ad.product_id ? (data.products || []).find((p) => p.id === ad.product_id) : null;
-    const targetId = product?.category_id
-      ? `cat-${product.category_id}`
-      : ad.category_id
-        ? `cat-${ad.category_id}`
-        : null;
-    const target = targetId ? document.getElementById(targetId) : null;
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const categoryId = product?.category_id || ad.category_id || null;
+    if (categoryId) {
+      selectCategory(categoryId, { reveal: true });
       return;
     }
     if (ad.link_url && /^https?:\/\//i.test(ad.link_url)) {
@@ -404,7 +404,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           </section>
         ) : null}
 
-        <div className={`cui-order ${showFeature('categories') ? '' : 'is-plain'}`}>
+        <div className="cui-order">
           {showFeature('categories') ? (
             <CustomerCategoryNav
               categories={visibleCategories}
@@ -413,37 +413,31 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             />
           ) : null}
 
-          <div className="cui-feed">
+          {/*
+           * One continuous grid: searching and picking a category narrow the
+           * same list instead of jumping between separate per-category blocks.
+           */}
+          <div className="cui-feed" id="cui-products">
             {products.length === 0 ? (
               <EmptyState icon="coffee" title={t('customer_menu_no_products')} />
             ) : (
-              visibleCategories
-                .filter((c) => products.some((p) => p.category_id === c.id))
-                .map((c) => {
-                  const items = products.filter((p) => p.category_id === c.id);
-                  return (
-                    <section className="menu-section" id={`cat-${c.id}`} key={c.id}>
-                      <CategoryHeading category={c} count={items.length} />
-                      <div className="cui-grid">
-                        {items.map((p) => (
-                          <CustomerProductCard
-                            key={p.id}
-                            product={p}
-                            categoryName={localized(c, 'name', locale)}
-                            locale={locale}
-                            currency={currency}
-                            showPrices={showFeature('prices')}
-                            canAdd={cartEnabled}
-                            addLabel={t('customer_menu_add')}
-                            promoLabel={t('customer_menu_promo')}
-                            onAdd={add}
-                            onOpen={showFeature('details') ? setDetail : undefined}
-                          />
-                        ))}
-                      </div>
-                    </section>
-                  );
-                })
+              <div className="cui-grid">
+                {products.map((p) => (
+                  <CustomerProductCard
+                    key={p.id}
+                    product={p}
+                    categoryName={localized(categories.find((c) => c.id === p.category_id), 'name', locale)}
+                    locale={locale}
+                    currency={currency}
+                    showPrices={showFeature('prices')}
+                    canAdd={cartEnabled}
+                    addLabel={t('customer_menu_add_to_cart')}
+                    promoLabel={t('customer_menu_promo')}
+                    onAdd={add}
+                    onOpen={showFeature('details') ? setDetail : undefined}
+                  />
+                ))}
+              </div>
             )}
           </div>
         </div>
@@ -540,23 +534,6 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   );
 }
 
-/* The heading over one category's products: its own identity glyph and accent,
-   the localized name, and how many items it holds. */
-function CategoryHeading({ category, count }) {
-  const { t, locale } = useI18n();
-  const appearance = appearanceOf(category);
-  return (
-    <div className="cui-sec__head">
-      <span className="cui-cat-icon" style={{ '--cic': appearance.color }} aria-hidden="true">
-        <Icon name={appearance.icon} size={17} />
-      </span>
-      <h2 className="cui-sec__title">{localized(category, 'name', locale)}</h2>
-      <span className="cui-sec__count" title={t('customer_menu_items')}>
-        {fmtNumber(count, locale)}
-      </span>
-    </div>
-  );
-}
 /*
  * The public review block: the reviews the API already published, plus the one
  * control that opens the illustrated review sheet. The form itself lives in
