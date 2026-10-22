@@ -26,21 +26,35 @@ export default function CategoryPanel({
 }) {
   const { t, locale } = useI18n();
 
+  // The header identity follows the selected row: its own saved glyph and
+  // accent, or the neutral Categories glyph while nothing is selected.
+  const selected = categories.find((c) => c.id === selectedId) || null;
+  const appearance = selected ? appearanceOf(selected) : null;
+
   return (
     <section className="mpanel">
       {/*
-       * One compact group at the inline start: the raised icon sits in the
-       * panel's far corner (physical right under RTL) and the heading + subtitle
-       * follow immediately beside it, never spread to the opposite edge.
+       * Heading at the inline start and its icon in the opposite far corner
+       * (physical right / physical left under RTL, mirrored in LTR), both
+       * vertically centred on the same line.
        */}
       <header className="mpanel__head">
-        <span className="mpanel__icon">
-          <Icon name="glass" size={23} />
-        </span>
         <div className="mpanel__text">
           <h2 className="mpanel__title">{t('menu_tab_categories')}</h2>
           <p className="mpanel__sub">{t('menu_categories_hint')}</p>
         </div>
+        {appearance ? (
+          <CategoryIdentityIcon
+            icon={appearance.icon}
+            color={appearance.color}
+            size={46}
+            variant="raised"
+          />
+        ) : (
+          <span className="mpanel__icon">
+            <Icon name="layers" size={22} />
+          </span>
+        )}
       </header>
 
       <div className="mcstats">

@@ -256,11 +256,16 @@
 }
 
 /*
- * The heading group leads and its icon follows at the logical end, which is the
- * physical left under RTL exactly as in the reference: icon, then the title and
- * its supporting line, hugging the start edge.
+ * Heading at the inline start, identity icon pushed to the opposite far corner
+ * (physical left under RTL, mirrored in LTR) and vertically centred with it.
  */
-.mpanel__head { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.mpanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
 .mpanel__icon {
   width: 48px;
   height: 48px;
@@ -268,20 +273,21 @@
   flex: none;
   display: grid;
   place-items: center;
+  /* Neutral fallback: follows the business theme, not a fixed hue. */
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--pastel-blue-ink) 7%, var(--pastel-blue)),
-    var(--pastel-blue)
+    color-mix(in srgb, var(--primary) 8%, var(--surface)),
+    color-mix(in srgb, var(--primary) 16%, var(--surface))
   );
-  color: var(--pastel-blue-ink);
-  border: 1px solid color-mix(in srgb, var(--pastel-blue-ink) 20%, transparent);
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.82),
-    inset 0 -1px 0 color-mix(in srgb, var(--pastel-blue-ink) 8%, transparent),
-    0 5px 12px -6px color-mix(in srgb, var(--pastel-blue-ink) 60%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--primary) 8%, transparent),
+    0 5px 12px -6px color-mix(in srgb, var(--primary) 60%, transparent),
     0 2px 4px -2px rgba(24, 46, 30, 0.12);
 }
-.mpanel__text { min-width: 0; }
+.mpanel__text { min-width: 0; flex: 1 1 auto; }
 .mpanel__title { font-size: 16px; font-weight: 800; color: var(--mp-ink); }
 .mpanel__sub { font-size: 11.5px; color: var(--mp-muted); margin-top: 2px; line-height: 1.4; }
 
