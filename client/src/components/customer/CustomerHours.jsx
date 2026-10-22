@@ -4,14 +4,16 @@ import { fmtDate, fmtWeekday } from '../../format';
 
 /*
  * Today's trading hours, read on the business's own clock (the API resolves the
- * day key and the open/closed verdict in the business timezone). It renders only
- * when the owner actually saved a schedule for today, so the sections around it
- * simply share the space when the card is absent.
+ * day key and the open/closed verdict in the business timezone, including an
+ * interval that runs past midnight). It renders only when the owner actually
+ * saved a schedule, so the sections around it simply share the space when the
+ * card is absent.
  *
  * Layout follows the reference: a tinted header row with the title, its icon and
- * the state pill, then a white body with the day/date on one side and the range
- * on the other. The date goes through the shared formatter, so Persian shows the
- * Solar Hijri calendar and every other language its own localized date.
+ * the state pill — the state on its own, never with the business type beside it
+ * — then the day and date in a soft calendar badge opposite the trading range.
+ * The date goes through the shared formatter, so Persian shows the Solar Hijri
+ * calendar and every other language its own localized date.
  */
 export default function CustomerHours({ hours, timeZone }) {
   const { t, locale } = useI18n();
@@ -37,7 +39,9 @@ export default function CustomerHours({ hours, timeZone }) {
 
       <div className="cui-hours__body">
         <div className="cui-hours__date">
-          <Icon name="calendar" size={17} />
+          <span className="cui-hours__dateicon">
+            <Icon name="calendar" size={16} />
+          </span>
           <span className="cui-hours__datetext">
             <strong className="cui-hours__day">
               {fmtWeekday(new Date(), locale, timeZone, { long: true })}
@@ -47,7 +51,7 @@ export default function CustomerHours({ hours, timeZone }) {
         </div>
 
         <div className="cui-hours__time">
-          <Icon name="clock" size={16} />
+          <Icon name="clock" size={15} />
           {closed ? (
             <span className="is-closed">{t('customer_menu_closed_today')}</span>
           ) : (

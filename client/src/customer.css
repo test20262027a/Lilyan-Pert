@@ -12,8 +12,8 @@
 .customer-shell {
   --cui-rad: 22px;
   --cui-rad-sm: 14px;
-  /* No sticky bar above the banner: the offset keeps the rail and chips
-     flush with the viewport top. */
+  /* Height the compact header occupies once the banner scrolled away; the
+     category strip sticks directly beneath it (0 while the banner is in view). */
   --cui-bar-h: 0px;
   --cui-line: color-mix(in srgb, var(--border) 78%, transparent);
   --cui-tint: color-mix(in srgb, var(--primary) 9%, transparent);
@@ -30,6 +30,8 @@
     radial-gradient(120% 55% at 50% -8%, color-mix(in srgb, var(--primary) 11%, transparent), transparent 72%),
     var(--bg);
 }
+.customer-shell.is-barred { --cui-bar-h: 64px; }
+
 [data-theme='dark'] .customer-shell {
   --cui-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
   --cui-shadow-2: 0 12px 30px rgba(0, 0, 0, 0.45);
@@ -37,23 +39,27 @@
   --cui-inset: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* ------------------------------------------- banner controls (hero top) --- */
+/* --------------------------------------------------------------- header -- */
 
-.cui-hero__top {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline: 0;
-  z-index: 3;
+/*
+ * One action row for both header states: the basket, then the language selector
+ * next to the in-store admin return. The row is laid out physically (basket
+ * left, tools right) in every language, so the composition never mirrors, while
+ * each control's own contents follow the reading direction.
+ */
+.cui-nav {
+  direction: ltr;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 14px clamp(12px, 2.6vw, 26px);
+  width: 100%;
+  min-width: 0;
 }
-.cui-hero__top-side { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cui-nav__tools { display: flex; align-items: center; gap: 8px; min-width: 0; }
 
 /* The in-store "back to the admin panel" pill — never rendered for a guest. */
-.cui-hero__back {
+.cui-nav__back {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -69,30 +75,18 @@
   box-shadow: 0 10px 22px color-mix(in srgb, var(--primary) 34%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.42);
   transition: transform 160ms ease, box-shadow 160ms ease;
 }
-.cui-hero__back:hover {
+.cui-nav__back:hover {
   transform: translateY(-1px);
   box-shadow: 0 13px 26px color-mix(in srgb, var(--primary) 40%, transparent);
 }
-.cui-hero__back span { display: none; }
+.cui-nav__back span { display: none; }
 
-/* The app's own language dropdown, framed as a light pill on the photograph. */
-.cui-hero__lang { display: inline-flex; }
-.cui-hero__lang .hdr-lang__btn {
-  height: 42px;
-  padding-inline: 13px;
-  border-radius: 999px;
-  color: var(--cui-hero-ink);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  border-color: rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 8px 20px rgba(6, 14, 12, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-.cui-hero__lang .hdr-lang__btn:hover { background: var(--surface); }
-.cui-hero__lang .hdr-lang__label { font-size: 12.5px; }
-.cui-hero__lang .hdr-lang__caret { color: currentColor; opacity: 0.7; }
+/* The app's own language dropdown, framed as a glass pill. */
+.cui-nav__lang { display: inline-flex; }
+.cui-nav__lang .hdr-lang__label { font-size: 12.5px; }
+.cui-nav__lang .hdr-lang__caret { color: currentColor; opacity: 0.7; }
 
-.cui-hero__cart {
+.cui-nav__cart {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -103,18 +97,11 @@
   font: inherit;
   font-size: 12.5px;
   font-weight: 750;
-  color: #fff;
-  background: rgba(16, 25, 21, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-  transition: transform 160ms ease, background 160ms ease;
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
-.cui-hero__cart:hover { background: rgba(16, 25, 21, 0.66); transform: translateY(-1px); }
-.cui-hero__cart:active { transform: scale(0.97); }
-.cui-hero__cartlabel { display: none; white-space: nowrap; }
-.cui-hero__count {
+.cui-nav__cart:active { transform: scale(0.97); }
+.cui-nav__cartlabel { display: none; white-space: nowrap; }
+.cui-nav__count {
   min-width: 20px;
   height: 20px;
   padding-inline: 6px;
@@ -123,12 +110,109 @@
   place-items: center;
   font-size: 11px;
   font-weight: 850;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+/* --- hero state: floating over the photograph --------------------------- */
+
+.cui-nav--hero {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 3;
+  padding: 14px clamp(12px, 2.6vw, 26px);
+}
+.cui-nav--hero .cui-nav__lang .hdr-lang__btn {
+  height: 42px;
+  padding-inline: 13px;
+  border-radius: 999px;
+  color: var(--cui-hero-ink);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border-color: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  box-shadow: 0 8px 20px rgba(6, 14, 12, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.cui-nav--hero .cui-nav__lang .hdr-lang__btn:hover { background: var(--surface); }
+.cui-nav--hero .cui-nav__cart {
+  color: #fff;
+  background: rgba(16, 25, 21, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+.cui-nav--hero .cui-nav__cart:hover { background: rgba(16, 25, 21, 0.66); transform: translateY(-1px); }
+.cui-nav--hero .cui-nav__count {
   color: var(--cui-hero-ink);
   background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
 }
-@media (min-width: 560px) { .cui-hero__cartlabel { display: inline; } }
-@media (min-width: 780px) { .cui-hero__back span { display: inline; } }
+
+/* --- scrolled state: the compact floating bar --------------------------- */
+
+/*
+ * One instance, driven by an IntersectionObserver on the banner: the bar fades
+ * and slides in, and the hidden state keeps it out of the tab order, so a guest
+ * never meets a second, invisible set of controls.
+ */
+.cui-stickybar {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 60;
+  visibility: hidden;
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 68%, transparent);
+  box-shadow: 0 10px 26px rgba(16, 32, 26, 0.1);
+  transition: opacity 220ms ease, transform 220ms ease, visibility 220ms ease;
+}
+.cui-stickybar.is-visible {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.cui-stickybar__inner {
+  width: min(100% - 32px, 1180px);
+  margin-inline: auto;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+}
+.cui-stickybar .cui-nav__lang .hdr-lang__btn {
+  height: 38px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-color: color-mix(in srgb, var(--border) 78%, transparent);
+  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.cui-stickybar .cui-nav__back { height: 38px; }
+.cui-stickybar .cui-nav__cart {
+  height: 38px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.cui-stickybar .cui-nav__cart:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+  box-shadow: var(--cui-shadow-2);
+}
+.cui-stickybar .cui-nav__count {
+  color: var(--primary-ink);
+  background: var(--primary);
+}
+
+@media (min-width: 560px) { .cui-nav__cartlabel { display: inline; } }
+@media (min-width: 780px) { .cui-nav__back span { display: inline; } }
 
 /* --------------------------------------------------------------- hero ---- */
 
@@ -184,34 +268,42 @@
   text-align: center;
   padding: clamp(76px, 9vw, 96px) clamp(16px, 4vw, 32px) clamp(46px, 6vw, 62px);
 }
+/* Frosted-glass frame around the saved logo: the artwork itself is untouched
+   (object-fit: contain), the surface behind it is translucent with a blur, a
+   hairline border, a soft outer shadow and a light inner highlight. */
 .cui-hero__logo {
-  width: 96px;
-  height: 96px;
-  border-radius: 28px;
+  width: 104px;
+  height: 104px;
+  padding: 10px;
+  border-radius: 26px;
   overflow: hidden;
   display: grid;
   place-items: center;
-  color: color-mix(in srgb, var(--primary) 62%, #0d1a15);
-  background: color-mix(in srgb, var(--surface) 96%, #ffffff);
-  border: 3px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 18px 40px rgba(6, 14, 12, 0.34), inset 0 1px 0 #ffffff;
+  color: rgba(255, 255, 255, 0.94);
+  background: rgba(255, 255, 255, 0.13);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  box-shadow:
+    0 16px 38px rgba(6, 14, 12, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  transition: transform 320ms ease, box-shadow 320ms ease;
 }
-.cui-hero__logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.cui-hero__kicker {
-  margin-top: 14px;
-  font-size: 10.5px;
-  font-weight: 750;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.76);
-}
+.cui-hero__logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+
+/* The welcome line is the banner's main heading — larger, softer tracking,
+   shadowed for readability over any photograph, and it never overflows. */
 .cui-hero__name {
-  margin-top: 2px;
-  font-size: clamp(20px, 3.2vw, 28px);
-  font-weight: 850;
+  margin-top: 16px;
+  max-width: min(100%, 720px);
+  font-size: clamp(22px, 3.6vw, 34px);
+  font-weight: 820;
   color: #fff;
-  line-height: 1.25;
-  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.45);
+  line-height: 1.38;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  text-shadow: 0 3px 20px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.34);
 }
 .cui-hero__place {
   margin-top: 10px;
@@ -279,11 +371,13 @@
    the search field sit half on the banner, half on the page. */
 .customer-shell .customer-body { padding-top: 0; }
 
-/* Search, summary strip and working hours: one calm centred column. */
+/*
+ * Search, summary strip and working hours: one calm column that takes the page's
+ * full content width, so its left and right edges line up exactly with the ads,
+ * featured products, best sellers, about and contact sections below.
+ */
 .cui-head {
   width: 100%;
-  max-width: 860px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   padding-bottom: 6px;
@@ -295,15 +389,20 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  width: min(560px, 100%);
-  height: 58px;
+  width: 100%;
+  height: 56px;
   /* Half on the banner, half on the page — the reference composition. */
-  margin: -29px auto 0;
+  margin: -28px auto 0;
   padding: 0 22px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 97%, var(--primary));
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  box-shadow: 0 18px 40px rgba(16, 32, 26, 0.14), 0 2px 6px rgba(16, 32, 26, 0.05), var(--cui-inset);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  box-shadow:
+    0 20px 44px rgba(16, 32, 26, 0.16),
+    0 3px 8px rgba(16, 32, 26, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
   transition: border-color 180ms ease, box-shadow 180ms ease;
 }
 .cui-search:focus-within {
@@ -324,14 +423,6 @@
   color: var(--text);
 }
 .cui-search input::placeholder { color: var(--muted); font-weight: 500; }
-.cui-welcome {
-  margin-top: 12px;
-  padding: 0 6px;
-  font-size: 12.5px;
-  line-height: 1.7;
-  text-align: center;
-  color: var(--muted);
-}
 
 /* summary strip: one card, soft dividers, themed icons */
 .cui-summary {
@@ -398,13 +489,13 @@
   .cui-summary__label { font-size: 12.5px; }
 }
 
-/* working hours: tinted header row, white body */
+/* working hours: tinted header row, then the date opposite the trading range */
 .cui-hours {
   margin-top: 14px;
   border-radius: 20px;
   border: 1px solid var(--cui-line);
   background: var(--surface);
-  box-shadow: var(--cui-shadow-1), var(--cui-inset);
+  box-shadow: var(--cui-shadow-2), var(--cui-inset);
   overflow: hidden;
 }
 .cui-hours__head {
@@ -433,34 +524,61 @@
 .cui-hours__title {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 13.5px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 820;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cui-hours__body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px 18px;
+  gap: 12px 18px;
   padding: 14px 18px;
 }
-.cui-hours__date { display: flex; align-items: center; gap: 9px; min-width: 0; color: var(--muted); }
-.cui-hours__datetext { display: flex; flex-direction: column; min-width: 0; }
-.cui-hours__day { font-size: 13px; font-weight: 800; color: var(--text); }
-.cui-hours__fulldate { font-size: 11.5px; color: var(--muted); }
+.cui-hours__date { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+/* The calendar sits in its own soft themed badge, so the day and the date read
+   as one calm block instead of two loose lines. */
+.cui-hours__dateicon {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--primary) 78%, #0b1220);
+  background: var(--cui-tint);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+[data-theme='dark'] .cui-hours__dateicon { color: color-mix(in srgb, var(--primary) 72%, #ffffff); }
+.cui-hours__datetext { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cui-hours__day { font-size: 14.5px; font-weight: 850; color: var(--text); line-height: 1.3; }
+.cui-hours__fulldate { font-size: 12.5px; font-weight: 600; color: var(--muted); }
+
+/* The range is the number a guest looks for, so it gets its own tinted plate. */
 .cui-hours__time {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14.5px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  font-size: 17px;
   font-weight: 850;
   color: var(--text);
-  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
   white-space: nowrap;
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
 }
 .cui-hours__time svg { color: color-mix(in srgb, var(--primary) 82%, var(--text)); }
-.cui-hours__time .is-closed { color: var(--muted); font-weight: 700; }
+.cui-hours__time .is-closed { color: var(--muted); font-weight: 700; font-size: 14px; }
 
 /* ---------------------------------------------------------- ordering ---- */
 
@@ -516,7 +634,7 @@
  */
 .cui-catbar {
   position: sticky;
-  top: 0;
+  top: var(--cui-bar-h);
   z-index: 35;
   display: flex;
   align-items: center;
@@ -1096,8 +1214,10 @@
   .cui-cat,
   .cui-catbar__arrow,
   .cui-link,
-  .cui-hero__cart,
-  .cui-hero__back,
+  .cui-nav__cart,
+  .cui-nav__back,
+  .cui-hero__logo,
+  .cui-stickybar,
   .cui-hero__bg {
     transition: none !important;
     animation: none !important;

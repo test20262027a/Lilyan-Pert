@@ -34,7 +34,8 @@ export default function CustomerStats({ categories, items, typeLabel, hours }) {
           icon: 'clock',
           tone: open ? 'mint' : 'rose',
           value: open ? t('dash_open_now') : t('dash_closed_now'),
-          label: typeLabel || t('settings_business_type'),
+          /* The state stands alone — the business type is never appended to it. */
+          label: '',
         }
       : typeLabel
         ? {
@@ -55,7 +56,7 @@ export default function CustomerStats({ categories, items, typeLabel, hours }) {
             <Icon name={tile.icon} size={17} />
           </span>
           <span className="cui-summary__value">{tile.value}</span>
-          <span className="cui-summary__label">{tile.label}</span>
+          {tile.label ? <span className="cui-summary__label">{tile.label}</span> : null}
         </div>
       ))}
     </div>

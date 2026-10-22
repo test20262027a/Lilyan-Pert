@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
@@ -18,6 +18,7 @@ import { fmtNumber, zoneFor } from '../format';
 import CustomerAds from '../components/ads/CustomerAds';
 import CustomerTopBar from '../components/customer/CustomerTopBar';
 import CustomerHero from '../components/customer/CustomerHero';
+import CustomerStickyHeader from '../components/customer/CustomerStickyHeader';
 import CustomerStats from '../components/customer/CustomerStats';
 import CustomerHours from '../components/customer/CustomerHours';
 import CustomerCategoryNav from '../components/customer/CustomerCategoryNav';
@@ -40,7 +41,7 @@ const sessionKey = () => {
 export default function CustomerMenu({ slug, adminMode = false }) {
   const params = useParams();
   const key = slug || params.key;
-  const { t, locale, setLocale } = useI18n();
+  const { t, locale } = useI18n();
   const { user } = useAuth();
   const toast = useToast();
 
@@ -59,6 +60,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
      open the same form. */
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewBusy, setReviewBusy] = useState(false);
+  /* True once the banner has scrolled away: the compact header takes over. */
+  const [barred, setBarred] = useState(false);
+  const heroRef = useRef(null);
 
   const storageKey = `lilyan.cart.${key}`;
 
@@ -85,6 +89,24 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   useEffect(() => {
     load();
   }, [load]);
+
+  /*
+   * The compact header appears when the banner leaves the viewport. An
+   * IntersectionObserver drives that once per crossing, instead of a scroll
+   * listener that would re-render the whole page on every frame.
+   */
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || !data || typeof IntersectionObserver === 'undefined') return undefined;
+    const observer = new IntersectionObserver(
+      ([entry]) => setBarred(!entry.isIntersecting),
+      /* The top inset matches the compact bar, so the switch happens exactly
+         when the banner has slid behind it. */
+      { rootMargin: '-64px 0px 0px 0px', threshold: 0 },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, [data]);
 
   useEffect(() => {
     try {
@@ -244,7 +266,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
   const biz = data.business;
   const brandName = localized(biz, 'name', locale) || biz.name;
-  const menuTitle = biz.editable_text?.menu_title?.[locale] || t('customer_menu_brand');
+  /* The banner's heading: the owner's saved welcome line, or the business name. */
+  const welcome = biz.editable_text?.welcome?.[locale] || '';
 
   if (data.menu_disabled) {
     return (
@@ -254,8 +277,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     );
   }
 
+  /* The way back to the admin panel exists only for an authenticated admin in
+     the in-store menu — a guest on the public link never receives it. */
   const showAdminReturn =
-    adminMode && biz.menu_settings?.show_admin_return !== false && biz.menu_settings?.show_customer_menu !== false;
+    adminMode
+    && Boolean(user)
+    && biz.menu_settings?.show_admin_return !== false
+    && biz.menu_settings?.show_customer_menu !== false;
 
   /*
    * The server resolves the Menu Settings for this context (main or qr), so the
@@ -312,11 +340,29 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   };
 
   return (
-    <div className="customer-shell">
+    <div className={`customer-shell ${barred ? 'is-barred' : ''}`}>
+      {/* The compact header reads the same cart, language and admin state as the
+          banner's own row — one set of controls, two visual states. */}
+      <CustomerStickyHeader visible={barred}>
+        <CustomerTopBar
+          variant="bar"
+          cartEnabled={cartEnabled}
+          cartCount={cartCount}
+          onCart={() => setCartOpen(true)}
+          adminReturn={showAdminReturn}
+        />
+      </CustomerStickyHeader>
+
       {/* The banner carries its own controls, so the page opens edge to edge
           exactly like the reference: basket on one side, language/admin on the
           other, logo floating in the middle. */}
-      <CustomerHero business={biz} brandName={brandName} menuTitle={menuTitle} table={data.table}>
+      <CustomerHero
+        business={biz}
+        brandName={brandName}
+        welcome={welcome}
+        table={data.table}
+        heroRef={heroRef}
+      >
         <CustomerTopBar
           cartEnabled={cartEnabled}
           cartCount={cartCount}
@@ -340,10 +386,6 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
-          ) : null}
-
-          {biz.editable_text?.welcome?.[locale] ? (
-            <p className="cui-welcome">{biz.editable_text.welcome[locale]}</p>
           ) : null}
 
           <CustomerStats

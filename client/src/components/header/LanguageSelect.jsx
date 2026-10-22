@@ -1,56 +1,107 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import LanguageFlag from './LanguageFlag';
 import { useI18n } from '../../i18n';
+
+/* Collision padding from the viewport edges, and the gap under the trigger. */
+const EDGE = 10;
+const GAP = 8;
+const MENU_MIN_WIDTH = 186;
+const ROW = 42;
 
 /*
  * Compact language control: flag, current label and a chevron. The list is a
  * real menu (not a native <select>) so every language can show its own flag —
  * Kurdish gets the Kurdistan flag, never the Iraqi or Iranian one.
  *
+ * The list is portalled to <body> and positioned fixed from the trigger's own
+ * rectangle: it is never clipped by a card, a scrolling strip or the sticky
+ * header, and it can never push the page sideways. It opens towards the inside
+ * of the page (its start edge on the trigger's start edge) and clamps to the
+ * viewport, so a trigger parked in the top-right corner still shows a complete
+ * menu instead of one hanging off the screen.
+ *
  * Choosing a language persists it through the i18n provider, which also flips
  * the document direction; nothing else on the page is reset.
  */
 export default function LanguageSelect() {
-  const { t, locale, setLocale, LOCALES } = useI18n();
+  const { t, locale, setLocale, LOCALES, dir } = useI18n();
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState(null);
   const wrapRef = useRef(null);
+  const menuRef = useRef(null);
   const current = LOCALES.find((l) => l.code === locale) || LOCALES[0];
+
+  const place = useCallback(() => {
+    const trigger = wrapRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const width = Math.min(Math.max(rect.width, MENU_MIN_WIDTH), vw - EDGE * 2);
+    const need = LOCALES.length * ROW + 14;
+    const below = vh - rect.bottom - EDGE;
+    const above = rect.top - EDGE;
+    const openUp = below < need && above > below;
+
+    /* Align the inner (start) edge of the list with the trigger's, then clamp
+       into the viewport — the reference layout's "extend inwards" rule. */
+    const preferred = dir === 'rtl' ? rect.right - width : rect.left;
+    const left = Math.min(Math.max(EDGE, preferred), Math.max(EDGE, vw - width - EDGE));
+
+    setPos({
+      left,
+      width,
+      maxHeight: Math.min(need, Math.max(ROW, (openUp ? above : below) - GAP)),
+      ...(openUp ? { bottom: Math.max(EDGE, vh - rect.top + GAP) } : { top: rect.bottom + GAP }),
+    });
+  }, [dir, LOCALES.length]);
+
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open, place]);
 
   useEffect(() => {
     if (!open) return undefined;
     const onPointerDown = (e) => {
-      if (!wrapRef.current?.contains(e.target)) setOpen(false);
+      if (wrapRef.current?.contains(e.target)) return;
+      if (menuRef.current?.contains(e.target)) return;
+      setOpen(false);
     };
     const onKey = (e) => {
       if (e.key === 'Escape') setOpen(false);
     };
+    const onViewport = () => place();
+
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKey);
+    /* Capture-phase scroll catches the page and every inner scrolling strip. */
+    window.addEventListener('scroll', onViewport, true);
+    window.addEventListener('resize', onViewport);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onViewport, true);
+      window.removeEventListener('resize', onViewport);
     };
-  }, [open]);
+  }, [open, place]);
 
-  return (
-    <span className="hdr-lang" ref={wrapRef}>
-      <button
-        type="button"
-        className="hdr-lang__btn"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label={t('label_language')}
-        title={t('label_language')}
-        onClick={() => setOpen((v) => !v)}
-      >
-        <LanguageFlag code={current.code} />
-        <span className="hdr-lang__label">{current.label}</span>
-        <Icon name="chevronDown" size={14} className={`hdr-lang__caret ${open ? 'is-open' : ''}`} />
-      </button>
-
-      {open ? (
-        <div className="hdr-lang__menu" role="listbox" aria-label={t('label_language')}>
+  const menu = open && pos
+    ? createPortal(
+        <div
+          ref={menuRef}
+          className="hdr-lang__menu hdr-lang__menu--float"
+          role="listbox"
+          aria-label={t('label_language')}
+          style={{
+            left: pos.left,
+            width: pos.width,
+            maxHeight: pos.maxHeight,
+            ...(pos.top === undefined ? { bottom: pos.bottom } : { top: pos.top }),
+          }}
+        >
           {LOCALES.map((l) => {
             const active = l.code === locale;
             return (
@@ -71,8 +122,28 @@ export default function LanguageSelect() {
               </button>
             );
           })}
-        </div>
-      ) : null}
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <span className="hdr-lang" ref={wrapRef}>
+      <button
+        type="button"
+        className="hdr-lang__btn"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={t('label_language')}
+        title={t('label_language')}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <LanguageFlag code={current.code} />
+        <span className="hdr-lang__label">{current.label}</span>
+        <Icon name="chevronDown" size={14} className={`hdr-lang__caret ${open ? 'is-open' : ''}`} />
+      </button>
+
+      {menu}
     </span>
   );
 }
