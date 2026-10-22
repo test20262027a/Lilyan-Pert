@@ -434,38 +434,42 @@
 .ostatus__caret.is-open { transform: rotate(180deg); }
 .ostatus__spinner { width: 13px; height: 13px; border-width: 2px; }
 
+/* The status list uses the shared selection popup surface (see select.css). */
 .ostatus__menu {
   position: fixed;
   z-index: 70;
-  min-width: 156px;
-  padding: 6px;
+  min-width: 176px;
+  padding: 7px;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-lg);
-  animation: ostatus-in 0.14s ease;
+  background: var(--lysel-bg);
+  border: 1px solid var(--lysel-border);
+  border-radius: var(--lysel-radius);
+  box-shadow: var(--lysel-shadow);
+  animation: ostatus-in 0.17s cubic-bezier(0.2, 0.7, 0.3, 1);
 }
-@keyframes ostatus-in { from { opacity: 0; transform: translateY(-4px); } }
+@keyframes ostatus-in { from { opacity: 0; transform: translateY(-4px) scale(0.985); } }
 
 .ostatus__item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 12px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--lysel-row-radius);
   background: none;
   color: var(--text);
   font-family: inherit;
-  font-size: 13px;
+  font-size: 13.5px;
   font-weight: 650;
   text-align: start;
   cursor: pointer;
+  transition: background-color 140ms ease;
 }
-.ostatus__item:hover { background: var(--surface-2); }
+.ostatus__item:hover,
+.ostatus__item:focus-visible { background: var(--lysel-row-hover); outline: none; }
 .ostatus__dot {
   width: 8px;
   height: 8px;

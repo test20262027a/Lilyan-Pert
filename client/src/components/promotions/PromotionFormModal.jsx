@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from '../Icon';
-import { Alert } from '../ui';
+import { Alert, Select } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { promotionsErrorText } from './errorText';
 import { PromotionModalArtwork } from './PromotionsArtwork';
@@ -125,14 +125,15 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
           <div className="promo-row">
             <label className="promo-field">
               <span className="promo-label">{t('marketing_promotion_type')}</span>
-              <select
-                className="promo-input promo-select"
+              <Select
                 value={values.discount_type}
-                onChange={(event) => set('discount_type', event.target.value)}
-              >
-                <option value="percent">{t('marketing_discount_percent')}</option>
-                <option value="fixed">{t('marketing_discount_fixed')}</option>
-              </select>
+                onChange={(next) => set('discount_type', next)}
+                aria-label={t('marketing_promotion_type')}
+                options={[
+                  { value: 'percent', label: t('marketing_discount_percent') },
+                  { value: 'fixed', label: t('marketing_discount_fixed') },
+                ]}
+              />
             </label>
             <label className="promo-field">
               <span className="promo-label">
@@ -222,50 +223,51 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
           {/* 6 — discount target */}
           <label className="promo-field">
             <span className="promo-label promo-label--marked">{t('disc_target')}</span>
-            <select
-              className="promo-input promo-select"
+            <Select
               value={values.target_type}
-              onChange={(event) => set('target_type', event.target.value)}
-            >
-              <option value="order">{t('disc_target_order')}</option>
-              <option value="category">{t('disc_target_category')}</option>
-              <option value="product">{t('disc_target_product')}</option>
-            </select>
+              onChange={(next) => set('target_type', next)}
+              aria-label={t('disc_target')}
+              options={[
+                { value: 'order', label: t('disc_target_order') },
+                { value: 'category', label: t('disc_target_category') },
+                { value: 'product', label: t('disc_target_product') },
+              ]}
+            />
           </label>
 
           {values.target_type === 'category' ? (
             <label className="promo-field">
               <span className="promo-label">{t('disc_choose_category')}</span>
-              <select
-                className="promo-input promo-select"
+              <Select
                 value={values.category_id || ''}
-                onChange={(event) => set('category_id', event.target.value)}
-              >
-                <option value="">—</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {localized(category, 'name', locale)}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => set('category_id', next)}
+                aria-label={t('disc_choose_category')}
+                options={[
+                  { value: '', label: '—' },
+                  ...categories.map((category) => ({
+                    value: category.id,
+                    label: localized(category, 'name', locale),
+                  })),
+                ]}
+              />
             </label>
           ) : null}
 
           {values.target_type === 'product' ? (
             <label className="promo-field">
               <span className="promo-label">{t('disc_choose_product')}</span>
-              <select
-                className="promo-input promo-select"
+              <Select
                 value={values.product_id || ''}
-                onChange={(event) => set('product_id', event.target.value)}
-              >
-                <option value="">—</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {localized(product, 'name', locale)}
-                  </option>
-                ))}
-              </select>
+                onChange={(next) => set('product_id', next)}
+                aria-label={t('disc_choose_product')}
+                options={[
+                  { value: '', label: '—' },
+                  ...products.map((product) => ({
+                    value: product.id,
+                    label: localized(product, 'name', locale),
+                  })),
+                ]}
+              />
             </label>
           ) : null}
 

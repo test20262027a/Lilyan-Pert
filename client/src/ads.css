@@ -636,8 +636,6 @@
   line-height: 1.55;
   resize: vertical;
 }
-.ad-select { appearance: none; }
-
 .ad-row {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,5 +1,5 @@
 import Icon from '../Icon';
-import { Alert, SwitchRow } from '../ui';
+import { Alert, Select, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 import { playSound, SOUND_OPTIONS, DEFAULT_SOUND } from '../../sound';
@@ -63,21 +63,13 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
             {t('dash_sound')}
           </span>
           <div className="sound-picker__row">
-            <span className="sound-select-wrap">
-              <select
-                className="select sound-select"
-                value={soundKey}
-                onChange={(e) => onChange({ sound_key: e.target.value })}
-                aria-label={t('dash_sound')}
-              >
-                {SOUND_OPTIONS.map((key) => (
-                  <option key={key} value={key}>
-                    {t(`dash_sound_${key}`)}
-                  </option>
-                ))}
-              </select>
-              <Icon name="chevronDown" size={15} className="sound-select__chevron" />
-            </span>
+            <Select
+              className="sound-picker__select"
+              value={soundKey}
+              onChange={(next) => onChange({ sound_key: next })}
+              aria-label={t('dash_sound')}
+              options={SOUND_OPTIONS.map((key) => ({ value: key, label: t(`dash_sound_${key}`) }))}
+            />
             <button
               type="button"
               className="sound-play"

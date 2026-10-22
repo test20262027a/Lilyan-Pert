@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import Icon from '../Icon';
-import { Alert, ConfirmDialog, Switch } from '../ui';
+import { Alert, ConfirmDialog, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
 import ProductImageField from './ProductImageField';
@@ -314,25 +314,17 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
           <span className="mcmodal__req" aria-hidden="true">*</span>
         </label>
 
-        <span className="mform__select">
-          <select
-            id="product-category"
-            className="mcmodal__input mform__select-input"
-            value={values.category_id}
-            onChange={(e) => set('category_id', e.target.value)}
-          >
-            <option value="">{t('menu_select_category')}</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {localized(c, 'name', locale) || c.name_en || c.name_ku || t('menu_uncategorized')}
-              </option>
-            ))}
-          </select>
-          {/* The chevron sits on the trailing edge — the physical left under RTL. */}
-          <span className="mform__select-icon" aria-hidden="true">
-            <Icon name="chevronDown" size={16} />
-          </span>
-        </span>
+        <Select
+          id="product-category"
+          value={values.category_id}
+          onChange={(next) => set('category_id', next)}
+          aria-label={t('menu_categories')}
+          placeholder={t('menu_select_category')}
+          options={categories.map((c) => ({
+            value: c.id,
+            label: localized(c, 'name', locale) || c.name_en || c.name_ku || t('menu_uncategorized'),
+          }))}
+        />
       </section>
 
       <div className="mform__pair">

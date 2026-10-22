@@ -136,6 +136,25 @@
   --radius: 10px;
   --radius-lg: 12px;
   --radius-pill: 999px;
+  /*
+   * ------------------------------------------------- selection dropdowns --
+   * One popup surface shared by every Select / listbox in the admin panel
+   * (see components/select/select.css). Radius, glass surface, floating
+   * shadow and row states live here so no page defines its own dropdown skin;
+   * the tints derive from `--primary`, so all themes follow automatically.
+   */
+  --lysel-radius: 18px;
+  --lysel-row-radius: 11px;
+  --lysel-row-height: 44px;
+  --lysel-bg: color-mix(in srgb, var(--surface) 93%, transparent);
+  --lysel-border: color-mix(in srgb, var(--primary) 16%, var(--border));
+  --lysel-shadow: 0 1px 1px color-mix(in srgb, var(--primary) 12%, transparent),
+    0 8px 18px -10px color-mix(in srgb, var(--primary) 32%, rgba(20, 24, 32, 0.2)),
+    0 26px 48px -24px color-mix(in srgb, var(--primary) 26%, rgba(20, 24, 32, 0.32)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --lysel-row-hover: var(--theme-focus-surface);
+  --lysel-row-selected: var(--theme-selected-bg);
+  --lysel-row-selected-hover: color-mix(in srgb, var(--primary) 16%, var(--surface));
   --gap: 16px;
   --page-max: 1240px;
   --font: 'Segoe UI', 'Noto Kufi Arabic', 'Noto Naskh Arabic', Tahoma, system-ui,
@@ -156,6 +175,12 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.55);
+  /* Selection popups keep their lift, without the light-mode white highlight. */
+  --lysel-bg: color-mix(in srgb, var(--surface) 96%, transparent);
+  --lysel-shadow: 0 1px 1px rgba(0, 0, 0, 0.4),
+    0 10px 22px -10px color-mix(in srgb, var(--primary) 34%, transparent),
+    0 28px 52px -24px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --danger-soft: #3b1417;
   --success-soft: #10331f;
   --warning-soft: #3a2a0d;

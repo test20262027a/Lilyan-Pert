@@ -167,18 +167,11 @@ export function Marker({ on, danger = false }) {
   );
 }
 
-export function Select({ value, onChange, options, placeholder, ...rest }) {
-  return (
-    <select className="select" value={value} onChange={(e) => onChange?.(e.target.value)} {...rest}>
-      {placeholder ? <option value="">{placeholder}</option> : null}
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
-  );
-}
+/*
+ * The shared selection dropdown. Re-exported here so every page keeps importing
+ * it from the UI kit while the premium surface lives in one component.
+ */
+export { default as Select } from './select/Select';
 
 /* --------------------------------------------------------------- feedback */
 

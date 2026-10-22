@@ -466,7 +466,6 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--um-green) 13%, transparent);
 }
 .um-input:disabled { background: #f4f6f2; color: #6f766c; cursor: not-allowed; }
-.um-select { appearance: auto; cursor: pointer; padding-inline-end: 8px; }
 .um-field__eye {
   position: absolute;
   inset-inline-end: 5px;

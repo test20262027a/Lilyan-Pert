@@ -511,24 +511,6 @@
 
 /* ------------------------------------------------------ category select */
 
-.mform__select { position: relative; display: block; }
-.mform__select-input {
-  appearance: none;
-  padding-inline-end: 36px;
-  text-align: start;
-  cursor: pointer;
-}
-.mform__select-icon {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  inset-inline-end: 13px;
-  display: grid;
-  place-items: center;
-  color: var(--mm-muted);
-  pointer-events: none;
-}
-
 /* ---------------------------------------------- calories / preparation */
 
 .mform__pair {

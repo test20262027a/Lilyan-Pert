@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import Icon from '../Icon';
+import { Select } from '../ui';
 import { useI18n } from '../../i18n';
 import UsersArtwork from './UsersArtwork';
 import {
@@ -300,13 +301,12 @@ export default function UserFormModal({
             <div className="um-fields um-fields--2">
               <label className="um-field">
                 <span className="um-field__label">{t('user_role')}</span>
-                <select className="um-input um-select" value={role} onChange={(e) => changeRole(e.target.value)}>
-                  {roleOptions.map((key) => (
-                    <option key={key} value={key}>
-                      {t(`role_${key}`)}
-                    </option>
-                  ))}
-                </select>
+                <Select
+                  value={role}
+                  onChange={changeRole}
+                  aria-label={t('user_role')}
+                  options={roleOptions.map((key) => ({ value: key, label: t(`role_${key}`) }))}
+                />
               </label>
               <label className="um-field">
                 <span className="um-field__label">{t('user_assigned_business')}</span>

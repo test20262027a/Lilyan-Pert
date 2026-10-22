@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
-import { Alert } from '../ui';
+import { Alert, Select } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import { toZonedInput } from '../../format';
 import { uploadImage } from '../../api';
@@ -313,27 +313,25 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
             <div className="ad-row">
               <label className="ad-field">
                 <span className="ad-field__label">{t('ads_related_product')}</span>
-                <select
-                  className="ad-input ad-select"
+                <Select
                   value={values.product_id}
-                  onChange={(event) => set('product_id', event.target.value)}
-                >
-                  <option value="">{t('ads_none')}</option>
-                  {visibleProducts.map((product) => (
-                    <option key={product.id} value={product.id}>
-                      {localized(product, 'name', locale)}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(next) => set('product_id', next)}
+                  aria-label={t('ads_related_product')}
+                  options={[
+                    { value: '', label: t('ads_none') },
+                    ...visibleProducts.map((product) => ({
+                      value: product.id,
+                      label: localized(product, 'name', locale),
+                    })),
+                  ]}
+                />
               </label>
 
               <label className="ad-field">
                 <span className="ad-field__label">{t('ads_related_category')}</span>
-                <select
-                  className="ad-input ad-select"
+                <Select
                   value={values.category_id}
-                  onChange={(event) => {
-                    const next = event.target.value;
+                  onChange={(next) => {
                     setValues((state) => ({
                       ...state,
                       category_id: next,
@@ -345,14 +343,15 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
                         : state.product_id,
                     }));
                   }}
-                >
-                  <option value="">{t('ads_none')}</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {localized(category, 'name', locale)}
-                    </option>
-                  ))}
-                </select>
+                  aria-label={t('ads_related_category')}
+                  options={[
+                    { value: '', label: t('ads_none') },
+                    ...categories.map((category) => ({
+                      value: category.id,
+                      label: localized(category, 'name', locale),
+                    })),
+                  ]}
+                />
               </label>
             </div>
           </section>
@@ -406,14 +405,15 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
           <div className="ad-row">
             <label className="ad-field">
               <span className="ad-field__label">{t('ads_placement')}</span>
-              <select
-                className="ad-input ad-select"
+              <Select
                 value={values.placement}
-                onChange={(event) => set('placement', event.target.value)}
-              >
-                <option value="below_header">{t('ads_placement_below_header')}</option>
-                <option value="menu_end">{t('ads_placement_menu_end')}</option>
-              </select>
+                onChange={(next) => set('placement', next)}
+                aria-label={t('ads_placement')}
+                options={[
+                  { value: 'below_header', label: t('ads_placement_below_header') },
+                  { value: 'menu_end', label: t('ads_placement_menu_end') },
+                ]}
+              />
             </label>
             <label className="ad-field">
               <span className="ad-field__label">{t('ads_priority')}</span>
