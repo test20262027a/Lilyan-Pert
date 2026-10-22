@@ -185,7 +185,7 @@ export default function OrderDetail() {
           </p>
         </div>
         <div className="page-head__actions">
-          <Link className="btn btn--sm" to={backTo}>
+          <Link className="btn btn--sm btn--dir-icon" to={backTo}>
             <Icon name="arrowLeft" size={15} />
             {t('action_back')}
           </Link>

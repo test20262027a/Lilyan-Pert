@@ -9,6 +9,10 @@ import { categoryGlyph, categoryToneClass } from './categoryIcons';
  *
  * The list never carries an independent active/inactive switch — status is
  * edited inside the create/edit form only.
+ *
+ * Every row renders the category's own saved icon (`categoryIcons` maps that key
+ * to a glyph and a pastel container), so each category keeps its identity
+ * instead of sharing one generic symbol.
  */
 export default function CategoryPanel({
   categories,
@@ -38,22 +42,28 @@ export default function CategoryPanel({
           <span className="mcstat__icon">
             <Icon name="layers" size={14} />
           </span>
-          <span className="mcstat__value">{stats.total}</span>
-          <span className="mcstat__label">{t('menu_total_categories')}</span>
+          <span className="mcstat__body">
+            <span className="mcstat__value">{stats.total}</span>
+            <span className="mcstat__label">{t('menu_total_categories')}</span>
+          </span>
         </div>
         <div className="mcstat mcstat--active">
           <span className="mcstat__icon">
             <Icon name="checkCircle" size={14} />
           </span>
-          <span className="mcstat__value">{stats.active}</span>
-          <span className="mcstat__label">{t('menu_active_categories')}</span>
+          <span className="mcstat__body">
+            <span className="mcstat__value">{stats.active}</span>
+            <span className="mcstat__label">{t('menu_active_categories')}</span>
+          </span>
         </div>
         <div className="mcstat mcstat--inactive">
           <span className="mcstat__icon">
             <Icon name="xCircle" size={14} />
           </span>
-          <span className="mcstat__value">{stats.inactive}</span>
-          <span className="mcstat__label">{t('menu_inactive_categories')}</span>
+          <span className="mcstat__body">
+            <span className="mcstat__value">{stats.inactive}</span>
+            <span className="mcstat__label">{t('menu_inactive_categories')}</span>
+          </span>
         </div>
       </div>
 
@@ -80,7 +90,7 @@ export default function CategoryPanel({
                     onClick={() => onSelect(c.id)}
                   >
                     <span className={`mrow__icon ${categoryToneClass(c.icon)}`}>
-                      <Icon name={categoryGlyph(c.icon)} size={17} />
+                      <Icon name={categoryGlyph(c.icon)} size={18} />
                     </span>
                     <span className="mrow__name" title={name}>
                       {name}

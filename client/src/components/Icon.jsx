@@ -86,6 +86,16 @@ const PATHS = {
   chevronsUp: <><path d="m7 14 5-5 5 5" /><path d="m7 20 5-5 5 5" /></>,
   chevronsLeft: <><path d="m11 7-5 5 5 5" /><path d="m17 7-5 5 5 5" /></>,
   lock: <><rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>,
+  /* Menu category glyphs: one recognizable silhouette per kind of item, so a
+     category keeps its identity instead of sharing one generic symbol. */
+  teaCup: <><path d="M4 9.5h12.5V14a4.5 4.5 0 0 1-4.5 4.5H8.5A4.5 4.5 0 0 1 4 14z" /><path d="M16.5 11h1.3a2.2 2.2 0 0 1 0 4.4h-1.3" /><path d="M7 3.2v2.6M10.4 3.2v2.6M13.8 3.2v2.6" /></>,
+  glass: <><path d="M7 4h10l-1.2 15a2 2 0 0 1-2 1.9h-3.6a2 2 0 0 1-2-1.9z" /><path d="M7.5 12.5h9" /><path d="m14.2 4 2.6-2.4" /></>,
+  citrus: <><circle cx="12" cy="12" r="8.5" /><path d="M12 3.5v17M3.5 12h17" /><path d="m6 6 12 12M18 6 6 18" /></>,
+  iceCream: <><path d="M9.2 9.6a3.1 3.1 0 0 1-.5-6.1 3.5 3.5 0 0 1 6.6 0 3.1 3.1 0 0 1-.5 6.1z" /><path d="M9.2 9.6h5.6L12 21z" /><path d="M10.2 12.6h3.6M10.8 15.4h2.4" /></>,
+  cake: <><path d="M4.5 20v-6A1.5 1.5 0 0 1 6 12.5h12A1.5 1.5 0 0 1 19.5 14v6" /><path d="M3.5 20h17" /><path d="M12 12.5v-3" /><path d="M12 6.2c-.9.4-1.4 1-1.4 1.8 0 .9 1.4 1.9 1.4 1.9s1.4-1 1.4-1.9c0-.8-.5-1.4-1.4-1.8z" /><path d="M4.5 16.6h15" /></>,
+  bottle: <><path d="M10 3.2h4v2.5c0 .6.2 1.1.6 1.6.8.9 1.4 2 1.4 3.2V19a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-8.5c0-1.2.6-2.3 1.4-3.2.4-.5.6-1 .6-1.6z" /><path d="M8 12.4h8" /></>,
+  waffle: <><rect x="4" y="4" width="16" height="16" rx="4.5" /><path d="M9.4 4v16M14.6 4v16M4 9.4h16M4 14.6h16" /></>,
+  pancake: <><ellipse cx="12" cy="18" rx="8.4" ry="2.9" /><path d="M3.6 14.2c0 1.6 3.8 2.9 8.4 2.9s8.4-1.3 8.4-2.9" /><path d="M4.8 10.6c0 1.5 3.2 2.7 7.2 2.7s7.2-1.2 7.2-2.7" /><path d="M12 7.7V4.4" /></>,
 };
 
 export default function Icon({ name, size = 18, className = '', style, title }) {

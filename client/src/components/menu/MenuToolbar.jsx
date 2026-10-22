@@ -6,6 +6,11 @@ import { useI18n } from '../../i18n';
  * two green create buttons. Read order is physical — the field takes the
  * remaining width on one side and the buttons sit on the other, so the layout
  * mirrors correctly for Kurdish/Persian/Arabic and English.
+ *
+ * Both create buttons follow the app-wide rule for labelled actions: the label
+ * is the first child and the icon the last, so the plus sits at the logical end
+ * of the label — physical left in RTL, physical right in LTR. `direction` is
+ * inherited from the document, never hardcoded here.
  */
 export default function MenuToolbar({
   query,
@@ -46,17 +51,27 @@ export default function MenuToolbar({
       </div>
 
       <div className="mtoolbar__actions">
-        <button type="button" className="mbtn mbtn--green" onClick={onAddCategory} disabled={!canManage}>
-          <span className="mbtn__plus">
+        <button
+          type="button"
+          className="mbtn mbtn--green app-action-button"
+          onClick={onAddCategory}
+          disabled={!canManage}
+        >
+          <span className="button-label">{t('menu_add_category')}</span>
+          <span className="mbtn__plus button-icon" aria-hidden="true">
             <Icon name="plus" size={15} />
           </span>
-          {t('menu_add_category')}
         </button>
-        <button type="button" className="mbtn mbtn--green" onClick={onAddProduct} disabled={!canManage}>
-          <span className="mbtn__plus">
+        <button
+          type="button"
+          className="mbtn mbtn--green app-action-button"
+          onClick={onAddProduct}
+          disabled={!canManage}
+        >
+          <span className="button-label">{t('menu_add_product')}</span>
+          <span className="mbtn__plus button-icon" aria-hidden="true">
             <Icon name="plus" size={15} />
           </span>
-          {t('menu_add_product')}
         </button>
       </div>
     </div>

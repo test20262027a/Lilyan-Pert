@@ -5,10 +5,13 @@ import { fmtMoneyParts } from '../../format';
 /*
  * One image-first product card.
  *
- * The photograph dominates the card; a soft translucent panel sits over its
- * lower edge with the product name (always one line, never an ellipsis) and the
- * supporting category/availability labels. The price row and the two action
- * buttons follow underneath.
+ * The photograph fills the card; a frosted panel sits over its lower edge with
+ * the product name, the category and the price, closed by the real availability
+ * pill. The two equal action buttons follow underneath.
+ *
+ * Both buttons follow the app-wide rule for labelled actions: label first, icon
+ * last, so the pencil/trash sits at the logical end of the word — physical left
+ * in RTL, physical right in LTR.
  *
  * `state` is the *effective* state: a product only counts as available when it
  * is active, available and its category is active too. An inactive parent
@@ -46,40 +49,42 @@ export default function ProductCard({ product, categoryName, currency, canManage
           </span>
         )}
 
-        <span className={`mcard__badge mcard__badge--${state}`}>
-          <i className="mcard__dot" />
-          {t(STATE_LABEL[state])}
-        </span>
-
         <div className="mcard__panel">
           <div className="mcard__name" title={name}>
             {name}
           </div>
-          <div className="mcard__labels">
+          <div className="mcard__meta">
             {categoryName ? <span className="mcard__cat">{categoryName}</span> : null}
-            <span className={`mcard__state mcard__state--${state}`}>{t(STATE_LABEL[state])}</span>
+            <span className="mcard__price">
+              <span className="mcard__amount">{number}</span>
+              <span className="mcard__currency">{symbol}</span>
+            </span>
           </div>
+          <span className={`mcard__state mcard__state--${state}`}>
+            <i className="mcard__dot" />
+            {t(STATE_LABEL[state])}
+          </span>
         </div>
       </div>
 
-      <div className="mcard__price">
-        <span>
-          <span className="mcard__amount">{number}</span>
-          <span className="mcard__currency">{symbol}</span>
-        </span>
-        <span className="mcard__coin">
-          <Icon name="banknote" size={15} />
-        </span>
-      </div>
-
       <div className="mcard__actions">
-        <button type="button" className="mcard__btn mcard__btn--edit" onClick={onEdit} disabled={!canManage}>
-          <Icon name="pencil" size={15} />
-          {t('action_edit')}
+        <button
+          type="button"
+          className="mcard__btn mcard__btn--edit app-action-button"
+          onClick={onEdit}
+          disabled={!canManage}
+        >
+          <span className="button-label">{t('action_edit')}</span>
+          <Icon name="pencil" size={16} className="button-icon" />
         </button>
-        <button type="button" className="mcard__btn mcard__btn--delete" onClick={onDelete} disabled={!canManage}>
-          <Icon name="trash" size={15} />
-          {t('action_delete')}
+        <button
+          type="button"
+          className="mcard__btn mcard__btn--delete app-action-button"
+          onClick={onDelete}
+          disabled={!canManage}
+        >
+          <span className="button-label">{t('action_delete')}</span>
+          <Icon name="trash" size={16} className="button-icon" />
         </button>
       </div>
     </article>

@@ -498,7 +498,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
               <Money value={cartTotal} currency={currency} />
             </button>
             {showAdminReturn ? (
-              <Link className="btn" to="/">
+              <Link className="btn btn--dir-icon" to="/">
                 <Icon name="arrowLeft" size={16} />
                 {t('customer_menu_return_to_admin')}
               </Link>
@@ -510,7 +510,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       {showAdminReturn && cartCount === 0 ? (
         <div className="cart-bar">
           <div className="cart-bar__inner">
-            <Link className="btn btn--block" to="/">
+            <Link className="btn btn--block btn--dir-icon" to="/">
               <Icon name="arrowLeft" size={16} />
               {t('customer_menu_return_to_admin')}
             </Link>
