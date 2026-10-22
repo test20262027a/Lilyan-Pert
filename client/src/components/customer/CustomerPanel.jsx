@@ -8,7 +8,7 @@ import Icon from '../Icon';
  * The icon comes first in the markup, which puts it at the inline-start edge —
  * the right side in RTL, exactly like the reference.
  */
-export default function CustomerPanel({ icon, title, children, className = '' }) {
+export default function CustomerPanel({ icon, title, count, children, className = '' }) {
   return (
     <section className={`cui-panel ${className}`.trim()}>
       <header className="cui-panel__head">
@@ -16,6 +16,7 @@ export default function CustomerPanel({ icon, title, children, className = '' })
           <Icon name={icon} size={19} />
         </span>
         <h2 className="cui-panel__title">{title}</h2>
+        {count !== undefined ? <span className="cui-panel__count">{count}</span> : null}
       </header>
       <div className="cui-panel__body">{children}</div>
     </section>

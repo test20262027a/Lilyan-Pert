@@ -17,6 +17,7 @@ import CustomerCategoryNav from '../components/customer/CustomerCategoryNav';
 import CustomerProductCard from '../components/customer/CustomerProductCard';
 import ProductDetailModal from '../components/customer/ProductDetailModal';
 import CustomerAbout from '../components/customer/CustomerAbout';
+import CustomerPanel from '../components/customer/CustomerPanel';
 import CustomerContact from '../components/customer/CustomerContact';
 import CartPanel from '../components/customer/CartPanel';
 import ReviewModal from '../components/customer/ReviewModal';
@@ -428,14 +429,12 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         ) : null}
 
         {bestProducts.length > 0 ? (
-          <section className="menu-section">
-            <div className="cui-sec__head">
-              <span className="cui-sec__icon">
-                <Icon name="trophy" size={17} />
-              </span>
-              <h2 className="cui-sec__title">{t('customer_menu_best_sellers')}</h2>
-              <span className="cui-sec__count">{fmtNumber(bestProducts.length, locale)}</span>
-            </div>
+          <CustomerPanel
+            className="cui-panel--products"
+            icon="trophy"
+            title={t('customer_menu_best_sellers')}
+            count={fmtNumber(bestProducts.length, locale)}
+          >
             <div className="cui-grid">
               {bestProducts.map((p) => (
                 <CustomerProductCard
@@ -456,7 +455,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                 />
               ))}
             </div>
-          </section>
+          </CustomerPanel>
         ) : null}
 
         <div className="cui-order">
