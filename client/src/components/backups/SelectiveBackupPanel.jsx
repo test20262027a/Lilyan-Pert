@@ -92,11 +92,10 @@ export default function SelectiveBackupPanel({
               className={`bk-sel-card ${on ? 'is-on' : ''}`}
               onClick={() => onToggle(category.key)}
             >
-              <header className="bk-sel-card__head">
+              <div className="bk-sel-card__top">
                 <span className={`bk-ico bk-tone--${visual.tone}`} aria-hidden="true">
-                  <Icon name={visual.icon} size={16} />
+                  <Icon name={visual.icon} size={17} />
                 </span>
-                <span className="bk-sel-card__name">{categoryLabel(t, category.key)}</span>
                 <button
                   type="button"
                   className="bk-tick"
@@ -108,9 +107,11 @@ export default function SelectiveBackupPanel({
                     onToggle(category.key);
                   }}
                 >
-                  {on ? <Icon name="check" size={12} /> : null}
+                  {on ? <Icon name="check" size={13} /> : null}
                 </button>
-              </header>
+              </div>
+
+              <span className="bk-sel-card__name">{categoryLabel(t, category.key)}</span>
 
               <div className="bk-sel-card__body">
                 {(sectionsByCategory[category.key] || []).map((section) => {
@@ -123,6 +124,7 @@ export default function SelectiveBackupPanel({
                     >
                       <Icon name={sectionStyle.icon} size={11} />
                       {sectionLabel(t, section.key)}
+                      {on ? <Icon name="check" size={11} className="bk-chip__tick" /> : null}
                     </span>
                   );
                 })}

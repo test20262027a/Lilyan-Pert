@@ -239,17 +239,10 @@ export default function ResetSampleData() {
                 className={`rs-card ${card.risk ? 'rs-card--risk' : ''} ${on ? 'is-on' : ''} ${disabled ? 'is-empty' : ''}`}
                 onClick={() => !disabled && toggle(card.key)}
               >
-                <div className="rs-card__head">
+                <div className="rs-card__top">
                   <span className={`rs-card__icon rs-tone--${card.tone}`} aria-hidden="true">
-                    <Icon name={card.icon} size={17} />
+                    <Icon name={card.icon} size={18} />
                   </span>
-                  <span className="rs-card__name">{card.label}</span>
-                  {card.risk ? (
-                    <span className="rs-card__badge">
-                      <Icon name="alert" size={11} />
-                      {t('reset_risk_badge')}
-                    </span>
-                  ) : null}
                   <button
                     type="button"
                     className="rs-tick"
@@ -261,8 +254,18 @@ export default function ResetSampleData() {
                       toggle(card.key);
                     }}
                   >
-                    {on ? <Icon name="check" size={12} /> : null}
+                    {on ? <Icon name="check" size={13} /> : null}
                   </button>
+                </div>
+
+                <div className="rs-card__title">
+                  <span className="rs-card__name">{card.label}</span>
+                  {card.risk ? (
+                    <span className="rs-card__badge">
+                      <Icon name="alert" size={11} />
+                      {t('reset_risk_badge')}
+                    </span>
+                  ) : null}
                 </div>
 
                 <p className="rs-card__desc">{t(`reset_mod_${card.key}_desc`)}</p>
@@ -271,8 +274,6 @@ export default function ResetSampleData() {
                 {card.blocked > 0 ? (
                   <p className="rs-card__warn">{t('reset_blocked_note', { count: card.blocked })}</p>
                 ) : null}
-
-                <div className="rs-card__rule" />
 
                 <div className="rs-card__foot">
                   <span className={`rs-count ${card.risk ? 'rs-count--risk' : ''}`}>
