@@ -1,6 +1,7 @@
 import Icon from '../Icon';
 import { useI18n, localized } from '../../i18n';
-import { categoryGlyph, categoryToneClass } from './categoryIcons';
+import { appearanceOf } from './categoryIcons';
+import CategoryIdentityIcon from './CategoryIdentityIcon';
 
 /*
  * The category management panel: heading, the three compact statistic cards and
@@ -27,14 +28,15 @@ export default function CategoryPanel({
 
   return (
     <section className="mpanel">
+      {/* Title group first, icon at the logical end: physical left under RTL. */}
       <header className="mpanel__head">
-        <span className="mpanel__icon">
-          <Icon name="layers" size={19} />
-        </span>
         <div className="mpanel__text">
           <h2 className="mpanel__title">{t('menu_tab_categories')}</h2>
           <p className="mpanel__sub">{t('menu_categories_hint')}</p>
         </div>
+        <span className="mpanel__icon">
+          <Icon name="glass" size={23} />
+        </span>
       </header>
 
       <div className="mcstats">
@@ -79,6 +81,7 @@ export default function CategoryPanel({
           {categories.map((c) => {
             const name = localized(c, 'name', locale);
             const selected = c.id === selectedId;
+            const appearance = appearanceOf(c);
             return (
               <li key={c.id}>
                 <div className={`mrow ${selected ? 'is-selected' : ''}`}>
@@ -89,9 +92,11 @@ export default function CategoryPanel({
                     aria-pressed={selected}
                     onClick={() => onSelect(c.id)}
                   >
-                    <span className={`mrow__icon ${categoryToneClass(c.icon)}`}>
-                      <Icon name={categoryGlyph(c.icon)} size={18} />
-                    </span>
+                    <CategoryIdentityIcon
+                      icon={appearance.icon}
+                      color={appearance.color}
+                      size={34}
+                    />
                     <span className="mrow__name" title={name}>
                       {name}
                     </span>

@@ -1,20 +1,20 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
+import CategoryIdentityIcon from './CategoryIdentityIcon';
 
 /*
  * The single wide header card above the product grid: the selected category on
- * one side (icon container, bold name, supporting line) and the compact product
- * counters on the other. Every number comes from the caller's persisted records.
+ * one side (its own icon and accent, bold name, supporting line) and the compact
+ * product counters on the other. Every number comes from the caller's persisted
+ * records, and the identity follows the selected row — never a fixed glyph.
  */
-export default function CategorySummary({ icon, toneClass, title, subtitle, stats }) {
+export default function CategorySummary({ icon, color, title, subtitle, stats }) {
   const { t } = useI18n();
 
   return (
     <header className="msummary">
       <div className="msummary__identity">
-        <span className={`msummary__icon ${toneClass}`}>
-          <Icon name={icon} size={20} />
-        </span>
+        <CategoryIdentityIcon icon={icon} color={color} size={46} variant="raised" />
         <div className="msummary__text">
           <div className="msummary__title">{title}</div>
           <div className="msummary__sub">{subtitle}</div>

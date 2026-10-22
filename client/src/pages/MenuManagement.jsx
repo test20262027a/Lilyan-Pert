@@ -8,7 +8,7 @@ import CategorySummary from '../components/menu/CategorySummary';
 import ProductCard from '../components/menu/ProductCard';
 import CategoryFormModal from '../components/menu/CategoryFormModal';
 import ProductFormModal from '../components/menu/ProductFormModal';
-import { categoryDialogTone, categoryGlyph, categoryToneClass } from '../components/menu/categoryIcons';
+import { appearanceOf } from '../components/menu/categoryIcons';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import { localized, useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
@@ -200,30 +200,35 @@ export default function MenuManagement() {
     // A category holding products is never deleted silently — the consequence
     // is explained and the products must be moved or removed first.
     if (c.product_count > 0) setBlocked(c);
-    else
+    else {
+      // The dialog names this exact record with its own saved glyph and accent.
+      const appearance = appearanceOf(c);
       setConfirm({
         kind: 'category',
         id: c.id,
         name: localized(c, 'name', locale),
-        icon: categoryGlyph(c.icon),
-        tone: categoryDialogTone(c.icon),
+        icon: appearance.icon,
+        color: appearance.color,
         productCount: Number(c.product_count) || 0,
       });
+    }
   };
 
   if (loading && !categories.length) return <Loading />;
 
+  const selectedAppearance = selectedCategory ? appearanceOf(selectedCategory) : null;
+
   const summary = results
     ? {
         icon: 'search',
-        toneClass: 'mtone--purple',
+        color: '#7c5cf0',
         title: t('menu_search_results'),
         subtitle: activeQuery,
       }
     : selectedCategory
       ? {
-          icon: categoryGlyph(selectedCategory.icon),
-          toneClass: categoryToneClass(selectedCategory.icon),
+          icon: selectedAppearance.icon,
+          color: selectedAppearance.color,
           title: localized(selectedCategory, 'name', locale),
           subtitle: t('menu_products_hint'),
         }
@@ -269,7 +274,7 @@ export default function MenuManagement() {
           {summary ? (
             <CategorySummary
               icon={summary.icon}
-              toneClass={summary.toneClass}
+              color={summary.color}
               title={summary.title}
               subtitle={summary.subtitle}
               stats={productStats}
@@ -346,7 +351,7 @@ export default function MenuManagement() {
           entityName={confirm.name}
           entityImage={confirm.kind === 'product' ? confirm.image : null}
           entityIcon={confirm.icon}
-          tone={confirm.tone}
+          tone={confirm.color}
           entitySubtitle={
             confirm.kind === 'category'
               ? confirm.productCount > 0

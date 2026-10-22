@@ -255,20 +255,31 @@
   min-width: 0;
 }
 
-.mpanel__head { display: flex; align-items: center; gap: 10px; min-width: 0; }
+/*
+ * The heading group leads and its icon follows at the logical end, which is the
+ * physical left under RTL exactly as in the reference: icon, then the title and
+ * its supporting line, hugging the start edge.
+ */
+.mpanel__head { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .mpanel__icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 13px;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
   flex: none;
   display: grid;
   place-items: center;
-  background: var(--pastel-blue);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pastel-blue-ink) 7%, var(--pastel-blue)),
+    var(--pastel-blue)
+  );
   color: var(--pastel-blue-ink);
-  border: 1px solid color-mix(in srgb, var(--pastel-blue-ink) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pastel-blue-ink) 20%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    0 3px 8px -4px color-mix(in srgb, var(--pastel-blue-ink) 55%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 color-mix(in srgb, var(--pastel-blue-ink) 8%, transparent),
+    0 5px 12px -6px color-mix(in srgb, var(--pastel-blue-ink) 60%, transparent),
+    0 2px 4px -2px rgba(24, 46, 30, 0.12);
 }
 .mpanel__text { min-width: 0; }
 .mpanel__title { font-size: 16px; font-weight: 800; color: var(--mp-ink); }
@@ -381,17 +392,47 @@
   text-align: start;
   cursor: pointer;
 }
-.mrow__icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
+/*
+ * Category identity icon (shared by rows, headings, previews and the delete
+ * dialog). `--mcat-ink` is the category's own saved accent — never the theme
+ * primary — and the soft container is mixed from it against the current
+ * surface, so it reads as pastel in light mode and stays legible in dark mode.
+ */
+.mcat {
+  width: var(--mcat-size, 34px);
+  height: var(--mcat-size, 34px);
   flex: none;
   display: grid;
   place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
+  border-radius: calc(var(--mcat-size, 34px) * 0.32);
+  color: var(--mcat-ink, var(--primary));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mcat-ink, var(--primary)) 9%, var(--surface)),
+    color-mix(in srgb, var(--mcat-ink, var(--primary)) 17%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--mcat-ink, var(--primary)) 26%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.68),
-    0 3px 7px -4px color-mix(in srgb, currentColor 60%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 3px 7px -4px color-mix(in srgb, var(--mcat-ink, var(--primary)) 55%, transparent);
+}
+[data-theme='dark'] .mcat {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 3px 8px -4px color-mix(in srgb, var(--mcat-ink, var(--primary)) 65%, transparent);
+}
+/* Heading and form variants sit a little prouder than a list row. */
+.mcat--raised {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 color-mix(in srgb, var(--mcat-ink, var(--primary)) 9%, transparent),
+    0 6px 14px -7px color-mix(in srgb, var(--mcat-ink, var(--primary)) 65%, transparent),
+    0 2px 4px -2px rgba(24, 46, 30, 0.14);
+}
+[data-theme='dark'] .mcat--raised {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 16px -8px color-mix(in srgb, var(--mcat-ink, var(--primary)) 70%, transparent);
 }
 .mrow__name {
   font-size: 13.5px;
@@ -458,18 +499,6 @@
     0 2px 5px rgba(24, 46, 30, 0.035);
 }
 .msummary__identity { display: flex; align-items: center; gap: 11px; flex: 1 1 160px; min-width: 0; }
-.msummary__icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border: 1px solid color-mix(in srgb, currentColor 14%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.68),
-    0 4px 10px -5px color-mix(in srgb, currentColor 70%, transparent);
-}
 .msummary__text { min-width: 0; }
 .msummary__title {
   font-size: clamp(18px, 0.45vw + 14px, 21px);

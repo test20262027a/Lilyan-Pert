@@ -1,8 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon';
 import { Alert, ConfirmDialog, Switch } from '../ui';
 import { LOCALES, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
+import CategoryIdentityIcon from './CategoryIdentityIcon';
+import {
+  CATEGORY_COLORS,
+  CATEGORY_ICONS,
+  appearanceOf,
+  categoryGlyph,
+  resolveCategoryAppearance,
+} from './categoryIcons';
 import { catalogErrorText } from './errorText';
 
 /*
@@ -14,9 +22,11 @@ import { catalogErrorText } from './errorText';
  * back language by language, so a category saved with only Kurdish still shows
  * a name everywhere.
  *
- * The stored `icon` is part of the existing schema but is not a field of this
- * form: create sends the app's established default and edit keeps the row's own
- * value, so editing a category never silently resets its icon.
+ * A category also carries an identity: its glyph (`icon`) and its own accent
+ * (`icon_color`). For a NEW category both are proposed from the four names as
+ * they are typed, and an existing category keeps exactly what it saved until the
+ * administrator picks another glyph, another accent, or presses the explicit
+ * auto-select action — so renaming a category never changes its identity.
  *
  * The active flag is edited here and only here — the category list deliberately
  * has no independent status switch.
@@ -35,7 +45,7 @@ const cardFor = (code) => LOCALES.find((l) => l.code === code);
 const trimmed = (value) => String(value ?? '').trim();
 
 export default function CategoryFormModal({ modal, categories = [], busy, error, onClose, onSave }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const isCreate = modal.mode !== 'edit';
 
   // Suggested order: one past the highest saved order, or the app's initial

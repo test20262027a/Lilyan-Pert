@@ -575,3 +575,107 @@
   .mform__drop { min-height: 132px; }
   .mform__image-frame img { max-height: 180px; }
 }
+
+/* ------------------------------------------- category appearance picker */
+
+/*
+ * Live preview of the identity the form is about to save: the category's glyph
+ * in its own accent, the resolved meaning, and the manual overrides. The
+ * swatches and glyphs are plain buttons so the choice can always be overridden.
+ */
+.mcappear {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--mm-line);
+  background: linear-gradient(180deg, var(--mm-card), var(--mm-body));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 6px 14px -12px rgba(18, 40, 24, 0.75);
+}
+.mcappear__text { min-width: 0; flex: 1 1 auto; }
+.mcappear__name {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--mm-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mcappear__hint {
+  font-size: 11px;
+  color: var(--mm-muted);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.mcappear__auto {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mcappear__auto:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mm-green) 45%, var(--mm-line));
+  color: var(--mm-green);
+}
+.mcappear__auto:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.mcappear__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 6px;
+}
+.mcappear__glyph {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.mcappear__glyph:hover { color: var(--mm-ink); background: var(--mm-body); }
+.mcappear__glyph.is-active {
+  color: var(--mm-ink);
+  border-color: color-mix(in srgb, var(--mm-ink) 34%, transparent);
+  background: var(--mm-body);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mm-ink) 18%, transparent);
+}
+.mcappear__glyph:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
+
+.mcappear__colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.mcappear__swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--swatch);
+  border: 2px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.mcappear__swatch:hover { transform: scale(1.08); }
+.mcappear__swatch.is-active {
+  box-shadow:
+    0 0 0 2px var(--mm-card),
+    0 0 0 4px var(--swatch);
+}
+.mcappear__swatch:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 3px; }
