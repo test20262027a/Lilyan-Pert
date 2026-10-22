@@ -240,11 +240,13 @@ export default function TextEditor() {
         </div>
       ) : null}
 
-      <div className="tx-search">
-        <Icon name="search" size={17} />
+      <div className="tx-search lilyan-search">
+        <span className="lilyan-search__icon">
+          <Icon name="search" size={15} />
+        </span>
         <input
           type="search"
-          className="tx-search__input"
+          className="tx-search__input lilyan-search__input"
           value={query}
           disabled={!ready}
           placeholder={t('text_editor_search')}

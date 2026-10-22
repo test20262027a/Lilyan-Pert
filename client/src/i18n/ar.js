@@ -352,6 +352,8 @@ export default {
   order_today: 'اليوم',
   order_prev_day: 'اليوم السابق',
   order_next_day: 'اليوم التالي',
+  order_prev_month: 'الشهر السابق',
+  order_next_month: 'الشهر التالي',
   order_select_date: 'اختر التاريخ',
   order_datetime: 'التاريخ والوقت',
   order_load_more: 'عرض المزيد',

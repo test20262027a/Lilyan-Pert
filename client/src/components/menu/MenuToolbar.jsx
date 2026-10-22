@@ -19,10 +19,12 @@ export default function MenuToolbar({
 
   return (
     <div className="mtoolbar">
-      <div className="msearch">
-        <Icon name="search" size={18} />
+      <div className="msearch lilyan-search">
+        <span className="lilyan-search__icon">
+          <Icon name="search" size={15} />
+        </span>
         <input
-          className="msearch__input"
+          className="msearch__input lilyan-search__input"
           type="search"
           value={query}
           onChange={(e) => onQuery(e.target.value)}
@@ -33,7 +35,7 @@ export default function MenuToolbar({
         {!searching && query ? (
           <button
             type="button"
-            className="msearch__clear"
+            className="msearch__clear lilyan-search__clear"
             onClick={() => onQuery('')}
             aria-label={t('action_clear')}
             title={t('action_clear')}

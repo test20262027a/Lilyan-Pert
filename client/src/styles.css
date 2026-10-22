@@ -432,6 +432,81 @@ a { color: var(--primary); }
 .form-grid .span-2 { grid-column: 1 / -1; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
 
+/* ------------------------------------------------------ shared search field */
+
+/*
+ * One search surface for Orders, Menu and the Text Editor. Each page keeps its
+ * own query logic and layout; only the skin is shared. The highlight lives on
+ * the wrapper's :focus-within, never on the inner input, so the icon, the field
+ * and the clear button glow as a single control instead of the field alone
+ * showing a detached outline inside it.
+ */
+.lilyan-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow:
+    0 2px 6px rgba(20, 50, 30, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    background-color 200ms ease;
+}
+.lilyan-search:hover {
+  border-color: color-mix(in srgb, var(--mint) 32%, var(--border-strong));
+}
+.lilyan-search:focus-within {
+  border-color: var(--mint);
+  background: color-mix(in srgb, var(--mint) 6%, var(--surface));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--mint) 15%, transparent),
+    0 6px 18px color-mix(in srgb, var(--mint) 12%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+.lilyan-search:has(input:disabled) { opacity: 0.6; }
+
+.lilyan-search__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: background 200ms ease, color 200ms ease;
+}
+.lilyan-search:focus-within .lilyan-search__icon {
+  background: color-mix(in srgb, var(--mint) 16%, var(--surface));
+  color: var(--mint-deep);
+}
+
+/* The field itself stays flat: the wrapper owns the border and the glow. */
+.lilyan-search input,
+.lilyan-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-family: inherit;
+}
+.lilyan-search input:focus,
+.lilyan-search input:focus-visible,
+.lilyan-search__input:focus {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+
 /* Toggle is a real switch: label + input, keyboard reachable. */
 .switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
 .switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }

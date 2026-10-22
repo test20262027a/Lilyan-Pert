@@ -62,15 +62,19 @@ export default function Orders() {
 
   const searching = Boolean(search);
 
-  // Debounced search: the query only reaches the API once typing pauses.
-  useEffect(() => {
-    const id = setTimeout(() => {
-      setSearch(query.trim());
-      setPages(1);
-    }, 300);
-    return () => clearTimeout(id);
+  /*
+   * Debounced search: the query only reaches the API once typing pauses.
+   * Enter flushes it immediately instead of waiting for the timer.
+   */
+  const applySearch = useCallback(() => {
+    setSearch(query.trim());
+    setPages(1);
   }, [query]);
 
+  useEffect(() => {
+    const id = setTimeout(applySearch, 250);
+    return () => clearTimeout(id);
+  }, [applySearch]);
 
 
   /*
@@ -213,16 +217,13 @@ export default function Orders() {
         title={t('order_title')}
         subtitle={fmtDay(day, locale, timeZone, { weekday: true })}
       >
-        <button type="button" className="obanner__new" onClick={() => setCreateOpen(true)}>
-          <Icon name="plus" size={15} />
-          {t('order_new')}
-        </button>
         <DateNav value={day} onChange={changeDay} timeZone={timeZone} />
       </OrdersBanner>
 
       <OrdersToolbar
         query={query}
         onQueryChange={setQuery}
+        onSearch={applySearch}
         status={status}
         onStatusChange={changeStatus}
         statuses={STATUSES}

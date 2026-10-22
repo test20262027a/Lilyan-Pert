@@ -136,23 +136,12 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* The surface and the focus ring come from the shared `.lilyan-search`. */
 .msearch {
   flex: 1 1 auto;
   min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 9px;
   padding: 0 14px;
   min-height: 46px;
-  border-radius: var(--radius-pill);
-  background: var(--surface-2);
-  border: 1px solid var(--mp-line);
-  color: var(--muted);
-}
-.msearch:focus-within {
-  background: var(--surface);
-  border-color: color-mix(in srgb, var(--mp-green) 45%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mp-green) 12%, transparent);
 }
 .msearch__input {
   flex: 1 1 auto;

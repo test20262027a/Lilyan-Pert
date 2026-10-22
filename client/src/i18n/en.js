@@ -352,6 +352,8 @@ export default {
   order_today: 'Today',
   order_prev_day: 'Previous day',
   order_next_day: 'Next day',
+  order_prev_month: 'Previous month',
+  order_next_month: 'Next month',
   order_select_date: 'Select date',
   order_datetime: 'Date and time',
   order_load_more: 'Load more',

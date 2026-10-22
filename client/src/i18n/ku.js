@@ -352,6 +352,8 @@ export default {
   order_today: 'ئەمڕۆ',
   order_prev_day: 'ڕۆژی پێشوو',
   order_next_day: 'ڕۆژی داهاتوو',
+  order_prev_month: 'مانگی پێشوو',
+  order_next_month: 'مانگی داهاتوو',
   order_select_date: 'هەڵبژاردنی بەروار',
   order_datetime: 'بەروار و کات',
   order_load_more: 'زیاتر پیشان بدە',

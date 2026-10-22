@@ -17,6 +17,16 @@ const TRANSITIONS = {
 
 const round2 = (n) => Math.round(n * 100) / 100;
 
+/**
+ * Persian and Arabic-Indic digits folded to Western ones, so «۱۰۱۵», «١٠١٥»
+ * and «1015» are the same search. Receipt numbers are never parsed as numbers
+ * here: only their digits matter, which keeps the comparison partial.
+ */
+const foldDigits = (value) =>
+  String(value)
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+
 async function loadOrder(businessId, id) {
   const { rows } = await q('SELECT * FROM orders WHERE id = $1 AND business_id = $2', [id, businessId]);
   if (!rows[0]) throw notFound('ORDER_NOT_FOUND');
@@ -53,11 +63,21 @@ router.get(
       return `(o.created_at AT TIME ZONE $${tzSlot}::text)::date`;
     };
 
-    const receipt = String(req.query.receipt || '').trim();
+    /*
+     * Receipt search spans every date (as the list notes) and is *partial*:
+     * the typed digits are matched anywhere in the receipt number, so «10»
+     * returns #1015, #2105 and #1007 alike. Only the displayed receipt number
+     * is searched — never a customer, product, table or internal id — and the
+     * `#` the list prints is optional.
+     */
+    const typedReceipt = String(req.query.receipt || '').trim();
+    const receipt = foldDigits(typedReceipt).replace(/[^0-9]/g, '');
     if (receipt) {
-      // Receipt search deliberately spans every date, as required.
-      params.push(Number(receipt.replace(/[^0-9]/g, '')) || -1);
-      where.push(`o.order_number = $${params.length}`);
+      params.push(`%${receipt}%`);
+      where.push(`o.order_number::text LIKE $${params.length}`);
+    } else if (typedReceipt) {
+      // Something was typed but it holds no digits: no receipt can match it.
+      where.push('false');
     } else {
       if (req.query.date) {
         const expr = dayExpr();

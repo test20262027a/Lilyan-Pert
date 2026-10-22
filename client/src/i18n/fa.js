@@ -352,6 +352,8 @@ export default {
   order_today: 'امروز',
   order_prev_day: 'روز قبل',
   order_next_day: 'روز بعد',
+  order_prev_month: 'ماه قبل',
+  order_next_month: 'ماه بعد',
   order_select_date: 'انتخاب تاریخ',
   order_datetime: 'تاریخ و زمان',
   order_load_more: 'بیشتر نشان بده',

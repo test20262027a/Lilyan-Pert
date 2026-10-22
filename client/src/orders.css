@@ -82,23 +82,6 @@
   justify-content: flex-end;
 }
 
-/* The extra action keeps the pill language of the neighbouring controls. */
-.obanner__new {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  min-height: 38px;
-  padding: 8px 14px;
-  border-radius: var(--radius-pill);
-  border: 1px solid color-mix(in srgb, var(--mint) 45%, transparent);
-  background: var(--surface);
-  color: var(--mint-ink);
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.obanner__new:hover { background: var(--mint-soft); }
-
 [data-theme='dark'] .obanner {
   background: linear-gradient(150deg, #1e1c15, #191c19);
   border-color: var(--mint-line);
@@ -132,18 +115,133 @@
   white-space: nowrap;
 }
 .odate__pick:hover { background: var(--surface); }
+.odate__pick.is-open {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 14%, transparent);
+}
 .odate__value { min-width: 0; }
-.odate__caret { color: var(--muted); }
-.odate__input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+.odate__caret { color: var(--muted); transition: transform 180ms ease; }
+.odate__pick.is-open .odate__caret { transform: rotate(180deg); }
+
+/* ------------------------------------------------------- calendar popover */
+
+/*
+ * Portalled to <body>, so the banner's overflow can never clip it, and placed
+ * in viewport coordinates by the component — it stays beside its button and
+ * inside the window on every screen size.
+ */
+.odate__pop {
+  position: fixed;
+  z-index: 1200;
+  width: min(308px, calc(100vw - 16px));
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow:
+    0 18px 44px rgba(24, 45, 32, 0.16),
+    0 4px 12px rgba(24, 45, 32, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   opacity: 0;
-  border: 0;
-  padding: 0;
-  margin: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.odate__pop.is-placed { opacity: 1; visibility: visible; transform: none; }
+
+[data-theme='dark'] .odate__pop {
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.odate__pop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 10px;
+}
+.odate__pop-title { font-size: 13.5px; font-weight: 750; color: var(--text); }
+.odate__pop-nav {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  display: grid;
+  place-items: center;
   cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.odate__pop-nav:hover {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 40%, transparent);
+  color: var(--mint-ink);
+}
+
+.odate__pop-week,
+.odate__pop-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+}
+.odate__pop-week { padding-bottom: 6px; }
+.odate__pop-week span {
+  text-align: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--muted);
+}
+.odate__pop-day {
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.odate__pop-day:hover { background: var(--mint-soft); color: var(--mint-ink); }
+.odate__pop-day:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
+.odate__pop-day.is-today {
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  color: var(--mint-ink);
+}
+.odate__pop-day.is-selected {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: #ffffff;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--mint) 32%, transparent);
+}
+.odate__pop-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.odate__pop-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--mint) 35%, transparent);
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.odate__pop-today:hover {
+  background: color-mix(in srgb, var(--mint) 16%, var(--surface));
 }
 
 .odate__btn {
@@ -185,19 +283,8 @@
   box-shadow: var(--shadow-sm);
 }
 
-.osearch {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 1 270px;
-  min-width: 0;
-  min-height: 38px;
-  padding: 0 12px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  color: var(--muted);
-}
+/* The surface and the focus ring come from the shared `.lilyan-search`. */
+.osearch { flex: 0 1 300px; min-width: 0; }
 .osearch__input {
   flex: 1 1 auto;
   min-width: 0;
