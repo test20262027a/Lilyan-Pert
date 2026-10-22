@@ -9,14 +9,14 @@
 .ads-page {
   --ad-green: #22a44c;
   --ad-green-ink: #16803a;
-  --ad-green-soft: #eaf8ee;
+  --ad-green-soft: var(--theme-primary-soft);
   --ad-green-line: #cbe8d5;
-  --ad-cream: #fff9ec;
+  --ad-cream: var(--theme-primary-soft);
   --ad-cream-line: #f3e6c8;
   --ad-orange: #e08a2e;
   --ad-orange-soft: #fdf1dc;
   --ad-orange-line: #f2c98f;
-  --ad-mint: #eaf7ee;
+  --ad-mint: var(--theme-primary-soft);
   --ad-ink: var(--text);
   --ad-muted: var(--muted);
   --ad-line: var(--border);
@@ -71,10 +71,10 @@
 }
 .ads-page .mhero__sub {
   font-size: 13.5px;
-  color: #8a7c60;
+  color: var(--muted);
 }
 [data-theme='dark'] .ads-page .mhero__title { color: #f0e9d8; }
-[data-theme='dark'] .ads-page .mhero__sub { color: #b4ab94; }
+[data-theme='dark'] .ads-page .mhero__sub { color: var(--muted); }
 
 .ads-page .aart {
   display: block;
@@ -194,7 +194,7 @@
 }
 .ad2-card__media-badge.is-inactive { background: #eef0ef; color: #6f7773; }
 .ad2-card__media-badge.is-active { background: var(--ad-green-soft); color: var(--ad-green-ink); }
-.ad2-card__media-badge.is-scheduled { background: #fdf3d5; color: #a9822a; }
+.ad2-card__media-badge.is-scheduled { background: var(--theme-primary-soft); color: var(--theme-primary-strong); }
 .ad2-card__media-badge.is-expired { background: #f3f0f0; color: #8b7f7f; }
 [data-theme='dark'] .ad2-card__media-badge.is-inactive,
 [data-theme='dark'] .ad2-card__media-badge.is-expired {
@@ -243,9 +243,9 @@
 .ad2-state__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .ad2-state.is-inactive { background: var(--ad-cream); border-color: var(--ad-orange-line); color: #c08425; }
 .ad2-state.is-active { background: var(--ad-green-soft); border-color: var(--ad-green-line); color: var(--ad-green-ink); }
-.ad2-state.is-scheduled { background: #fdf6e3; border-color: #f0dcae; color: #a9822a; }
+.ad2-state.is-scheduled { background: var(--theme-primary-soft); border-color: #f0dcae; color: var(--theme-primary-strong); }
 .ad2-state.is-expired { background: var(--surface-2); border-color: var(--border); color: var(--ad-muted); }
-[data-theme='dark'] .ad2-state.is-scheduled { background: rgba(233, 179, 75, 0.16); border-color: rgba(233, 179, 75, 0.3); color: #e8c375; }
+[data-theme='dark'] .ad2-state.is-scheduled { background: rgba(233, 179, 75, 0.16); border-color: rgba(233, 179, 75, 0.3); color: var(--theme-primary); }
 
 .ad2-card__desc {
   margin: 0;
@@ -337,7 +337,7 @@
 
 /* An advertisement without a picture keeps readable ink on a pale mint surface
    instead of white text on a white card. */
-.ad-card.is-plain { background: var(--ad-mint, #eaf7ee); }
+.ad-card.is-plain { background: var(--ad-mint, var(--theme-primary-soft)); }
 .ad-card.is-plain .ad-card__scrim {
   background: none;
   color: #24503a;
@@ -381,14 +381,14 @@
   overflow: hidden;
   border-bottom: 1px solid var(--ad-cream-line);
   background:
-    radial-gradient(90% 150% at 22% 0%, #fdf3d9 0%, transparent 60%),
-    radial-gradient(80% 140% at 92% 100%, #eaf6ea 0%, transparent 62%),
-    linear-gradient(180deg, #fffdf5, #fff7e6);
+    radial-gradient(90% 150% at 22% 0%, var(--theme-primary-soft) 0%, transparent 60%),
+    radial-gradient(80% 140% at 92% 100%, var(--theme-primary-soft) 0%, transparent 62%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 [data-theme='dark'] .ad-modal__head {
   background:
     radial-gradient(90% 150% at 22% 0%, rgba(243, 214, 150, 0.14) 0%, transparent 60%),
-    radial-gradient(80% 140% at 92% 100%, rgba(67, 196, 91, 0.12) 0%, transparent 62%),
+    radial-gradient(80% 140% at 92% 100%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 62%),
     linear-gradient(180deg, #1d1f1a, #191c18);
 }
 
@@ -834,7 +834,7 @@
   font-size: 11.5px;
   font-weight: 700;
 }
-.ad-card.is-plain .adp__cta { background: rgba(34, 164, 76, 0.14); }
+.ad-card.is-plain .adp__cta { background: color-mix(in srgb, var(--theme-primary) 14%, transparent); }
 
 .adp__meta {
   margin: 0;
@@ -864,7 +864,7 @@
 [data-theme='dark'] .adp__note {
   border-color: rgba(233, 179, 75, 0.32);
   background: rgba(233, 179, 75, 0.12);
-  color: #e8c375;
+  color: var(--theme-primary);
 }
 
 .adp__foot {
@@ -937,4 +937,4 @@
   font-size: 11.5px;
   font-weight: 700;
 }
-.ad-card.is-plain .ad-card__cta { background: rgba(34, 164, 76, 0.14); }
+.ad-card.is-plain .ad-card__cta { background: color-mix(in srgb, var(--theme-primary) 14%, transparent); }

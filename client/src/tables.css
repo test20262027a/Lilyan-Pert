@@ -6,14 +6,14 @@
    ========================================================================== */
 
 .tables-page {
-  --tp-green: #43c45b;
-  --tp-green-ink: #1b7f42;
+  --tp-green: var(--theme-primary);
+  --tp-green-ink: var(--theme-primary-strong);
   --tp-teal: #319d91;
   --tp-ink: #242724;
   --tp-muted: #898c87;
   --tp-line: #e9ede9;
-  --tp-mint: #eaf8ef;
-  --tp-mint-line: #d9efdf;
+  --tp-mint: var(--theme-primary-soft);
+  --tp-mint-line: var(--theme-primary-line);
   --tp-red: #ef4444;
   --tp-red-soft: #fff2f2;
   --tp-red-line: #fadada;

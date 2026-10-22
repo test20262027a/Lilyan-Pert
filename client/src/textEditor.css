@@ -12,7 +12,7 @@
 .tx-hero .mhero {
   min-height: 148px;
   border-radius: 20px;
-  border-color: #f1e5c8;
+  border-color: var(--theme-primary-line);
   box-shadow:
     0 1px 2px rgba(23, 26, 43, 0.05),
     0 14px 30px rgba(23, 26, 43, 0.06);
@@ -22,7 +22,7 @@
   height: 52px;
   border-radius: 16px;
   background: #f3efff;
-  color: #7c67e4;
+  color: var(--theme-primary);
   border: 1px solid rgba(124, 103, 228, 0.24);
   box-shadow: 0 4px 12px rgba(124, 103, 228, 0.16), inset 0 1px 0 #ffffff;
 }
@@ -67,16 +67,16 @@
   gap: 6px;
   padding: 5px 11px;
   border-radius: 999px;
-  background: #fff7e6;
-  border: 1px solid #f2dcb0;
-  color: #9a6a13;
+  background: var(--theme-primary-soft);
+  border: 1px solid var(--theme-primary-line);
+  color: var(--theme-primary-strong);
   font-size: 11.5px;
   font-weight: 650;
 }
 [data-theme='dark'] .tx-unsaved {
   background: rgba(217, 119, 6, 0.18);
   border-color: rgba(217, 119, 6, 0.4);
-  color: #f0c27b;
+  color: var(--theme-primary);
 }
 
 /* ---------------------------------------------------------------- notices */
@@ -289,7 +289,7 @@
 .tx-lang__input:focus {
   outline: none;
   border-color: #7cc995;
-  box-shadow: 0 0 0 3px rgba(67, 196, 91, 0.16);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 16%, transparent);
 }
 .tx-lang__input:disabled { background: var(--surface-2); color: var(--text-soft); }
 
@@ -341,10 +341,10 @@
   border: 1px solid var(--border);
   background: var(--surface-2);
 }
-.tx-review__item.is-replace { border-color: #f2dcb0; background: #fffdf6; }
+.tx-review__item.is-replace { border-color: var(--theme-primary-line); background: var(--theme-primary-soft); }
 .tx-review__head { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 650; }
 .tx-review__lang { font-weight: 750; }
-.tx-review__warn { margin-inline-start: auto; font-size: 10.5px; font-weight: 700; color: #9a6a13; }
+.tx-review__warn { margin-inline-start: auto; font-size: 10.5px; font-weight: 700; color: var(--theme-primary-strong); }
 .tx-review__text {
   display: block;
   padding: 8px 10px;
@@ -357,7 +357,7 @@
   word-break: break-word;
 }
 [data-theme='dark'] .tx-review__item.is-replace { background: rgba(217, 119, 6, 0.12); }
-[data-theme='dark'] .tx-review__warn { color: #f0c27b; }
+[data-theme='dark'] .tx-review__warn { color: var(--theme-primary); }
 
 /* -------------------------------------------------------------- skeleton */
 

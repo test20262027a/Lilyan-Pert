@@ -13,8 +13,8 @@
   --pr-pink-soft: #fdeef2;
   --pr-pink-line: #f7d3dd;
   --pr-pink-ink: #dd5468;
-  --pr-cream: #fff9ec;
-  --pr-cream-line: #f2e5c6;
+  --pr-cream: var(--theme-primary-soft);
+  --pr-cream-line: var(--theme-primary-line);
   --pr-line: var(--border);
   --pr-ink: var(--text);
   --pr-muted: var(--muted);
@@ -184,8 +184,8 @@
 .promo-pill--inactive { background: var(--surface-2); color: var(--pr-muted); }
 .promo-pill--expired,
 .promo-pill--exhausted { background: var(--pr-red-soft); color: var(--pr-red); }
-.promo-pill--scheduled { background: #fdf3d5; color: #a9822a; }
-[data-theme='dark'] .promo-pill--scheduled { background: rgba(233, 179, 75, 0.16); color: #e8c375; }
+.promo-pill--scheduled { background: var(--theme-primary-soft); color: var(--theme-primary-strong); }
+[data-theme='dark'] .promo-pill--scheduled { background: rgba(233, 179, 75, 0.16); color: var(--theme-primary); }
 
 .promo-card__usage {
   display: flex;
@@ -320,14 +320,14 @@
   padding: 16px 18px;
   border-bottom: 1px solid var(--pr-cream-line);
   background:
-    radial-gradient(90% 150% at 20% 0%, #fdf3d9 0%, transparent 60%),
-    radial-gradient(80% 140% at 90% 100%, #eaf6ea 0%, transparent 62%),
-    linear-gradient(180deg, #fffdf5, #fff7e6);
+    radial-gradient(90% 150% at 20% 0%, var(--theme-primary-soft) 0%, transparent 60%),
+    radial-gradient(80% 140% at 90% 100%, var(--theme-primary-soft) 0%, transparent 62%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 [data-theme='dark'] .promo-modal__head {
   background:
     radial-gradient(90% 150% at 20% 0%, rgba(243, 214, 150, 0.14) 0%, transparent 60%),
-    radial-gradient(80% 140% at 90% 100%, rgba(67, 196, 91, 0.12) 0%, transparent 62%),
+    radial-gradient(80% 140% at 90% 100%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 62%),
     linear-gradient(180deg, #1d1f1a, #191c18);
 }
 

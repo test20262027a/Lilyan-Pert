@@ -12,7 +12,7 @@
   --rv-surface: #ffffff;
   --rv-mint: #f1fbf4;
   --rv-cream: #fff9e8;
-  --rv-green: #43c45b;
+  --rv-green: var(--theme-primary);
   --rv-green-deep: #2f9b47;
   --rv-star: #39bf59;
   --rv-gold: #f6b92b;
@@ -32,11 +32,11 @@
 
 [data-theme='dark'] .reviews-page {
   --rv-surface: var(--surface);
-  --rv-mint: rgba(67, 196, 91, 0.12);
+  --rv-mint: color-mix(in srgb, var(--theme-primary) 12%, transparent);
   --rv-cream: rgba(246, 185, 43, 0.14);
-  --rv-green: #4ac964;
+  --rv-green: var(--theme-primary);
   --rv-green-deep: #8fe2a9;
-  --rv-star: #4ac964;
+  --rv-star: var(--theme-primary);
   --rv-ink: var(--text);
   --rv-text: var(--text-soft);
   --rv-muted: var(--muted);
@@ -224,11 +224,11 @@
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #4ecf68, #43c45b);
+  background: linear-gradient(90deg, var(--theme-primary), var(--theme-primary));
   transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 [data-theme='dark'] .rv-row__fill {
-  background: linear-gradient(90deg, #57cf6e, #4ac964);
+  background: linear-gradient(90deg, var(--theme-primary), var(--theme-primary));
 }
 
 .rv-row__count {

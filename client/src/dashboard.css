@@ -86,7 +86,7 @@
   border: 1px solid var(--mint-line);
   background:
     radial-gradient(120% 150% at 100% 0%, #fdf3dd 0%, transparent 62%),
-    radial-gradient(110% 140% at 0% 100%, #eef7ee 0%, transparent 60%),
+    radial-gradient(110% 140% at 0% 100%, var(--theme-primary-soft) 0%, transparent 60%),
     linear-gradient(90deg, #fdfaf0, #fbf6e9);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 16%, transparent), var(--shadow-soft);
   min-height: 165px;
@@ -106,7 +106,7 @@
   color: #443a24;
   letter-spacing: -0.01em;
 }
-.welcome__sub { font-size: 12.5px; color: #8a7c60; }
+.welcome__sub { font-size: 12.5px; color: var(--muted); }
 .welcome__art { flex: none; width: min(46%, 320px); height: auto; }
 
 [data-theme='dark'] .welcome {
@@ -114,7 +114,7 @@
   border-color: var(--mint-line);
 }
 [data-theme='dark'] .welcome__title { color: #f0e9d8; }
-[data-theme='dark'] .welcome__sub { color: #b4ab94; }
+[data-theme='dark'] .welcome__sub { color: var(--muted); }
 [data-theme='dark'] .welcome__art { opacity: 0.9; }
 
 /* -------------------------------------------------- dark glass surfaces */
@@ -1002,7 +1002,7 @@
 }
 .dash-modal__btn--apply {
   border-color: #7b5ceb; color: #ffffff;
-  background: linear-gradient(180deg, #8365f0, #6f4fe0);
+  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-strong));
   box-shadow:
     0 6px 16px rgba(123, 92, 235, 0.34),
     inset 0 1px 0 rgba(255, 255, 255, 0.32);
@@ -1023,7 +1023,7 @@
   color: var(--text);
 }
 [data-theme='dark'] .dash-modal__btn { background: #232935; color: var(--text); }
-[data-theme='dark'] .dash-modal__btn--apply { background: linear-gradient(180deg, #8365f0, #6f4fe0); color: #fff; }
+[data-theme='dark'] .dash-modal__btn--apply { background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-strong)); color: #fff; }
 
 @keyframes dash-modal-fade {
   from { opacity: 0; }

@@ -11,8 +11,8 @@
   --stats-bg: #fafcfa;
   --stats-surface: #ffffff;
   --stats-mint: #f3fbf5;
-  --stats-primary: #43c45b;
-  --stats-purple: #8056f5;
+  --stats-primary: var(--theme-primary);
+  --stats-purple: var(--theme-primary);
   --stats-blue: #4f8df7;
   --stats-orange: #f2a12b;
   --stats-ink: #242824;
@@ -32,7 +32,7 @@
 [data-theme='dark'] .stats-page {
   --stats-bg: transparent;
   --stats-surface: var(--surface);
-  --stats-mint: rgba(67, 196, 91, 0.1);
+  --stats-mint: color-mix(in srgb, var(--theme-primary) 10%, transparent);
   --stats-ink: var(--text);
   --stats-muted: var(--muted);
   --stats-border: var(--border);
@@ -64,11 +64,11 @@
   min-height: 150px;
   padding: 14px 22px;
   border-radius: 20px;
-  border-color: #f1e5c8;
+  border-color: var(--theme-primary-line);
   background:
-    radial-gradient(90% 150% at 24% 6%, #fdf3d9 0%, transparent 62%),
-    radial-gradient(80% 140% at 88% 98%, #eaf6ea 0%, transparent 60%),
-    linear-gradient(180deg, #fffdf5, #fff8e6);
+    radial-gradient(90% 150% at 24% 6%, var(--theme-primary-soft) 0%, transparent 62%),
+    radial-gradient(80% 140% at 88% 98%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 
 .stats-page .mhero__icon {
@@ -77,7 +77,7 @@
   border-radius: 14px;
   background: linear-gradient(180deg, #f6f0ff, #ece4ff);
   border: 1px solid #ddd0fb;
-  color: #8056f5;
+  color: var(--theme-primary);
   box-shadow:
     inset 0 1px 0 #ffffff,
     0 8px 16px -9px rgba(128, 86, 245, 0.55);
@@ -87,11 +87,11 @@
 }
 .stats-page .mhero__title {
   font-size: clamp(22px, 2.4vw, 27px);
-  color: #3f3623;
+  color: var(--text);
 }
 .stats-page .mhero__sub {
   font-size: 13.5px;
-  color: #8a7c60;
+  color: var(--muted);
 }
 
 .stats-page .start {
@@ -111,7 +111,7 @@
   box-shadow: none;
 }
 [data-theme='dark'] .stats-page .mhero__title { color: #f0e9d8; }
-[data-theme='dark'] .stats-page .mhero__sub { color: #b4ab94; }
+[data-theme='dark'] .stats-page .mhero__sub { color: var(--muted); }
 
 /* ---------------------------------------------------------- the KPI cards */
 
@@ -147,13 +147,13 @@
 
 .stats-kpi--green {
   --tone-soft: #eefaf1;
-  --tone-line: #d9f0df;
-  --tone-ink: #43c45b;
+  --tone-line: var(--theme-primary-line);
+  --tone-ink: var(--theme-primary);
 }
 .stats-kpi--purple {
   --tone-soft: #f4efff;
   --tone-line: #e6dcfb;
-  --tone-ink: #8056f5;
+  --tone-ink: var(--theme-primary);
 }
 .stats-kpi--orange {
   --tone-soft: #fff5e8;
@@ -207,9 +207,9 @@
   --tone-ink: #8ab4fb;
 }
 [data-theme='dark'] .stats-kpi--green {
-  --tone-soft: rgba(67, 196, 91, 0.14);
-  --tone-line: rgba(67, 196, 91, 0.3);
-  --tone-ink: #6fdd8a;
+  --tone-soft: color-mix(in srgb, var(--theme-primary) 14%, transparent);
+  --tone-line: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+  --tone-ink: var(--theme-primary);
 }
 [data-theme='dark'] .stats-kpi--purple {
   --tone-soft: rgba(128, 86, 245, 0.16);
@@ -277,9 +277,9 @@
   border-color: #fbe5c8;
 }
 .stat-panel__icon--green {
-  color: #43c45b;
+  color: var(--theme-primary);
   background: #effaf2;
-  border-color: #d9f0df;
+  border-color: var(--theme-primary-line);
 }
 
 .stat-panel__title {
@@ -302,7 +302,7 @@
 }
 
 [data-theme='dark'] .stat-panel__head {
-  background: linear-gradient(180deg, rgba(67, 196, 91, 0.1), rgba(23, 26, 36, 0.96));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-primary) 10%, transparent), rgba(23, 26, 36, 0.96));
   border-bottom-color: var(--border);
 }
 [data-theme='dark'] .stat-panel__icon--blue {
@@ -316,9 +316,9 @@
   border-color: rgba(242, 161, 43, 0.3);
 }
 [data-theme='dark'] .stat-panel__icon--green {
-  color: #6fdd8a;
-  background: rgba(67, 196, 91, 0.14);
-  border-color: rgba(67, 196, 91, 0.3);
+  color: var(--theme-primary);
+  background: color-mix(in srgb, var(--theme-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
 }
 
 /* ------------------------------------------------- visits & orders chart */

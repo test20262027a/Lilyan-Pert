@@ -8,8 +8,8 @@
    ========================================================================== */
 
 .rs-page {
-  --rs-green: #2fa85a;
-  --rs-green-ink: #1b7f42;
+  --rs-green: var(--theme-primary);
+  --rs-green-ink: var(--theme-primary-strong);
   --rs-mint: #eefbf2;
   --rs-mint-line: #bfe8cc;
   --rs-ink: #23281f;
@@ -32,11 +32,11 @@
   min-height: 110px;
   padding: 14px 20px;
   border-radius: 18px;
-  border-color: #f1e5c8;
+  border-color: var(--theme-primary-line);
   background:
-    radial-gradient(90% 150% at 22% 6%, #fdf3d9 0%, transparent 62%),
-    radial-gradient(80% 140% at 90% 98%, #eaf6ea 0%, transparent 60%),
-    linear-gradient(180deg, #fffdf5, #fff8e6);
+    radial-gradient(90% 150% at 22% 6%, var(--theme-primary-soft) 0%, transparent 62%),
+    radial-gradient(80% 140% at 90% 98%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 
 .rs-page .mhero__icon {
@@ -53,12 +53,12 @@
 
 .rs-page .mhero__title {
   font-size: clamp(19px, 2.3vw, 24px);
-  color: #3f3623;
+  color: var(--text);
 }
 
 .rs-page .mhero__sub {
   font-size: 12.5px;
-  color: #8a7c60;
+  color: var(--muted);
 }
 
 .rs-page .mhero__art { padding-inline: 6px; }
@@ -72,7 +72,7 @@
   gap: 8px;
   padding: 9px 13px;
   border-radius: 10px;
-  border: 1px solid #cfe9d6;
+  border: 1px solid var(--theme-primary-line);
   background: #f2fbf4;
   color: #2c6b43;
   font-size: 12.5px;
@@ -124,7 +124,7 @@
 .rs-btn--green {
   background: var(--rs-green);
   color: #ffffff;
-  box-shadow: 0 2px 6px rgba(47, 168, 90, 0.22);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--theme-primary) 22%, transparent);
 }
 
 .rs-btn--green:hover:not(:disabled) { background: #289b52; }
@@ -180,7 +180,7 @@
 .rs-card.is-on {
   background: var(--rs-mint);
   border-color: var(--rs-mint-line);
-  box-shadow: 0 2px 8px rgba(47, 168, 90, 0.12);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--theme-primary) 12%, transparent);
 }
 
 /* High-risk card: the red surface stays red when selected — only the ring and
@@ -361,7 +361,7 @@
 
 .rs-tone--orange { background: #fff2e6; color: #d9822b; border-color: #f8ddc2; }
 .rs-tone--blue { background: #eaf2ff; color: #3b7fd4; border-color: #cfe0f8; }
-.rs-tone--purple { background: #f1ecff; color: #7c67e4; border-color: #ddd2ff; }
+.rs-tone--purple { background: #f1ecff; color: var(--theme-primary); border-color: #ddd2ff; }
 .rs-tone--amber { background: #fff6e0; color: #cf8b16; border-color: #f6e2b4; }
 .rs-tone--teal { background: #e6f7f4; color: #1f9d8b; border-color: #c3e9e2; }
 .rs-tone--pink { background: #fdecf4; color: #d6539a; border-color: #f8cee2; }
@@ -589,16 +589,16 @@
   border-color: var(--mint-line);
   background:
     radial-gradient(90% 150% at 22% 6%, rgba(243, 214, 150, 0.12) 0%, transparent 62%),
-    radial-gradient(80% 140% at 90% 98%, rgba(67, 196, 91, 0.1) 0%, transparent 60%),
+    radial-gradient(80% 140% at 90% 98%, color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%, transparent 60%),
     linear-gradient(180deg, #1d1f1a, #191c18);
 }
 
 [data-theme='dark'] .rs-page .mhero__title { color: #f0e9d8; }
-[data-theme='dark'] .rs-page .mhero__sub { color: #b4ab94; }
+[data-theme='dark'] .rs-page .mhero__sub { color: var(--muted); }
 
 [data-theme='dark'] .rs-notice {
-  border-color: rgba(63, 168, 92, 0.4);
-  background: rgba(63, 168, 92, 0.1);
+  border-color: color-mix(in srgb, var(--theme-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--theme-primary) 10%, transparent);
   color: #9ed4b0;
 }
 
@@ -609,8 +609,8 @@
 }
 
 [data-theme='dark'] .rs-card.is-on {
-  background: rgba(63, 168, 92, 0.14);
-  border-color: rgba(63, 168, 92, 0.45);
+  background: color-mix(in srgb, var(--theme-primary) 14%, transparent);
+  border-color: color-mix(in srgb, var(--theme-primary) 45%, transparent);
 }
 
 [data-theme='dark'] .rs-card--risk {
@@ -624,5 +624,5 @@
 [data-theme='dark'] .rs-count { background: #23261f; border-color: #35392f; color: #c8cec0; }
 [data-theme='dark'] .rs-reset { background: #262a22; border-color: #3a3f34; color: #e2ddd0; }
 [data-theme='dark'] .rs-btn--ghost { background: #262a22; border-color: #3a3f34; color: #e2ddd0; }
-[data-theme='dark'] .rs-result { background: rgba(63, 168, 92, 0.09); border-color: rgba(63, 168, 92, 0.3); }
+[data-theme='dark'] .rs-result { background: color-mix(in srgb, var(--theme-primary) 9%, transparent); border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent); }
 [data-theme='dark'] .rs-modal__list li { background: #23261f; border-color: #35392f; }

@@ -851,6 +851,46 @@ router.delete(
 const ASSIGNABLE_ROLES = ['owner', 'manager', 'staff', 'customer'];
 const ROLE_RANK = { customer: 0, staff: 1, manager: 2, owner: 3 };
 
+/*
+ * Search folding for the four scripts the product supports (Kurdish Sorani,
+ * Persian, Arabic, English). Stored values are never rewritten: the comparison
+ * folds away only the variants that make the same name look different —
+ * alef/yeh/keh forms, teh marbuta, the Arabic-Indic and Persian digits, and the
+ * zero-width joiners Kurdish and Persian words carry. Kept as a JS map and a
+ * matching SQL `translate()` pair so both sides of the comparison agree.
+ */
+const FOLD_PAIRS = [
+  ['أإآٱ', 'اااا'],
+  ['ة', 'ه'],
+  ['ىي', 'یی'],
+  ['ك', 'ک'],
+  ['ؤ', 'و'],
+  ['ئ', 'ی'],
+  ['۰۱۲۳۴۵۶۷۸۹', '0123456789'],
+  ['٠١٢٣٤٥٦٧٨٩', '0123456789'],
+];
+const FOLD_FROM = FOLD_PAIRS.map(([from]) => from).join('');
+const FOLD_TO = FOLD_PAIRS.map(([, to]) => to).join('');
+/* Zero-width joiners, tatweel and the short vowel marks Persian/Arabic names
+   carry — dropped for the comparison only, never from the stored value. */
+const JOINERS = /[\u200c\u200d\u0640\u064b-\u0652]/g;
+const JOINER_CHARS = '\u200c\u200d\u0640\u064b\u064c\u064d\u064e\u064f\u0650\u0651\u0652';
+
+/** Folds a typed term the same way the SQL expression folds the stored value. */
+function foldTerm(value) {
+  let out = String(value || '').toLowerCase();
+  out = out.replace(/[أإآٱةىيكؤئ۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩]/g, (ch) => {
+    const at = FOLD_FROM.indexOf(ch);
+    return at === -1 ? ch : FOLD_TO[at];
+  });
+  return out.replace(JOINERS, '').replace(/\s+/g, ' ').trim();
+}
+
+/** SQL twin of `foldTerm` for one column (joiners stripped, then folded). */
+function foldSql(column) {
+  return `translate(translate(lower(${column}), '${JOINER_CHARS}', ''), '${FOLD_FROM}', '${FOLD_TO}')`;
+}
+
 async function countOwners(businessId) {
   const { rows } = await q(
     `SELECT count(*)::int AS c FROM memberships WHERE business_id = $1 AND role = 'owner' AND status = 'active'`,
@@ -891,12 +931,17 @@ router.get(
     const params = [req.businessId];
     const where = ['m.business_id = $1'];
 
-    const term = String(req.query.q || '').trim().slice(0, 80);
+    // Partial matching across the identity fields the administrator may read:
+    // name, email and phone. `%` / `_` typed by the user stay literal.
+    const term = foldTerm(String(req.query.q || '').slice(0, 80));
     if (term) {
-      params.push(`%${term}%`);
+      const pattern = `%${term.replace(/([%_\\])/g, '\\$1')}%`;
+      params.push(pattern);
+      const at = `$${params.length}`;
       where.push(
-        `(u.full_name ILIKE $${params.length} OR u.email ILIKE $${params.length}
-          OR u.phone ILIKE $${params.length})`,
+        `(${foldSql('u.full_name')} LIKE ${at} ESCAPE '\\'
+          OR ${foldSql('u.email')} LIKE ${at} ESCAPE '\\'
+          OR ${foldSql('u.phone')} LIKE ${at} ESCAPE '\\')`,
       );
     }
     if (ASSIGNABLE_ROLES.includes(req.query.role)) {

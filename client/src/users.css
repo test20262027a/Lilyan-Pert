@@ -8,12 +8,12 @@
    ========================================================================== */
 
 .users-page {
-  --um-green: #2fa85a;
-  --um-green-ink: #1b7f42;
-  --um-mint: #eaf8ee;
-  --um-mint-line: #cfe9d6;
-  --um-purple: #7c67e4;
-  --um-purple-soft: #f1ecff;
+  --um-green: var(--theme-primary);
+  --um-green-ink: var(--theme-primary-strong);
+  --um-mint: var(--theme-primary-soft);
+  --um-mint-line: var(--theme-primary-line);
+  --um-purple: var(--theme-primary);
+  --um-purple-soft: var(--theme-primary-soft);
   --um-red: #e5484d;
   --um-red-soft: #fdecec;
   --um-ink: #23281f;
@@ -31,11 +31,11 @@
 
 .users-page .mhero {
   min-height: 150px;
-  border-color: #f1e5c8;
+  border-color: var(--theme-primary-line);
   background:
-    radial-gradient(90% 150% at 22% 6%, #fdf3d9 0%, transparent 62%),
-    radial-gradient(80% 140% at 90% 98%, #eaf6ea 0%, transparent 60%),
-    linear-gradient(180deg, #fffdf5, #fff8e6);
+    radial-gradient(90% 150% at 22% 6%, var(--theme-primary-soft) 0%, transparent 62%),
+    radial-gradient(80% 140% at 90% 98%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 
 /* Purple users glyph on the far right of the banner. */
@@ -45,14 +45,14 @@
   border-radius: 15px;
   background: var(--um-purple-soft);
   color: var(--um-purple);
-  border: 1px solid #ddd2ff;
+  border: 1px solid var(--theme-primary-line);
   box-shadow:
     inset 0 1px 0 #ffffff,
-    0 4px 10px rgba(124, 103, 228, 0.14);
+    0 4px 10px color-mix(in srgb, var(--theme-primary) 14%, transparent);
 }
 
-.users-page .mhero__title { color: #3f3623; }
-.users-page .mhero__sub { color: #8a7c60; }
+.users-page .mhero__title { color: var(--text); }
+.users-page .mhero__sub { color: var(--muted); }
 
 /* -------------------------------------------------------- add user button */
 
@@ -63,18 +63,18 @@
   height: 46px;
   padding: 0 16px 0 8px;
   border-radius: 13px;
-  border: 1px solid color-mix(in srgb, var(--um-green) 74%, #000);
-  background: linear-gradient(180deg, #37b262, var(--um-green));
-  color: #ffffff;
+  border: 1px solid var(--theme-primary-active);
+  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-hover));
+  color: var(--primary-ink);
   font: inherit;
   font-size: 13.5px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 3px 9px rgba(47, 168, 90, 0.24);
+  box-shadow: 0 3px 9px color-mix(in srgb, var(--theme-primary) 24%, transparent);
   transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 [dir='rtl'] .um-add { padding: 0 8px 0 16px; }
-.um-add:hover { filter: brightness(1.03); box-shadow: 0 5px 14px rgba(47, 168, 90, 0.3); }
+.um-add:hover { filter: brightness(1.03); box-shadow: 0 5px 14px color-mix(in srgb, var(--theme-primary) 30%, transparent); }
 .um-add:active { transform: translateY(1px); }
 .um-add:focus-visible { outline: 2px solid var(--um-green); outline-offset: 2px; }
 .um-add__plus {
@@ -101,39 +101,26 @@
   box-shadow: 0 2px 8px rgba(23, 26, 43, 0.05);
 }
 
-.um-search {
-  position: relative;
-  display: flex;
-  align-items: center;
-  flex: 1 1 280px;
-  min-width: 0;
+/* Layout only. The surface, the border and the single theme-aware focus ring
+   for the whole container come from the shared `.lilyan-search` control, so the
+   field can never grow a second outline of its own. */
+.um-search { flex: 1 1 280px; min-width: 0; }
+.um-search__input { font-size: 13px; }
+.um-search__input::placeholder { color: var(--muted); }
+.um-search__clear {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.um-search__icon {
-  position: absolute;
-  inset-inline-start: 12px;
-  color: #9aa196;
-  pointer-events: none;
-}
-.um-search__input {
-  width: 100%;
-  height: 42px;
-  padding-inline-start: 36px;
-  padding-inline-end: 12px;
-  border-radius: 11px;
-  border: 1px solid var(--um-line);
-  background: #fbfcfa;
-  color: var(--um-ink);
-  font: inherit;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
-}
-.um-search__input::placeholder { color: #a2a99f; }
-.um-search__input:focus {
-  background: #ffffff;
-  border-color: color-mix(in srgb, var(--um-green) 50%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--um-green) 13%, transparent);
-}
+.um-search__clear:hover { background: var(--surface-3); color: var(--text); }
 
 .um-filter { flex: 0 0 auto; width: 168px; }
 .um-filter .select { height: 42px; border-radius: 11px; font-size: 13px; }
@@ -200,7 +187,7 @@
   color: var(--um-muted);
   white-space: nowrap;
 }
-.um-row__perms strong { color: #4c6b4f; font-weight: 700; }
+.um-row__perms strong { color: var(--um-green-ink); font-weight: 700; }
 
 /* ---------------------------------------------------------- role / status */
 
@@ -322,7 +309,7 @@
   padding: 16px 18px;
   padding-inline-end: 58px;
   overflow: hidden;
-  background: linear-gradient(180deg, #fffdf5, #fff8e6);
+  background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 .um-modal__art {
   position: absolute;
@@ -684,13 +671,13 @@
 }
 .um-btn:hover:not(:disabled) { background: #f7f8f5; }
 .um-btn--primary {
-  border-color: var(--um-green);
-  background: var(--um-green);
-  color: #ffffff;
+  border-color: var(--theme-primary);
+  background: var(--theme-primary);
+  color: var(--primary-ink);
   font-weight: 700;
-  box-shadow: 0 2px 7px rgba(47, 168, 90, 0.24);
+  box-shadow: 0 2px 7px color-mix(in srgb, var(--theme-primary) 24%, transparent);
 }
-.um-btn--primary:hover:not(:disabled) { background: #2b9a52; }
+.um-btn--primary:hover:not(:disabled) { background: var(--theme-primary-hover); }
 .um-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .um-btn:focus-visible { outline: 2px solid var(--um-green); outline-offset: 2px; }
 .um-btn .spinner { width: 15px; height: 15px; border-width: 2px; }
@@ -717,8 +704,7 @@
 [data-theme='dark'] .um-sec__title,
 [data-theme='dark'] .um-permcard__title { color: var(--text); }
 [data-theme='dark'] .um-permcard { background: var(--surface-2); border-color: var(--border); }
-[data-theme='dark'] .um-input,
-[data-theme='dark'] .um-search__input { background: var(--surface-2); color: var(--text); }
+[data-theme='dark'] .um-input { background: var(--surface-2); color: var(--text); }
 [data-theme='dark'] .um-check__box { background: var(--surface); border-color: var(--border); }
 [data-theme='dark'] .um-modal__head { background: linear-gradient(180deg, #1d1f1a, #191c18); }
 [data-theme='dark'] .um-modal__head::after { background: none; }

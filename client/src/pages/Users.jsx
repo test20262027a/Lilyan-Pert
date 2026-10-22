@@ -46,7 +46,10 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // `search` is what is typed; `query` is what the server was last asked for.
+  // Typing settles into `query` after a short debounce, Enter commits at once.
   const [search, setSearch] = useState('');
+  const [query, setQuery] = useState('');
   const [role, setRole] = useState('all');
   const [status, setStatus] = useState('all');
   const [modal, setModal] = useState(null);
@@ -65,7 +68,7 @@ export default function Users() {
     setFailed(false);
     try {
       const params = new URLSearchParams();
-      if (search.trim()) params.set('q', search.trim());
+      if (query.trim()) params.set('q', query.trim());
       if (role !== 'all') params.set('role', role);
       if (status !== 'all') params.set('status', status);
       const query = params.toString();
@@ -78,12 +81,25 @@ export default function Users() {
     } finally {
       if (id === requestId.current) setLoading(false);
     }
-  }, [search, role, status]);
+  }, [query, role, status]);
+
+  // Live search: typing settles into the committed query. Clearing the field
+  // restores the list straight away and never touches the role/status filters.
+  useEffect(() => {
+    const timer = setTimeout(() => setQuery(search), search.trim() ? 250 : 0);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   useEffect(() => {
-    const timer = setTimeout(load, search ? 250 : 0);
-    return () => clearTimeout(timer);
-  }, [load, search]);
+    load();
+  }, [load]);
+
+  // Enter searches now, without a page reload and without waiting for the debounce.
+  const onSearchKeyDown = (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    setQuery(search);
+  };
 
   const failMessage = (err) => t(ERROR_KEYS[err.code] || 'error_generic');
 
@@ -190,16 +206,31 @@ export default function Users() {
       </PageHeroBanner>
 
       <div className="um-toolbar">
-        <span className="um-search">
-          <Icon name="search" size={16} className="um-search__icon" />
+        <div className="um-search lilyan-search">
+          <span className="lilyan-search__icon">
+            <Icon name="search" size={15} />
+          </span>
           <input
-            className="um-search__input"
+            className="um-search__input lilyan-search__input"
+            type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={onSearchKeyDown}
             placeholder={t('user_search_placeholder')}
             aria-label={t('user_search_placeholder')}
           />
-        </span>
+          {search ? (
+            <button
+              type="button"
+              className="um-search__clear lilyan-search__clear"
+              onClick={() => setSearch('')}
+              aria-label={t('action_clear')}
+              title={t('action_clear')}
+            >
+              <Icon name="close" size={14} />
+            </button>
+          ) : null}
+        </div>
         <div className="um-filter">
           <Select value={role} onChange={setRole} options={roleOptions} aria-label={t('user_role')} />
         </div>

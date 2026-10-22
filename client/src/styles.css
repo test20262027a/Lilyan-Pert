@@ -17,6 +17,41 @@
   --accent-slate: #64748b;
 
   /*
+   * ---------------------------------------------------------------- theme --
+   * `--primary` (and `--primary-ink`) are written on :root by the active
+   * business theme (see theme.js). Everything below is derived from them, so
+   * one saved appearance recolours buttons, focus rings, selections, chart
+   * strokes, icon containers and glass tints everywhere — no page defines its
+   * own accent. Only semantic status colours and brand media stay fixed.
+   */
+  --theme-primary: var(--primary);
+  /* Readable variant of the accent for text/icons on a light surface. Mixed
+     with `--text`, so it darkens in light mode and lightens in dark mode. */
+  --theme-primary-strong: color-mix(in srgb, var(--primary) 74%, var(--text));
+  --theme-primary-hover: color-mix(in srgb, var(--primary) 88%, #10141f);
+  --theme-primary-active: color-mix(in srgb, var(--primary) 76%, #10141f);
+  --theme-primary-foreground: var(--primary-ink);
+  --theme-primary-soft: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  --theme-primary-line: color-mix(in srgb, var(--primary) 26%, var(--border));
+  --theme-focus-ring: color-mix(in srgb, var(--primary) 20%, transparent);
+  --theme-focus-surface: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  --theme-selected-bg: color-mix(in srgb, var(--primary) 13%, var(--surface));
+  --theme-selected-border: color-mix(in srgb, var(--primary) 45%, var(--border-strong));
+  --theme-icon-bg: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  --theme-header-gradient: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 15%, var(--surface)),
+    var(--surface)
+  );
+  --theme-glass: color-mix(in srgb, var(--surface) 88%, var(--primary));
+  --theme-shadow: 0 12px 28px -16px color-mix(in srgb, var(--primary) 45%, transparent);
+  --surface-primary: var(--surface);
+  --surface-secondary: var(--surface-2);
+  --border-default: var(--border-strong);
+  --shadow-soft: var(--shadow-sm);
+  --shadow-elevated: var(--shadow);
+
+  /*
    * Fixed shell chrome: a dark navy sidebar and mint (soft green) tints.
    * These stay the same whatever brand colour the business picks, so the
    * layout never shifts — only `--primary` follows the business theme.
@@ -26,14 +61,18 @@
   --navy-line: #263747;
   --navy-ink: #e1e7eb;
   --navy-muted: #aeb9c2;
-  --navy-active: #194d35;
+  --navy-active: color-mix(in srgb, var(--primary) 30%, var(--navy));
   --navy-scroll: #344857;
-  --mint: #43c45b;
-  /* Deeper green for filled controls that carry white text (5:1, readable). */
-  --mint-deep: #1b7f42;
-  --mint-ink: #1b7f42;
-  --mint-soft: #f2fbf5;
-  --mint-line: #e9eee9;
+  /*
+   * The accent alias the whole stylesheet already shares. It used to be a fixed
+   * green; it now mirrors the active theme, so every surface written against
+   * `--mint*` follows the selected appearance without touching the pages.
+   */
+  --mint: var(--theme-primary);
+  --mint-deep: var(--theme-primary-strong);
+  --mint-ink: var(--theme-primary-strong);
+  --mint-soft: var(--theme-primary-soft);
+  --mint-line: var(--theme-primary-line);
 
   /* Pastel KPI / status tones. */
   --pastel-blue: #eef4ff;
@@ -105,11 +144,13 @@
   --navy: #0d1b29;
   --navy-2: #112232;
   --navy-line: #263747;
-  --mint: #3fbe86;
-  --mint-deep: #2f9e6b;
-  --mint-ink: #7ddcae;
-  --mint-soft: #14261f;
-  --mint-line: #22392f;
+  /* The accent stays theme-derived in dark mode too: `--theme-primary-*`
+     already adapts through `--surface` and `--text`. */
+  --mint: color-mix(in srgb, var(--primary) 92%, #ffffff);
+  --mint-deep: color-mix(in srgb, var(--primary) 72%, #ffffff);
+  --mint-ink: color-mix(in srgb, var(--primary) 62%, #ffffff);
+  --mint-soft: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  --mint-line: color-mix(in srgb, var(--primary) 26%, var(--surface));
   --pastel-blue: #172232;
   --pastel-blue-ink: #9dc0f7;
   --pastel-blue-line: #24334a;
@@ -503,9 +544,7 @@ a { color: var(--primary); }
   border: 1px solid var(--border-strong);
   border-radius: 14px;
   background: var(--surface);
-  box-shadow:
-    0 2px 6px rgba(20, 50, 30, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-sm);
   transition:
     border-color 200ms ease,
     box-shadow 200ms ease,
@@ -513,16 +552,18 @@ a { color: var(--primary); }
     transform 200ms ease;
 }
 .lilyan-search:hover {
-  border-color: color-mix(in srgb, var(--mint) 32%, var(--border-strong));
+  border-color: var(--theme-selected-border);
 }
+/* The whole container — border, tint, ring and icon — follows the active
+   theme. The inner input keeps no ring of its own, so there is never a second
+   competing outline inside the container. */
 .lilyan-search:focus-within {
-  border-color: color-mix(in srgb, var(--mint) 78%, #ffffff);
-  background: color-mix(in srgb, var(--mint) 9%, var(--surface));
+  border-color: var(--theme-primary);
+  background: var(--theme-focus-surface);
   transform: translateY(-1px);
   box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--mint) 16%, transparent),
-    0 10px 26px -10px color-mix(in srgb, var(--mint) 45%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    0 0 0 3px var(--theme-focus-ring),
+    var(--theme-shadow);
 }
 .lilyan-search:has(input:disabled) { opacity: 0.6; }
 
@@ -538,8 +579,8 @@ a { color: var(--primary); }
   transition: background 200ms ease, color 200ms ease;
 }
 .lilyan-search:focus-within .lilyan-search__icon {
-  background: color-mix(in srgb, var(--mint) 16%, var(--surface));
-  color: var(--mint-deep);
+  background: var(--theme-icon-bg);
+  color: var(--theme-primary-strong);
 }
 
 /* The field itself stays flat: the wrapper owns the border and the glow. */

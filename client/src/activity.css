@@ -9,9 +9,9 @@
 
 .activity-page {
   --av-surface: #ffffff;
-  --av-mint: #f2fbf5;
+  --av-mint: var(--theme-primary-soft);
   --av-cream: #fff9e8;
-  --av-green: #43c45b;
+  --av-green: var(--theme-primary);
   --av-green-deep: #2f9b47;
   --av-ink: #242724;
   --av-text: #46494a;
@@ -28,9 +28,9 @@
 
 [data-theme='dark'] .activity-page {
   --av-surface: var(--surface);
-  --av-mint: rgba(67, 196, 91, 0.12);
+  --av-mint: color-mix(in srgb, var(--theme-primary) 12%, transparent);
   --av-cream: rgba(246, 185, 43, 0.12);
-  --av-green: #4ac964;
+  --av-green: var(--theme-primary);
   --av-green-deep: #8fe2a9;
   --av-ink: var(--text);
   --av-text: var(--text-soft);
@@ -53,7 +53,7 @@
   border-radius: 16px;
   background: linear-gradient(180deg, #faf6ff, #f1e8ff);
   border: 1px solid #e0d0f8;
-  color: #7a4cd8;
+  color: var(--theme-primary);
   box-shadow:
     inset 0 1px 0 #ffffff,
     0 8px 16px -8px rgba(122, 76, 216, 0.45);
@@ -342,7 +342,7 @@
 .av-card__icon.is-purple {
   background: #f6f0ff;
   border-color: #e6d9fa;
-  color: #7a4cd8;
+  color: var(--theme-primary);
 }
 .av-card__icon.is-orange {
   background: #fff8e8;
@@ -354,11 +354,11 @@
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--av-line);
 }
-[data-theme='dark'] .av-card__icon.is-green { background: rgba(67, 196, 91, 0.14); border-color: rgba(67, 196, 91, 0.28); color: #7fd894; }
+[data-theme='dark'] .av-card__icon.is-green { background: color-mix(in srgb, var(--theme-primary) 14%, transparent); border-color: color-mix(in srgb, var(--theme-primary) 28%, transparent); color: #7fd894; }
 [data-theme='dark'] .av-card__icon.is-blue { background: rgba(88, 148, 232, 0.16); border-color: rgba(88, 148, 232, 0.3); color: #8fbcf4; }
 [data-theme='dark'] .av-card__icon.is-red { background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.3); color: #f0a3a3; }
 [data-theme='dark'] .av-card__icon.is-purple { background: rgba(122, 76, 216, 0.18); border-color: rgba(122, 76, 216, 0.34); color: #c3a8f2; }
-[data-theme='dark'] .av-card__icon.is-orange { background: rgba(208, 138, 23, 0.16); border-color: rgba(208, 138, 23, 0.3); color: #e7bb72; }
+[data-theme='dark'] .av-card__icon.is-orange { background: rgba(208, 138, 23, 0.16); border-color: rgba(208, 138, 23, 0.3); color: var(--theme-primary); }
 
 .av-card__body {
   flex: 1 1 auto;
@@ -392,21 +392,21 @@
   line-height: 1.7;
   white-space: nowrap;
 }
-.av-badge.is-green { background: #f2fbf5; border-color: #d9efe0; color: #2f9b47; }
+.av-badge.is-green { background: var(--theme-primary-soft); border-color: #d9efe0; color: #2f9b47; }
 .av-badge.is-blue { background: #eff5ff; border-color: #dce9fb; color: #3e77c7; }
 .av-badge.is-amber { background: #fff8e8; border-color: #f5e6bc; color: #a9761d; }
 .av-badge.is-orange { background: #fff3e6; border-color: #f8dfc2; color: #c47816; }
-.av-badge.is-purple { background: #f6f0ff; border-color: #e6d9fa; color: #7a4cd8; }
+.av-badge.is-purple { background: #f6f0ff; border-color: #e6d9fa; color: var(--theme-primary); }
 
 [data-theme='dark'] .av-badge {
   background: rgba(255, 255, 255, 0.06);
   border-color: var(--av-line);
   color: var(--av-muted);
 }
-[data-theme='dark'] .av-badge.is-green { background: rgba(67, 196, 91, 0.14); border-color: rgba(67, 196, 91, 0.3); color: #8fe2a9; }
+[data-theme='dark'] .av-badge.is-green { background: color-mix(in srgb, var(--theme-primary) 14%, transparent); border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent); color: #8fe2a9; }
 [data-theme='dark'] .av-badge.is-blue { background: rgba(88, 148, 232, 0.16); border-color: rgba(88, 148, 232, 0.3); color: #a9caf6; }
 [data-theme='dark'] .av-badge.is-amber { background: rgba(246, 185, 43, 0.16); border-color: rgba(246, 185, 43, 0.3); color: #e6c37e; }
-[data-theme='dark'] .av-badge.is-orange { background: rgba(208, 138, 23, 0.16); border-color: rgba(208, 138, 23, 0.3); color: #e7bb72; }
+[data-theme='dark'] .av-badge.is-orange { background: rgba(208, 138, 23, 0.16); border-color: rgba(208, 138, 23, 0.3); color: var(--theme-primary); }
 [data-theme='dark'] .av-badge.is-purple { background: rgba(122, 76, 216, 0.18); border-color: rgba(122, 76, 216, 0.34); color: #c3a8f2; }
 
 .av-card__desc {

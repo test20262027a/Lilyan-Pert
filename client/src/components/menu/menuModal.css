@@ -20,9 +20,9 @@
 }
 
 .mcmodal {
-  --mm-green: #43c45b;
-  --mm-green-ink: #1b7f42;
-  --mm-mint: #eaf8ee;
+  --mm-green: var(--theme-primary);
+  --mm-green-ink: var(--theme-primary-strong);
+  --mm-mint: var(--theme-primary-soft);
   --mm-red: #ef4444;
   --mm-body: #f7f7f7;
   --mm-card: #ffffff;
@@ -70,7 +70,7 @@
   padding: 16px 18px;
   padding-inline-end: 60px;
   overflow: hidden;
-  background: linear-gradient(180deg, #fffdf5, #fff8e6);
+  background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
 
 /*
