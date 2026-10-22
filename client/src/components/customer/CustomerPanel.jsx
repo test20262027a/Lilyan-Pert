@@ -16,7 +16,7 @@ export default function CustomerPanel({ icon, title, count, children, className 
           <Icon name={icon} size={19} />
         </span>
         <h2 className="cui-panel__title">{title}</h2>
-        {count !== undefined ? <span className="cui-panel__count">{count}</span> : null}
+        {count !== undefined ? <span className="cui-count">{count}</span> : null}
       </header>
       <div className="cui-panel__body">{children}</div>
     </section>

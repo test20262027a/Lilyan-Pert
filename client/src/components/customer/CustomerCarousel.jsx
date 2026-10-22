@@ -79,7 +79,7 @@ export default function CustomerCarousel({ children, trackClassName = '', classN
           disabled={!edges.left}
           aria-label={t('customer_menu_scroll_left')}
         >
-          <Icon name="chevronLeft" size={17} />
+          <Icon name="caretLeft" size={17} />
         </button>
       ) : null}
 
@@ -95,7 +95,7 @@ export default function CustomerCarousel({ children, trackClassName = '', classN
           disabled={!edges.right}
           aria-label={t('customer_menu_scroll_right')}
         >
-          <Icon name="chevronRight" size={17} />
+          <Icon name="caretRight" size={17} />
         </button>
       ) : null}
     </div>

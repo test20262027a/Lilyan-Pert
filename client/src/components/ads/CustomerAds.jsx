@@ -1,6 +1,7 @@
 import Icon from '../Icon';
 import CustomerCarousel from '../customer/CustomerCarousel';
 import { localized, useI18n } from '../../i18n';
+import { fmtNumber } from '../../format';
 import '../../customer-ads.css';
 
 /*
@@ -42,6 +43,9 @@ export default function CustomerAds({ ads, locale, onOpen }) {
         <h2 className="cui-ads__title" id="cui-ads-title">
           {t('marketing_ads')}
         </h2>
+        {/* How many ads this strip really holds — the eligible list the API
+            already filtered, never the cards currently on screen. */}
+        <span className="cui-count">{fmtNumber(ads.length, locale)}</span>
       </header>
 
       <CustomerCarousel className="cui-car--ads" trackClassName="cui-ads__grid" count={ads.length}>

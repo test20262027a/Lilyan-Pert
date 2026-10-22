@@ -1126,7 +1126,9 @@
 }
 .cui-panel__body { padding: 14px 16px 16px; }
 .cui-panel__title { flex: 1 1 auto; min-width: 0; }
-.cui-panel__count {
+/* The item counter of every section header — Best Sellers, Featured and
+   Advertisements — is this one badge, so the three always look identical. */
+.cui-count {
   flex: none;
   min-width: 30px;
   height: 30px;
