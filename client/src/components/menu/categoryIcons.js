@@ -25,6 +25,8 @@
  * milkshake glyph rather than the generic milk one.
  */
 
+import { ICON_KEYS } from './categoryIconCatalog';
+
 /* ----------------------------------------------------------- palette ----- */
 
 /*
@@ -55,6 +57,8 @@ const INK = Object.fromEntries(PALETTE);
 
 /** Every identity accent, in palette order — used by the form's colour picker. */
 export const CATEGORY_COLORS = PALETTE.map(([, ink]) => ink);
+
+export const isCategoryInk = (value) => /^#[0-9a-f]{6}$/i.test(String(value ?? ''));
 
 /** Fallback identity: a real menu glyph rather than an unrelated product icon. */
 const FALLBACK_ICON = 'utensils';
@@ -171,7 +175,9 @@ const GLYPH_ALIASES = {
   trophy: 'trophy',
 };
 
-/** Glyph choices offered in the category form's icon picker. */
+const CATALOG_KEYS = new Set(ICON_KEYS);
+
+/** Core glyph choices (legacy list; the picker now uses the full catalogue). */
 export const CATEGORY_ICONS = [
   'coffee',
   'teaCup',
@@ -540,6 +546,8 @@ function pickColor(preferredKey, usedInks, seed) {
 /** Glyph for any stored icon key, including the legacy short aliases. */
 export function categoryGlyph(icon) {
   const key = String(icon ?? '').trim();
+  // Keys picked from the icon catalogue are stored as-is.
+  if (CATALOG_KEYS.has(key)) return key;
   return GLYPH_ALIASES[key] || GLYPH_ALIASES[key.toLowerCase()] || FALLBACK_ICON;
 }
 

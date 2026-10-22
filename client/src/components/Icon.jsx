@@ -2,7 +2,9 @@
  * Icon set. Icons are stroke-only and never mirrored, except the explicit
  * directional ones (arrow/chevron) which flip under RTL via .icon--dir.
  */
-const PATHS = {
+import { EXTRA_GLYPHS } from './categoryGlyphs';
+
+const BASE_PATHS = {
   dashboard: <><rect x="3" y="3" width="7" height="9" rx="1.5" /><rect x="14" y="3" width="7" height="5" rx="1.5" /><rect x="14" y="12" width="7" height="9" rx="1.5" /><rect x="3" y="16" width="7" height="5" rx="1.5" /></>,
   book: <><path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v17H6.5A2.5 2.5 0 0 0 4 21.5z" /><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /></>,
   receipt: <><path d="M5 3h14v18l-2.5-1.6L14 21l-2-1.6L10 21l-2.5-1.6L5 21z" /><path d="M9 8h6M9 12h6" /></>,
@@ -121,6 +123,12 @@ const PATHS = {
   personFemale: <><circle cx="12" cy="9" r="3.2" /><path d="M8.9 6.9c.5-1.7 1.8-2.8 3.1-2.8s2.6 1.1 3.1 2.8" /><path d="M8.7 9.4c-.5 1.9-.6 3.8 0 5.1" /><path d="M15.3 9.4c.5 1.9.6 3.8 0 5.1" /><path d="M5.6 20.9a6.9 6.9 0 0 1 12.8 0" /></>,
   camera: <><path d="M3 8.6h3.2l1.4-2.4h8.8l1.4 2.4H21a1.4 1.4 0 0 1 1.4 1.4v8.2A1.4 1.4 0 0 1 21 19.6H3a1.4 1.4 0 0 1-1.4-1.4V10A1.4 1.4 0 0 1 3 8.6z" /><circle cx="12" cy="14.2" r="3.2" /></>,
 };
+
+/* The wider category glyph library lives in categoryGlyphs.jsx. Base keys win. */
+const PATHS = { ...EXTRA_GLYPHS, ...BASE_PATHS };
+
+/** True when `name` resolves to a real glyph (never the `info` fallback). */
+export const hasIcon = (name) => Object.prototype.hasOwnProperty.call(PATHS, name);
 
 export default function Icon({ name, size = 18, className = '', style, title }) {
   const path = PATHS[name] || PATHS.info;

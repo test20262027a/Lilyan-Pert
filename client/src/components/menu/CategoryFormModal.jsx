@@ -4,13 +4,11 @@ import { Alert, ConfirmDialog, Switch } from '../ui';
 import { LOCALES, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
 import CategoryIdentityIcon from './CategoryIdentityIcon';
-import {
-  CATEGORY_COLORS,
-  CATEGORY_ICONS,
-  appearanceOf,
-  resolveCategoryAppearance,
-} from './categoryIcons';
+import CategoryIconPicker from './CategoryIconPicker';
+import CategoryColorPicker from './CategoryColorPicker';
+import { appearanceOf, resolveCategoryAppearance } from './categoryIcons';
 import { catalogErrorText } from './errorText';
+import './categoryPicker.css';
 
 /*
  * Create / edit category.
@@ -251,35 +249,31 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
           </button>
         </div>
 
-        <div className="mcappear__grid" role="group" aria-label={t('menu_category_icon')}>
-          {CATEGORY_ICONS.map((glyph) => (
-            <button
-              key={glyph}
-              type="button"
-              className={`mcappear__glyph ${appearance.icon === glyph ? 'is-active' : ''}`.trim()}
-              onClick={() => pickAppearance({ icon: glyph })}
-              aria-pressed={appearance.icon === glyph}
-              aria-label={glyph}
-              title={glyph}
-            >
-              <Icon name={glyph} size={17} />
-            </button>
-          ))}
-        </div>
-
-        <div className="mcappear__colors" role="group" aria-label={t('menu_category_color')}>
-          {CATEGORY_COLORS.map((ink) => (
-            <button
-              key={ink}
-              type="button"
-              className={`mcappear__swatch ${appearance.color.toLowerCase() === ink ? 'is-active' : ''}`.trim()}
-              style={{ '--swatch': ink }}
-              onClick={() => pickAppearance({ color: ink })}
-              aria-pressed={appearance.color.toLowerCase() === ink}
-              aria-label={ink}
-              title={t('menu_category_color')}
+        {/* Two independent dropdowns replace the always-open glyph / colour grids. */}
+        <div className="mcfield-pair">
+          <div>
+            <label className="mcfield__label" htmlFor="menu-category-icon">
+              {t('menu_category_icon')}
+            </label>
+            <CategoryIconPicker
+              id="menu-category-icon"
+              value={appearance.icon}
+              color={appearance.color}
+              disabled={busy}
+              onChange={(icon) => pickAppearance({ icon })}
             />
-          ))}
+          </div>
+          <div>
+            <label className="mcfield__label" htmlFor="menu-category-color">
+              {t('menu_category_color')}
+            </label>
+            <CategoryColorPicker
+              id="menu-category-color"
+              value={appearance.color}
+              disabled={busy}
+              onChange={(color) => pickAppearance({ color })}
+            />
+          </div>
         </div>
       </section>
 
