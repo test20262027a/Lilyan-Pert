@@ -23,6 +23,7 @@ export default function CategoryPanel({
   onEdit,
   onDelete,
   canManage,
+  className = '',
 }) {
   const { t, locale } = useI18n();
 
@@ -32,7 +33,7 @@ export default function CategoryPanel({
   const appearance = selected ? appearanceOf(selected) : null;
 
   return (
-    <section className="mpanel">
+    <section className={`mpanel ${className}`.trim()}>
       {/*
        * Heading at the inline start and its icon in the opposite far corner
        * (physical right / physical left under RTL, mirrored in LTR), both

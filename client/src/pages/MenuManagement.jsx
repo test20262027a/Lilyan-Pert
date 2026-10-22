@@ -3,7 +3,11 @@ import { Alert, EmptyState, Loading, useToast } from '../components/ui';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import MenuToolbar from '../components/menu/MenuToolbar';
 import CategoryPanel from '../components/menu/CategoryPanel';
+import CategoryChips from '../components/menu/CategoryChips';
+import CategoryDrawer from '../components/menu/CategoryDrawer';
 import CategorySummary from '../components/menu/CategorySummary';
+import CategoryIdentityIcon from '../components/menu/CategoryIdentityIcon';
+import Icon from '../components/Icon';
 import ProductCard from '../components/menu/ProductCard';
 import CategoryFormModal from '../components/menu/CategoryFormModal';
 import ProductFormModal from '../components/menu/ProductFormModal';
@@ -60,6 +64,10 @@ export default function MenuManagement() {
   const [confirm, setConfirm] = useState(null);
   const [confirmError, setConfirmError] = useState(null);
   const [error, setError] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  // Measured height of the shared sticky header: the desktop rail and the
+  // narrow-screen chip strip hang from it instead of a hardcoded offset.
+  const [stickyTop, setStickyTop] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -80,6 +88,28 @@ export default function MenuManagement() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    const header = document.querySelector('.hdr-wrap');
+    if (!header) return undefined;
+    const measure = () => setStickyTop(Math.round(header.getBoundingClientRect().height));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  // Leaving the drawer range (the rail returns, or the chip strip takes over)
+  // dismisses the drawer instead of leaving it floating over the new layout.
+  useEffect(() => {
+    if (!drawerOpen) return undefined;
+    const range = window.matchMedia('(min-width: 768px) and (max-width: 1199px)');
+    const onChange = (event) => {
+      if (!event.matches) setDrawerOpen(false);
+    };
+    range.addEventListener('change', onChange);
+    return () => range.removeEventListener('change', onChange);
+  }, [drawerOpen]);
 
   // Keep a category selected; fall back to the first one when the current
   // selection disappears (for example after a delete).
@@ -268,8 +298,35 @@ export default function MenuManagement() {
         }
       : null;
 
+  const selectedName = selectedCategory ? localized(selectedCategory, 'name', locale) : '';
+
+  // One selection, three presentations: the drawer hands the selection back and
+  // dismisses itself so the products are immediately in view.
+  const pickFromDrawer = (id) => {
+    setSelectedId(id);
+    setDrawerOpen(false);
+  };
+
+  const categoryPanel = (panelProps) => (
+    <CategoryPanel
+      categories={listCategories}
+      stats={categoryStats}
+      selectedId={selectedId}
+      canManage={isManager}
+      onEdit={(c) => {
+        setFormError(null);
+        setCategoryModal({ mode: 'edit', id: c.id, values: { ...c } });
+      }}
+      onDelete={openCategoryDelete}
+      {...panelProps}
+    />
+  );
+
   return (
-    <div className="menu-page">
+    <div
+      className="menu-page"
+      style={stickyTop ? { '--menu-sticky-top': `${stickyTop}px` } : undefined}
+    >
       <PageHeroBanner icon="utensils" title={t('menu_page_title')} subtitle={t('menu_subtitle')} />
 
       <MenuToolbar
@@ -290,21 +347,36 @@ export default function MenuManagement() {
       {!isManager ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
       {error ? <Alert kind="error">{t('error_generic')}</Alert> : null}
 
+      {/* Narrow screens: the same categories as a sticky chip strip. */}
+      <CategoryChips
+        categories={listCategories}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onManage={() => setDrawerOpen(true)}
+      />
+
       <div className="mworkspace">
-        <CategoryPanel
-          categories={listCategories}
-          stats={categoryStats}
-          selectedId={selectedId}
-          canManage={isManager}
-          onSelect={setSelectedId}
-          onEdit={(c) => {
-            setFormError(null);
-            setCategoryModal({ mode: 'edit', id: c.id, values: { ...c } });
-          }}
-          onDelete={openCategoryDelete}
-        />
+        {/* Desktop rail — sticky, and the only place the panel lives at width. */}
+        {categoryPanel({ className: 'mpanel--sidebar', onSelect: setSelectedId })}
 
         <section className="mproducts">
+          {/* Intermediate widths: the rail becomes an on-demand drawer. */}
+          <button
+            type="button"
+            className="mcat-toggle"
+            onClick={() => setDrawerOpen(true)}
+            aria-haspopup="dialog"
+          >
+            {selectedAppearance ? (
+              <CategoryIdentityIcon icon={selectedAppearance.icon} color={selectedAppearance.color} size={28} />
+            ) : null}
+            <span className="mcat-toggle__text">
+              <span className="mcat-toggle__label">{t('menu_tab_categories')}</span>
+              {selectedName ? <span className="mcat-toggle__current">{selectedName}</span> : null}
+            </span>
+            <Icon name="chevronDown" size={16} />
+          </button>
+
           {summary ? (
             <CategorySummary
               icon={summary.icon}
@@ -431,6 +503,10 @@ export default function MenuManagement() {
           onConfirm={() => removeProduct(confirm.id)}
         />
       ) : null}
+
+      <CategoryDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
+        {categoryPanel({ onSelect: pickFromDrawer })}
+      </CategoryDrawer>
     </div>
   );
 }
