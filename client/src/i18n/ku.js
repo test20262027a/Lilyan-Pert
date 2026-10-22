@@ -824,6 +824,7 @@ export default {
   settings_open_control: 'کردنەوە',
 
   customer_menu_search: 'گەڕان لە مێنیۆ…',
+  customer_ads_view: 'بینین',
   customer_menu_cart: 'سەبەتە',
   customer_menu_cart_empty: 'سەبەتەکەت بەتاڵە',
   customer_menu_add: 'زیادکردن',

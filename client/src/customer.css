@@ -969,9 +969,10 @@
   box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 26%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
-/* ------------------------------------------------------ ads & sections -- */
+/* --------------------------------------------------------- sections -- */
 
-/* the customer panels sit inside the shell's own rhythm */
+/* the customer panels sit inside the shell's own rhythm (the advertisement
+   section carries its own panel styling in customer-ads.css) */
 .customer-shell .card,
 .customer-shell .menu-section { margin-top: 18px; }
 .customer-shell .card {
@@ -979,34 +980,6 @@
   border: 1px solid var(--cui-line);
   background: var(--surface);
   box-shadow: var(--cui-shadow-1), var(--cui-inset);
-}
-.customer-shell .ads-grid { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
-@media (min-width: 760px) { .customer-shell .ads-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.customer-shell .ad-card {
-  border-radius: 18px;
-  border-color: var(--cui-line);
-  min-height: 168px;
-  box-shadow: var(--cui-shadow-1), var(--cui-inset);
-  transition: transform 210ms ease, box-shadow 210ms ease, border-color 210ms ease;
-}
-.customer-shell .ad-card__scrim { padding: 16px; background: linear-gradient(0deg, rgba(8, 14, 12, 0.86), rgba(8, 14, 12, 0.12) 70%); }
-.customer-shell .ad-card__title { font-size: 15px; font-weight: 820; line-height: 1.4; }
-.customer-shell .ad-card__sub { margin-top: 3px; font-size: 12.5px; line-height: 1.6; }
-.customer-shell .ad-card__cta {
-  margin-top: 9px;
-  padding: 5px 12px;
-  border-radius: 999px;
-  color: var(--primary-ink);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 92%, #ffffff), var(--primary));
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-}
-@media (hover: hover) {
-  .customer-shell .ad-card.is-clickable:hover {
-    transform: translateY(-3px);
-    filter: none;
-    border-color: color-mix(in srgb, var(--primary) 26%, var(--cui-line));
-    box-shadow: var(--cui-shadow-2), var(--cui-inset);
-  }
 }
 
 @keyframes cui-fade {

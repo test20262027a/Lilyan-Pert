@@ -823,6 +823,7 @@ export default {
   settings_open_control: 'باز',
 
   customer_menu_search: 'جستجو در منو…',
+  customer_ads_view: 'مشاهده',
   customer_menu_cart: 'سبد',
   customer_menu_cart_empty: 'سبد شما خالی است',
   customer_menu_add: 'افزودن',

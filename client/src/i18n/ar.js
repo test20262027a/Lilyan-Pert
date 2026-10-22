@@ -822,6 +822,7 @@ export default {
   settings_open_control: 'فتح',
 
   customer_menu_search: 'ابحث في القائمة…',
+  customer_ads_view: 'عرض',
   customer_menu_cart: 'السلة',
   customer_menu_cart_empty: 'سلتك فارغة',
   customer_menu_add: 'إضافة',

@@ -825,6 +825,7 @@ export default {
   settings_open_control: 'Open',
 
   customer_menu_search: 'Search the menu…',
+  customer_ads_view: 'View',
   customer_menu_cart: 'Cart',
   customer_menu_cart_empty: 'Your cart is empty',
   customer_menu_add: 'Add',
