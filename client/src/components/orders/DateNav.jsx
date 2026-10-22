@@ -16,6 +16,9 @@ export default function DateNav({ value, onChange, timeZone }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef(null);
   const today = isoDay(new Date(), timeZone);
+  /* Calendar-day comparison (both are `yyyy-mm-dd`), so there is no future date
+     to step into once the business-local today is reached. */
+  const nextDayDisabled = value >= today;
 
   return (
     <div className="odate">
@@ -55,7 +58,11 @@ export default function DateNav({ value, onChange, timeZone }) {
       <button
         type="button"
         className="odate__btn"
-        onClick={() => onChange(addDaysToDay(value, 1))}
+        onClick={() => {
+          if (nextDayDisabled) return;
+          onChange(addDaysToDay(value, 1));
+        }}
+        disabled={nextDayDisabled}
         aria-label={t('order_next_day')}
         title={t('order_next_day')}
       >

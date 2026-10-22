@@ -197,7 +197,7 @@ export default function SettingsTabs({ tabs, value, onChange }) {
         tabIndex={edge.overflow ? 0 : -1}
         aria-label={t('settings_tabs_scroll_prev')}
       >
-        <Icon name="chevronLeft" size={16} />
+        <Icon name="caretLeft" size={16} />
       </button>
 
       <div className="set-tabs__viewport">
@@ -250,7 +250,7 @@ export default function SettingsTabs({ tabs, value, onChange }) {
         tabIndex={edge.overflow ? 0 : -1}
         aria-label={t('settings_tabs_scroll_next')}
       >
-        <Icon name="chevronRight" size={16} />
+        <Icon name="caretRight" size={16} />
       </button>
     </div>
   );
