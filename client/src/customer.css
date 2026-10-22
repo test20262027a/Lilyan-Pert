@@ -584,7 +584,14 @@
 
 .cui-order { min-width: 0; margin-top: 14px; }
 /* One continuous browsing column: the sticky strip, then the product grid. */
-.cui-feed { min-width: 0; max-width: 100%; padding-top: 14px; scroll-margin-top: 118px; }
+.cui-feed {
+  min-width: 0;
+  max-width: 100%;
+  /* Clear breathing room under the category strip: the navigation reads as its
+     own section instead of merging into the first product row. */
+  padding-top: 24px;
+  scroll-margin-top: 118px;
+}
 
 .cui-sec__head {
   display: flex;
@@ -640,8 +647,9 @@
   align-items: center;
   gap: 8px;
   margin: 0;
-  padding: 9px 0 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 62%, transparent);
+  padding: 10px 0 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border));
+  box-shadow: 0 12px 20px -18px rgba(16, 30, 22, 0.5);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--bg) 97%, transparent),
@@ -667,50 +675,79 @@
 
 .cui-cat {
   flex: none;
-  width: 84px;
+  width: 88px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 8px 4px 9px;
-  border-radius: 18px;
-  border: 1px solid var(--cui-line);
-  background: var(--surface);
+  gap: 7px;
+  padding: 9px 5px 10px;
+  border-radius: 19px;
+  border: 1px solid color-mix(in srgb, var(--primary) 14%, var(--cui-line));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 97%, var(--primary)),
+    color-mix(in srgb, var(--primary) 5%, var(--surface))
+  );
   color: var(--text-soft);
   font: inherit;
   cursor: pointer;
-  box-shadow: var(--cui-shadow-1), var(--cui-inset);
+  box-shadow: 0 1px 2px rgba(16, 30, 22, 0.05),
+    0 7px 16px -9px rgba(16, 30, 22, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease,
     background 180ms ease, color 180ms ease;
 }
-.cui-cat:hover { border-color: color-mix(in srgb, var(--primary) 28%, var(--cui-line)); }
+.cui-cat:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--cui-line));
+  box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--primary) 42%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
 .cui-cat:active { transform: scale(0.97); }
+/* Selected: the theme colour fills the card, with a soft glow ring and a
+   lifted, slightly larger body so the active chip is unmistakable. */
 .cui-cat.is-active {
   color: var(--primary-ink);
-  border-color: transparent;
+  border-color: color-mix(in srgb, var(--primary) 62%, transparent);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--primary) 94%, #ffffff),
     var(--theme-primary-active, var(--primary))
   );
-  box-shadow: 0 12px 24px color-mix(in srgb, var(--primary) 30%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.34);
-  transform: translateY(-1px);
+  box-shadow: 0 16px 28px -12px color-mix(in srgb, var(--primary) 62%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px) scale(1.02);
+}
+[data-theme='dark'] .cui-cat {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 18px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+[data-theme='dark'] .cui-cat.is-active {
+  box-shadow: 0 16px 28px -12px color-mix(in srgb, var(--primary) 70%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 .cui-cat__icon {
   --cic: var(--primary);
-  width: 46px;
-  height: 46px;
+  width: 50px;
+  height: 50px;
   flex: none;
-  border-radius: 14px;
+  border-radius: 16px;
   display: grid;
   place-items: center;
-  color: color-mix(in srgb, var(--cic) 82%, #0b1220);
-  background: color-mix(in srgb, var(--cic) 16%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--cic) 24%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+  color: color-mix(in srgb, var(--cic) 88%, #0b1220);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--cic) 21%, var(--surface)),
+    color-mix(in srgb, var(--cic) 10%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--cic) 27%, transparent);
+  box-shadow: 0 5px 12px -5px color-mix(in srgb, var(--cic) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 5px color-mix(in srgb, var(--cic) 12%, transparent);
+  transition: background 180ms ease, color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 [data-theme='dark'] .cui-cat__icon { color: color-mix(in srgb, var(--cic) 78%, #ffffff); }
 .cui-cat__icon--all {
@@ -720,9 +757,10 @@
 }
 .cui-cat.is-active .cui-cat__icon {
   color: #ffffff;
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.34);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.16));
+  border-color: rgba(255, 255, 255, 0.42);
+  box-shadow: 0 4px 10px -4px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .cui-cat__label {
@@ -731,8 +769,8 @@
   -webkit-line-clamp: 2;
   overflow: hidden;
   max-width: 100%;
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 11.5px;
+  font-weight: 780;
   line-height: 1.35;
   text-align: center;
   overflow-wrap: anywhere;

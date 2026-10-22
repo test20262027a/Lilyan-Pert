@@ -32,13 +32,15 @@ export default function CustomerAds({ ads, locale, onOpen }) {
 
   return (
     <section className="cui-ads" aria-labelledby="cui-ads-title">
+      {/* The mark leads the title, so it sits on the right in RTL and on the
+          left in LTR — always before the text it belongs to. */}
       <header className="cui-ads__head">
-        <h2 className="cui-ads__title" id="cui-ads-title">
-          {t('marketing_ads')}
-        </h2>
         <span className="cui-ads__icon" aria-hidden="true">
           <Icon name="megaphone" size={20} />
         </span>
+        <h2 className="cui-ads__title" id="cui-ads-title">
+          {t('marketing_ads')}
+        </h2>
       </header>
 
       <div className="cui-ads__grid">

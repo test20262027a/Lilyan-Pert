@@ -36,7 +36,7 @@ function CategoryCard({ row, active, onSelect }) {
         style={appearance ? { '--cic': appearance.color } : undefined}
         aria-hidden="true"
       >
-        <Icon name={row.category ? appearance.icon : 'grid'} size={24} />
+        <Icon name={row.category ? appearance.icon : 'grid'} size={26} />
       </span>
       <span className="cui-cat__label">{row.label}</span>
     </button>

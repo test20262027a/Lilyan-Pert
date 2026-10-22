@@ -301,11 +301,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
   /*
    * The API ranks this business's best sellers from its own order history and
-   * only sends them while the owner enabled the recommendation; each id is
-   * resolved against the menu products that are actually sellable right now.
+   * only sends them while the owner enabled the recommendation. Each id is
+   * resolved against the WHOLE menu — never the category- or search-filtered
+   * `products` list — so this section stays a global sales ranking and does not
+   * change when the guest picks a category.
    */
   const bestProducts = (data.best_selling || [])
-    .map((row) => products.find((p) => p.id === row.id))
+    .map((row) => (data.products || []).find((p) => p.id === row.id))
     .filter(Boolean);
 
   /* The featured strip is likewise resolved from the business's own products. */
