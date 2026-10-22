@@ -1110,29 +1110,44 @@
 
 /* ---- contact icon grid ---- */
 
+/* Tiles fill the card width: flex-wrap plus a grow basis lets every row —
+   including a short final one — stretch to the edges instead of leaving the
+   items clustered in the middle with empty corners. */
 .cui-links {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, 84px);
-  justify-content: center;
-  gap: 16px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
 }
 .cui-link {
+  flex: 1 1 118px;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   gap: 8px;
-  padding: 6px 2px;
-  border: 0;
-  border-radius: 14px;
-  background: none;
+  padding: 12px 9px;
+  border: 1px solid color-mix(in srgb, var(--primary) 13%, var(--cui-line));
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--surface)),
+    color-mix(in srgb, var(--primary) 2%, var(--surface))
+  );
+  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   font: inherit;
   color: inherit;
   text-decoration: none;
   text-align: center;
   cursor: pointer;
-  transition: transform 170ms ease, background-color 170ms ease;
+  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease, background-color 170ms ease;
 }
-.cui-link:hover { transform: translateY(-2px); background: color-mix(in srgb, var(--primary) 6%, transparent); }
+.cui-link:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--cui-line));
+  box-shadow: 0 10px 20px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
 .cui-link:active { transform: translateY(0) scale(0.97); }
 .cui-link:focus-visible {
   outline: none;
@@ -1155,6 +1170,9 @@
   box-shadow: 0 10px 20px rgba(16, 30, 22, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 .cui-link__label {
+  /* Two label lines are reserved so every tile keeps the same height even when
+     only one label in the card wraps. */
+  min-height: 2.7em;
   font-size: 11.5px;
   font-weight: 650;
   line-height: 1.35;
@@ -1181,10 +1199,13 @@
 }
 
 @media (max-width: 900px) {
-  .cui-links { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px 8px; }
+  .cui-links { gap: 10px; }
+  .cui-link { flex-basis: 106px; }
 }
 @media (max-width: 560px) {
-  .cui-links { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 6px; }
+  .cui-links { gap: 9px; }
+  .cui-link { flex-basis: calc(33.333% - 6px); padding: 10px 6px; border-radius: 14px; }
+  .cui-link__icon { width: 42px; height: 42px; border-radius: 12px; }
   .cui-panel__head { min-height: 58px; padding: 10px 14px; }
   .cui-panel__body { padding: 13px 14px 15px; }
   .cui-panel--products .cui-panel__body { padding: 14px; }
