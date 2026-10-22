@@ -30,7 +30,7 @@ export default function StatusBreakdown({ flow = {} }) {
         {STATUSES.map((s) => (
           <article className={`status-tile status-tile--${s.tone}`} key={s.key}>
             <span className="status-tile__icon">
-              <Icon name={s.icon} size={17} />
+              <Icon name={s.icon} size={22} />
             </span>
             <span className="status-tile__label" title={t(`status_${s.key}`)}>
               {t(`status_${s.key}`)}

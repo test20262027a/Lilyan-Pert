@@ -16,6 +16,8 @@
   --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
   --shadow-soft: 0 3px 9px rgba(25, 55, 35, 0.035), 0 12px 28px rgba(25, 55, 35, 0.045);
   --shadow-hover: 0 9px 24px rgba(25, 55, 35, 0.08), 0 20px 40px rgba(25, 55, 35, 0.045);
+  /* Inner gloss painted on the premium KPI surfaces; flipped for dark mode. */
+  --sheen: rgba(255, 255, 255, 0.92);
 
   display: flex;
   flex-direction: column;
@@ -37,7 +39,9 @@
 .dash .card__head {
   padding: 12px 16px;
   border-bottom: 1px solid var(--glass-line);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--mint) 9%, #ffffff), rgba(255, 255, 255, 0));
+  border-start-start-radius: var(--dash-radius);
+  border-start-end-radius: var(--dash-radius);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mint) 9%, var(--surface)), rgba(255, 255, 255, 0));
 }
 .dash .card__body { padding: 14px 16px; }
 .dash .switch-row { padding: 9px 0; }
@@ -122,6 +126,7 @@
   --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   --shadow-soft: 0 3px 10px rgba(0, 0, 0, 0.35), 0 14px 34px rgba(0, 0, 0, 0.3);
   --shadow-hover: 0 10px 26px rgba(0, 0, 0, 0.4), 0 20px 42px rgba(0, 0, 0, 0.32);
+  --sheen: rgba(255, 255, 255, 0.06);
 }
 [data-theme='dark'] .dash .card {
   background: linear-gradient(145deg, rgba(30, 35, 46, 0.96), rgba(20, 23, 31, 0.9));
@@ -221,50 +226,86 @@
 
 .kpi-row { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 
+/*
+ * The premium metric surface shared by the order counters: a pastel gradient
+ * with a faint top gloss, a hairline tone border and a layered green-tinted
+ * shadow so the card sits slightly above the dashboard.
+ */
 .kpi {
   --tone: var(--pastel-blue);
   --tone-ink: var(--pastel-blue-ink);
   --tone-line: var(--pastel-blue-line);
   position: relative;
+  overflow: hidden;
+  min-height: 162px;
   background:
-    radial-gradient(120% 95% at 50% 0%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 62%),
-    var(--tone);
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tone) 86%, var(--surface)), var(--tone));
   border: 1px solid var(--tone-line);
-  border-radius: var(--dash-radius);
-  padding: 16px 14px 15px;
-  display: flex; flex-direction: column; align-items: center;
-  gap: 7px; text-align: center; min-width: 0;
-  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  transition: transform 200ms ease, box-shadow 200ms ease;
+  border-radius: 20px;
+  padding: 20px 16px 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; text-align: center; min-width: 0;
+  box-shadow:
+    0 3px 6px rgba(20, 45, 30, 0.035),
+    0 12px 26px rgba(20, 45, 30, 0.055),
+    var(--inset-top);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
-.kpi:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.8); }
+.kpi:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 16px rgba(20, 45, 30, 0.07),
+    0 18px 35px rgba(20, 45, 30, 0.075),
+    var(--inset-top);
+}
 .kpi--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
 .kpi--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
 .kpi--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
 .kpi--pink { --tone: var(--pastel-pink); --tone-ink: var(--pastel-pink-ink); --tone-line: var(--pastel-pink-line); }
 
+/* Raised circular icon: pastel tone, inner highlight, soft matching halo. */
 .kpi__icon {
-  width: 46px; height: 46px; border-radius: 50%; flex: none;
+  width: 52px; height: 52px; border-radius: 50%; flex: none;
   display: grid; place-items: center;
-  background: color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
+  background:
+    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
+    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
   color: var(--tone-ink);
+  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 4px 10px color-mix(in srgb, var(--tone-ink) 16%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
+  transition: transform 200ms ease, box-shadow 200ms ease;
 }
-.kpi__label { font-size: 12.5px; font-weight: 700; color: var(--text-soft); min-width: 0; }
+.kpi:hover .kpi__icon {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
+}
+.kpi__label { font-size: 13px; font-weight: 700; color: var(--text-soft); min-width: 0; }
 .kpi__value {
-  font-size: clamp(26px, 3.2vw, 34px); font-weight: 800; line-height: 1.05;
+  font-size: clamp(28px, 3.3vw, 34px); font-weight: 800; line-height: 1.04;
+  letter-spacing: -0.02em;
   color: var(--tone-ink); min-width: 0;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 .kpi__hint {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
   font-size: 11.5px; color: var(--muted); min-width: 0; max-width: 100%;
+  padding: 2px 9px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--tone-ink) 8%, transparent);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .kpi__hint strong { font-weight: 750; }
 .kpi__hint--up, .kpi__hint--up strong { color: var(--success); }
 .kpi__hint--down, .kpi__hint--down strong { color: var(--danger); }
+.kpi__trend { flex: none; }
+.kpi__trend.is-down { transform: rotate(180deg); }
 
 /* ------------------------------------------------------ finance section */
 
@@ -286,33 +327,87 @@
   box-shadow: 0 5px 14px color-mix(in srgb, var(--mint-deep) 30%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 
+/*
+ * Business Insights tiles — same premium surface as the order counters, one
+ * pastel family per metric: revenue / orders / visits / average order value.
+ * Every child is centred, the figure is the focal point, and the comparison
+ * sits in a compact pill directly beneath it.
+ */
 .fstat-row { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .fstat {
-  background: var(--glass-surface);
-  border: 1px solid var(--glass-line);
-  border-radius: var(--dash-radius-sm);
-  padding: 14px 13px;
-  display: flex; flex-direction: column; align-items: flex-start; gap: 5px;
-  text-align: start; min-width: 0;
-  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  --tone: var(--pastel-green);
+  --tone-ink: var(--pastel-green-ink);
+  --tone-line: var(--pastel-green-line);
+  position: relative;
+  overflow: hidden;
+  min-height: 155px;
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tone) 88%, var(--surface)), var(--tone));
+  border: 1px solid var(--tone-line);
+  border-radius: 18px;
+  padding: 18px 14px 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; text-align: center; min-width: 0;
+  box-shadow:
+    0 3px 6px rgba(20, 45, 30, 0.035),
+    0 12px 26px rgba(20, 45, 30, 0.055),
+    var(--inset-top);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.fstat:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 16px rgba(20, 45, 30, 0.07),
+    0 18px 35px rgba(20, 45, 30, 0.075),
+    var(--inset-top);
+}
+.fstat--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
+.fstat--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
+.fstat--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
+.fstat--lavender { --tone: var(--pastel-lavender); --tone-ink: var(--pastel-lavender-ink); --tone-line: var(--pastel-lavender-line); }
+
+.fstat__icon {
+  width: 50px; height: 50px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
+    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
+  color: var(--tone-ink);
+  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
   transition: transform 200ms ease, box-shadow 200ms ease;
 }
-.fstat:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.85); }
-.fstat__icon {
-  width: 32px; height: 32px; border-radius: 10px; flex: none;
-  display: grid; place-items: center;
-  background: color-mix(in srgb, var(--mint) 14%, transparent);
-  color: var(--mint-deep);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+.fstat:hover .fstat__icon {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
 }
-.fstat__label { font-size: 11.5px; color: var(--muted); font-weight: 650; min-width: 0; }
+.fstat__label { font-size: 12.5px; color: var(--text-soft); font-weight: 650; min-width: 0; }
 .fstat__value {
-  font-size: clamp(17px, 2vw, 21px); font-weight: 800; min-width: 0;
+  font-size: clamp(19px, 2vw, 23px); font-weight: 800; min-width: 0;
+  color: var(--tone-ink); letter-spacing: -0.01em;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.fstat__delta { font-size: 11px; font-weight: 650; color: var(--muted); min-height: 15px; }
-.fstat__delta.is-down { color: var(--danger); }
-.fstat__delta.is-up { color: var(--success); }
+.fstat__delta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-height: 22px; padding: 2px 9px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 650; color: var(--muted);
+  background: color-mix(in srgb, var(--tone-ink) 8%, transparent);
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fstat__delta--empty { background: transparent; }
+.fstat__delta.is-down { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.fstat__delta.is-up { color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); }
+.fstat__trend { flex: none; }
+.fstat__trend.is-down { transform: rotate(180deg); }
 
 /* --------------------------------------------------- business insights */
 
@@ -390,30 +485,59 @@
 
 /* --------------------------------------------------------- best selling */
 
-.best-list { display: flex; flex-direction: column; gap: 11px; }
-.best-row { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.best-row__num {
+.best-list { display: flex; flex-direction: column; gap: 12px; }
+.best-row { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.best-row__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.best-row__rank {
   width: 22px; height: 22px; border-radius: 7px; flex: none;
   display: grid; place-items: center;
   background: color-mix(in srgb, var(--mint) 16%, transparent);
-  color: var(--mint-deep); font-size: 11px; font-weight: 800;
+  color: var(--mint-ink); font-size: 11px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
-.best-row__main { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.best-row__top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .best-row__name {
   flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 650; color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.best-row__units { flex: none; font-size: 12px; font-weight: 750; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
+/* Bar plus a fixed value column: the column is what keeps every circle on the
+   same vertical line, whatever the quantity's digit count. */
+.best-row__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center; gap: 9px;
+}
 .best-row__track {
-  height: 6px; border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--border-strong) 55%, transparent);
+  height: 9px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border-strong) 45%, transparent);
+  box-shadow: inset 0 1px 2px rgba(20, 45, 30, 0.09);
   overflow: hidden;
 }
 .best-row__fill {
   display: block; height: 100%; border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--mint) 75%, #ffffff), var(--mint));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mint) 70%, #ffffff), var(--mint));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
   transition: width 240ms ease;
+}
+/* The bar grows from the start of the line, which is the right edge in RTL. */
+[dir='rtl'] .best-row__fill {
+  background: linear-gradient(270deg, color-mix(in srgb, var(--mint) 70%, #ffffff), var(--mint));
+}
+
+/* The quantity: one colour-matched pastel circle at the end of its own bar. */
+.best-row__badge {
+  width: 30px; height: 30px; border-radius: 50%; justify-self: center;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; line-height: 1;
+  color: var(--mint-ink);
+  font-variant-numeric: tabular-nums;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
+    color-mix(in srgb, var(--mint) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--mint) 40%, transparent);
+  box-shadow:
+    0 2px 5px color-mix(in srgb, var(--mint) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 2px color-mix(in srgb, var(--mint) 14%, transparent);
 }
 
 /* --------------------------------------------------------- status tiles */
@@ -424,15 +548,29 @@
   --tone: var(--pastel-blue);
   --tone-ink: var(--pastel-blue-ink);
   --tone-line: var(--pastel-blue-line);
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
   background:
-    radial-gradient(120% 95% at 50% 0%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 60%),
-    var(--tone);
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tone) 88%, var(--surface)), var(--tone));
   border: 1px solid var(--tone-line);
-  border-radius: var(--dash-radius-sm);
-  padding: 13px 10px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
-  text-align: center; min-width: 0;
-  box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  border-radius: 18px;
+  padding: 16px 10px 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 7px; text-align: center; min-width: 0;
+  box-shadow:
+    0 3px 6px rgba(20, 45, 30, 0.035),
+    0 12px 26px rgba(20, 45, 30, 0.05),
+    var(--inset-top);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.status-tile:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 16px rgba(20, 45, 30, 0.065),
+    0 18px 35px rgba(20, 45, 30, 0.07),
+    var(--inset-top);
 }
 .status-tile--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
 .status-tile--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
@@ -441,21 +579,35 @@
 .status-tile--pink { --tone: var(--pastel-pink); --tone-ink: var(--pastel-pink-ink); --tone-line: var(--pastel-pink-line); }
 
 .status-tile__icon {
-  width: 38px; height: 38px; border-radius: 50%; flex: none;
+  width: 50px; height: 50px; border-radius: 50%; flex: none;
   display: grid; place-items: center;
-  background: color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
+  background:
+    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
+    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
   color: var(--tone-ink);
+  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 3px 9px color-mix(in srgb, var(--tone-ink) 15%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.status-tile:hover .status-tile__icon {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
 }
 .status-tile__label {
-  font-size: 12px; font-weight: 700; color: var(--text-soft);
+  font-size: 12.5px; font-weight: 700; color: var(--text-soft);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
 }
 .status-tile__value {
-  font-size: 23px; font-weight: 800; line-height: 1.1;
+  font-size: clamp(28px, 2.6vw, 34px); font-weight: 800; line-height: 1.05;
+  letter-spacing: -0.02em;
   color: var(--tone-ink); font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 /* ---------------------------------------------------- dashboard order table */
@@ -590,6 +742,7 @@
 @media (max-width: 1020px) {
   .dash-row--analytics { grid-template-columns: minmax(0, 1fr); }
   .status-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fstat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
@@ -611,7 +764,11 @@
     -webkit-backdrop-filter: none;
     box-shadow: 0 2px 8px rgba(25, 55, 35, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
   }
-  .kpi:hover, .fstat:hover { transform: none; }
+  .kpi, .fstat, .status-tile { min-height: 0; padding: 16px 12px 14px; }
+  .kpi:hover, .fstat:hover, .status-tile:hover { transform: none; }
+  .kpi:hover .kpi__icon, .fstat:hover .fstat__icon, .status-tile:hover .status-tile__icon {
+    transform: none;
+  }
 
   /* Below this width the six columns become one compact card per order, so the
      order number and the grand total stay on screen without sideways scrolling. */
@@ -662,15 +819,23 @@
   .fstat-row { grid-template-columns: minmax(0, 1fr); }
   .welcome__art { display: none; }
   .kpi { padding: 13px 10px; }
-  .kpi__value { font-size: 24px; }
-  .kpi__icon { width: 40px; height: 40px; }
+  .kpi__value { font-size: 26px; }
+  .kpi__icon, .fstat__icon, .status-tile__icon { width: 44px; height: 44px; }
+  .fstat__value { font-size: 19px; }
+  .status-tile__value { font-size: 28px; }
+  .best-row__line { grid-template-columns: minmax(0, 1fr) 32px; gap: 8px; }
+  .best-row__badge { width: 28px; height: 28px; font-size: 11.5px; }
   .hours-card__body { flex-direction: column; gap: 12px; }
   .hours-card__divider { width: auto; height: 1px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .dash .card, .kpi, .fstat, .sound-play, .range-pill, .chart__dot, .best-row__fill {
+  .dash .card, .kpi, .fstat, .status-tile, .kpi__icon, .fstat__icon, .status-tile__icon,
+  .sound-play, .range-pill, .chart__dot, .best-row__fill {
     transition: none;
   }
-  .kpi:hover, .fstat:hover, .sound-play:hover { transform: none; }
+  .kpi:hover, .fstat:hover, .status-tile:hover, .sound-play:hover { transform: none; }
+  .kpi:hover .kpi__icon, .fstat:hover .fstat__icon, .status-tile:hover .status-tile__icon {
+    transform: none;
+  }
 }

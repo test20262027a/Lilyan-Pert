@@ -79,7 +79,6 @@ export default function Sidebar({ open = false, onNavigate }) {
           </span>
           <span className="brand__text">
             <span className="brand__name">{business?.name_en || business?.name || t('app_name')}</span>
-            <span className="brand__sub">{t('nav_brand_title')}</span>
           </span>
         </div>
 

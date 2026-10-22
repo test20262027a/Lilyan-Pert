@@ -16,12 +16,17 @@ const RANGES = [
 
 const isDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
 
-function Stat({ icon, label, value, delta }) {
+/*
+ * One metric tile: icon, label, the figure and its comparison, all centred.
+ * The tone only picks the pastel surface — the figure itself is whatever the
+ * API returned for the selected period.
+ */
+function Stat({ icon, label, value, delta, tone = 'green' }) {
   const { t, locale } = useI18n();
   return (
-    <div className="fstat">
+    <div className={`fstat fstat--${tone}`}>
       <span className="fstat__icon">
-        <Icon name={icon} size={16} />
+        <Icon name={icon} size={22} />
       </span>
       <span className="fstat__label">{label}</span>
       <span className="fstat__value">{value}</span>
@@ -29,6 +34,7 @@ function Stat({ icon, label, value, delta }) {
         <span className="fstat__delta fstat__delta--empty" aria-hidden="true" />
       ) : (
         <span className={`fstat__delta ${delta < 0 ? 'is-down' : delta > 0 ? 'is-up' : ''}`}>
+          <Icon name="trendUp" size={12} className={`fstat__trend ${delta < 0 ? 'is-down' : ''}`} />
           {t(delta < 0 ? 'dash_delta_down' : 'dash_delta_up', { pct: fmtNumber(Math.abs(delta), locale) })}
         </span>
       )}
@@ -108,19 +114,28 @@ export default function FinanceOverview({
 
         <div className="fstat-row" style={{ marginTop: 12 }}>
           <Stat
+            tone="green"
             icon="banknote"
             label={t('dash_revenue_label')}
             value={fmtMoney(f.revenue, currency, locale)}
             delta={f.revenue_pct}
           />
-          <Stat icon="cart" label={t('dash_orders')} value={fmtNumber(f.orders || 0, locale)} delta={f.orders_pct} />
           <Stat
+            tone="amber"
+            icon="cart"
+            label={t('dash_orders')}
+            value={fmtNumber(f.orders || 0, locale)}
+            delta={f.orders_pct}
+          />
+          <Stat
+            tone="blue"
             icon="eye"
             label={t('dash_menu_views')}
             value={fmtNumber(f.views || 0, locale)}
             delta={f.views_pct}
           />
           <Stat
+            tone="lavender"
             icon="receipt"
             label={t('dash_avg_order_value')}
             value={fmtMoney(f.avg_order, currency, locale)}

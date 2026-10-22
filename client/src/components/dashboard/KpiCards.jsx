@@ -11,7 +11,7 @@ function Kpi({ tone, icon, label, value, hint, hintTone }) {
   return (
     <article className={`kpi kpi--${tone}`}>
       <span className="kpi__icon">
-        <Icon name={icon} size={19} />
+        <Icon name={icon} size={22} />
       </span>
       <span className="kpi__label">{label}</span>
       <span className="kpi__value">{value}</span>
@@ -44,7 +44,10 @@ export default function KpiCards({ kpi = {}, locale }) {
       `${t('dash_yesterday')}: ${fmtNumber(yesterday, locale)}`
     ) : (
       <>
-        <strong>{`${delta > 0 ? '▲' : delta < 0 ? '▼' : '•'} ${fmtNumber(Math.abs(delta), locale)}%`}</strong>
+        {delta !== 0 ? (
+          <Icon name="trendUp" size={12} className={`kpi__trend ${delta < 0 ? 'is-down' : ''}`} />
+        ) : null}
+        <strong>{`${fmtNumber(Math.abs(delta), locale)}%`}</strong>
         {` ${t('dash_vs_yesterday')}`}
       </>
     );

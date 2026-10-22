@@ -99,12 +99,19 @@ router.get(
           GROUP BY i.name ORDER BY units DESC LIMIT 5`,
         [b],
       ),
+      /*
+       * "New orders" are the ones still in the kitchen pipeline: pending,
+       * preparing and ready. A finished or cancelled order is history, so it
+       * never appears as new — the same three statuses mark a table as busy in
+       * the tables route, so both screens agree on what "active" means.
+       */
       q(
         `SELECT o.id, o.order_number, o.status, o.total, o.created_at, o.customer_name,
                 t.name AS table_name,
                 (SELECT coalesce(sum(i.quantity), 0)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
            FROM orders o LEFT JOIN tables t ON t.id = o.table_id
-          WHERE o.business_id = $1 ORDER BY o.created_at DESC, o.id DESC LIMIT 6`,
+          WHERE o.business_id = $1 AND o.status IN ('pending', 'preparing', 'ready')
+          ORDER BY o.created_at DESC, o.id DESC LIMIT 6`,
         [b],
       ),
       q(

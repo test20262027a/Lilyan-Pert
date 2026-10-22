@@ -181,7 +181,6 @@ export default function Dashboard() {
       {show('show_recent_orders') ? (
         <NewOrders
           orders={data.new_orders}
-          total={data.kpi?.total_orders || 0}
           currency={currency}
           locale={locale}
           timeZone={timeZone}
