@@ -152,15 +152,7 @@
   background: var(--mint-soft);
   border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
 }
-.hdr-user__avatar {
-  width: 32px; height: 32px; flex: none; border-radius: 50%;
-  display: grid; place-items: center; overflow: hidden;
-  background: color-mix(in srgb, var(--mint) 14%, var(--surface));
-  border: 1.5px solid color-mix(in srgb, var(--mint) 55%, transparent);
-  color: var(--mint-ink);
-  font-weight: 800; font-size: 13px;
-}
-.hdr-user__avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* The trigger avatar is the shared <UserAvatar>, sized by its own prop. */
 .hdr-user__caret { color: var(--muted); transition: transform 0.18s ease; }
 .hdr-user__caret.is-open { transform: rotate(180deg); }
 
@@ -192,14 +184,7 @@
     color-mix(in srgb, var(--mint) 24%, var(--surface)) 100%
   );
 }
-.hdr-menu__avatar {
-  width: 50px; height: 50px; flex: none; border-radius: 50%;
-  display: grid; place-items: center; overflow: hidden;
-  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 65%, #ffffff));
-  color: #ffffff; font-weight: 800; font-size: 20px;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 16%, transparent);
-}
-.hdr-menu__avatar img { width: 100%; height: 100%; object-fit: cover; }
+/* The menu avatar is the same shared <UserAvatar>, at 50px. */
 .hdr-menu__who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .hdr-menu__name {
   font-size: 15px; font-weight: 800; color: var(--text);

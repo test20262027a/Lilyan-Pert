@@ -106,7 +106,9 @@ export async function attachSession(req, _res, next) {
     const payload = verifyToken(token);
     if (payload?.uid) {
       const { rows } = await q(
-        'SELECT id, email, full_name, phone, is_super_admin, locale FROM users WHERE id = $1',
+        `SELECT id, email, full_name, phone, is_super_admin, locale,
+                profile_image_url, avatar_type
+           FROM users WHERE id = $1`,
         [payload.uid],
       );
       if (rows[0]) {

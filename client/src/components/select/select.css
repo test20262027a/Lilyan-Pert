@@ -78,6 +78,21 @@
 .lysel__value {
   flex: 1 1 auto;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* Optional leading marker (an avatar glyph, a colour dot…) inside the trigger. */
+.lysel__lead {
+  display: inline-flex;
+  flex: none;
+  color: var(--theme-primary-strong);
+}
+
+.lysel__label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -187,6 +202,13 @@
 
 .lysel-opt + .lysel-opt {
   margin-top: 2px;
+}
+
+/* The same leading marker inside each option row. */
+.lysel-opt__lead {
+  display: inline-flex;
+  flex: none;
+  color: var(--theme-primary-strong);
 }
 
 .lysel-opt__text {

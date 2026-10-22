@@ -11,6 +11,7 @@ import {
   sanitizePermissions,
 } from '../lib/permissions.js';
 import { ah, bad, conflict, isUuid, notFound } from '../lib/http.js';
+import { normalizeAvatarType, normalizeProfileImageUrl } from '../lib/profile.js';
 import { getVapidKeys } from '../lib/push.js';
 
 const router = express.Router();
@@ -955,7 +956,8 @@ router.get(
 
     const { rows } = await q(
       `SELECT m.id AS membership_id, m.role, m.status, m.permissions, m.created_at,
-              u.id, u.email, u.full_name, u.phone, u.locale
+              u.id, u.email, u.full_name, u.phone, u.locale,
+              u.profile_image_url, u.avatar_type
          FROM memberships m JOIN users u ON u.id = m.user_id
         WHERE ${where.join(' AND ')}
         ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'manager' THEN 1 WHEN 'staff' THEN 2 ELSE 3 END,
@@ -978,6 +980,8 @@ router.get(
         full_name: r.full_name,
         phone: r.phone,
         locale: r.locale,
+        profile_image_url: r.profile_image_url,
+        avatar_type: r.avatar_type || 'default',
         role: r.role,
         status: r.status,
         created_at: r.created_at,
@@ -1022,6 +1026,9 @@ router.post(
       throw bad('ROLE_NOT_ASSIGNABLE');
     }
     const permissions = permissionPayload(req, role, req.body?.permissions);
+    // Appearance is optional: no photo, and the neutral avatar unless one is chosen.
+    const profileImageUrl = normalizeProfileImageUrl(req.body?.profile_image_url) || null;
+    const avatarType = normalizeAvatarType(req.body?.avatar_type) || 'default';
 
     const created = await tx(async (c) => {
       let userId;
@@ -1038,8 +1045,9 @@ router.post(
       } else {
         if (password.length < 8) throw bad('WEAK_PASSWORD');
         const u = await c.query(
-          `INSERT INTO users (email, password_hash, full_name, phone) VALUES ($1,$2,$3,$4) RETURNING id`,
-          [email, hashPassword(password), fullName, phone],
+          `INSERT INTO users (email, password_hash, full_name, phone, profile_image_url, avatar_type)
+           VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
+          [email, hashPassword(password), fullName, phone, profileImageUrl, avatarType],
         );
         userId = u.rows[0].id;
       }
@@ -1104,6 +1112,12 @@ router.patch(
     const targetRole = nextRole || membership.role;
     const permissions = permissionPayload(req, targetRole, b.permissions);
 
+    // Validated before the transaction opens, so a rejected file reference never
+    // leaves the membership half-updated nor overwrites the stored photo.
+    const hasProfileImage = b.profile_image_url !== undefined;
+    const profileImageUrl = normalizeProfileImageUrl(b.profile_image_url);
+    const avatarType = normalizeAvatarType(b.avatar_type);
+
     const updated = await tx(async (c) => {
       const saved = await c.query(
         `UPDATE memberships SET role = COALESCE($3, role),
@@ -1120,14 +1134,24 @@ router.patch(
         ],
       );
       // The identity's own profile fields live on `users`, not on the membership.
-      if (b.full_name !== undefined || b.phone !== undefined) {
+      if (b.full_name !== undefined || b.phone !== undefined || hasProfileImage || avatarType !== undefined) {
         const fullName = b.full_name === undefined ? null : String(b.full_name).trim().slice(0, 120);
         if (b.full_name !== undefined && !fullName) throw bad('NAME_REQUIRED');
         await c.query(
           `UPDATE users SET full_name = COALESCE($2, full_name),
-                            phone = COALESCE($3, phone), updated_at = now()
+                            phone = COALESCE($3, phone),
+                            profile_image_url = CASE WHEN $4::boolean THEN $5::text ELSE profile_image_url END,
+                            avatar_type = COALESCE($6, avatar_type),
+                            updated_at = now()
             WHERE id = $1`,
-          [membership.user_id, fullName, b.phone === undefined ? null : String(b.phone).slice(0, 40)],
+          [
+            membership.user_id,
+            fullName,
+            b.phone === undefined ? null : String(b.phone).slice(0, 40),
+            hasProfileImage,
+            profileImageUrl === undefined ? null : profileImageUrl,
+            avatarType === undefined ? null : avatarType,
+          ],
         );
       }
       return saved.rows[0];

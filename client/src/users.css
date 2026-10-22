@@ -158,12 +158,20 @@
   box-shadow: 0 3px 10px rgba(23, 26, 43, 0.07);
 }
 
+/* The avatar sits immediately beside the name in both directions, with the
+   name and email stacked and vertically centred against it. */
 .um-row__identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+.um-row__who {
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
-  flex: 1 1 220px;
 }
 .um-row__name {
   font-size: 13.5px;

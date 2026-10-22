@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
+import UserAvatar from '../UserAvatar';
 import { useI18n } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,7 +24,6 @@ export default function ProfileMenu() {
     : isSuperAdmin
       ? 'role_super_admin'
       : null;
-  const initial = (user?.full_name || user?.email || '?').trim().charAt(0).toUpperCase();
   const displayName = user?.full_name || user?.email?.split('@')[0] || t('auth_account');
 
   // Outside click closes the overlay; Escape closes it and returns focus.
@@ -70,18 +70,14 @@ export default function ProfileMenu() {
         title={user?.email || t('auth_account')}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="hdr-user__avatar">
-          {user?.avatar_url ? <img src={user.avatar_url} alt="" /> : initial}
-        </span>
+        <UserAvatar user={user} size={32} />
         <Icon name="chevronDown" size={14} className={`hdr-user__caret ${open ? 'is-open' : ''}`} />
       </button>
 
       {open ? (
         <div className="hdr-menu" role="menu" aria-label={t('auth_account')}>
           <div className="hdr-menu__user">
-            <span className="hdr-menu__avatar">
-              {user?.avatar_url ? <img src={user.avatar_url} alt="" /> : initial}
-            </span>
+            <UserAvatar user={user} size={50} />
             <span className="hdr-menu__who">
               <span className="hdr-menu__name" title={displayName}>{displayName}</span>
               <span className="hdr-menu__mail" title={user?.email}>{user?.email}</span>

@@ -1,0 +1,169 @@
+/* ==========================================================================
+   Profile picture & avatar picker — the card inside Add / Edit User and the
+   own-account dialog.
+
+   Layout: a soft 3D panel with the circular live preview on the start side and
+   the upload / remove controls plus the avatar dropdown beside it. On a phone
+   the preview centres above the controls and the dropdown takes the full width.
+   Every accent derives from the active theme tokens.
+   ========================================================================== */
+
+.uphoto {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 16px;
+  border-radius: 18px;
+  border: 1px solid var(--theme-primary-line);
+  background:
+    radial-gradient(120% 140% at 12% 0%, var(--theme-primary-soft) 0%, transparent 58%),
+    var(--um-card, var(--surface));
+  box-shadow:
+    0 1px 2px rgba(23, 26, 43, 0.05),
+    0 10px 24px -18px color-mix(in srgb, var(--theme-primary) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ------------------------------------------------------------- preview */
+
+.uphoto__stage {
+  flex: none;
+  display: grid;
+  place-items: center;
+}
+
+.uphoto__frame {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 50%;
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--theme-primary) 22%, #ffffff),
+    color-mix(in srgb, var(--theme-primary) 6%, #ffffff)
+  );
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--theme-primary) 18%, transparent),
+    0 12px 24px -14px color-mix(in srgb, var(--theme-primary) 62%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.uphoto__frame.is-busy { transform: scale(0.985); }
+
+.uphoto__frame .uavatar {
+  border-width: 2px;
+  box-shadow: inset 0 1px 2px rgba(23, 26, 43, 0.08);
+}
+
+/* Camera / edit badge, tinted from the theme. */
+.uphoto__badge {
+  position: absolute;
+  inset-block-end: 2px;
+  inset-inline-end: 2px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--theme-primary) 88%, #ffffff),
+    var(--theme-primary)
+  );
+  border: 2px solid var(--um-card, var(--surface));
+  box-shadow: 0 4px 10px -4px color-mix(in srgb, var(--theme-primary) 75%, transparent);
+}
+.uphoto__badge .spinner { width: 13px; height: 13px; }
+
+/* ------------------------------------------------------------- controls */
+
+.uphoto__panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.uphoto__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.uphoto__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 11px;
+  border: 1px solid var(--um-line, var(--border));
+  background: var(--um-card, var(--surface));
+  color: var(--um-ink, var(--text));
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.uphoto__btn:hover:not(:disabled):not(.is-disabled) {
+  border-color: var(--theme-primary-line);
+  box-shadow: 0 4px 12px -6px color-mix(in srgb, var(--theme-primary) 60%, transparent);
+  transform: translateY(-1px);
+}
+.uphoto__btn:disabled,
+.uphoto__btn.is-disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.uphoto__btn--primary {
+  border-color: transparent;
+  color: #ffffff;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--theme-primary) 86%, #ffffff),
+    var(--theme-primary)
+  );
+  box-shadow:
+    0 1px 1px rgba(23, 26, 43, 0.08),
+    0 8px 16px -10px color-mix(in srgb, var(--theme-primary) 90%, transparent);
+}
+.uphoto__btn--primary:hover:not(:disabled):not(.is-disabled) {
+  border-color: transparent;
+  box-shadow: 0 6px 18px -8px color-mix(in srgb, var(--theme-primary) 85%, transparent);
+}
+
+.uphoto__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.uphoto__label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--um-muted, var(--muted));
+}
+
+.uphoto__hint { margin-top: -2px; }
+
+/* --------------------------------------------------------------- mobile */
+
+@media (max-width: 600px) {
+  .uphoto {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 16px 14px;
+  }
+  .uphoto__stage { justify-self: center; }
+  .uphoto__actions { justify-content: center; }
+  .uphoto__btn { flex: 1 1 auto; justify-content: center; }
+  .uphoto__panel { align-items: stretch; }
+}

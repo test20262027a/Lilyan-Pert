@@ -9,6 +9,8 @@ import { del, get, patch, post } from '../api';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import UsersArtwork from '../components/users/UsersArtwork';
 import UserFormModal from '../components/users/UserFormModal';
+import UserPhotoField from '../components/users/UserPhotoField';
+import UserAvatar from '../components/UserAvatar';
 import { permissionSummaryKey } from '../permissions';
 import '../users.css';
 
@@ -40,7 +42,7 @@ const ERROR_KEYS = {
 export default function Users() {
   const { t } = useI18n();
   const { business } = useBusiness();
-  const { user: me, can, updateProfile } = useAuth();
+  const { user: me, can, updateProfile, refresh } = useAuth();
   const toast = useToast();
 
   const [data, setData] = useState(EMPTY);
@@ -115,7 +117,11 @@ export default function Users() {
           role: values.role,
           status: values.status,
           permissions: values.permissions,
+          profile_image_url: values.profile_image_url,
+          avatar_type: values.avatar_type,
         });
+        // Editing your own account must also refresh the header avatar.
+        if (modal.user.id === me?.id) await refresh();
       } else {
         await post('/manage/users', values);
       }
@@ -272,10 +278,13 @@ export default function Users() {
             return (
               <div className="um-row" key={member.membership_id}>
                 <div className="um-row__identity">
-                  <span className="um-row__name">{member.full_name || member.email}</span>
-                  <span className="um-row__email" dir="ltr">
-                    {member.email}
-                  </span>
+                  <UserAvatar user={member} size={44} alt={member.full_name || member.email} />
+                  <div className="um-row__who">
+                    <span className="um-row__name">{member.full_name || member.email}</span>
+                    <span className="um-row__email" dir="ltr">
+                      {member.email}
+                    </span>
+                  </div>
                 </div>
 
                 <span className={`um-badge um-badge--${member.role}`}>{t(`role_${member.role}`)}</span>
@@ -459,6 +468,8 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
     full_name: user?.full_name || '',
     phone: user?.phone || '',
     locale: user?.locale || 'ku',
+    profile_image_url: user?.profile_image_url || null,
+    avatar_type: user?.avatar_type || 'default',
   });
   return (
     <Modal
@@ -483,6 +494,13 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
         </>
       }
     >
+      <UserPhotoField
+        photo={values.profile_image_url}
+        avatarType={values.avatar_type}
+        name={values.full_name}
+        onPhotoChange={(url) => setValues((v) => ({ ...v, profile_image_url: url }))}
+        onAvatarChange={(kind) => setValues((v) => ({ ...v, avatar_type: kind }))}
+      />
       <div className="form-grid">
         <Field label={t('label_full_name')}>
           <input

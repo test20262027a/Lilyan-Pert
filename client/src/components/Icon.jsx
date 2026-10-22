@@ -113,6 +113,13 @@ const PATHS = {
   pizza: <><path d="M12 3.2c4.4 0 8.3 1.6 8.3 3.7 0 1.7-2.5 5.8-6.5 10.9a2.3 2.3 0 0 1-3.6 0C6.2 12.7 3.7 8.6 3.7 6.9c0-2.1 3.9-3.7 8.3-3.7z" /><circle cx="9.4" cy="8.9" r=".95" /><circle cx="14.6" cy="8.9" r=".95" /></>,
   leaf: <><path d="M11 20.5A7.5 7.5 0 0 1 9.8 6.1C15.5 5 17.2 4.4 19.2 2c1 2 1.8 4.2 1.8 8 0 5.5-4.7 10.5-10 10.5z" /><path d="M2.5 21.5c0-3.2 1.9-5.6 5.1-6.3 2.4-.5 4.9-2 5.9-3.2" /></>,
   bread: <><path d="M4 11.4c0-3.1 3.6-5.2 8-5.2s8 2.1 8 5.2v5.4a2.4 2.4 0 0 1-2.4 2.4H6.4A2.4 2.4 0 0 1 4 16.8z" /><path d="M4 12.6h16" /><path d="M9.2 7.6v2.4M14.8 7.6v2.4" /></>,
+
+  /* Profile avatars — one neutral silhouette and two visibly distinct
+     masculine / feminine ones, so the two choices are never confused. */
+  person: <><circle cx="12" cy="8" r="3.6" /><path d="M4.8 20.6a7.2 7.2 0 0 1 14.4 0" /></>,
+  personMale: <><circle cx="12" cy="8.5" r="3.5" /><path d="M8.6 5.9h6.8" /><path d="M4.3 20.8a7.7 7.7 0 0 1 15.4 0" /></>,
+  personFemale: <><circle cx="12" cy="9" r="3.2" /><path d="M8.9 6.9c.5-1.7 1.8-2.8 3.1-2.8s2.6 1.1 3.1 2.8" /><path d="M8.7 9.4c-.5 1.9-.6 3.8 0 5.1" /><path d="M15.3 9.4c.5 1.9.6 3.8 0 5.1" /><path d="M5.6 20.9a6.9 6.9 0 0 1 12.8 0" /></>,
+  camera: <><path d="M3 8.6h3.2l1.4-2.4h8.8l1.4 2.4H21a1.4 1.4 0 0 1 1.4 1.4v8.2A1.4 1.4 0 0 1 21 19.6H3a1.4 1.4 0 0 1-1.4-1.4V10A1.4 1.4 0 0 1 3 8.6z" /><circle cx="12" cy="14.2" r="3.2" /></>,
 };
 
 export default function Icon({ name, size = 18, className = '', style, title }) {

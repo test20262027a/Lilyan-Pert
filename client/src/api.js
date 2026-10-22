@@ -53,6 +53,15 @@ export const put = (path, body) => api(path, { method: 'PUT', body });
 export const patch = (path, body) => api(path, { method: 'PATCH', body });
 export const del = (path) => api(path, { method: 'DELETE' });
 
+/**
+ * Stores an already-prepared data URL (a cropped, resized avatar) via the same
+ * media endpoint and returns its permanent reference.
+ */
+export async function uploadImageDataUrl(dataUrl) {
+  const result = await post('/manage/media', { data_url: dataUrl });
+  return result.url;
+}
+
 /** Reads an image file and stores it via the media endpoint. */
 export function uploadImage(file) {
   return new Promise((resolve, reject) => {

@@ -61,6 +61,9 @@ export default function Select({
     const list = options.map((option) => ({
       value: toKey(option.value),
       label: option.label,
+      // Optional visual marker (an avatar glyph, a colour dot…) shown in the row
+      // and, once chosen, on the trigger itself.
+      leading: option.leading ?? null,
       disabled: Boolean(option.disabled),
     }));
     if (placeholder) {
@@ -310,6 +313,7 @@ export default function Select({
                     onMouseEnter={() => !row.disabled && setActive(index)}
                     onClick={() => choose(index)}
                   >
+                    {row.leading ? <span className="lysel-opt__lead" aria-hidden="true">{row.leading}</span> : null}
                     <span className="lysel-opt__text">{row.label}</span>
                     <span className="lysel-opt__check" aria-hidden="true">
                       {isSelected ? <Icon name="check" size={15} /> : null}
@@ -342,7 +346,10 @@ export default function Select({
         {...rest}
       >
         <span className={`lysel__value ${selected && !selected.placeholder ? '' : 'is-placeholder'}`.trim()}>
-          {triggerText}
+          {selected?.leading ? (
+            <span className="lysel__lead" aria-hidden="true">{selected.leading}</span>
+          ) : null}
+          <span className="lysel__label">{triggerText}</span>
         </span>
         <Icon name="chevronDown" size={15} className="lysel__chevron" />
       </button>

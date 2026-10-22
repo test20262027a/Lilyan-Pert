@@ -9,6 +9,7 @@ import {
   requireAuth,
 } from '../auth.js';
 import { ah, bad, conflict } from '../lib/http.js';
+import { normalizeAvatarType, normalizeProfileImageUrl } from '../lib/profile.js';
 
 const router = express.Router();
 
@@ -95,6 +96,8 @@ router.get(
         phone: req.user.phone,
         is_super_admin: req.user.is_super_admin,
         locale: req.user.locale,
+        profile_image_url: req.user.profile_image_url || null,
+        avatar_type: req.user.avatar_type || 'default',
       },
       memberships: req.memberships,
       active_business_id: active,
@@ -107,13 +110,28 @@ router.patch(
   requireAuth,
   ah(async (req, res) => {
     const { full_name, phone, locale } = req.body || {};
+    // Own-profile appearance: the same stored fields the User Management form
+    // writes, validated by the same rules.
+    const hasProfileImage = req.body?.profile_image_url !== undefined;
+    const profileImageUrl = normalizeProfileImageUrl(req.body?.profile_image_url);
+    const avatarType = normalizeAvatarType(req.body?.avatar_type);
     await q(
       `UPDATE users SET full_name = COALESCE($2, full_name),
                         phone = COALESCE($3, phone),
                         locale = COALESCE($4, locale),
+                        profile_image_url = CASE WHEN $5::boolean THEN $6::text ELSE profile_image_url END,
+                        avatar_type = COALESCE($7, avatar_type),
                         updated_at = now()
         WHERE id = $1`,
-      [req.user.id, full_name ?? null, phone ?? null, locale ?? null],
+      [
+        req.user.id,
+        full_name ?? null,
+        phone ?? null,
+        locale ?? null,
+        hasProfileImage,
+        profileImageUrl === undefined ? null : profileImageUrl,
+        avatarType === undefined ? null : avatarType,
+      ],
     );
     res.json({ ok: true });
   }),

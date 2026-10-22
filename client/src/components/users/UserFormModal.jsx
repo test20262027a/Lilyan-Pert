@@ -3,6 +3,7 @@ import Icon from '../Icon';
 import { Select } from '../ui';
 import { useI18n } from '../../i18n';
 import UsersArtwork from './UsersArtwork';
+import UserPhotoField from './UserPhotoField';
 import {
   PERMISSION_CARDS,
   actionLabelKey,
@@ -127,6 +128,11 @@ export default function UserFormModal({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState(user?.role || 'staff');
   const [active, setActive] = useState(user ? user.status === 'active' : true);
+  // Appearance is always optional: a new account starts with no photo and the
+  // neutral avatar, and the fallback choice is never guessed from the name.
+  const [profileImage, setProfileImage] = useState(user?.profile_image_url || null);
+  const [avatarType, setAvatarType] = useState(user?.avatar_type || 'default');
+  const [uploading, setUploading] = useState(false);
   const [permissions, setPermissions] = useState(() =>
     Object.fromEntries((user?.permissions || []).map((key) => [key, true])),
   );
@@ -159,6 +165,8 @@ export default function UserFormModal({
     || password.length > 0
     || role !== (user?.role || 'staff')
     || active !== (user ? user.status === 'active' : true)
+    || profileImage !== (user?.profile_image_url || null)
+    || avatarType !== (user?.avatar_type || 'default')
     || JSON.stringify(permissions)
       !== JSON.stringify(Object.fromEntries((user?.permissions || []).map((key) => [key, true])));
 
@@ -207,6 +215,7 @@ export default function UserFormModal({
     if (!EMAIL_RE.test(email.trim())) return setError(t('user_invalid_email'));
     if (password && password.length < 8) return setError(t('auth_weak_password'));
     if (password !== confirmPassword) return setError(t('user_password_mismatch'));
+    if (uploading) return setError(t('user_photo_wait'));
     setError(null);
     return onSubmit({
       full_name: name,
@@ -215,6 +224,8 @@ export default function UserFormModal({
       role,
       status: active ? 'active' : 'disabled',
       permissions,
+      profile_image_url: profileImage,
+      avatar_type: avatarType,
     });
   };
 
@@ -277,6 +288,17 @@ export default function UserFormModal({
                 />
               </label>
             </div>
+          </Section>
+
+          <Section title={t('user_section_profile')}>
+            <UserPhotoField
+              photo={profileImage}
+              avatarType={avatarType}
+              name={fullName}
+              onPhotoChange={setProfileImage}
+              onAvatarChange={setAvatarType}
+              onUploading={setUploading}
+            />
           </Section>
 
           <Section title={t('user_section_password')}>
@@ -366,8 +388,13 @@ export default function UserFormModal({
           <button type="button" className="um-btn" onClick={close} disabled={busy}>
             {t('action_cancel')}
           </button>
-          <button type="button" className="um-btn um-btn--primary" onClick={submit} disabled={busy}>
-            {busy ? <span className="spinner" /> : null}
+          <button
+            type="button"
+            className="um-btn um-btn--primary"
+            onClick={submit}
+            disabled={busy || uploading}
+          >
+            {busy || uploading ? <span className="spinner" /> : null}
             {t('action_save')}
           </button>
         </footer>

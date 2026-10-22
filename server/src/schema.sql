@@ -13,6 +13,16 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at     timestamptz NOT NULL DEFAULT now()
 );
 
+-- Profile appearance. The photo is a reference to an uploaded media row and is
+-- always shown in preference to the fallback avatar; `avatar_type` keeps the
+-- administrator's choice even while a photo is set. Additive: accounts created
+-- before this have no photo and the neutral `default` avatar.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_url text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_type text NOT NULL DEFAULT 'default';
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_avatar_type_check;
+ALTER TABLE users ADD CONSTRAINT users_avatar_type_check
+  CHECK (avatar_type IN ('default', 'male', 'female'));
+
 CREATE TABLE IF NOT EXISTS businesses (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug          text UNIQUE NOT NULL,
