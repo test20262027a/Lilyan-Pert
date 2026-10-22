@@ -1,0 +1,571 @@
+/*
+ * The customer product experience: the inline quantity stepper that replaces
+ * the Add to Cart button, the two-column product sheet and the full-screen
+ * photograph viewer.
+ *
+ * Every colour is derived from the active theme's `--primary`, so the five
+ * appearance presets recolour the stepper, the price accent, the category badge
+ * and the zoom controls. The category's own identity colour arrives separately
+ * as `--pd-ink`, so a Fresh Juice category keeps its citrus accent whatever the
+ * business theme is.
+ */
+
+/* ------------------------------------------------ quantity stepper ------ */
+
+.cui-qc {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-height: 46px;
+  padding: 5px 6px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 8px 18px -12px rgba(16, 32, 26, 0.45);
+  animation: cui-ctl-in 190ms cubic-bezier(0.22, 0.78, 0.3, 1) both;
+}
+[data-theme='dark'] .cui-qc {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 18px -12px rgba(0, 0, 0, 0.7);
+}
+
+.cui-qc__btn {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 0;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 160ms ease, background 160ms ease, filter 160ms ease;
+}
+.cui-qc__btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 32%, transparent);
+}
+.cui-qc__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* raised: the accent reads as the surface you press */
+.cui-qc__btn--plus {
+  color: var(--primary-ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 88%, #ffffff), var(--primary));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 8px 16px -8px color-mix(in srgb, var(--primary) 85%, transparent);
+}
+.cui-qc__btn--plus:hover:not(:disabled) { filter: brightness(1.05); }
+.cui-qc__btn--minus {
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-3) 86%, var(--surface));
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 5px 12px -9px rgba(16, 32, 26, 0.55);
+}
+.cui-qc__btn--minus:hover:not(:disabled) { background: var(--surface-3); }
+.cui-qc__btn:active:not(:disabled) { transform: scale(0.92); }
+
+.cui-qc__value {
+  flex: 1 1 auto;
+  min-width: 22px;
+  text-align: center;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  transition: color 160ms ease;
+}
+
+.cui-qc--lg {
+  min-height: 54px;
+  padding: 6px;
+  border-radius: 16px;
+}
+.cui-qc--lg .cui-qc__btn { width: 42px; height: 42px; }
+.cui-qc--lg .cui-qc__value { font-size: 18px; }
+
+@keyframes cui-ctl-in {
+  from { opacity: 0; transform: scale(0.955); }
+  to { opacity: 1; transform: none; }
+}
+
+/* the card reserves the action's height, so swapping the button for the
+   stepper can never move the price or the product name */
+.cui-prod__actions {
+  margin-top: auto;
+  display: flex;
+  align-items: stretch;
+  min-height: 46px;
+  animation: cui-ctl-in 190ms cubic-bezier(0.22, 0.78, 0.3, 1) both;
+}
+.cui-prod__actions > * { flex: 1 1 auto; min-width: 0; }
+.cui-prod__actions .cui-prod__add { margin-top: 0; }
+
+/* ---------------------------------------------------- product sheet ------ */
+
+.cui-pd-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 34px);
+  background: color-mix(in srgb, #06110c 58%, transparent);
+  backdrop-filter: blur(7px) saturate(0.95);
+  -webkit-backdrop-filter: blur(7px) saturate(0.95);
+  animation: cui-pd-fade 180ms ease-out both;
+}
+
+@keyframes cui-pd-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes cui-pd-rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/*
+ * `direction: ltr` is deliberate: the reference fixes the information on the
+ * left and the photograph on the right, and only the copy inside the columns
+ * follows the language. The columns are placed explicitly as well, so nothing
+ * in the tree can flip them.
+ */
+.cui-pd {
+  position: relative;
+  direction: ltr;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr);
+  width: min(100%, 1080px);
+  max-height: min(90dvh, 720px);
+  border-radius: 26px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, var(--border));
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 40px 80px -30px rgba(4, 14, 10, 0.55),
+    0 16px 36px -20px rgba(4, 14, 10, 0.35);
+  animation: cui-pd-rise 230ms cubic-bezier(0.22, 0.78, 0.3, 1) both;
+}
+
+.cui-pd__info {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  min-width: 0;
+  padding: 58px 28px 22px;
+  overflow-y: auto;
+  background:
+    radial-gradient(120% 80% at 0% 0%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 62%),
+    var(--surface);
+}
+
+.cui-pd__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+.cui-pd__caticon {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: var(--pd-ink, var(--primary));
+  background: color-mix(in srgb, var(--pd-ink, var(--primary)) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--pd-ink, var(--primary)) 26%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.cui-pd__heading { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.cui-pd__name {
+  margin: 0;
+  font-size: clamp(20px, 2.1vw, 27px);
+  font-weight: 850;
+  line-height: 1.28;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.cui-pd__cat {
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--muted);
+}
+
+.cui-pd__status { display: flex; }
+.cui-pd__stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  color: color-mix(in srgb, var(--success) 78%, var(--text));
+}
+.cui-pd__stock i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
+}
+.cui-pd__stock--out {
+  border-color: color-mix(in srgb, var(--danger) 28%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  color: color-mix(in srgb, var(--danger) 82%, var(--text));
+}
+
+.cui-pd__desc {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.cui-pd__foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
+  background: color-mix(in srgb, var(--surface-2) 74%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.cui-pd__price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.cui-pd__coin {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: color-mix(in srgb, var(--primary) 78%, var(--text));
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.cui-pd__amount {
+  font-size: clamp(22px, 2.4vw, 30px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  color: color-mix(in srgb, var(--primary) 74%, var(--text));
+  font-variant-numeric: tabular-nums;
+}
+.cui-pd__curr { font-size: 12px; font-weight: 780; color: var(--muted); }
+.cui-pd__was { font-size: 12px; color: var(--muted); text-decoration-thickness: 1px; }
+.cui-pd__promo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--primary-ink);
+  background: linear-gradient(180deg, var(--theme-primary, var(--primary)), var(--theme-primary-active, var(--primary)));
+}
+
+.cui-pd__action { flex: 0 1 232px; min-width: 0; display: flex; }
+
+.cui-pd__add {
+  flex: 1 1 auto;
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--primary) 52%, transparent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 830;
+  color: var(--primary-ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 92%, #ffffff), var(--primary));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 12px 24px -12px color-mix(in srgb, var(--primary) 85%, transparent);
+  transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+}
+.cui-pd__add:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
+.cui-pd__add:active:not(:disabled) { transform: translateY(1px); }
+.cui-pd__add:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.cui-pd__add:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.cui-pd__add span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ----------------------------------------------------- photograph side --- */
+
+.cui-pd__media {
+  grid-column: 2;
+  grid-row: 1;
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  background: linear-gradient(150deg, color-mix(in srgb, var(--primary) 12%, var(--surface-2)), var(--surface-2));
+}
+.cui-pd__shot {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+  overflow: hidden;
+}
+.cui-pd__shot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 480ms ease;
+}
+.cui-pd__shot:hover img { transform: scale(1.03); }
+.cui-pd__shot:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--primary) 42%, transparent);
+}
+.cui-pd__zoomhint {
+  position: absolute;
+  inset-block-end: 14px;
+  inset-inline-end: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #f7fffb;
+  background: color-mix(in srgb, #07130e 58%, transparent);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 22px -12px rgba(0, 0, 0, 0.8);
+  transition: background 160ms ease, transform 160ms ease;
+}
+.cui-pd__shot:hover .cui-pd__zoomhint { transform: translateY(-1px); }
+.cui-pd__ph {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: color-mix(in srgb, var(--primary) 46%, var(--muted));
+}
+
+/* physical top-left corner of the sheet, whatever the reading direction */
+.cui-pd__close {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 3;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: var(--text);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 22px -14px rgba(8, 20, 16, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 150ms ease, background 150ms ease;
+}
+.cui-pd__close:hover { transform: scale(1.06); background: var(--surface); }
+.cui-pd__close:active { transform: scale(0.95); }
+.cui-pd__close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 34%, transparent);
+}
+
+/* ------------------------------------------------------- zoom viewer ----- */
+
+.cui-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  background: color-mix(in srgb, #040e0a 88%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  animation: cui-pd-fade 160ms ease-out both;
+}
+.cui-zoom__stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  touch-action: none;
+}
+.cui-zoom__img {
+  max-width: 92vw;
+  max-height: 84vh;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: center center;
+  will-change: transform;
+  border-radius: 10px;
+  box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.9);
+}
+.cui-zoom__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #f4fbf7;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: transform 150ms ease, background 150ms ease;
+}
+.cui-zoom__close:hover { transform: scale(1.06); background: rgba(255, 255, 255, 0.24); }
+.cui-zoom__close:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5); }
+
+.cui-zoom__bar {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 9px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(10, 24, 18, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 36px -20px rgba(0, 0, 0, 0.9);
+}
+.cui-zoom__btn {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #f4fbf7;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  transition: transform 140ms ease, background 150ms ease, opacity 150ms ease;
+}
+.cui-zoom__btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.22); }
+.cui-zoom__btn:active:not(:disabled) { transform: scale(0.93); }
+.cui-zoom__btn:disabled { opacity: 0.35; cursor: default; }
+.cui-zoom__btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5); }
+.cui-zoom__level {
+  min-width: 52px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: #f4fbf7;
+  font-variant-numeric: tabular-nums;
+}
+.cui-zoom__sep {
+  width: 1px;
+  height: 22px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* --------------------------------------------------------- responsive --- */
+
+/* Tablet: two columns while the sheet still has room for them. */
+@media (max-width: 980px) {
+  .cui-pd { grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr); }
+  .cui-pd__info { padding: 54px 20px 18px; }
+  .cui-pd__action { flex: 0 1 200px; }
+}
+
+/* Phone: the photograph leads, then the information, then the action. */
+@media (max-width: 780px) {
+  .cui-pd-overlay { padding: 0; align-items: end; }
+  .cui-pd {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+    max-width: 560px;
+    max-height: 94dvh;
+    border-radius: 24px 24px 0 0;
+    overflow-y: auto;
+    border-bottom: 0;
+  }
+  .cui-pd__media {
+    grid-column: 1;
+    grid-row: 1;
+    order: -1;
+    aspect-ratio: 16 / 11;
+    max-height: 42dvh;
+  }
+  .cui-pd__info {
+    grid-column: 1;
+    grid-row: 2;
+    overflow: visible;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+    gap: 12px;
+  }
+  .cui-pd__foot {
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 4px;
+  }
+  .cui-pd__action { flex: 1 1 100%; }
+  .cui-pd__add, .cui-pd__action .cui-qc { min-height: 50px; }
+  .cui-zoom__bar { bottom: 16px; gap: 4px; padding: 6px 7px; }
+  .cui-zoom__btn { width: 38px; height: 38px; }
+  .cui-zoom__level { min-width: 46px; font-size: 12px; }
+}
+
+@media (max-width: 420px) {
+  .cui-pd__name { font-size: 19px; }
+  .cui-pd__amount { font-size: 22px; }
+  .cui-pd__caticon { width: 40px; height: 40px; border-radius: 13px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cui-qc,
+  .cui-prod__actions,
+  .cui-pd,
+  .cui-pd-overlay,
+  .cui-zoom { animation: none; }
+  .cui-zoom__img { transition: none !important; }
+}

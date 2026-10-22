@@ -2,6 +2,8 @@ import Icon from '../Icon';
 import { Money } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { fmtMoneyParts } from '../../format';
+import ProductQuantityControl from './ProductQuantityControl';
+import '../../customerProduct.css';
 
 /*
  * One sellable product, as a guest sees it: the photograph leads the card and a
@@ -13,7 +15,12 @@ import { fmtMoneyParts } from '../../format';
  * across the grid.
  *
  * Tapping the card opens the detail sheet when the owner enabled product
- * details; the add button is its own control and never opens the sheet.
+ * details; the add button and the quantity stepper are their own controls and
+ * never open the sheet.
+ *
+ * `quantity` is the cart's own count of this product — the same number the cart
+ * sheet and the badge show. It is never held locally, so a change made anywhere
+ * (stepper, sheet, cart) is reflected here on the next render.
  */
 export default function CustomerProductCard({
   product,
@@ -25,7 +32,9 @@ export default function CustomerProductCard({
   addLabel,
   promoLabel,
   badge,
+  quantity = 0,
   onAdd,
+  onDecrease,
   onOpen,
 }) {
   const { t } = useI18n();
@@ -111,19 +120,34 @@ export default function CustomerProductCard({
         ) : null}
 
         {canAdd ? (
-          <button
-            type="button"
-            className="cui-prod__add"
-            disabled={!available}
-            onClick={(event) => {
-              event.stopPropagation();
-              onAdd(product);
-            }}
-            aria-label={`${addLabel || t('customer_menu_add_to_cart')} — ${name}`}
+          <div
+            className="cui-prod__actions"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
           >
-            <Icon name="cart" size={17} />
-            <span>{addLabel || t('customer_menu_add_to_cart')}</span>
-          </button>
+            {quantity > 0 ? (
+              <ProductQuantityControl
+                quantity={quantity}
+                onIncrease={() => onAdd(product)}
+                onDecrease={() => onDecrease?.(product)}
+                disabled={!available}
+              />
+            ) : (
+              <button
+                type="button"
+                className="cui-prod__add"
+                disabled={!available}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onAdd(product);
+                }}
+                aria-label={`${addLabel || t('customer_menu_add_to_cart')} — ${name}`}
+              >
+                <Icon name="cart" size={17} />
+                <span>{addLabel || t('customer_menu_add_to_cart')}</span>
+              </button>
+            )}
+          </div>
         ) : null}
       </div>
     </article>

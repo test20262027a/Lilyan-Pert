@@ -1,15 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
-import {
-  Badge,
-  EmptyState,
-  Loading,
-  Modal,
-  Money,
-  SectionCard,
-  useToast,
-} from '../components/ui';
+import { EmptyState, Loading, Modal, Money, useToast } from '../components/ui';
 import { localized, useI18n, LOCALES } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { get, post } from '../api';
@@ -23,6 +15,7 @@ import CustomerStats from '../components/customer/CustomerStats';
 import CustomerHours from '../components/customer/CustomerHours';
 import CustomerCategoryNav from '../components/customer/CustomerCategoryNav';
 import CustomerProductCard from '../components/customer/CustomerProductCard';
+import ProductDetailModal from '../components/customer/ProductDetailModal';
 import CustomerAbout from '../components/customer/CustomerAbout';
 import CustomerContact from '../components/customer/CustomerContact';
 import CartPanel from '../components/customer/CartPanel';
@@ -195,6 +188,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       return next;
     });
   };
+  /* One step down; the last unit removes the line, so a count can never go
+     below zero and the card returns to its Add to Cart state. */
+  const removeOne = (product) => setQty(product, (cart[product.id] || 0) - 1);
 
   const placeOrder = async ({ customer_name, customer_phone, notes, promotion_code }) => {
     setBusy(true);
@@ -421,7 +417,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   canAdd={cartEnabled}
                   addLabel={t('customer_menu_add')}
                   promoLabel={t('customer_menu_promo')}
+                  quantity={cart[p.id] || 0}
                   onAdd={add}
+                  onDecrease={removeOne}
                   onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
@@ -451,7 +449,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   addLabel={t('customer_menu_add')}
                   promoLabel={t('customer_menu_promo')}
                   badge={t('customer_menu_best_badge')}
+                  quantity={cart[p.id] || 0}
                   onAdd={add}
+                  onDecrease={removeOne}
                   onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
@@ -488,7 +488,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                     canAdd={cartEnabled}
                     addLabel={t('customer_menu_add_to_cart')}
                     promoLabel={t('customer_menu_promo')}
+                    quantity={cart[p.id] || 0}
                     onAdd={add}
+                    onDecrease={removeOne}
                     onOpen={showFeature('details') ? setDetail : undefined}
                   />
                 ))}
@@ -505,14 +507,16 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           <CustomerContact business={biz} locale={locale} onReview={() => setReviewOpen(true)} />
         ) : null}
 
-        <ReviewSection
-          reviews={data.reviews || []}
-          onSubmit={sendReview}
-          busy={reviewBusy}
-          open={reviewOpen}
-          onOpen={() => setReviewOpen(true)}
-          onClose={() => setReviewOpen(false)}
-        />
+        {/* The reviews themselves now live only in the Admin Panel: the public
+            menu keeps the one review entry point of the contact grid, whose form
+            still posts to the same endpoint and refreshes the saved reviews. */}
+        {reviewOpen ? (
+          <ReviewModal
+            busy={reviewBusy}
+            onClose={() => setReviewOpen(false)}
+            onSubmit={sendReview}
+          />
+        ) : null}
       </main>
 
       {cartEnabled && cartCount > 0 && !placed ? (
@@ -549,15 +553,17 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       ) : null}
 
       {detail ? (
-        <ProductDetail
+        <ProductDetailModal
           product={detail}
-          locale={locale}
+          category={categories.find((c) => c.id === detail.category_id)}
           currency={currency}
           showPrices={showFeature('prices')}
           canAdd={cartEnabled}
-          addLabel={t('customer_menu_add')}
+          addLabel={t('customer_menu_add_to_cart')}
           promoLabel={t('customer_menu_promo')}
+          quantity={cart[detail.id] || 0}
           onAdd={add}
+          onDecrease={removeOne}
           onClose={() => setDetail(null)}
         />
       ) : null}
@@ -595,120 +601,5 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         </Modal>
       ) : null}
     </div>
-  );
-}
-
-/*
- * The public review block: the reviews the API already published, plus the one
- * control that opens the illustrated review sheet. The form itself lives in
- * ReviewModal — nothing here invents a review or a success state.
- */
-function ReviewSection({ reviews, onSubmit, busy, open, onOpen, onClose }) {
-  const { t } = useI18n();
-
-  return (
-    <section className="cui-block">
-      <header className="cui-block__head">
-        <span className="cui-block__icon">
-          <Icon name="star" size={16} />
-        </span>
-        <h2>{t('customer_menu_reviews')}</h2>
-      </header>
-
-      {reviews.length === 0 ? (
-        <p className="cui-about__text">{t('review_no_reviews')}</p>
-      ) : (
-        <ul className="cui-reviews">
-          {reviews.slice(0, 6).map((r) => (
-            <li key={r.id}>
-              <div className="cui-reviews__head">
-                <strong>{r.customer_name || t('review_customer')}</strong>
-                <span className="cui-reviews__score">
-                  <Icon name="star" size={12} />
-                  {r.rating}/5
-                </span>
-              </div>
-              {r.comment ? <p>{r.comment}</p> : null}
-            </li>
-          ))}
-        </ul>
-      )}
-
-      <button type="button" className="cui-review__cta" onClick={onOpen}>
-        <span className="cui-review__ctaicon">
-          <Icon name="star" size={16} />
-        </span>
-        <span>{t('customer_menu_write_review')}</span>
-      </button>
-
-      {open ? <ReviewModal busy={busy} onClose={onClose} onSubmit={onSubmit} /> : null}
-    </section>
-  );
-}
-
-/**
- * The product detail view opened by tapping a card while the owner kept
- * "Product details" enabled. It reads only the data the menu already sent.
- */
-function ProductDetail({ product, locale, currency, showPrices, canAdd, addLabel, promoLabel, onAdd, onClose }) {
-  const { t } = useI18n();
-  const name = localized(product, 'name', locale);
-  const description = localized(product, 'description', locale);
-
-  return (
-    <Modal
-      title={name}
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn" onClick={onClose}>
-            {t('action_close')}
-          </button>
-          {canAdd ? (
-            <button
-              className="btn btn--primary"
-              onClick={() => {
-                onAdd(product);
-                onClose();
-              }}
-            >
-              <Icon name="plus" size={16} />
-              {addLabel}
-            </button>
-          ) : null}
-        </>
-      }
-    >
-      <div className="product-detail">
-        <div className="product-detail__media">
-          {product.image_url ? (
-            <img src={product.image_url} alt="" />
-          ) : (
-            <span className="product-detail__empty">
-              <Icon name="coffee" size={30} />
-            </span>
-          )}
-        </div>
-        {description ? <p className="product-detail__desc">{description}</p> : null}
-        {showPrices ? (
-          <div className="product-detail__price">
-            {product.promo_price ? (
-              <span className="price-tag--old">
-                <Money value={product.price} currency={currency} />
-              </span>
-            ) : null}
-            <span className="price-tag">
-              <Money value={product.promo_price ?? product.price} currency={currency} />
-            </span>
-            {product.promo_price ? (
-              <Badge kind="pending">
-                <Icon name="tag" size={11} />
-                {promoLabel}
-              </Badge>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-    </Modal>
   );
 }
