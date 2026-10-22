@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { Alert } from '../ui';
@@ -30,6 +30,7 @@ export function ConfirmSurface({
   footer,
   initialFocusRef,
   maxWidth,
+  accent,
 }) {
   const { t } = useI18n();
   const dialogRef = useRef(null);
@@ -101,8 +102,12 @@ export function ConfirmSurface({
     >
       <div
         ref={dialogRef}
-        className={`dcd dcd--tone-${tone}`}
-        style={maxWidth ? { maxWidth } : undefined}
+        className={`dcd ${accent ? '' : `dcd--tone-${tone}`}`}
+        style={
+          // A record's own saved colour (a category's identity accent) is used
+          // verbatim; the tone class stays for entities that have no colour.
+          { ...(maxWidth ? { maxWidth } : null), ...(accent ? { '--dcd-ink': accent } : null) }
+        }
         role="alertdialog"
         aria-modal="true"
         aria-labelledby={titleId}
@@ -179,6 +184,7 @@ export default function DeleteConfirmationDialog({
   entityIcon,
   icon,
   tone,
+  accent,
   warning,
   confirmLabel,
   cancelLabel,
@@ -188,12 +194,20 @@ export default function DeleteConfirmationDialog({
   onCancel,
   children,
   maxWidth,
+  acknowledgeLabel,
+  confirmDisabled = false,
 }) {
   const { t } = useI18n();
   const cancelRef = useRef(null);
+  // An explicit acknowledgement is required when the action reaches beyond the
+  // selected record (a cascading delete); otherwise the button stays enabled.
+  const [acknowledged, setAcknowledged] = useState(false);
   const visual = entityVisual(entityType);
 
   if (!open) return null;
+
+  const needsAck = Boolean(acknowledgeLabel);
+  const blocked = confirmDisabled || (needsAck && !acknowledged);
 
   const heading = title || t(visual.titleKey);
   const message = description || t(visual.messageKey);
@@ -204,6 +218,7 @@ export default function DeleteConfirmationDialog({
     <ConfirmSurface
       tone={tone || visual.tone}
       icon={icon || visual.icon}
+      accent={accent}
       title={heading}
       description={message}
       onCancel={onCancel}
@@ -227,7 +242,7 @@ export default function DeleteConfirmationDialog({
             type="button"
             className="dcd__btn dcd__btn--danger"
             onClick={onConfirm}
-            disabled={busy}
+            disabled={busy || blocked}
             aria-busy={busy || undefined}
           >
             <span>{busy ? t('state_saving') : confirmLabel || t('action_delete')}</span>
@@ -260,6 +275,21 @@ export default function DeleteConfirmationDialog({
       ) : null}
 
       {children}
+
+      {/* Reaching beyond the selected record is acknowledged explicitly before
+          the destructive button becomes available. */}
+      {needsAck ? (
+        <label className="dcd__ack">
+          <input
+            type="checkbox"
+            className="dcd__ack-input"
+            checked={acknowledged}
+            disabled={busy}
+            onChange={(event) => setAcknowledged(event.target.checked)}
+          />
+          <span className="dcd__ack-label">{acknowledgeLabel}</span>
+        </label>
+      ) : null}
     </ConfirmSurface>
   );
 }

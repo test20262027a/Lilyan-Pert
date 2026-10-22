@@ -1,7 +1,7 @@
 import express from 'express';
-import { q } from '../db.js';
+import { q, tx } from '../db.js';
 import { requireAuth, withBusiness, perm } from '../auth.js';
-import { ah, bad, isUuid, notFound, num } from '../lib/http.js';
+import { ah, bad, conflict, isUuid, notFound, num } from '../lib/http.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -139,18 +139,116 @@ router.put(
   }),
 );
 
+/*
+ * What deleting a category would touch, counted from the authoritative tables.
+ * The confirmation dialog shows exactly these numbers and refuses to confirm
+ * while they are unknown — nothing is ever guessed in the interface.
+ */
+async function categoryImpact(businessId, categoryId) {
+  // A product belongs to exactly one category, so its removal cannot affect
+  // another category. Order history is never counted: those rows survive.
+  const { rows } = await q(
+    `SELECT
+       (SELECT count(*)::int FROM products p
+         WHERE p.category_id = $1 AND p.business_id = $2) AS product_count,
+       (SELECT count(*)::int FROM promotions pr
+          JOIN products p ON p.id = pr.product_id
+         WHERE p.category_id = $1 AND p.business_id = $2) AS promotion_count,
+       (SELECT count(DISTINCT o.id)::int FROM order_items oi
+          JOIN orders o ON o.id = oi.order_id
+          JOIN products p ON p.id = oi.product_id
+         WHERE p.category_id = $1 AND p.business_id = $2
+           AND o.status IN ('pending','preparing','ready')) AS active_order_count`,
+    [categoryId, businessId],
+  );
+  const row = rows[0];
+  return {
+    product_count: row.product_count,
+    promotion_count: row.promotion_count,
+    active_order_count: row.active_order_count,
+    total: 1 + row.product_count,
+  };
+}
+
+router.get(
+  '/categories/:id/impact',
+  withBusiness('manager'),
+  perm('menu.categories.delete'),
+  ah(async (req, res) => {
+    await loadCategory(req.businessId, req.params.id);
+    res.json({ impact: await categoryImpact(req.businessId, req.params.id) });
+  }),
+);
+
+/*
+ * Deleting a category. Without `?cascade=1` a category that still holds
+ * products is refused, exactly as before — the admin interface always asks for
+ * the cascade explicitly after showing its consequences.
+ *
+ * With the cascade: one transaction removes the category's products and then
+ * the category itself. What is deliberately NOT touched:
+ *   - order_items, whose product_id is set to NULL by the foreign key while the
+ *     frozen name / unit price / quantity / line total stay as sold, so
+ *     historical orders and reports keep their figures;
+ *   - uploaded media rows, which are shared references addressed by URL and
+ *     have no per-record ownership to delete safely;
+ *   - advertisements, whose product/category references simply become NULL.
+ * Promotions attached to the deleted products go with them through their own
+ * ON DELETE CASCADE, and are reported by the impact endpoint beforehand.
+ *
+ * A category whose products appear in an order that is still open is refused
+ * instead of silently rewriting that order.
+ */
 router.delete(
   '/categories/:id',
   withBusiness('manager'),
   perm('menu.categories.delete'),
   ah(async (req, res) => {
-    await loadCategory(req.businessId, req.params.id);
-    const used = await q('SELECT count(*)::int c FROM products WHERE category_id = $1', [req.params.id]);
-    if (used.rows[0].c > 0) {
-      throw bad('CATEGORY_HAS_PRODUCTS', String(used.rows[0].c));
-    }
-    await q('DELETE FROM categories WHERE id=$1 AND business_id=$2', [req.params.id, req.businessId]);
-    res.json({ ok: true });
+    const cascade = req.query.cascade === '1' || req.body?.cascade === true;
+    const deleted = await tx(async (client) => {
+      // Lock the category so a concurrent edit/delete cannot change the scope.
+      const locked = await client.query(
+        'SELECT id FROM categories WHERE id = $1 AND business_id = $2 FOR UPDATE',
+        [req.params.id, req.businessId],
+      );
+      if (!locked.rows[0]) throw notFound('CATEGORY_NOT_FOUND');
+
+      const counted = await client.query(
+        'SELECT count(*)::int AS c FROM products WHERE category_id = $1 AND business_id = $2',
+        [req.params.id, req.businessId],
+      );
+      const productCount = counted.rows[0].c;
+
+      if (productCount > 0 && !cascade) throw bad('CATEGORY_HAS_PRODUCTS', String(productCount));
+
+      if (productCount > 0) {
+        const active = await client.query(
+          `SELECT count(DISTINCT o.id)::int AS c
+             FROM order_items oi
+             JOIN orders o ON o.id = oi.order_id
+             JOIN products p ON p.id = oi.product_id
+            WHERE p.category_id = $1 AND p.business_id = $2
+              AND o.status IN ('pending','preparing','ready')`,
+          [req.params.id, req.businessId],
+        );
+        if (active.rows[0].c > 0) throw conflict('CATEGORY_ACTIVE_ORDERS', String(active.rows[0].c));
+
+        const removed = await client.query(
+          'DELETE FROM products WHERE category_id = $1 AND business_id = $2',
+          [req.params.id, req.businessId],
+        );
+        // Never report a cascade that did not remove exactly what was counted.
+        if (removed.rowCount !== productCount) throw conflict('CATEGORY_DELETE_INCOMPLETE');
+      }
+
+      await client.query('DELETE FROM categories WHERE id = $1 AND business_id = $2', [
+        req.params.id,
+        req.businessId,
+      ]);
+      return { products: productCount };
+    });
+
+    res.json({ ok: true, deleted: { categories: 1, products: deleted.products } });
   }),
 );
 

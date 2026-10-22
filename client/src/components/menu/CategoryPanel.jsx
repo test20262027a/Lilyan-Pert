@@ -28,15 +28,19 @@ export default function CategoryPanel({
 
   return (
     <section className="mpanel">
-      {/* Title group first, icon at the logical end: physical left under RTL. */}
+      {/*
+       * One compact group at the inline start: the raised icon sits in the
+       * panel's far corner (physical right under RTL) and the heading + subtitle
+       * follow immediately beside it, never spread to the opposite edge.
+       */}
       <header className="mpanel__head">
+        <span className="mpanel__icon">
+          <Icon name="glass" size={23} />
+        </span>
         <div className="mpanel__text">
           <h2 className="mpanel__title">{t('menu_tab_categories')}</h2>
           <p className="mpanel__sub">{t('menu_categories_hint')}</p>
         </div>
-        <span className="mpanel__icon">
-          <Icon name="glass" size={23} />
-        </span>
       </header>
 
       <div className="mcstats">

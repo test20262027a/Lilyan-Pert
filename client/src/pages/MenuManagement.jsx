@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Icon from '../components/Icon';
-import { Alert, EmptyState, Loading, Modal, useToast } from '../components/ui';
+import { Alert, EmptyState, Loading, useToast } from '../components/ui';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import MenuToolbar from '../components/menu/MenuToolbar';
 import CategoryPanel from '../components/menu/CategoryPanel';
@@ -8,7 +7,9 @@ import CategorySummary from '../components/menu/CategorySummary';
 import ProductCard from '../components/menu/ProductCard';
 import CategoryFormModal from '../components/menu/CategoryFormModal';
 import ProductFormModal from '../components/menu/ProductFormModal';
+import CategoryDeleteDetails from '../components/menu/CategoryDeleteDetails';
 import { appearanceOf } from '../components/menu/categoryIcons';
+import { catalogErrorText } from '../components/menu/errorText';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
 import { localized, useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
@@ -57,7 +58,7 @@ export default function MenuManagement() {
   const [productModal, setProductModal] = useState(null);
   const [formError, setFormError] = useState(null);
   const [confirm, setConfirm] = useState(null);
-  const [blocked, setBlocked] = useState(null);
+  const [confirmError, setConfirmError] = useState(null);
   const [error, setError] = useState(null);
 
   const load = useCallback(async () => {
@@ -168,15 +169,37 @@ export default function MenuManagement() {
     }
   };
 
-  const removeCategory = async (id) => {
+  /*
+   * Category removal is a cascade: the category and every product inside it are
+   * deleted in one server transaction, decided from the database rather than
+   * from what this page happens to be showing. The dialog stays open on failure
+   * and shows the real reason, so a partial result is never reported as success.
+   */
+  const removeCategory = async (category) => {
     setBusy(true);
+    setConfirmError(null);
     try {
-      await del(`/catalog/categories/${id}`);
-      toast.success(t('state_saved'));
+      const result = await del(`/catalog/categories/${category.id}?cascade=1`);
+      const removed = Number(result?.deleted?.products) || 0;
+      toast.success(
+        removed > 0
+          ? t('menu_category_deleted_with_products', { name: category.name, count: removed })
+          : t('menu_category_deleted', { name: category.name }),
+      );
       setConfirm(null);
+      // Refetch both lists: rows, product grid, counters and the heading all
+      // follow the new state, and the selection falls back to a remaining row.
       await load();
     } catch (err) {
-      toast.error(err.code === 'CATEGORY_HAS_PRODUCTS' ? t('menu_category_has_products') : t('error_generic'));
+      setConfirmError(
+        err.code === 'CATEGORY_ACTIVE_ORDERS'
+          ? t('menu_category_active_orders', { count: err.detail })
+          : err.code === 'CATEGORY_HAS_PRODUCTS'
+            ? t('menu_category_has_products_message', { count: err.detail })
+            : err.code === 'CATEGORY_DELETE_INCOMPLETE'
+              ? t('menu_category_delete_incomplete')
+              : catalogErrorText(err.code, t) || t('error_generic'),
+      );
     } finally {
       setBusy(false);
     }
@@ -196,21 +219,32 @@ export default function MenuManagement() {
     }
   };
 
-  const openCategoryDelete = (c) => {
-    // A category holding products is never deleted silently — the consequence
-    // is explained and the products must be moved or removed first.
-    if (c.product_count > 0) setBlocked(c);
-    else {
-      // The dialog names this exact record with its own saved glyph and accent.
-      const appearance = appearanceOf(c);
-      setConfirm({
-        kind: 'category',
-        id: c.id,
-        name: localized(c, 'name', locale),
-        icon: appearance.icon,
-        color: appearance.color,
-        productCount: Number(c.product_count) || 0,
-      });
+  /*
+   * A category delete always opens the shared confirmation dialog — a category
+   * holding products is no longer refused, it is explained. The dialog shows the
+   * record's own glyph and accent, and asks the server what the cascade would
+   * really remove before the destructive button becomes available.
+   */
+  const openCategoryDelete = async (c) => {
+    const appearance = appearanceOf(c);
+    setConfirmError(null);
+    setConfirm({
+      kind: 'category',
+      id: c.id,
+      name: localized(c, 'name', locale),
+      icon: appearance.icon,
+      color: appearance.color,
+      productCount: Number(c.product_count) || 0,
+      impact: null,
+      impactError: null,
+    });
+    try {
+      const data = await get(`/catalog/categories/${c.id}/impact`);
+      setConfirm((cur) => (cur && cur.id === c.id ? { ...cur, impact: data.impact } : cur));
+    } catch (err) {
+      setConfirm((cur) =>
+        cur && cur.id === c.id ? { ...cur, impactError: err.code || 'ERROR' } : cur,
+      );
     }
   };
 
@@ -345,48 +379,57 @@ export default function MenuManagement() {
         />
       ) : null}
 
-      {confirm ? (
+      {confirm && confirm.kind === 'category' ? (
         <DeleteConfirmationDialog
-          entityType={confirm.kind}
-          entityName={confirm.name}
-          entityImage={confirm.kind === 'product' ? confirm.image : null}
-          entityIcon={confirm.icon}
-          tone={confirm.color}
-          entitySubtitle={
-            confirm.kind === 'category'
-              ? confirm.productCount > 0
-                ? `${confirm.productCount} ${t('menu_stats_products')}`
-                : undefined
-              : confirm.categoryName
+          entityType="category"
+          title={t('menu_delete_category_title')}
+          description={
+            (confirm.impact?.product_count ?? confirm.productCount) > 0
+              ? t('menu_delete_category_cascade_question')
+              : t('menu_delete_category_question')
           }
-          warning={confirm.kind === 'category' ? t('menu_delete_category_hint') : t('menu_delete_product_hint')}
+          entityName={confirm.name}
+          entityIcon={confirm.icon}
+          accent={confirm.color}
+          entitySubtitle={
+            confirm.productCount > 0
+              ? t('menu_delete_category_preview_sub', { count: confirm.productCount })
+              : undefined
+          }
+          confirmLabel={
+            (confirm.impact?.product_count ?? confirm.productCount) > 0
+              ? t('menu_delete_category_confirm_cascade')
+              : t('menu_delete_category_confirm')
+          }
+          acknowledgeLabel={
+            confirm.impact?.product_count > 0 ? t('menu_delete_category_ack') : undefined
+          }
+          // Nothing can be confirmed before the server has counted the impact —
+          // an unknown scope must never become a destructive action.
+          confirmDisabled={!confirm.impact || Boolean(confirm.impactError)}
           busy={busy}
-          onCancel={() => setConfirm(null)}
-          onConfirm={() => (confirm.kind === 'category' ? removeCategory(confirm.id) : removeProduct(confirm.id))}
-        />
+          error={confirmError}
+          onCancel={() => {
+            setConfirm(null);
+            setConfirmError(null);
+          }}
+          onConfirm={() => removeCategory(confirm)}
+        >
+          <CategoryDeleteDetails impact={confirm.impact} error={confirm.impactError} />
+        </DeleteConfirmationDialog>
       ) : null}
 
-      {blocked ? (
-        <Modal
-          title={t('menu_category_locked_title')}
-          onClose={() => setBlocked(null)}
-          footer={
-            <button className="btn btn--primary" onClick={() => setBlocked(null)}>
-              {t('action_close')}
-            </button>
-          }
-        >
-          <div className="alert alert--warning" style={{ marginBottom: 10 }}>
-            <Icon name="alert" size={17} />
-            <span>
-              {localized(blocked, 'name', locale)} · {blocked.product_count} {t('menu_stats_products')}
-            </span>
-          </div>
-          <p style={{ fontSize: 14, color: 'var(--text-soft)' }}>
-            {t('menu_category_has_products_message', { count: blocked.product_count })}
-          </p>
-          <p style={{ fontSize: 12.5, color: 'var(--muted)', marginTop: 8 }}>{t('menu_delete_category_hint')}</p>
-        </Modal>
+      {confirm && confirm.kind === 'product' ? (
+        <DeleteConfirmationDialog
+          entityType="product"
+          entityName={confirm.name}
+          entityImage={confirm.image}
+          entitySubtitle={confirm.categoryName}
+          warning={t('menu_delete_product_hint')}
+          busy={busy}
+          onCancel={() => setConfirm(null)}
+          onConfirm={() => removeProduct(confirm.id)}
+        />
       ) : null}
     </div>
   );
