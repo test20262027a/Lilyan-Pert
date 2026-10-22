@@ -144,11 +144,14 @@ export default function SettingsTabs({ tabs, value, onChange }) {
     return () => el.removeEventListener('wheel', onWheel);
   }, [goTo, metrics]);
 
+  /* `physical` is the arrow's own direction on screen, never the reading
+     direction: in RTL the start edge is the right one, so moving physically
+     right walks back toward it. */
   const step = (physical) => {
     const el = scrollRef.current;
     if (!el) return;
     const page = Math.max(160, el.clientWidth * 0.66);
-    goTo(metrics().pos + (rtl ? -physical : physical) * page, true);
+    goTo(metrics().pos + (domRtl() ? -physical : physical) * page, true);
   };
 
   const onKeyDown = (event) => {
