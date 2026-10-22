@@ -213,7 +213,7 @@ a { color: var(--primary); }
   min-height: 100dvh;
   align-items: stretch;
   padding-inline-start: var(--admin-sidebar-width, 280px);
-  transition: padding-inline-start 0.18s ease;
+  transition: padding-inline-start 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /*
@@ -231,7 +231,7 @@ a { color: var(--primary); }
   height: 100vh;
   height: 100dvh;
   z-index: 50;
-  transition: width 0.18s ease, transform 0.22s ease;
+  transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s ease;
 }
 
 .sidebar {
@@ -251,31 +251,31 @@ a { color: var(--primary); }
 /* Branding stays pinned at the top while the tree below it scrolls. */
 .sidebar .brand {
   flex: none;
-  padding: 16px 16px 12px;
+  padding: 14px 14px 11px;
   border-bottom: 1px solid var(--navy-line);
   background: var(--navy);
 }
 
-/* The only scrolling region: the navigation tree itself. */
+/*
+ * The only scrolling region: the navigation tree itself. Spacing is compact so
+ * the whole tree fits an ordinary desktop height without scrolling, and the
+ * scrollbar is never drawn — on a genuinely short viewport the tree still
+ * scrolls with the wheel, touch or keyboard, it just does it invisibly.
+ */
 .sidebar__nav {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 10px 12px calc(24px + env(safe-area-inset-bottom));
+  gap: 1px;
+  padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--navy-scroll) transparent;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
-.sidebar__nav::-webkit-scrollbar { width: 8px; }
-.sidebar__nav::-webkit-scrollbar-track { background: transparent; }
-.sidebar__nav::-webkit-scrollbar-thumb {
-  background: var(--navy-scroll);
-  border-radius: var(--radius-pill);
-}
+.sidebar__nav::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
 .brand {
   display: flex;
@@ -317,15 +317,35 @@ a { color: var(--primary); }
   border-color: color-mix(in srgb, var(--primary) 30%, transparent);
 }
 
-/* Navy rail overrides: muted labels, soft green active highlight. */
-.sidebar .nav-link { color: var(--navy-muted); }
+/* Navy rail overrides: muted labels, theme-accented active plate. */
+.sidebar .nav-link {
+  color: var(--navy-muted);
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease,
+    box-shadow 0.16s ease, padding 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
 .sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
-/* Active rail item: a tinted navy plate, the theme accent label and a thin
-   accent edge — all three follow the saved appearance. */
+/*
+ * Active rail item: a translucent accent plate that follows the saved theme,
+ * a thin accent edge, an inner highlight for the soft 3D lift and a theme
+ * shadow — nothing here is a fixed blue or green.
+ */
 .sidebar .nav-link.is-active {
-  background: var(--navy-active);
-  color: color-mix(in srgb, var(--primary) 38%, #ffffff);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 30%, var(--navy)),
+    color-mix(in srgb, var(--primary) 18%, var(--navy))
+  );
+  color: color-mix(in srgb, var(--primary) 26%, #ffffff);
   border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent),
+    0 8px 18px -12px color-mix(in srgb, var(--primary) 90%, transparent);
+}
+.sidebar .nav-link.is-active .icon { color: color-mix(in srgb, var(--primary) 40%, #ffffff); }
+
+/* Labels fade out instead of popping while the rail narrows. */
+.sidebar .nav-link__label,
+.sidebar .brand__text {
+  transition: opacity 0.14s ease, max-width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .sidebar .btn {
   background: rgba(255, 255, 255, 0.07);
@@ -338,7 +358,7 @@ a { color: var(--primary); }
   flex: none;
   font-size: 11.5px;
   color: var(--navy-muted);
-  padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+  padding: 9px 14px calc(11px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--navy-line);
   background: var(--navy-2);
 }
@@ -1100,8 +1120,23 @@ table.data tr:hover td { background: var(--surface-2); }
 
 /* ------------------------------------------- sidebar groups & collapsed rail */
 
+/*
+ * Compact rows. Everything below is sized so a normal desktop viewport shows
+ * the whole tree — three direct links, three group headers and one open
+ * submenu — without ever reaching for a scrollbar, while staying readable.
+ */
+.sidebar .nav-link {
+  padding: 8px 10px;
+  gap: 10px;
+  font-size: 13.5px;
+  min-height: 36px;
+  border-radius: 10px;
+}
+.sidebar .nav-link__label { flex: 1 1 auto; max-width: 100%; }
+
 /* Expandable navigation groups: the group itself is the button, the children
    are plain links so every destination stays a real, bookmarkable route. */
+.nav-item { position: relative; }
 .nav-group {
   width: 100%;
   background: none;
@@ -1109,12 +1144,43 @@ table.data tr:hover td { background: var(--surface-2); }
   font-family: inherit;
   text-align: start;
 }
-.nav-group__caret { margin-inline-start: auto; transition: transform 0.18s ease; }
-.nav-group__caret.is-open { transform: rotate(180deg); }
+.nav-group__caret {
+  margin-inline-start: auto;
+  flex: none;
+  opacity: 0.7;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.16s ease;
+}
+/* Closed points down, open points up — a state arrow, not a direction arrow,
+   so it is never mirrored by the layout direction. */
+.nav-group__caret.is-open { transform: rotate(180deg); opacity: 1; }
 .nav-group.is-current { color: #ffffff; }
+/* The group that holds the current page keeps a faint accent, so the open
+   accordion always explains where the member is. */
+.nav-group.is-current:not(.is-open) {
+  background: color-mix(in srgb, var(--primary) 13%, transparent);
+  color: #ffffff;
+}
+.nav-group.is-open {
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
 
-.nav-children { display: flex; flex-direction: column; gap: 2px; padding: 3px 0 5px; }
-.nav-children .nav-link { padding-inline-start: 28px; font-size: 13px; }
+@keyframes nav-submenu-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nav-children {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0 4px;
+  animation: nav-submenu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-children .nav-link {
+  padding-inline-start: 26px;
+  font-size: 12.8px;
+  min-height: 32px;
+}
 .nav-children .nav-dot {
   width: 5px; height: 5px; border-radius: 50%; flex: none;
   background: currentColor; opacity: 0.5;
@@ -1122,48 +1188,206 @@ table.data tr:hover td { background: var(--surface-2); }
 /* A submenu entry that carries its own small outlined mark instead of the dot. */
 .nav-children .nav-child-icon { flex: none; opacity: 0.6; }
 /* A destructive destination (sample-data reset) is marked, never hidden. */
-.nav-children .nav-danger {
+.nav-children .nav-danger,
+.nav-flyout .nav-danger {
   width: 6px; height: 6px; border-radius: 50%; flex: none;
   margin-inline-start: auto;
   background: #f27b7b;
 }
 
+/*
+ * Floating collapse control. It straddles the rail's outer edge, stays above
+ * the page content and follows the theme accent, so the whole rail reads as
+ * one surface in every preset.
+ */
 .nav-collapse {
-  width: 26px; height: 26px; border-radius: 50%; flex: none;
-  display: grid; place-items: center; cursor: pointer; padding: 0;
-  background: var(--mint);
-  border: 2px solid var(--navy);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex: none;
+  display: none;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(6, 14, 22, 0.35);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--primary) 82%, #ffffff),
+    var(--primary)
+  );
+  border: 1px solid color-mix(in srgb, #ffffff 38%, transparent);
+  box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--primary) 85%, transparent),
+    0 2px 6px rgba(4, 10, 18, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.2s ease;
 }
 .nav-collapse:hover {
-  background: color-mix(in srgb, var(--mint) 85%, #ffffff);
-  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--primary) 90%, transparent),
+    0 3px 8px rgba(4, 10, 18, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
+.nav-collapse:active { transform: translateY(0) scale(0.95); }
+.nav-collapse__chev { transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* Hidden on mobile, where the sidebar is a drawer instead of a rail. */
-.nav-collapse { display: none; }
+/*
+ * The arrow always points at the edge the rail will move toward: on the LTR
+ * rail (physical left) it points left while expanded and right while collapsed,
+ * and the RTL rail (physical right) mirrors exactly that.
+ */
+.nav-collapse__chev { transform: scaleX(1); }
+.sidebar-shell.is-collapsed .nav-collapse__chev { transform: scaleX(-1); }
+[dir='rtl'] .nav-collapse__chev { transform: scaleX(-1); }
+[dir='rtl'] .sidebar-shell.is-collapsed .nav-collapse__chev { transform: scaleX(1); }
 
 /* The rail collapses on desktop only — on mobile it stays a full drawer. */
 @media (min-width: 1001px) {
-  /* Straddles the outer edge of the rail, above the clipped navigation. */
+  /* Straddles the outer edge of the rail, never clipped by it. */
   .nav-collapse {
     display: grid;
     position: absolute;
-    inset-inline-end: -13px;
-    inset-block-start: 76px;
+    inset-inline-end: -18px;
+    inset-block-start: 74px;
     z-index: 3;
   }
+
   .sidebar-shell.is-collapsed { width: 72px; }
+
+  /* A compact icon rail: brand mark, centred icons, no labels. The shell stops
+     clipping so tooltips and group flyouts can sit outside it. */
+  .sidebar.is-collapsed { overflow: visible; }
+  .sidebar.is-collapsed .sidebar__nav {
+    overflow: visible;
+    padding-inline: 8px;
+  }
   .sidebar.is-collapsed .brand { justify-content: center; padding-inline: 0; }
-  .sidebar.is-collapsed .brand__text,
-  .sidebar.is-collapsed .nav-link span,
-  .sidebar.is-collapsed .nav-group__caret,
-  .sidebar.is-collapsed .nav-children,
-  .sidebar.is-collapsed .sidebar__user { display: none; }
+  .sidebar.is-collapsed .brand__text { display: none; }
+  /* The footer stays pinned at the bottom — icon only, no clipped label. */
+  .sidebar.is-collapsed .sidebar__user {
+    text-align: center;
+    padding-inline: 0;
+    display: grid;
+    place-items: center;
+  }
+  .sidebar.is-collapsed .sidebar__role { font-size: 0; }
+  .sidebar.is-collapsed .nav-link__label {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .sidebar.is-collapsed .nav-group__caret { display: none; }
   .sidebar.is-collapsed .nav-link,
-  .sidebar.is-collapsed .nav-group { justify-content: center; padding-inline: 0; }
-  .sidebar.is-collapsed .sidebar__nav { padding-inline: 8px; }
+  .sidebar.is-collapsed .nav-group {
+    justify-content: center;
+    padding-inline: 0;
+    gap: 0;
+  }
+  /* Every rail row is a square target so the icons line up vertically. */
+  .sidebar.is-collapsed .nav-link {
+    width: 44px;
+    height: 38px;
+    min-height: 38px;
+    margin-inline: auto;
+  }
+
+  /* Tooltips for the icon-only rail: outside the rail, in the current language. */
+  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip] { position: relative; }
+  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    inset-inline-start: calc(100% + 12px);
+    inset-block-start: 50%;
+    transform: translateY(-50%) scale(0.96);
+    transform-origin: center;
+    padding: 6px 10px;
+    border-radius: 9px;
+    background: var(--navy-2);
+    border: 1px solid var(--navy-line);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 10px 22px -12px rgba(3, 8, 14, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    z-index: 6;
+  }
+  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]:hover::after,
+  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]:focus-visible::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+  /* The open group already names itself in its flyout header. */
+  .sidebar.is-collapsed .nav-link.is-flyout::after { display: none; }
+
+  /* Collapsed group flyout: keeps submenu destinations reachable and keyboard
+     focusable without widening the rail. */
+  .nav-flyout {
+    position: absolute;
+    inset-inline-start: calc(100% + 10px);
+    inset-block-start: -4px;
+    z-index: 5;
+    min-width: 196px;
+    max-height: 70dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 8px;
+    border-radius: 14px;
+    background: var(--navy-2);
+    border: 1px solid var(--navy-line);
+    box-shadow: 0 20px 44px -20px rgba(3, 8, 14, 0.9);
+    animation: nav-submenu-in 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .nav-flyout::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .nav-flyout__head {
+    padding: 4px 8px 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--navy-line);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-flyout__link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 9px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    color: var(--navy-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  }
+  .nav-flyout__link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+  .nav-flyout__link.is-active {
+    background: color-mix(in srgb, var(--primary) 24%, var(--navy-2));
+    border-color: color-mix(in srgb, var(--primary) 50%, transparent);
+    color: #ffffff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-shell,
+  .app-shell,
+  .sidebar .nav-link,
+  .sidebar .nav-link__label,
+  .sidebar .brand__text,
+  .nav-group__caret,
+  .nav-collapse,
+  .nav-collapse__chev,
+  .nav-children,
+  .nav-flyout,
+  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]::after {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 /* ------------------------------------------------------------ responsive */

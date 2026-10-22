@@ -12,14 +12,13 @@ const EXPANDED_WIDTH = '280px';
 const COLLAPSED_WIDTH = '72px';
 
 /*
- * The admin panel rail: brand, scrollable navigation tree and the collapse
- * control. It owns the two preferences it is responsible for — the collapsed
- * rail and which groups are open — so the shell only has to track the mobile
- * drawer.
+ * The admin panel rail: brand, compact navigation tree, footer and the collapse
+ * control. It owns its two preferences — the collapsed rail and the one open
+ * group — so the shell only has to track the mobile drawer.
  *
- * The wrapper `.sidebar-shell` is the fixed, full-viewport column; the inner
- * `<aside>` clips its own content so the navigation scrolls on its own while
- * the branding and footer stay put.
+ * The navigation is a single-open accordion: `expandedGroup` holds at most one
+ * group key, so opening a group always closes the previous one and the tree can
+ * never leave two submenus open at once.
  */
 export default function Sidebar({ open = false, onNavigate }) {
   const { t } = useI18n();
@@ -30,26 +29,37 @@ export default function Sidebar({ open = false, onNavigate }) {
   const [collapsed, setCollapsed] = useState(
     () => typeof localStorage !== 'undefined' && localStorage.getItem(COLLAPSE_KEY) === '1',
   );
-  const [openGroups, setOpenGroups] = useState(() => {
-    const group = groupFor(titleKeyFor(location.pathname));
-    return group ? { [group.key]: true } : {};
-  });
+  // The icon rail only exists on desktop; on mobile the same drawer is always
+  // full width with its labels, whatever the saved desktop preference is.
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 1001px)').matches,
+  );
+  useEffect(() => {
+    const query = window.matchMedia('(min-width: 1001px)');
+    const onChange = (event) => setIsDesktop(event.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+  const railCollapsed = collapsed && isDesktop;
+  // One identifier instead of a boolean per group: the accordion cannot drift
+  // into several open groups, and the current route seeds it on first render.
+  const [expandedGroup, setExpandedGroup] = useState(
+    () => groupFor(titleKeyFor(location.pathname))?.key ?? null,
+  );
 
   const currentKey = titleKeyFor(location.pathname);
 
   // The page content is offset by the rail's real width, so the nav never
-  // overlaps the dashboard and follows the collapse state.
+  // overlaps the dashboard and the content always reclaims the freed space.
   useEffect(() => {
     const root = document.documentElement;
-    root.style.setProperty('--admin-sidebar-width', collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH);
+    root.style.setProperty('--admin-sidebar-width', railCollapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH);
     return () => root.style.removeProperty('--admin-sidebar-width');
-  }, [collapsed]);
+  }, [railCollapsed]);
 
-  // Reaching a page opens the group that holds it, so the tree always explains
-  // where the member currently is — without closing the groups they opened.
+  // Reaching a page opens the group that holds it and closes every other one.
   useEffect(() => {
-    const group = groupFor(titleKeyFor(location.pathname));
-    if (group) setOpenGroups((state) => ({ ...state, [group.key]: true }));
+    setExpandedGroup(groupFor(titleKeyFor(location.pathname))?.key ?? null);
   }, [location.pathname]);
 
   const toggleCollapsed = () =>
@@ -59,36 +69,30 @@ export default function Sidebar({ open = false, onNavigate }) {
       return next;
     });
 
-  const toggleGroup = (item) => {
-    // A collapsed rail has no room for submenu rows, so opening a group expands it.
-    if (collapsed) {
-      setCollapsed(false);
-      localStorage.setItem(COLLAPSE_KEY, '0');
-    }
-    setOpenGroups((state) => ({ ...state, [item.key]: !state[item.key] }));
-  };
+  const toggleGroup = (item) =>
+    setExpandedGroup((current) => (current === item.key ? null : item.key));
 
   const membership = memberships.find((m) => m.business_id === businessId);
 
   return (
-    <div className={`sidebar-shell ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
-      <aside className={`sidebar ${open ? 'is-open' : ''} ${collapsed ? 'is-collapsed' : ''}`}>
+    <div className={`sidebar-shell ${open ? 'is-open' : ''} ${railCollapsed ? 'is-collapsed' : ''}`}>
+      <aside className={`sidebar ${open ? 'is-open' : ''} ${railCollapsed ? 'is-collapsed' : ''}`}>
         <div className="brand">
           <span className="brand__mark">
-            <Icon name="qr" size={22} />
+            <Icon name="qr" size={20} />
           </span>
           <span className="brand__text">
             <span className="brand__name">{business?.name_en || business?.name || t('app_name')}</span>
           </span>
         </div>
 
-        <nav className="sidebar__nav">
+        <nav className="sidebar__nav" id="admin-sidebar-nav">
           <SidebarNav
             items={NAV}
             roles={{ isManager, isOwner, can }}
             currentKey={currentKey}
-            collapsed={collapsed}
-            openGroups={openGroups}
+            collapsed={railCollapsed}
+            expandedGroup={expandedGroup}
             onToggleGroup={toggleGroup}
             previewHref={business ? `/m/${business.slug}` : ''}
             onNavigate={onNavigate}
@@ -105,15 +109,21 @@ export default function Sidebar({ open = false, onNavigate }) {
         ) : null}
       </aside>
 
-      {/* Straddles the rail's outer edge, so it never scrolls with the tree. */}
+      {/*
+       * Straddles the rail's outer edge, so it never scrolls with the tree and
+       * stays clickable in both states. The chevron flips with the real layout
+       * direction: it always points at the edge the rail is moving toward.
+       */}
       <button
         type="button"
         className="nav-collapse"
         onClick={toggleCollapsed}
-        aria-label={collapsed ? t('nav_expand') : t('nav_collapse')}
-        title={collapsed ? t('nav_expand') : t('nav_collapse')}
+        aria-label={railCollapsed ? t('nav_expand') : t('nav_collapse')}
+        aria-expanded={!railCollapsed}
+        aria-controls="admin-sidebar-nav"
+        title={railCollapsed ? t('nav_expand') : t('nav_collapse')}
       >
-        <Icon name="chevronsLeft" size={15} className={collapsed ? 'icon--dir' : ''} />
+        <Icon name="chevronLeft" size={18} className="nav-collapse__chev" />
       </button>
     </div>
   );
