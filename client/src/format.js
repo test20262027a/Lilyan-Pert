@@ -38,9 +38,35 @@ export function fmtDate(value, locale, timeZone, { weekday = false, short = fals
   return new Intl.DateTimeFormat(safeLocale(locale), { ...options, timeZone }).format(d);
 }
 
+/**
+ * Full calendar date with the weekday in front: «پنجشنبه، ۳۰ مهر ۱۴۰۵» /
+ * «Thursday, 22 October 2026». Built from two formatters because the CLDR
+ * Persian order puts the weekday last, which reads backwards in this card.
+ */
+export function fmtWeekdayDate(value, locale, timeZone) {
+  const d = toDate(value);
+  if (!d) return '—';
+  const weekday = new Intl.DateTimeFormat(safeLocale(locale), { weekday: 'long', timeZone }).format(d);
+  return `${weekday}${locale === 'en' ? ',' : '،'} ${fmtDate(d, locale, timeZone)}`;
+}
+
 export function fmtTime(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '—';
+  return new Intl.DateTimeFormat(safeLocale(locale), {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone,
+  }).format(d);
+}
+
+/**
+ * Wall-clock time for the dashboard clock: 24-hour, in the business timezone,
+ * with the digits of the active language (۰۹:۴۷ / ٠٩:٤٧ / 09:47).
+ */
+export function fmtClock(value, locale, timeZone) {
+  const d = toDate(value) || new Date();
   return new Intl.DateTimeFormat(safeLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',

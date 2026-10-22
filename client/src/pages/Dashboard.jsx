@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Loading, useToast } from '../components/ui';
 import WelcomeBanner from '../components/dashboard/WelcomeBanner';
 import NotificationSettings from '../components/dashboard/NotificationSettings';
@@ -39,6 +39,9 @@ export default function Dashboard() {
       ? `range=custom&from=${custom.from}&to=${custom.to}`
       : `range=${range}`;
 
+  /* The last range the API actually answered for — what the cards show. */
+  const applied = useRef({ query: `range=${range}`, range, custom });
+
   /*
    * The financial window is a real backend filter: the API recomputes every
    * figure for the requested range in the business timezone, so nothing here
@@ -51,15 +54,22 @@ export default function Dashboard() {
         const res = await get(`/dashboard?${query}`);
         setData(res);
         setFailed(false);
+        applied.current = { query, range, custom };
         return res;
       } catch {
         setFailed(true);
+        // A failed request never moves the filter: the figures on screen belong
+        // to the range that last answered, so that stays the active one.
+        if (applied.current.query !== query) {
+          setRange(applied.current.range);
+          setCustom(applied.current.custom);
+        }
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [query],
+    [query, range, custom],
   );
 
   useEffect(() => {
@@ -166,6 +176,7 @@ export default function Dashboard() {
         busy={loading}
         currency={currency}
         locale={locale}
+        timeZone={timeZone}
       />
 
       {/* ---- Order flow and best-selling products ---- */}

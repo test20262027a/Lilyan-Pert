@@ -36,14 +36,13 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
         <SwitchRow
           icon="volume"
           title={t('dash_sound_new_order')}
-          hint={t('dash_new_orders_only')}
           checked={soundOn}
           onChange={(v) => onChange({ sound_enabled: v })}
         />
         <SwitchRow
           icon="bell"
           iconClass="switch-row__icon--muted"
-          title={t('dash_push')}
+          title={t('dash_push_background')}
           hint={pushHint}
           checked={push.subscribed}
           disabled={!push.supported || push.busy}
@@ -64,18 +63,21 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
             {t('dash_sound')}
           </span>
           <div className="sound-picker__row">
-            <select
-              className="select sound-select"
-              value={soundKey}
-              onChange={(e) => onChange({ sound_key: e.target.value })}
-              aria-label={t('dash_sound')}
-            >
-              {SOUND_OPTIONS.map((key) => (
-                <option key={key} value={key}>
-                  {t(`dash_sound_${key}`)}
-                </option>
-              ))}
-            </select>
+            <span className="sound-select-wrap">
+              <select
+                className="select sound-select"
+                value={soundKey}
+                onChange={(e) => onChange({ sound_key: e.target.value })}
+                aria-label={t('dash_sound')}
+              >
+                {SOUND_OPTIONS.map((key) => (
+                  <option key={key} value={key}>
+                    {t(`dash_sound_${key}`)}
+                  </option>
+                ))}
+              </select>
+              <Icon name="chevronDown" size={15} className="sound-select__chevron" />
+            </span>
             <button
               type="button"
               className="sound-play"
@@ -83,7 +85,7 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
               aria-label={t('dash_sound_preview')}
               title={t('dash_sound_preview')}
             >
-              <Icon name="volume" size={16} />
+              <Icon name="volume" size={17} />
             </button>
           </div>
         </div>

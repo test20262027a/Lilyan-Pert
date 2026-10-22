@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Icon from '../Icon';
-import { Alert, Field, Modal } from '../ui';
 import BusinessInsights from './BusinessInsights';
+import DateRangeModal from './DateRangeModal';
 import { useI18n } from '../../i18n';
 import { fmtMoney, fmtNumber } from '../../format';
 
@@ -13,8 +13,6 @@ const RANGES = [
   { key: 'all', i18n: 'dash_range_alltime' },
   { key: 'custom', i18n: 'dash_range_custom' },
 ];
-
-const isDay = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ''));
 
 /*
  * One metric tile: icon, label, the figure and its comparison, all centred.
@@ -48,6 +46,9 @@ function Stat({ icon, label, value, delta, tone = 'green' }) {
  * window (business timezone) — the client never calculates money, and
  * comparisons come from the API too, so a period with no previous data shows
  * nothing instead of an invented -100%.
+ *
+ * The custom range is confirmed in a modal; only a valid, applied range leaves
+ * it, so cancelling keeps the range the cards are currently showing.
  */
 export default function FinanceOverview({
   finance,
@@ -59,33 +60,17 @@ export default function FinanceOverview({
   busy,
   currency,
   locale,
+  timeZone,
   showInsights = true,
 }) {
   const { t } = useI18n();
   const f = finance || {};
-  const [picker, setPicker] = useState(null); // { from, to } | null
-  const [error, setError] = useState('');
+  const [picker, setPicker] = useState(false);
 
-  const openPicker = () => {
-    setError('');
-    setPicker({ from: custom?.from || '', to: custom?.to || '' });
-  };
-
-  const applyCustom = () => {
-    if (!isDay(picker.from) || !isDay(picker.to)) {
-      setError(t('dash_range_required'));
-      return;
-    }
-    if (picker.from > picker.to) {
-      setError(t('dash_range_invalid'));
-      return;
-    }
-    onCustom({ from: picker.from, to: picker.to });
-    setPicker(null);
-  };
+  const openPicker = () => setPicker(true);
 
   return (
-    <section className="card finance">
+    <section className={`card finance ${busy ? 'is-busy' : ''}`}>
       <header className="card__head">
         <span className="card__icon ic-blue">
           <Icon name="chartBars" size={18} />
@@ -101,7 +86,9 @@ export default function FinanceOverview({
             <button
               key={item.key}
               type="button"
-              className={`range-pill ${range === item.key ? 'is-active' : ''}`}
+              className={`range-pill ${item.key === 'custom' ? 'range-pill--custom' : ''} ${
+                range === item.key ? 'is-active' : ''
+              }`}
               aria-pressed={range === item.key}
               disabled={busy}
               onClick={() => (item.key === 'custom' ? openPicker() : onRange(item.key))}
@@ -146,45 +133,16 @@ export default function FinanceOverview({
       </div>
 
       {picker ? (
-        <Modal
-          title={t('dash_range_custom')}
-          subtitle={t('dash_range_hint')}
-          onClose={() => setPicker(null)}
-          footer={
-            <>
-              <button className="btn" onClick={() => setPicker(null)}>
-                {t('action_cancel')}
-              </button>
-              <button className="btn btn--primary" onClick={applyCustom}>
-                {t('action_apply')}
-              </button>
-            </>
-          }
-        >
-          <div className="form-grid">
-            <Field label={t('dash_range_from')}>
-              <input
-                className="input"
-                type="date"
-                value={picker.from}
-                onChange={(e) => setPicker((p) => ({ ...p, from: e.target.value }))}
-              />
-            </Field>
-            <Field label={t('dash_range_to')}>
-              <input
-                className="input"
-                type="date"
-                value={picker.to}
-                onChange={(e) => setPicker((p) => ({ ...p, to: e.target.value }))}
-              />
-            </Field>
-          </div>
-          {error ? (
-            <div style={{ marginTop: 12 }}>
-              <Alert kind="error">{error}</Alert>
-            </div>
-          ) : null}
-        </Modal>
+        <DateRangeModal
+          value={custom}
+          timeZone={timeZone}
+          locale={locale}
+          onClose={() => setPicker(false)}
+          onApply={(next) => {
+            setPicker(false);
+            onCustom(next);
+          }}
+        />
       ) : null}
     </section>
   );
