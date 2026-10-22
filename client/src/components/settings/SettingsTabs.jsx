@@ -10,12 +10,11 @@ import { useI18n } from '../../i18n';
  * (the row still scrolls by wheel, trackpad, touch and keyboard) and two
  * physical edge arrows plus soft fades take over as the affordance.
  *
- * RTL is handled by reading the browser's own `scrollLeft` model rather than
- * assuming a sign: current Chrome/Firefox/Safari count negative offsets from
- * the right edge, older WebKit counts backwards from the maximum. Both are
- * normalised here to "distance from the reading start edge", so the arrows keep
- * their physical meaning (left arrow reveals content to the left) in either
- * language.
+ * Each arrow is a physical control: the left one always reveals tabs hidden on
+ * the left, the right one tabs hidden on the right, in every language. Both the
+ * scroll limits and the scroll direction are read from measured screen
+ * geometry — plus a one-off probe of which way `scrollLeft` moves the content —
+ * so no browser's RTL coordinate model can turn them around.
  */
 
 const reducedMotion = () =>
@@ -30,82 +29,98 @@ export default function SettingsTabs({ tabs, value, onChange }) {
   const scrollRef = useRef(null);
   const trackRef = useRef(null);
   const refs = useRef({});
-  const modelRef = useRef('negative');
+  const slopeRef = useRef(-1);
   const overflowRef = useRef(false);
   const [edge, setEdge] = useState({ overflow: false, atStart: true, atEnd: false });
 
-  /** Current scroll position measured from the reading start edge. */
-  const metrics = useCallback(() => {
+  /*
+   * Everything is measured in screen pixels: how much tab content still sits
+   * beyond each physical edge of the viewport. Nothing here assumes a sign for
+   * `scrollLeft`, so no browser's RTL model can turn an arrow around.
+   */
+  const geometry = useCallback(() => {
     const el = scrollRef.current;
-    if (!el) return { pos: 0, max: 0, overflow: false };
-    const max = Math.max(0, el.scrollWidth - el.clientWidth);
-    const raw = el.scrollLeft;
-    const rtlNow = domRtl();
-    const pos = !rtlNow ? raw : modelRef.current === 'reverse' ? max - raw : -raw;
-    return { pos: Math.min(max, Math.max(0, pos)), max, overflow: max > 1 };
+    const track = trackRef.current;
+    if (!el || !track) return { hiddenLeft: 0, hiddenRight: 0, overflow: false };
+    const view = el.getBoundingClientRect();
+    const strip = track.getBoundingClientRect();
+    return {
+      hiddenLeft: Math.max(0, Math.round(view.left - strip.left)),
+      hiddenRight: Math.max(0, Math.round(strip.right - view.right)),
+      viewLeft: view.left,
+      viewRight: view.right,
+      page: Math.max(160, view.width * 0.66),
+      overflow: el.scrollWidth > el.clientWidth + 1,
+    };
   }, []);
 
   const sync = useCallback(() => {
-    const { pos, max, overflow } = metrics();
+    const { hiddenLeft, hiddenRight, overflow } = geometry();
     overflowRef.current = overflow;
+    const rtlNow = domRtl();
     setEdge((prev) => {
-      const next = { overflow, atStart: pos <= 1, atEnd: pos >= max - 1 };
+      /* `atStart`/`atEnd` stay reading-order words: RTL starts on the right. */
+      const next = {
+        overflow,
+        atStart: (rtlNow ? hiddenRight : hiddenLeft) <= 1,
+        atEnd: (rtlNow ? hiddenLeft : hiddenRight) <= 1,
+      };
       return prev.overflow === next.overflow &&
         prev.atStart === next.atStart &&
         prev.atEnd === next.atEnd
         ? prev
         : next;
     });
-  }, [metrics]);
+  }, [geometry]);
 
-  /** Scrolls to a distance-from-start, converting back to the browser's axis. */
-  const goTo = useCallback(
-    (pos, smooth) => {
+  /* Which sign of `scrollLeft` slides the content which way — measured, never
+     assumed, so a mirrored axis can never reverse the arrows. */
+  const calibrate = useCallback(() => {
+    const el = scrollRef.current;
+    const track = trackRef.current;
+    if (!el || !track) return;
+    const raw = el.scrollLeft;
+    const base = track.getBoundingClientRect().left;
+    const probe = (delta) => {
+      el.scrollLeft = raw + delta;
+      const moved = el.scrollLeft !== raw;
+      const slope = (track.getBoundingClientRect().left - base) / delta;
+      el.scrollLeft = raw;
+      return moved && slope !== 0 ? slope : 0;
+    };
+    slopeRef.current = probe(1) || probe(-1) || slopeRef.current;
+  }, []);
+
+  /* Slides the content by `dx` screen pixels (+ right, − left) and stops at the
+     edge, so an arrow can never scroll past the last visible tab. */
+  const slide = useCallback(
+    (dx, smooth) => {
       const el = scrollRef.current;
       if (!el) return;
-      const max = Math.max(0, el.scrollWidth - el.clientWidth);
-      const clamped = Math.min(max, Math.max(0, pos));
-      const rtlNow = domRtl();
-      const left = !rtlNow ? clamped : modelRef.current === 'reverse' ? max - clamped : -clamped;
-      el.scrollTo({ left, behavior: smooth && !reducedMotion() ? 'smooth' : 'auto' });
+      const { hiddenLeft, hiddenRight } = geometry();
+      const reach = dx > 0 ? hiddenLeft : hiddenRight;
+      const move = Math.sign(dx) * Math.min(Math.abs(dx), reach);
+      if (Math.abs(move) < 1) return;
+      el.scrollTo({
+        left: el.scrollLeft + move / slopeRef.current,
+        behavior: smooth && !reducedMotion() ? 'smooth' : 'auto',
+      });
     },
-    [],
+    [geometry],
   );
 
   /** Nudges the strip only as far as needed to show one tab. */
   const reveal = useCallback(
     (node, smooth) => {
-      const el = scrollRef.current;
-      const track = trackRef.current;
-      if (!el || !track || !node) return;
-      const { pos } = metrics();
-      const view = el.clientWidth;
-      const trackRect = track.getBoundingClientRect();
+      if (!node) return;
+      const { viewLeft, viewRight } = geometry();
       const rect = node.getBoundingClientRect();
-      const fromLeft = rect.left - trackRect.left;
-      const fromRight = trackRect.right - rect.right;
-      const startDist = domRtl() ? fromRight : fromLeft;
-      const endDist = startDist + rect.width;
       const pad = 10;
-      if (startDist < pos + pad) goTo(startDist - pad, smooth);
-      else if (endDist > pos + view - pad) goTo(endDist - view + pad, smooth);
+      if (rect.left < viewLeft + pad) slide(viewLeft + pad - rect.left, smooth);
+      else if (rect.right > viewRight - pad) slide(viewRight - pad - rect.right, smooth);
     },
-    [goTo, metrics],
+    [geometry, slide],
   );
-
-  /* Which RTL offset model this browser uses — probed once, never assumed. */
-  const detectModel = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    if (!domRtl()) {
-      modelRef.current = 'negative';
-      return;
-    }
-    const raw = el.scrollLeft;
-    el.scrollLeft = 1;
-    modelRef.current = el.scrollLeft > 0 ? 'reverse' : 'negative';
-    el.scrollLeft = raw;
-  }, []);
 
   /* Overflow reacts to the viewport, the tab count and a language change. */
   useEffect(() => {
@@ -122,12 +137,12 @@ export default function SettingsTabs({ tabs, value, onChange }) {
   /* Reveal after the direction and the new labels are actually in the DOM. */
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      detectModel();
+      calibrate();
       sync();
       reveal(refs.current[value], true);
     });
     return () => cancelAnimationFrame(frame);
-  }, [value, rtl, detectModel, reveal, sync]);
+  }, [value, rtl, calibrate, reveal, sync]);
 
   /* A vertical wheel over the strip drives it sideways instead of the page. */
   useEffect(() => {
@@ -138,20 +153,18 @@ export default function SettingsTabs({ tabs, value, onChange }) {
       if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
       event.preventDefault();
       const unit = event.deltaMode === 1 ? 18 : event.deltaMode === 2 ? el.clientWidth : 1;
-      goTo(metrics().pos + event.deltaY * unit, false);
+      slide(event.deltaY * unit * (domRtl() ? 1 : -1), false);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [goTo, metrics]);
+  }, [slide]);
 
   /* `physical` is the arrow's own direction on screen, never the reading
      direction: in RTL the start edge is the right one, so moving physically
      right walks back toward it. */
   const step = (physical) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const page = Math.max(160, el.clientWidth * 0.66);
-    goTo(metrics().pos + (domRtl() ? -physical : physical) * page, true);
+    const { page } = geometry();
+    slide(physical > 0 ? -page : page, true);
   };
 
   const onKeyDown = (event) => {
