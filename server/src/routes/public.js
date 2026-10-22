@@ -3,6 +3,7 @@ import { q, tx } from '../db.js';
 import { ah, bad, isUuid, notFound } from '../lib/http.js';
 import { pushNewOrder } from '../lib/push.js';
 import { menuContext, normalizeMenuSettings } from '../lib/menu-settings.js';
+import { openStatus, zonedNow } from '../lib/hours.js';
 
 const router = express.Router();
 
@@ -94,7 +95,7 @@ router.get(
 
     const [cats, prods, promos, ads, reviews] = await Promise.all([
       q(
-        `SELECT id, icon, sort_order, name_ku, name_fa, name_ar, name_en
+        `SELECT id, icon, icon_color, sort_order, name_ku, name_fa, name_ar, name_en
            FROM categories WHERE business_id = $1 AND active = true
           ORDER BY sort_order, created_at`,
         [business.id],
@@ -245,6 +246,18 @@ router.get(
       menu,
       table,
       table_state: tableState,
+      /*
+       * Today on the business's own clock, so the menu can show the working
+       * hours card and its open/closed state without guessing a timezone.
+       */
+      hours: (() => {
+        const now = zonedNow(business.timezone);
+        return {
+          ...openStatus(business.working_hours, business.timezone),
+          now,
+          today: now ? business.working_hours?.[now.dayKey] || null : null,
+        };
+      })(),
       tables,
       categories: cats.rows,
       products,

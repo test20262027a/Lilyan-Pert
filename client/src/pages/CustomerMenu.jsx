@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
@@ -14,8 +14,18 @@ import { localized, useI18n, LOCALES } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { get, post } from '../api';
 import { applyTheme } from '../theme';
-import { zoneFor } from '../format';
+import { fmtNumber, zoneFor } from '../format';
 import CustomerAds from '../components/ads/CustomerAds';
+import CustomerTopBar from '../components/customer/CustomerTopBar';
+import CustomerHero from '../components/customer/CustomerHero';
+import CustomerStats from '../components/customer/CustomerStats';
+import CustomerHours from '../components/customer/CustomerHours';
+import CustomerCategoryNav from '../components/customer/CustomerCategoryNav';
+import CustomerProductCard from '../components/customer/CustomerProductCard';
+import CustomerAbout from '../components/customer/CustomerAbout';
+import CustomerContact from '../components/customer/CustomerContact';
+import { appearanceOf } from '../components/menu/categoryIcons';
+import '../customer.css';
 
 const sessionKey = () => {
   let key = localStorage.getItem('lilyan.session');
@@ -40,12 +50,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState(null);
-  const [stuck, setStuck] = useState(false);
   const [placed, setPlaced] = useState(null);
   const [busy, setBusy] = useState(false);
   const [detail, setDetail] = useState(null);
   const [tableId, setTableId] = useState('');
-  const headerRef = useRef(null);
 
   const storageKey = `lilyan.cart.${key}`;
 
@@ -92,26 +100,28 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     post(`/public/views/${key}`, { session_key: sessionKey() }).catch(() => {});
   }, [data, key, adminMode]);
 
-  /*
-   * The category bar only becomes "stuck" (compact) once the main header has
-   * scrolled out of view. It keeps its own space in the flow, so it can never
-   * cover the product content.
-   */
-  useEffect(() => {
-    const el = headerRef.current;
-    if (!el || typeof IntersectionObserver === 'undefined') return undefined;
-    const observer = new IntersectionObserver(
-      ([entry]) => setStuck(!entry.isIntersecting),
-      { rootMargin: '-8px 0px 0px 0px', threshold: 0 },
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [data]);
+  /* Picking a category filters the list to it and brings it into view; the rail,
+     the drawer and the chip strip all drive this one handler. */
+  const selectCategory = (id) => {
+    setActiveCat(id);
+    if (!id) return;
+    window.requestAnimationFrame(() => {
+      document.getElementById(`cat-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   const timeZone = zoneFor(locale, data?.business?.timezone);
   const currency = data?.business?.currency || 'IQD';
 
   const categories = data?.categories || [];
+  /* Every category that still has a product, independent of the current
+     selection — the rail, drawer and chips always list them all, so a guest can
+     switch between categories (or back to "all") from any state. */
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => (data?.products || []).some((p) => p.category_id === c.id)),
+    [categories, data],
+  );
+
   const products = useMemo(() => {
     const q = query.trim().toLowerCase();
     return (data?.products || []).filter((p) => {
@@ -288,118 +298,73 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
   return (
     <div className="customer-shell">
-      <header className="customer-header" ref={headerRef}>
-        <div className="customer-header__row">
-          <div className="customer-header__brand">
-            <span className="customer-header__logo">
-              {biz.logo_url ? <img src={biz.logo_url} alt="" /> : brandName.slice(0, 2)}
-            </span>
-            <div className="customer-header__text">
-              {/* Localized "Digital Menu + Business Name", kept on one line. */}
-              <div className="customer-header__title" title={`${menuTitle} · ${brandName}`}>
-                {menuTitle} · {brandName}
-              </div>
-              <div className="customer-header__sub">
-                {data.table ? (
-                  <span>
-                    <Icon name="table" size={13} /> {data.table.name}
-                  </span>
-                ) : null}
-                {biz.city ? <span>{biz.city}</span> : null}
-              </div>
-            </div>
-          </div>
-          <div className="customer-header__actions">
-            <select
-              className="ghost-btn"
-              value={locale}
-              onChange={(e) => setLocale(e.target.value)}
-              aria-label={t('label_language')}
-            >
-              {LOCALES.map((l) => (
-                <option key={l.code} value={l.code} style={{ color: '#111' }}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
-            {cartEnabled ? (
-              <button className="ghost-btn" onClick={() => setCartOpen(true)} aria-label={t('customer_menu_cart')}>
-                <Icon name="cart" size={18} />
-                {cartCount > 0 ? <span style={{ fontWeight: 800 }}>{cartCount}</span> : null}
-              </button>
-            ) : null}
-          </div>
-        </div>
-      </header>
+      <CustomerTopBar
+        brandName={brandName}
+        logoUrl={biz.logo_url}
+        table={data.table}
+        cartEnabled={cartEnabled}
+        cartCount={cartCount}
+        onCart={() => setCartOpen(true)}
+        adminReturn={showAdminReturn}
+      />
 
-      {showFeature('categories') ? (
-      <div className={`category-bar ${stuck ? 'is-stuck' : ''}`}>
-        <div className="category-bar__scroll">
-          <button
-            className={`cat-pill ${!activeCat ? 'is-active' : ''}`}
-            onClick={() => setActiveCat(null)}
-          >
-            {t('customer_menu_all')}
-          </button>
-          {categories.map((c) => (
-            <button
-              key={c.id}
-              className={`cat-pill ${activeCat === c.id ? 'is-active' : ''}`}
-              onClick={() => {
-                setActiveCat(c.id);
-                document.getElementById(`cat-${c.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-            >
-              <Icon name={c.icon || 'utensils'} size={14} />
-              {localized(c, 'name', locale)}
-            </button>
-          ))}
-        </div>
-      </div>
-      ) : null}
+      <CustomerHero
+        business={biz}
+        brandName={brandName}
+        menuTitle={menuTitle}
+        table={data.table}
+        hours={data.hours}
+      />
 
       <main className="customer-body">
-        {showFeature('search') || biz.editable_text?.welcome?.[locale] ? (
-          <div className="card card--pad">
-            {showFeature('search') ? (
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <Icon name="search" size={17} />
-                <input
-                  className="input"
-                  value={query}
-                  placeholder={t('customer_menu_search')}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </div>
-            ) : null}
-            {biz.editable_text?.welcome?.[locale] ? (
-              <p style={{ marginTop: 10, color: 'var(--muted)', fontSize: 13 }}>
-                {biz.editable_text.welcome[locale]}
-              </p>
-            ) : null}
+        {showFeature('search') ? (
+          <div className="cui-search">
+            <Icon name="search" size={18} />
+            <input
+              value={query}
+              placeholder={t('customer_menu_search')}
+              aria-label={t('customer_menu_search')}
+              onChange={(e) => setQuery(e.target.value)}
+            />
           </div>
         ) : null}
+
+        {biz.editable_text?.welcome?.[locale] ? (
+          <p className="cui-welcome">{biz.editable_text.welcome[locale]}</p>
+        ) : null}
+
+        <CustomerStats
+          categories={visibleCategories.length}
+          items={products.length}
+          typeLabel={biz.business_type ? t(`settings_type_${biz.business_type}`) : ''}
+        />
+
+        <CustomerHours hours={data.hours} timeZone={timeZone} />
 
         <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
 
         {featuredProducts.length > 0 ? (
-          <section className="menu-section featured-products">
-            <h2 style={{ fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Icon name="sparkles" size={17} />
-              {t('customer_menu_featured')}
-            </h2>
-            <div className="menu-item-grid">
+          <section className="menu-section">
+            <div className="cui-sec__head">
+              <span className="cui-sec__icon">
+                <Icon name="sparkles" size={17} />
+              </span>
+              <h2 className="cui-sec__title">{t('customer_menu_featured')}</h2>
+              <span className="cui-sec__count">{fmtNumber(featuredProducts.length, locale)}</span>
+            </div>
+            <div className="cui-grid">
               {featuredProducts.map((p) => (
-                <MenuProduct
+                <CustomerProductCard
                   key={p.id}
                   product={p}
+                  categoryName={localized(categories.find((c) => c.id === p.category_id), 'name', locale)}
                   locale={locale}
                   currency={currency}
-                  onAdd={add}
-                  addLabel={t('customer_menu_add')}
-                  promoLabel={t('customer_menu_promo')}
                   showPrices={showFeature('prices')}
                   canAdd={cartEnabled}
+                  addLabel={t('customer_menu_add')}
+                  promoLabel={t('customer_menu_promo')}
+                  onAdd={add}
                   onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
@@ -408,23 +373,28 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         ) : null}
 
         {bestProducts.length > 0 ? (
-          <section className="menu-section best-sellers">
-            <h2 style={{ fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Icon name="trophy" size={17} />
-              {t('customer_menu_best_sellers')}
-            </h2>
-            <div className="menu-item-grid">
+          <section className="menu-section">
+            <div className="cui-sec__head">
+              <span className="cui-sec__icon">
+                <Icon name="trophy" size={17} />
+              </span>
+              <h2 className="cui-sec__title">{t('customer_menu_best_sellers')}</h2>
+              <span className="cui-sec__count">{fmtNumber(bestProducts.length, locale)}</span>
+            </div>
+            <div className="cui-grid">
               {bestProducts.map((p) => (
-                <MenuProduct
+                <CustomerProductCard
                   key={p.id}
                   product={p}
+                  categoryName={localized(categories.find((c) => c.id === p.category_id), 'name', locale)}
                   locale={locale}
                   currency={currency}
-                  onAdd={add}
-                  addLabel={t('customer_menu_add')}
-                  promoLabel={t('customer_menu_promo')}
                   showPrices={showFeature('prices')}
                   canAdd={cartEnabled}
+                  addLabel={t('customer_menu_add')}
+                  promoLabel={t('customer_menu_promo')}
+                  badge={t('customer_menu_best_badge')}
+                  onAdd={add}
                   onOpen={showFeature('details') ? setDetail : undefined}
                 />
               ))}
@@ -432,61 +402,57 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           </section>
         ) : null}
 
-        {products.length === 0 ? (
-          <EmptyState icon="coffee" title={t('customer_menu_no_products')} />
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
-            {categories
-              .filter((c) => products.some((p) => p.category_id === c.id))
-              .map((c) => (
-                <section className="menu-section" id={`cat-${c.id}`} key={c.id}>
-                  <h2 style={{ fontSize: 16, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Icon name={c.icon || 'utensils'} size={17} />
-                    {localized(c, 'name', locale)}
-                  </h2>
-                  <div className="menu-item-grid">
-                    {products
-                      .filter((p) => p.category_id === c.id)
-                      .map((p) => (
-                        <MenuProduct
-                          key={p.id}
-                          product={p}
-                          locale={locale}
-                          currency={currency}
-                          onAdd={add}
-                          addLabel={t('customer_menu_add')}
-                          promoLabel={t('customer_menu_promo')}
-                          showPrices={showFeature('prices')}
-                          canAdd={cartEnabled}
-                          onOpen={showFeature('details') ? setDetail : undefined}
-                        />
-                      ))}
-                  </div>
-                </section>
-              ))}
+        <div className={`cui-order ${showFeature('categories') ? '' : 'is-plain'}`}>
+          {showFeature('categories') ? (
+            <CustomerCategoryNav
+              categories={visibleCategories}
+              activeCat={activeCat}
+              onSelect={selectCategory}
+            />
+          ) : null}
+
+          <div className="cui-feed">
+            {products.length === 0 ? (
+              <EmptyState icon="coffee" title={t('customer_menu_no_products')} />
+            ) : (
+              visibleCategories
+                .filter((c) => products.some((p) => p.category_id === c.id))
+                .map((c) => {
+                  const items = products.filter((p) => p.category_id === c.id);
+                  return (
+                    <section className="menu-section" id={`cat-${c.id}`} key={c.id}>
+                      <CategoryHeading category={c} count={items.length} />
+                      <div className="cui-grid">
+                        {items.map((p) => (
+                          <CustomerProductCard
+                            key={p.id}
+                            product={p}
+                            categoryName={localized(c, 'name', locale)}
+                            locale={locale}
+                            currency={currency}
+                            showPrices={showFeature('prices')}
+                            canAdd={cartEnabled}
+                            addLabel={t('customer_menu_add')}
+                            promoLabel={t('customer_menu_promo')}
+                            onAdd={add}
+                            onOpen={showFeature('details') ? setDetail : undefined}
+                          />
+                        ))}
+                      </div>
+                    </section>
+                  );
+                })
+            )}
           </div>
-        )}
+        </div>
 
         <CustomerAds ads={adsMenuEnd} locale={locale} onOpen={openAd} />
 
-        <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} timeZone={timeZone} />
+        <CustomerAbout text={localized(biz, 'description', locale) || biz.description || ''} />
 
-        <footer style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 12.5, paddingBottom: 8 }}>
-          {showFeature('social') && biz.phone ? (
-            <div>
-              <Icon name="phone" size={12} /> <span dir="ltr">{biz.phone}</span>
-            </div>
-          ) : null}
-          {showFeature('social') && biz.socials && Object.keys(biz.socials).length ? (
-            <div className="social-list" style={{ justifyContent: 'center', marginTop: 8 }}>
-              {Object.entries(biz.socials).map(([network, url]) => (
-                <a key={network} className={`social-link social-link--${network}`} href={url} target="_blank" rel="noreferrer" aria-label={network}>
-                  <Icon name={network === 'website' ? 'globe' : 'link'} size={17} />
-                </a>
-              ))}
-            </div>
-          ) : null}
-        </footer>
+        {showFeature('social') ? <CustomerContact business={biz} locale={locale} /> : null}
+
+        <ReviewSection reviews={data.reviews || []} onSubmit={submitReview} timeZone={timeZone} />
       </main>
 
       {cartEnabled && cartCount > 0 && !placed ? (
@@ -497,23 +463,6 @@ export default function CustomerMenu({ slug, adminMode = false }) {
               {t('customer_menu_view_order')} · {cartCount}
               <Money value={cartTotal} currency={currency} />
             </button>
-            {showAdminReturn ? (
-              <Link className="btn btn--dir-icon" to="/">
-                <Icon name="arrowLeft" size={16} />
-                {t('customer_menu_return_to_admin')}
-              </Link>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-
-      {showAdminReturn && cartCount === 0 ? (
-        <div className="cart-bar">
-          <div className="cart-bar__inner">
-            <Link className="btn btn--block btn--dir-icon" to="/">
-              <Icon name="arrowLeft" size={16} />
-              {t('customer_menu_return_to_admin')}
-            </Link>
           </div>
         </div>
       ) : null}
@@ -588,6 +537,23 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   );
 }
 
+/* The heading over one category's products: its own identity glyph and accent,
+   the localized name, and how many items it holds. */
+function CategoryHeading({ category, count }) {
+  const { t, locale } = useI18n();
+  const appearance = appearanceOf(category);
+  return (
+    <div className="cui-sec__head">
+      <span className="cui-cat-icon" style={{ '--cic': appearance.color }} aria-hidden="true">
+        <Icon name={appearance.icon} size={17} />
+      </span>
+      <h2 className="cui-sec__title">{localized(category, 'name', locale)}</h2>
+      <span className="cui-sec__count" title={t('customer_menu_items')}>
+        {fmtNumber(count, locale)}
+      </span>
+    </div>
+  );
+}
 function ReviewSection({ reviews, onSubmit, timeZone }) {
   const { t, locale } = useI18n();
   const [form, setForm] = useState({ customer_name: '', rating: 5, comment: '' });
@@ -807,80 +773,6 @@ function CartModal({
         </>
       )}
     </Modal>
-  );
-}
-
-/**
- * One sellable product card. Shared by the regular category sections and the
- * best-selling strip, so both always offer the same price and add action.
- */
-function MenuProduct({ product: p, locale, currency, onAdd, addLabel, promoLabel, showPrices = true, canAdd = true, onOpen }) {
-  const open = () => onOpen?.(p);
-
-  return (
-    <article
-      className={`menu-item ${onOpen ? 'is-openable' : ''}`}
-      onClick={onOpen ? open : undefined}
-      onKeyDown={
-        onOpen
-          ? (event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                open();
-              }
-            }
-          : undefined
-      }
-      role={onOpen ? 'button' : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-    >
-      <span className="menu-item__thumb">
-        {p.image_url ? <img src={p.image_url} alt="" loading="lazy" /> : <Icon name="coffee" size={22} />}
-      </span>
-      <div className="menu-item__info">
-        {/* Product names stay fully visible on one line. */}
-        <div className="product-name" title={localized(p, 'name', locale)}>
-          {localized(p, 'name', locale)}
-        </div>
-        {localized(p, 'description', locale) ? (
-          <div className="menu-item__desc">{localized(p, 'description', locale)}</div>
-        ) : null}
-        <div className="menu-item__foot">
-          <span style={{ display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 }}>
-            {showPrices ? (
-              <>
-                {p.promo_price ? (
-                  <span className="price-tag--old">
-                    <Money value={p.price} currency={currency} />
-                  </span>
-                ) : null}
-                <span className="price-tag">
-                  <Money value={p.promo_price ?? p.price} currency={currency} />
-                </span>
-                {p.promo_price ? (
-                  <Badge kind="pending">
-                    <Icon name="tag" size={11} />
-                    {promoLabel}
-                  </Badge>
-                ) : null}
-              </>
-            ) : null}
-          </span>
-          {canAdd ? (
-            <button
-              className="add-btn"
-              onClick={(event) => {
-                event.stopPropagation();
-                onAdd(p);
-              }}
-              aria-label={addLabel}
-            >
-              <Icon name="plus" size={19} />
-            </button>
-          ) : null}
-        </div>
-      </div>
-    </article>
   );
 }
 
