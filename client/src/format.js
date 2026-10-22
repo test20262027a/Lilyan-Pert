@@ -46,7 +46,7 @@ export function fmtDate(value, locale, timeZone, { weekday = false, short = fals
 export function fmtWeekdayDate(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '—';
-  const weekday = new Intl.DateTimeFormat(safeLocale(locale), { weekday: 'long', timeZone }).format(d);
+  const weekday = fmtWeekday(d, locale, timeZone, { long: true });
   return `${weekday}${locale === 'en' ? ',' : '،'} ${fmtDate(d, locale, timeZone)}`;
 }
 
@@ -81,11 +81,17 @@ export function fmtDateTime(value, locale, timeZone) {
   return `${fmtDate(d, locale, timeZone, { short: true })} · ${fmtTime(d, locale, timeZone)}`;
 }
 
-/** Short weekday label used by the dashboard charts. */
-export function fmtWeekday(value, locale, timeZone) {
+/**
+ * Weekday label: short for the dashboard charts, `long` for the working-hours
+ * card and anything else that shows the day on its own.
+ */
+export function fmtWeekday(value, locale, timeZone, { long = false } = {}) {
   const d = toDate(value);
   if (!d) return '';
-  return new Intl.DateTimeFormat(safeLocale(locale), { weekday: 'short', timeZone }).format(d);
+  return new Intl.DateTimeFormat(safeLocale(locale), {
+    weekday: long ? 'long' : 'short',
+    timeZone,
+  }).format(d);
 }
 
 /** Short month label for month-bucketed charts. */

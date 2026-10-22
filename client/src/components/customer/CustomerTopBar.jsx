@@ -7,65 +7,44 @@ import LanguageSelect from '../header/LanguageSelect';
 import '../header/header.css';
 
 /*
- * The compact bar pinned to the top of both ordering menus: the business mark,
- * the scanned table, the language control and the cart. It floats over the hero
- * on a glass surface, so the guest keeps the two actions they need (language and
- * cart) in reach at every scroll position without the bar ever feeling heavy.
+ * The two controls that float over the business banner: the basket on one end
+ * and, on the other, the language dropdown plus the in-store "back to the admin
+ * panel" pill. They sit on the hero itself (not in a bar above it), so the
+ * banner opens the page edge to edge exactly like the reference layout.
  *
  * `adminReturn` is the in-store "main" context only — the public customer menu
  * never receives it, so a guest is never shown a way back into the admin panel.
  */
-export default function CustomerTopBar({
-  brandName,
-  logoUrl,
-  table,
-  cartEnabled,
-  cartCount,
-  onCart,
-  adminReturn,
-}) {
+export default function CustomerTopBar({ cartEnabled, cartCount, onCart, adminReturn }) {
   const { t } = useI18n();
 
   return (
-    <div className="cui-bar">
-      <div className="cui-bar__inner">
-        <div className="cui-bar__brand">
-          <span className="cui-bar__logo">
-            {logoUrl ? <img src={logoUrl} alt="" /> : <span>{brandName.slice(0, 2)}</span>}
-          </span>
-          <span className="cui-bar__name" title={brandName}>
-            {brandName}
-          </span>
-          {table ? (
-            <span className="cui-bar__table">
-              <Icon name="table" size={13} />
-              {table.name}
-            </span>
-          ) : null}
-        </div>
-
-        <div className="cui-bar__actions">
-          {adminReturn ? (
-            <Link className="cui-bar__ghost" to="/">
-              <span>{t('customer_menu_return_to_admin')}</span>
-              <Icon name="arrowLeft" size={15} />
-            </Link>
-          ) : null}
+    <div className="cui-hero__top">
+      <div className="cui-hero__top-side">
+        {adminReturn ? (
+          <Link className="cui-hero__back" to="/">
+            <Icon name="arrowLeft" size={15} />
+            <span>{t('customer_menu_return_to_admin')}</span>
+          </Link>
+        ) : null}
+        <span className="cui-hero__lang">
           <LanguageSelect />
-          {cartEnabled ? (
-            <button
-              type="button"
-              className="cui-cart"
-              onClick={onCart}
-              aria-label={t('customer_menu_cart')}
-              title={t('customer_menu_cart')}
-            >
-              <Icon name="cart" size={19} />
-              {cartCount > 0 ? <span className="cui-cart__count">{cartCount}</span> : null}
-            </button>
-          ) : null}
-        </div>
+        </span>
       </div>
+
+      {cartEnabled ? (
+        <button
+          type="button"
+          className="cui-hero__cart"
+          onClick={onCart}
+          aria-label={t('customer_menu_cart')}
+          title={t('customer_menu_cart')}
+        >
+          <Icon name="cart" size={18} />
+          <span className="cui-hero__cartlabel">{t('customer_menu_cart')}</span>
+          {cartCount > 0 ? <span className="cui-hero__count">{cartCount}</span> : null}
+        </button>
+      ) : null}
     </div>
   );
 }

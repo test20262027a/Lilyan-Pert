@@ -300,48 +300,48 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
   return (
     <div className="customer-shell">
-      <CustomerTopBar
-        brandName={brandName}
-        logoUrl={biz.logo_url}
-        table={data.table}
-        cartEnabled={cartEnabled}
-        cartCount={cartCount}
-        onCart={() => setCartOpen(true)}
-        adminReturn={showAdminReturn}
-      />
-
-      <CustomerHero
-        business={biz}
-        brandName={brandName}
-        menuTitle={menuTitle}
-        table={data.table}
-        hours={data.hours}
-      />
+      {/* The banner carries its own controls, so the page opens edge to edge
+          exactly like the reference: basket on one side, language/admin on the
+          other, logo floating in the middle. */}
+      <CustomerHero business={biz} brandName={brandName} menuTitle={menuTitle} table={data.table}>
+        <CustomerTopBar
+          cartEnabled={cartEnabled}
+          cartCount={cartCount}
+          onCart={() => setCartOpen(true)}
+          adminReturn={showAdminReturn}
+        />
+      </CustomerHero>
 
       <main className="customer-body">
-        {showFeature('search') ? (
-          <div className="cui-search">
-            <Icon name="search" size={18} />
-            <input
-              value={query}
-              placeholder={t('customer_menu_search')}
-              aria-label={t('customer_menu_search')}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
-        ) : null}
+        {/* Search, summary strip and working hours share one centred column,
+            so the banner stays wide while the controls below it read as a
+            single, calm vertical rhythm. */}
+        <div className="cui-head">
+          {showFeature('search') ? (
+            <div className="cui-search">
+              <Icon name="search" size={18} />
+              <input
+                value={query}
+                placeholder={t('customer_menu_search')}
+                aria-label={t('customer_menu_search')}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          ) : null}
 
-        {biz.editable_text?.welcome?.[locale] ? (
-          <p className="cui-welcome">{biz.editable_text.welcome[locale]}</p>
-        ) : null}
+          {biz.editable_text?.welcome?.[locale] ? (
+            <p className="cui-welcome">{biz.editable_text.welcome[locale]}</p>
+          ) : null}
 
-        <CustomerStats
-          categories={visibleCategories.length}
-          items={products.length}
-          typeLabel={biz.business_type ? t(`settings_type_${biz.business_type}`) : ''}
-        />
+          <CustomerStats
+            categories={categories.length}
+            items={(data.products || []).length}
+            typeLabel={biz.business_type ? t(`settings_type_${biz.business_type}`) : ''}
+            hours={data.hours}
+          />
 
-        <CustomerHours hours={data.hours} timeZone={timeZone} />
+          <CustomerHours hours={data.hours} timeZone={timeZone} />
+        </div>
 
         <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
 

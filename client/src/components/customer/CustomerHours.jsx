@@ -1,12 +1,17 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { fmtWeekdayDate } from '../../format';
+import { fmtDate, fmtWeekday } from '../../format';
 
 /*
  * Today's trading hours, read on the business's own clock (the API resolves the
  * day key and the open/closed verdict in the business timezone). It renders only
  * when the owner actually saved a schedule for today, so the sections around it
  * simply share the space when the card is absent.
+ *
+ * Layout follows the reference: a tinted header row with the title, its icon and
+ * the state pill, then a white body with the day/date on one side and the range
+ * on the other. The date goes through the shared formatter, so Persian shows the
+ * Solar Hijri calendar and every other language its own localized date.
  */
 export default function CustomerHours({ hours, timeZone }) {
   const { t, locale } = useI18n();
@@ -17,27 +22,40 @@ export default function CustomerHours({ hours, timeZone }) {
 
   return (
     <section className="cui-hours">
-      <span className="cui-hours__icon">
-        <Icon name="clock" size={20} />
-      </span>
-      <div className="cui-hours__text">
-        <p className="cui-hours__title">{t('dash_working_hours')}</p>
-        <p className="cui-hours__day">{fmtWeekdayDate(new Date(), locale, timeZone)}</p>
-      </div>
-      <div className="cui-hours__right">
-        {closed ? (
-          <span className="cui-hours__range is-closed">{t('customer_menu_closed_today')}</span>
-        ) : (
-          <span className="cui-hours__range" dir="ltr">
-            {today.open} – {today.close}
-          </span>
-        )}
+      <header className="cui-hours__head">
+        <span className="cui-hours__icon">
+          <Icon name="clock" size={17} />
+        </span>
+        <h2 className="cui-hours__title">{t('dash_working_hours')}</h2>
         {hours.valid ? (
           <span className={`cui-state ${hours.is_open ? 'is-open' : 'is-closed'}`}>
             <i aria-hidden="true" />
             {hours.is_open ? t('dash_open_now') : t('dash_closed_now')}
           </span>
         ) : null}
+      </header>
+
+      <div className="cui-hours__body">
+        <div className="cui-hours__date">
+          <Icon name="calendar" size={17} />
+          <span className="cui-hours__datetext">
+            <strong className="cui-hours__day">
+              {fmtWeekday(new Date(), locale, timeZone, { long: true })}
+            </strong>
+            <span className="cui-hours__fulldate">{fmtDate(new Date(), locale, timeZone)}</span>
+          </span>
+        </div>
+
+        <div className="cui-hours__time">
+          <Icon name="clock" size={16} />
+          {closed ? (
+            <span className="is-closed">{t('customer_menu_closed_today')}</span>
+          ) : (
+            <span dir="ltr">
+              {today.open} – {today.close}
+            </span>
+          )}
+        </div>
       </div>
     </section>
   );
