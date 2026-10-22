@@ -355,13 +355,8 @@
   max-height: min(58vh, 520px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-strong) transparent;
 }
 [dir='rtl'] .mclist { padding: 0 0 0 2px; }
-.mclist::-webkit-scrollbar { width: 6px; }
-.mclist::-webkit-scrollbar-track { background: transparent; }
-.mclist::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: var(--radius-pill); }
 
 .mrow {
   display: flex;

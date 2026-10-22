@@ -164,21 +164,6 @@
   list-style: none;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--primary) 26%, var(--border-strong)) transparent;
-}
-
-.lysel-pop__list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.lysel-pop__list::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 24%, var(--border-strong));
-}
-
-.lysel-pop__list::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 /* ------------------------------------------------------------------ rows */

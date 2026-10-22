@@ -405,14 +405,7 @@
   gap: 16px;
   padding: 16px 18px 18px;
   background: var(--um-body);
-  scrollbar-width: thin;
 }
-.um-modal__body::-webkit-scrollbar { width: 8px; }
-.um-modal__body::-webkit-scrollbar-thumb {
-  background: #d9ded4;
-  border-radius: 999px;
-}
-.um-modal__body::-webkit-scrollbar-track { background: transparent; }
 
 .um-error {
   padding: 9px 12px;
