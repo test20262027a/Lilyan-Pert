@@ -442,6 +442,9 @@
   color: var(--text-soft);
   text-decoration: none;
   vertical-align: middle;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
 }
 .orow-btn:hover { background: var(--surface-2); color: var(--mint-ink); }
 

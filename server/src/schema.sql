@@ -511,6 +511,41 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency text;
 
 CREATE INDEX IF NOT EXISTS orders_business_currency_idx ON orders (business_id, currency);
 
+-- Manual (staff-entered) discount on an order. Additive: orders saved before this
+-- carry no type/value and a zero amount, so their totals are unchanged.
+--
+-- `orders.discount` stays the ONE discount total of an order: a manual discount
+-- is written into it only when the order redeemed no coupon, because a coupon
+-- and a manual discount may never stack. The columns below keep the manual
+-- discount's own terms (what the administrator entered) and who entered it.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manual_discount_type text
+  CHECK (manual_discount_type IS NULL OR manual_discount_type IN ('fixed', 'percent'));
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manual_discount_value numeric(12,2)
+  CHECK (manual_discount_value IS NULL OR manual_discount_value >= 0);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manual_discount_amount numeric(12,2) NOT NULL DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manual_discount_currency text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manual_discount_by uuid REFERENCES users(id) ON DELETE SET NULL;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS manual_discount_at timestamptz;
+
+-- Append-only audit of manual discount changes, so the order's activity timeline
+-- can show what really happened (applied / changed / removed) and who did it.
+CREATE TABLE IF NOT EXISTS order_discount_history (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id     uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  order_id        uuid NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  action          text NOT NULL CHECK (action IN ('applied', 'changed', 'removed')),
+  discount_type   text CHECK (discount_type IS NULL OR discount_type IN ('fixed', 'percent')),
+  discount_value  numeric(12,2),
+  discount_amount numeric(12,2) NOT NULL DEFAULT 0,
+  total_before    numeric(12,2) NOT NULL DEFAULT 0,
+  total_after     numeric(12,2) NOT NULL DEFAULT 0,
+  currency        text,
+  actor_id        uuid REFERENCES users(id) ON DELETE SET NULL,
+  actor_name      text,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS odh_order_idx ON order_discount_history(order_id, created_at);
+
 -- One-time, audited data migrations. Each writes its own marker in app_settings,
 -- so re-running this schema (it runs on every boot) can never convert a price
 -- twice or overwrite a value the owner has since edited.

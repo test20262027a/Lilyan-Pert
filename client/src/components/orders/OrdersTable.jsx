@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import Icon from '../Icon';
 import { Money, StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
@@ -15,7 +14,7 @@ import OrderTableLabel from './OrderTableLabel';
  * The scroll wrapper keeps a narrow tablet usable without ever overflowing the
  * page; the row status menu is positioned fixed, so it is never clipped here.
  */
-export default function OrdersTable({ orders, currency, timeZone, busyId, linkState, onStatusChange }) {
+export default function OrdersTable({ orders, currency, timeZone, busyId, onView, onStatusChange }) {
   const { t, locale } = useI18n();
 
   return (
@@ -51,15 +50,15 @@ export default function OrdersTable({ orders, currency, timeZone, busyId, linkSt
                 <Money value={order.total} currency={currency} />
               </td>
               <td className="otable__actions">
-                <Link
+                <button
+                  type="button"
                   className="orow-btn"
-                  to={`/orders/${order.id}`}
-                  state={linkState}
+                  onClick={() => onView?.(order.id)}
                   aria-label={`${t('action_view')} #${order.order_number}`}
                   title={t('action_view')}
                 >
                   <Icon name="eye" size={15} />
-                </Link>
+                </button>
                 <StatusMenu
                   order={order}
                   busy={busyId === order.id}

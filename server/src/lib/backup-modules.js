@@ -122,6 +122,15 @@ const MODULE_DEFS = {
     columns: ['id', 'order_id', 'printed_by_name', 'printed_at'],
     dependsOn: ['orders'],
   },
+  order_discounts: {
+    exportMode: 'rows',
+    table: 'order_discount_history',
+    columns: [
+      'id', 'order_id', 'action', 'discount_type', 'discount_value', 'discount_amount',
+      'total_before', 'total_after', 'currency', 'actor_name', 'created_at',
+    ],
+    dependsOn: ['orders'],
+  },
   tables: {
     exportMode: 'rows',
     table: 'tables',
@@ -195,7 +204,7 @@ export const BACKUP_SECTIONS = [
   },
 
   { key: 'orders', category: 'orders', modules: ['orders', 'order_items'] },
-  { key: 'order_audit', category: 'order_history', modules: ['order_audit', 'receipt_prints'] },
+  { key: 'order_audit', category: 'order_history', modules: ['order_audit', 'receipt_prints', 'order_discounts'] },
 
   { key: 'tables', category: 'tables', modules: ['tables'] },
   { key: 'reviews', category: 'reviews', modules: ['reviews'] },

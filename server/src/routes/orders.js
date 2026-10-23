@@ -45,6 +45,30 @@ function assertEditable(order) {
   if (order.status === 'cancelled') throw conflict('ORDER_CANCELLED_LOCKED');
 }
 
+const MANUAL_DISCOUNT_TYPES = new Set(['fixed', 'percent']);
+
+/**
+ * The amount a manual discount really takes off, always derived from the
+ * order's own saved subtotal and its saved currency — never from a client-sent
+ * amount. A fixed discount can never exceed the subtotal, and a percentage is
+ * clamped to 0–100.
+ */
+function manualDiscountAmount(type, value, subtotal) {
+  const base = Math.max(0, Number(subtotal) || 0);
+  const entered = Number(value);
+  if (!Number.isFinite(entered) || entered <= 0) return 0;
+  if (type === 'percent') return round2((base * Math.min(100, entered)) / 100);
+  return round2(Math.min(base, entered));
+}
+
+/** Tax, service fee and total for a given subtotal and total discount. */
+function totalsAfterDiscount(subtotal, discount, business) {
+  const taxable = round2(Math.max(0, Number(subtotal) - Number(discount)));
+  const tax = round2((taxable * Number(business.tax_rate || 0)) / 100);
+  const service = round2((taxable * Number(business.service_charge_rate || 0)) / 100);
+  return { tax, service, total: round2(taxable + tax + service) };
+}
+
 /** List with date / status / receipt-number filters (all tenant-scoped). */
 router.get(
   '/',
@@ -161,8 +185,15 @@ router.get(
     const order = await loadOrder(req.businessId, req.params.id);
     const creator = await q('SELECT full_name, email FROM users WHERE id = $1', [order.created_by]);
     order.created_by_name = creator.rows[0]?.full_name || creator.rows[0]?.email || null;
-    const [items, history, prints, table] = await Promise.all([
-      q('SELECT * FROM order_items WHERE order_id = $1 ORDER BY id', [order.id]),
+    const [items, history, prints, discountHistory, table] = await Promise.all([
+      // The saved line is the history: its name and prices are never re-read
+      // from the product. Only the thumbnail is joined, purely for display.
+      q(
+        `SELECT i.*, p.image_url AS product_image
+           FROM order_items i LEFT JOIN products p ON p.id = i.product_id
+          WHERE i.order_id = $1 ORDER BY i.id`,
+        [order.id],
+      ),
       q(
         `SELECT h.*, u.email AS changed_by_email FROM order_status_history h
            LEFT JOIN users u ON u.id = h.changed_by
@@ -170,7 +201,10 @@ router.get(
         [order.id],
       ),
       q('SELECT * FROM receipt_prints WHERE order_id = $1 ORDER BY printed_at', [order.id]),
-      order.table_id ? q('SELECT id, name, zone FROM tables WHERE id = $1', [order.table_id]) : { rows: [] },
+      q('SELECT * FROM order_discount_history WHERE order_id = $1 ORDER BY created_at', [order.id]),
+      order.table_id
+        ? q('SELECT id, name, name_ku, name_fa, name_ar, name_en, zone FROM tables WHERE id = $1', [order.table_id])
+        : { rows: [] },
     ]);
     const business = await q('SELECT * FROM businesses WHERE id = $1', [req.businessId]);
     res.json({
@@ -178,6 +212,7 @@ router.get(
       items: items.rows,
       history: history.rows,
       prints: prints.rows,
+      discount_history: discountHistory.rows,
       // A deleted table falls back to the snapshot stored on the order.
       table: table.rows[0] || (order.table_name ? { id: null, name: order.table_name, zone: null } : null),
       business: business.rows[0],
@@ -442,6 +477,103 @@ router.patch(
   }),
 );
 
+/**
+ * Manual discount — the administrator's own discount on an order.
+ *
+ * A coupon that the guest really redeemed is authoritative and blocks this
+ * entirely, so a coupon and a manual discount can never stack. The amount is
+ * calculated here from the order's saved subtotal and currency; the client only
+ * names the type and the number the administrator typed.
+ */
+router.patch(
+  '/:id/discount',
+  withBusiness('staff'),
+  perm('orders.edit'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    assertEditable(order);
+    // `promotion_code` is only ever saved for a code that passed the pricing
+    // engine's full validation at checkout — a typed-in invalid code never
+    // reaches the order, so this detects a genuine coupon redemption.
+    if (order.promotion_code) throw conflict('MANUAL_DISCOUNT_COUPON');
+
+    const business = (
+      await q('SELECT tax_rate, service_charge_rate FROM businesses WHERE id = $1', [req.businessId])
+    ).rows[0];
+    const subtotal = Number(order.subtotal) || 0;
+    const remove = req.body?.remove === true;
+    const type = remove ? null : String(req.body?.type || '');
+    const rawValue = Number(req.body?.value);
+
+    if (!remove) {
+      if (!MANUAL_DISCOUNT_TYPES.has(type)) throw bad('INVALID_DISCOUNT_TYPE');
+      if (!Number.isFinite(rawValue) || rawValue <= 0) throw bad('INVALID_DISCOUNT');
+      if (type === 'percent' && rawValue > 100) throw bad('INVALID_DISCOUNT');
+      if (type === 'fixed' && rawValue > subtotal) throw bad('DISCOUNT_TOO_LARGE');
+    }
+
+    const amount = remove ? 0 : manualDiscountAmount(type, rawValue, subtotal);
+    if (!remove && amount <= 0) throw bad('INVALID_DISCOUNT');
+
+    // Pressing Apply twice with the same terms changes nothing and writes no
+    // second audit row.
+    const unchanged = remove
+      ? !order.manual_discount_type && Number(order.manual_discount_amount) === 0
+      : order.manual_discount_type === type && Number(order.manual_discount_value) === rawValue;
+    if (unchanged) return res.json({ order, unchanged: true });
+
+    const totals = totalsAfterDiscount(subtotal, amount, business);
+    const action = remove ? 'removed' : order.manual_discount_type ? 'changed' : 'applied';
+
+    const updated = await tx(async (c) => {
+      const { rows } = await c.query(
+        `UPDATE orders SET discount = $3, tax = $4, service_charge = $5, total = $6,
+                           manual_discount_type = $7, manual_discount_value = $8,
+                           manual_discount_amount = $9, manual_discount_currency = $10,
+                           manual_discount_by = $11, manual_discount_at = $12,
+                           updated_at = now()
+          WHERE id = $1 AND business_id = $2 RETURNING *`,
+        [
+          order.id,
+          req.businessId,
+          round2(amount),
+          totals.tax,
+          totals.service,
+          totals.total,
+          type,
+          remove ? null : round2(rawValue),
+          round2(amount),
+          order.currency || null,
+          remove ? null : req.user.id,
+          remove ? null : new Date(),
+        ],
+      );
+      await c.query(
+        `INSERT INTO order_discount_history
+           (business_id, order_id, action, discount_type, discount_value, discount_amount,
+            total_before, total_after, currency, actor_id, actor_name)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [
+          req.businessId,
+          order.id,
+          action,
+          type,
+          remove ? null : round2(rawValue),
+          round2(amount),
+          Number(order.total) || 0,
+          totals.total,
+          order.currency || null,
+          req.user.id,
+          req.user.full_name || req.user.email,
+        ],
+      );
+      return rows[0];
+    });
+
+    res.json({ order: updated, action, unchanged: false });
+  }),
+);
+
 /** Replaces the item list, recomputing every money value on the server. */
 router.put(
   '/:id/items',
@@ -491,20 +623,33 @@ router.put(
         );
       }
 
-      let discount = round2(Math.max(0, Number(req.body?.discount ?? order.discount) || 0));
-      if (req.body?.discount_type === 'percent') {
-        discount = round2((subtotal * Math.min(100, Number(req.body?.discount) || 0)) / 100);
+      /*
+       * Discounts survive an item edit: a redeemed coupon keeps its saved
+       * amount (never rewritten from the form), a manual discount is
+       * recalculated from its own saved terms against the new subtotal, and
+       * only an order with neither takes the form's own discount.
+       */
+      let discount;
+      let manualAmount = Number(order.manual_discount_amount) || 0;
+      if (order.promotion_code) {
+        discount = round2(Math.min(Number(order.discount) || 0, subtotal));
+      } else if (order.manual_discount_type) {
+        manualAmount = manualDiscountAmount(order.manual_discount_type, order.manual_discount_value, subtotal);
+        discount = manualAmount;
+      } else {
+        discount = round2(Math.max(0, Number(req.body?.discount ?? order.discount) || 0));
+        if (req.body?.discount_type === 'percent') {
+          discount = round2((subtotal * Math.min(100, Number(req.body?.discount) || 0)) / 100);
+        }
+        if (discount > subtotal) discount = subtotal;
       }
-      if (discount > subtotal) discount = subtotal;
-      const taxed = round2(subtotal - discount);
-      const tax = round2((taxed * Number(business.tax_rate || 0)) / 100);
-      const service = round2((taxed * Number(business.service_charge_rate || 0)) / 100);
-      const total = round2(taxed + tax + service);
+      const totals = totalsAfterDiscount(subtotal, discount, business);
 
       const { rows } = await c.query(
-        `UPDATE orders SET subtotal=$3, discount=$4, tax=$5, service_charge=$6, total=$7, updated_at=now()
+        `UPDATE orders SET subtotal=$3, discount=$4, tax=$5, service_charge=$6, total=$7,
+                           manual_discount_amount=$8, updated_at=now()
           WHERE id=$1 AND business_id=$2 RETURNING *`,
-        [order.id, req.businessId, subtotal, discount, tax, service, total],
+        [order.id, req.businessId, subtotal, discount, totals.tax, totals.service, totals.total, manualAmount],
       );
       return rows[0];
     });

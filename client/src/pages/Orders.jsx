@@ -23,6 +23,7 @@ import DateNav from '../components/orders/DateNav';
 import OrdersToolbar from '../components/orders/OrdersToolbar';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrdersCards from '../components/orders/OrdersCards';
+import OrderDetailsModal from '../components/orders/detail/OrderDetailsModal';
 import '../orders.css';
 
 /* The application's own authoritative status model — one list, no duplicates. */
@@ -56,6 +57,8 @@ export default function Orders() {
   const [list, setList] = useState({ orders: [], total: 0, loading: true, error: null });
   const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState(null);
+  /* The order opened in the details modal — the list stays mounted behind it. */
+  const [viewId, setViewId] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [tables, setTables] = useState([]);
@@ -199,14 +202,12 @@ export default function Orders() {
     if (query.trim()) p.set('q', query.trim());
     return `/orders?${p.toString()}`;
   })();
-  const linkState = useMemo(() => ({ from: backTo }), [backTo]);
-
   const listProps = {
     orders,
     currency,
     timeZone,
     busyId,
-    linkState,
+    onView: setViewId,
     onStatusChange: changeOrderStatus,
   };
 
@@ -280,6 +281,15 @@ export default function Orders() {
       </div>
 
       {!isManager ? <Alert kind="warning">{t('user_view_only')}</Alert> : null}
+
+      {viewId ? (
+        <OrderDetailsModal
+          orderId={viewId}
+          backTo={backTo}
+          onClose={() => setViewId(null)}
+          onChanged={() => load({ silent: true })}
+        />
+      ) : null}
 
       {createOpen ? (
         <CreateOrderModal

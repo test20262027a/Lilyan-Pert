@@ -1,0 +1,477 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import Icon from '../../Icon';
+import { ConfirmDialog, Loading, Money, StatusBadge, useToast } from '../../ui';
+import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../../Receipt';
+import OrdersArtwork from '../OrdersArtwork';
+import ManualDiscountCard from './ManualDiscountCard';
+import OrderStatusControl from './OrderStatusControl';
+import OrderActivityTimeline from './OrderActivityTimeline';
+import { localized, useI18n } from '../../../i18n';
+import { useAuth } from '../../../context/AuthContext';
+import { useBusiness } from '../../../context/BusinessContext';
+import { get, patch, post } from '../../../api';
+import { fmtDateTime, zoneFor } from '../../../format';
+import './orderDetails.css';
+
+/*
+ * The Order Details modal.
+ *
+ * It opens over the Orders page — the list, its filters, search, date and
+ * scroll position stay mounted behind it — and reads the same `/orders/:id`
+ * payload the standalone page used. Status changes and the manual discount go
+ * through the existing endpoints; the standalone route stays available for
+ * direct links and for the full edit screen.
+ *
+ * Closing never loses work silently: a typed-but-unapplied discount asks first.
+ */
+export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose, onChanged }) {
+  const { t, locale } = useI18n();
+  const { can } = useAuth();
+  const { business } = useBusiness();
+  const navigate = useNavigate();
+  const toast = useToast();
+
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [printing, setPrinting] = useState(false);
+  const [discountDirty, setDiscountDirty] = useState(false);
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const bodyRef = useRef(null);
+
+  const load = useCallback(
+    async ({ silent = false } = {}) => {
+      if (!silent) setLoading(true);
+      try {
+        const res = await get(`/orders/${orderId}`);
+        setData(res);
+        setFailed(false);
+      } catch {
+        setFailed(true);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [orderId],
+  );
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  /* The modal owns the page while it is open, exactly like the shared Modal. */
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  useEffect(() => {
+    const after = () => setPrinting(false);
+    window.addEventListener('afterprint', after);
+    return () => window.removeEventListener('afterprint', after);
+  }, []);
+
+  const order = data?.order;
+  const items = data?.items || [];
+  const currency = order?.currency || data?.business?.currency || business?.currency || 'IQD';
+  const timeZone = zoneFor(locale, business?.timezone || data?.business?.timezone);
+  const locked = order ? ['completed', 'cancelled'].includes(order.status) : false;
+  const canEdit = can('orders.edit');
+
+  const requestClose = useCallback(() => {
+    if (discountDirty) setConfirmDiscard(true);
+    else onClose();
+  }, [discountDirty, onClose]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === 'Escape') requestClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [requestClose]);
+
+  const handleDirty = useCallback((next) => setDiscountDirty(next), []);
+
+  const refresh = async () => {
+    await load({ silent: true });
+    onChanged?.();
+  };
+
+  const changeStatus = async (status) => {
+    setBusy(true);
+    try {
+      await patch(`/orders/${orderId}/status`, { status });
+      toast.success(t('order_status_updated'));
+      await refresh();
+    } catch (err) {
+      toast.error(
+        err.code === 'INVALID_STATUS_TRANSITION' ? t('error_invalid_transition') : t('error_generic'),
+      );
+      await load({ silent: true });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const applyDiscount = async ({ type, value }) => {
+    setBusy(true);
+    try {
+      await patch(`/orders/${orderId}/discount`, { type, value });
+      setDiscountDirty(false);
+      toast.success(t('od_discount_applied'));
+      await refresh();
+    } catch (err) {
+      toast.error(
+        err.code === 'MANUAL_DISCOUNT_COUPON'
+          ? t('od_coupon_lock')
+          : err.code === 'DISCOUNT_TOO_LARGE'
+            ? t('od_discount_too_large')
+            : err.code === 'INVALID_DISCOUNT' || err.code === 'INVALID_DISCOUNT_TYPE'
+              ? t('od_discount_invalid')
+              : err.code === 'ORDER_COMPLETED_LOCKED' || err.code === 'ORDER_CANCELLED_LOCKED'
+                ? t('error_order_locked')
+                : t('error_generic'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeDiscount = async () => {
+    setBusy(true);
+    try {
+      await patch(`/orders/${orderId}/discount`, { remove: true });
+      setDiscountDirty(false);
+      toast.success(t('od_discount_removed'));
+      await refresh();
+    } catch (err) {
+      toast.error(
+        err.code === 'ORDER_COMPLETED_LOCKED' || err.code === 'ORDER_CANCELLED_LOCKED'
+          ? t('error_order_locked')
+          : t('error_generic'),
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const doPrint = async () => {
+    setBusy(true);
+    try {
+      // The same append-only print audit the standalone page writes.
+      await post(`/orders/${orderId}/print`, {});
+      setPrinting(true);
+      setTimeout(() => window.print(), 80);
+      await load({ silent: true });
+    } catch {
+      toast.error(t('error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editOrder = () => {
+    onClose?.();
+    navigate(`/orders/${orderId}`, { state: { from: backTo } });
+  };
+
+  const tableName = useMemo(() => {
+    const table = data?.table;
+    if (!table) return '';
+    return localized(table, 'name', locale) || table.name || '';
+  }, [data, locale]);
+
+  const tableSource =
+    order?.table_source === 'qr'
+      ? t('od_table_qr')
+      : order?.table_source === 'manual'
+        ? t('od_table_manual')
+        : null;
+
+  const manualAmount = Number(order?.manual_discount_amount) || 0;
+
+  return (
+    <div
+      className="odm-backdrop"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) requestClose();
+      }}
+    >
+      <section className="odm" role="dialog" aria-modal="true" aria-label={t('od_title')}>
+        <header className="odm__head">
+          <div className="odm__art" aria-hidden="true">
+            <OrdersArtwork />
+          </div>
+          <div className="odm__head-row">
+            <span className="odm__head-icon">
+              <Icon name="receipt" size={19} />
+            </span>
+            <div className="odm__head-text">
+              <h2 className="odm__title">{t('od_title')}</h2>
+              {order ? <p className="odm__subtitle">#{order.order_number}</p> : null}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="odm__close"
+            onClick={requestClose}
+            aria-label={t('action_close')}
+            title={t('action_close')}
+          >
+            <Icon name="close" size={17} />
+          </button>
+        </header>
+
+        <div className="odm__body" ref={bodyRef}>
+          {loading && !data ? (
+            <div className="odm__state">
+              <Loading />
+            </div>
+          ) : failed || !order ? (
+            <div className="odm__state">
+              <Icon name="alert" size={22} />
+              <p>{t('error_not_found')}</p>
+            </div>
+          ) : (
+            <>
+              {/* 1 — order number, status, dates */}
+              <div className="odm-identity">
+                <div className="odm-identity__main">
+                  <span className="odm-identity__label">{t('order_number')}</span>
+                  <strong className="odm-identity__no">#{order.order_number}</strong>
+                </div>
+                <StatusBadge status={order.status} />
+              </div>
+              <div className="odm-dates">
+                <span>
+                  <Icon name="calendar" size={12} />
+                  {t('od_created')} · {fmtDateTime(order.created_at, locale, timeZone)}
+                </span>
+                <span>
+                  <Icon name="clock" size={12} />
+                  {t('od_updated')} · {fmtDateTime(order.updated_at, locale, timeZone)}
+                </span>
+              </div>
+
+              {locked ? (
+                <div className="odm-note odm-note--warning">
+                  <Icon name="lock" size={14} />
+                  {order.status === 'completed' ? t('order_completed_lock_hint') : t('order_locked')}
+                </div>
+              ) : null}
+
+              {/* 2 — table */}
+              <div className={`odm-card odm-table ${tableName ? '' : 'is-neutral'}`}>
+                <span className="odm-table__icon">
+                  <Icon name="table" size={18} />
+                </span>
+                <div className="odm-table__text">
+                  <span className="odm-table__label">{t('od_table')}</span>
+                  <strong className="odm-table__name">{tableName || t('od_no_table')}</strong>
+                  {tableSource ? <span className="odm-table__source">{tableSource}</span> : null}
+                </div>
+              </div>
+
+              {/* 3 — ordered items */}
+              <section className="odm-card">
+                <header className="odm-card__head">
+                  <span className="odm-card__icon">
+                    <Icon name="coffee" size={16} />
+                  </span>
+                  <h3 className="odm-card__title">{t('od_products')}</h3>
+                  <span className="odm-card__count">{items.length}</span>
+                </header>
+                <ul className="odm-items">
+                  {items.map((item) => (
+                    <li className="odm-item" key={item.id}>
+                      <span className="odm-item__thumb">
+                        {item.product_image ? (
+                          <img src={item.product_image} alt="" loading="lazy" />
+                        ) : (
+                          <Icon name="coffee" size={17} />
+                        )}
+                      </span>
+                      <div className="odm-item__main">
+                        <span className="odm-item__name">{item.name}</span>
+                        <span className="odm-item__meta">
+                          {item.quantity} × <Money value={item.unit_price} currency={currency} />
+                        </span>
+                        {item.notes ? <span className="odm-item__note">{item.notes}</span> : null}
+                      </div>
+                      <span className="odm-item__total">
+                        <Money value={item.line_total} currency={currency} />
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* 4 — manual discount */}
+              <ManualDiscountCard
+                key={`${order.manual_discount_type}-${order.manual_discount_amount}`}
+                order={order}
+                business={data.business}
+                currency={currency}
+                canEdit={canEdit}
+                busy={busy}
+                onApply={applyDiscount}
+                onRemove={removeDiscount}
+                onDirtyChange={handleDirty}
+              />
+
+              {/* 5 — financial summary */}
+              <section className="odm-card odm-summary">
+                <header className="odm-card__head">
+                  <span className="odm-card__icon">
+                    <Icon name="wallet" size={16} />
+                  </span>
+                  <h3 className="odm-card__title">{t('od_summary')}</h3>
+                </header>
+                <div className="odm-summary__row">
+                  <span>{t('order_subtotal')}</span>
+                  <Money value={order.subtotal} currency={currency} />
+                </div>
+                {order.promotion_code ? (
+                  <div className="odm-summary__row">
+                    <span className="odm-summary__tag">
+                      <Icon name="tag" size={12} />
+                      {t('od_coupon_applied')} · {order.promotion_code}
+                    </span>
+                    <span className="odm-summary__minus">
+                      −<Money value={order.discount} currency={currency} />
+                    </span>
+                  </div>
+                ) : null}
+                {!order.promotion_code && manualAmount > 0 ? (
+                  <div className="odm-summary__row">
+                    <span className="odm-summary__tag">
+                      <Icon name="percent" size={12} />
+                      {t('od_manual_discount')}
+                      {order.manual_discount_type === 'percent'
+                        ? ` · ${Number(order.manual_discount_value) || 0}%`
+                        : ''}
+                    </span>
+                    <span className="odm-summary__minus">
+                      −<Money value={manualAmount} currency={currency} />
+                    </span>
+                  </div>
+                ) : null}
+                {Number(order.tax) > 0 ? (
+                  <div className="odm-summary__row">
+                    <span>{t('order_tax')}</span>
+                    <Money value={order.tax} currency={currency} />
+                  </div>
+                ) : null}
+                {Number(order.service_charge) > 0 ? (
+                  <div className="odm-summary__row">
+                    <span>{t('order_service')}</span>
+                    <Money value={order.service_charge} currency={currency} />
+                  </div>
+                ) : null}
+                <div className="odm-summary__grand">
+                  <span>{t('order_grand_total')}</span>
+                  <strong>
+                    <Money value={order.total} currency={currency} />
+                  </strong>
+                </div>
+              </section>
+
+              {/* 6 — status workflow (same endpoint, restyled only) */}
+              <section className="odm-card">
+                <header className="odm-card__head">
+                  <span className="odm-card__icon">
+                    <Icon name="refresh" size={16} />
+                  </span>
+                  <h3 className="odm-card__title">{t('od_status')}</h3>
+                </header>
+                <OrderStatusControl
+                  order={order}
+                  transitions={data.allowed_transitions || []}
+                  busy={busy}
+                  onChange={changeStatus}
+                />
+              </section>
+
+              {/* 7 — real activity */}
+              <section className="odm-card">
+                <header className="odm-card__head">
+                  <span className="odm-card__icon">
+                    <Icon name="history" size={16} />
+                  </span>
+                  <h3 className="odm-card__title">{t('od_activity')}</h3>
+                </header>
+                <OrderActivityTimeline
+                  order={order}
+                  history={data.history || []}
+                  prints={data.prints || []}
+                  discounts={data.discount_history || []}
+                  currency={currency}
+                  timeZone={timeZone}
+                />
+              </section>
+            </>
+          )}
+        </div>
+
+        <footer className="odm__foot">
+          <button
+            type="button"
+            className="odm__foot-btn"
+            onClick={editOrder}
+            disabled={!order || locked || !canEdit || busy}
+            title={!canEdit || locked ? t('od_cannot_edit') : t('od_edit')}
+          >
+            <Icon name="pencil" size={15} />
+            {t('od_edit')}
+          </button>
+          <button
+            type="button"
+            className="odm__foot-btn odm__foot-btn--primary"
+            onClick={doPrint}
+            disabled={!order || busy}
+          >
+            {busy ? <span className="spinner" /> : <Icon name="print" size={15} />}
+            {t('od_print')}
+          </button>
+        </footer>
+      </section>
+
+      {confirmDiscard ? (
+        <ConfirmDialog
+          title={t('od_unsaved_title')}
+          message={t('od_unsaved_message')}
+          confirmLabel={t('od_discard')}
+          danger
+          onCancel={() => setConfirmDiscard(false)}
+          onConfirm={() => {
+            setConfirmDiscard(false);
+            onClose?.();
+          }}
+        />
+      ) : null}
+
+      {printing && data ? (
+        <PrintPortal>
+          <ReceiptPrintStyle settings={data.business?.receipt_settings} />
+          <ReceiptPaper
+            data={{
+              ...data,
+              history: data.history,
+              // The receipt prints the currency the order was really saved in.
+              business: { ...data.business, currency },
+            }}
+            locale={locale}
+            t={t}
+            showChangeInfo
+          />
+        </PrintPortal>
+      ) : null}
+    </div>
+  );
+}

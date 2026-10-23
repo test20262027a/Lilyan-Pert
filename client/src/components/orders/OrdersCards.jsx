@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import Icon from '../Icon';
 import { Money, StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
@@ -11,7 +10,7 @@ import OrderTableLabel from './OrderTableLabel';
  * table, customer, amount, status and both actions — because seven columns
  * cannot stay readable on a small screen. No information is dropped.
  */
-export default function OrdersCards({ orders, currency, timeZone, busyId, linkState, onStatusChange }) {
+export default function OrdersCards({ orders, currency, timeZone, busyId, onView, onStatusChange }) {
   const { t, locale } = useI18n();
 
   return (
@@ -34,15 +33,15 @@ export default function OrdersCards({ orders, currency, timeZone, busyId, linkSt
           </div>
 
           <div className="ocard__foot">
-            <Link
+            <button
+              type="button"
               className="orow-btn"
-              to={`/orders/${order.id}`}
-              state={linkState}
+              onClick={() => onView?.(order.id)}
               aria-label={`${t('action_view')} #${order.order_number}`}
               title={t('action_view')}
             >
               <Icon name="eye" size={15} />
-            </Link>
+            </button>
             <StatusMenu
               order={order}
               busy={busyId === order.id}
