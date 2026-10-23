@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon';
 import { Alert, Select } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import { toZonedInput } from '../../format';
-import { uploadImage } from '../../api';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
+import AdImageField from './AdImageField';
 import { adErrorText } from './errorText';
 import { AdModalArtwork } from './AdsArtwork';
 
@@ -14,9 +15,6 @@ import { AdModalArtwork } from './AdsArtwork';
  * exactly that arrangement and mirrors naturally under English LTR.
  */
 const CARD_ORDER = ['en', 'ku', 'fa', 'ar'];
-
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_BYTES = 8 * 1024 * 1024;
 
 const languageOf = (code) => LOCALES.find((l) => l.code === code) || { label: code, rtl: false };
 
@@ -63,9 +61,7 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
   const [initial] = useState(() => JSON.stringify(initialValues(modal.values || {}, timeZone)));
   const [localError, setLocalError] = useState(null);
   const [uploading, setUploading] = useState(false);
-  const [dragOver, setDragOver] = useState(false);
   const [askDiscard, setAskDiscard] = useState(false);
-  const fileInput = useRef(null);
 
   const dirty = useMemo(() => JSON.stringify(values) !== initial, [values, initial]);
   const shownError = localError || error;
@@ -94,29 +90,6 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
       document.body.style.overflow = previous;
     };
   });
-
-  const pickImage = async (fileList) => {
-    const file = fileList?.[0];
-    if (!file) return;
-    if (!ACCEPTED.includes(file.type)) {
-      setLocalError('INVALID_IMAGE');
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      setLocalError('IMAGE_TOO_LARGE');
-      return;
-    }
-    setUploading(true);
-    setLocalError(null);
-    try {
-      const url = await uploadImage(file);
-      setValues((state) => ({ ...state, image_url: url }));
-    } catch (err) {
-      setLocalError(err?.code === 'IMAGE_TOO_LARGE' ? 'IMAGE_TOO_LARGE' : 'INVALID_IMAGE');
-    } finally {
-      setUploading(false);
-    }
-  };
 
   // A chosen category narrows the product list to that category's own products.
   const visibleProducts = useMemo(

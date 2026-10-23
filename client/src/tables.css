@@ -444,13 +444,7 @@
 .tform__vip .switch__track { background: #d3d8d3; }
 .tform__vip .switch input:checked + .switch__track { background: var(--mm-green); }
 
-/* Two name cards stay readable side by side on a phone, so this dialog keeps
-   them side by side and only stacks them once a card would be too narrow. */
-.tform .mcmodal__langs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-
-@media (max-width: 340px) {
-  .tform .mcmodal__langs { grid-template-columns: minmax(0, 1fr); }
-}
+/* The name cards' columns come from LanguageFieldsGrid (see languageGrid.css). */
 
 @media (max-width: 560px) {
   .tform .mcmodal__head { min-height: 118px; padding: 15px; padding-inline-end: 58px; }

@@ -260,10 +260,8 @@
 
 /* ------------------------------------------------------ language fields */
 
+/* Columns come from LanguageFieldsGrid (only enabled languages are rendered). */
 .tx-langs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
   padding-top: 11px;
   border-top: 1px dashed var(--border);
 }
@@ -383,10 +381,6 @@
 
 /* ----------------------------------------------------------- responsive */
 
-@media (max-width: 1120px) {
-  .tx-langs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
 @media (max-width: 860px) {
   .tx-hero .tx-art { max-width: 420px; }
   .tx-conflict { flex-wrap: wrap; }
@@ -394,7 +388,6 @@
 }
 
 @media (max-width: 640px) {
-  .tx-langs { grid-template-columns: minmax(0, 1fr); }
   .tx-lang__input { min-height: 82px; }
   .tx-row__label { gap: 5px; }
   .tx-search { padding: 0 11px; }
