@@ -16,6 +16,7 @@ import {
   useToast,
 } from '../components/ui';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
+import OrderTableLabel from '../components/orders/OrderTableLabel';
 import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get, patch, post, put } from '../api';
@@ -232,7 +233,9 @@ export default function OrderDetail() {
             </div>
             <div className="totals__row">
               <span>{t('label_table')}</span>
-              <span>{data.table?.name || '—'}</span>
+              <span>
+                <OrderTableLabel name={data.table?.name} source={order.table_source} />
+              </span>
             </div>
             <div className="totals__row">
               <span>{t('order_changed_by')}</span>

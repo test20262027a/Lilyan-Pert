@@ -4,6 +4,7 @@ import { Money, StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDate, fmtTime } from '../../format';
 import StatusMenu from './StatusMenu';
+import OrderTableLabel from './OrderTableLabel';
 
 /*
  * Seven-column orders table, laid out right-to-left exactly as the reference:
@@ -40,7 +41,9 @@ export default function OrdersTable({ orders, currency, timeZone, busyId, linkSt
                 <span>{fmtTime(order.created_at, locale, timeZone)}</span>
               </td>
               <td className="otable__customer">{order.customer_name || '—'}</td>
-              <td>{order.table_name || '—'}</td>
+              <td>
+                <OrderTableLabel name={order.table_name} source={order.table_source} />
+              </td>
               <td>
                 <StatusBadge status={order.status} />
               </td>

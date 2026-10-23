@@ -4,6 +4,7 @@ import { Money, StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDate, fmtTime } from '../../format';
 import StatusMenu from './StatusMenu';
+import OrderTableLabel from './OrderTableLabel';
 
 /*
  * Phone layout: the same order kept as a compact card — number, date/time,
@@ -28,7 +29,7 @@ export default function OrdersCards({ orders, currency, timeZone, busyId, linkSt
           <div className="ocard__meta">
             <span>{fmtDate(order.created_at, locale, timeZone, { short: true })}</span>
             <span>{fmtTime(order.created_at, locale, timeZone)}</span>
-            <span>{order.table_name || t('label_none')}</span>
+            <OrderTableLabel name={order.table_name} source={order.table_source} />
             <span>{order.customer_name || '—'}</span>
           </div>
 
