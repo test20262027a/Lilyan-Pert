@@ -462,6 +462,10 @@
 }
 .cui-note--center { justify-content: center; margin-top: 8px; }
 .cui-note svg { color: color-mix(in srgb, var(--primary) 70%, var(--muted)); }
+/* A blocked state the guest has to act on (no table could be identified). */
+.cui-note--warn { color: #c0362e; font-weight: 720; }
+[data-theme='dark'] .cui-note--warn { color: #ffb0a8; }
+.cui-note--warn svg { color: inherit; }
 
 /* -------------------------------------------------------------- footer --- */
 

@@ -334,6 +334,12 @@ ALTER TABLE products ADD COLUMN IF NOT EXISTS price_en numeric(12,2) CHECK (pric
 -- to this snapshot.
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_name text;
 
+-- How that table was identified: the guest scanned the table's own QR code
+-- ('qr') or someone picked it in the order form ('manual'). NULL for orders
+-- without a table and for every order saved before this column existed.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS table_source text
+  CHECK (table_source IS NULL OR table_source IN ('qr', 'manual'));
+
 -- Table identity fields carried by the Add / Edit Table form. All additive, so
 -- existing tables keep their values and simply gain the new ones.
 --

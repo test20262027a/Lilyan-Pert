@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
-import { Money, Select, useToast } from '../ui';
+import { Money, useToast } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { post } from '../../api';
 import { ConfirmSurface } from '../confirm/DeleteConfirmationDialog';
 import { CartArtwork } from './CustomerArtwork';
+import TableField from './TableField';
 import '../../customerModals.css';
 
 /*
@@ -26,8 +27,10 @@ export default function CartPanel({
   busy,
   canCheckout,
   canOrder,
-  tableMissing,
-  needsTableChoice,
+  /* The table already resolved from a scanned QR code, if there is one. */
+  qrTable,
+  /* 'resolved' | 'invalid' | 'missing' | 'none' — how the QR link resolved. */
+  tableState,
   tables,
   tableId,
   onTable,
@@ -153,12 +156,17 @@ export default function CartPanel({
   const service = quote?.service ?? 0;
   const total = quote?.total ?? localSubtotal;
 
-  const tableReady = !needsTableChoice || Boolean(tableId);
-  const canSubmit = canOrder && tableReady && !isEmpty;
-  const tableOptions = (tables || []).map((row) => ({
-    value: row.id,
-    label: row.zone ? `${row.name} · ${row.zone}` : row.name,
-  }));
+  /*
+   * One validation flow for the whole sheet. A QR table is authoritative; a
+   * manual choice only counts while it is one of the business's own active
+   * tables, so a stale id can never enable the button — and the button is the
+   * only way to submit, so no order is created without a valid table reference.
+   */
+  const tableList = tables || [];
+  const validatedTableId = qrTable?.id
+    || (tableList.some((row) => row.id === tableId) ? tableId : '');
+  const tableReady = Boolean(validatedTableId);
+  const canSubmit = canOrder && tableReady && !isEmpty && !busy && !submitted;
 
   const submit = async () => {
     if (submitted || busy) return;
@@ -283,20 +291,18 @@ export default function CartPanel({
 
               {canCheckout ? (
                 <div className="cui-form">
-                  {needsTableChoice ? (
-                    <label className="cui-field">
-                      <span className="cui-field__label">
-                        <Icon name="table" size={14} />
-                        {t('customer_menu_cart_table')}
-                      </span>
-                      <Select
-                        value={tableId}
-                        onChange={onTable}
-                        options={tableOptions}
-                        placeholder={t('customer_menu_cart_table_placeholder')}
-                        ariaLabel={t('customer_table_select')}
-                      />
-                    </label>
+                  {/* A table resolved from the scanned QR code is final and
+                      read-only; otherwise the guest picks one of the business's
+                      own active tables. */}
+                  {qrTable ? (
+                    <TableField mode="auto" table={qrTable} />
+                  ) : tableList.length > 0 ? (
+                    <TableField
+                      mode="manual"
+                      tables={tableList}
+                      value={validatedTableId}
+                      onChange={onTable}
+                    />
                   ) : null}
 
                   <label className="cui-field">
@@ -397,10 +403,14 @@ export default function CartPanel({
                 </p>
               )}
 
-              {tableMissing ? (
-                <p className="cui-note">
-                  <Icon name="info" size={14} />
-                  {t('customer_table_missing')}
+              {/* No table was identified and this menu offers no manual choice:
+                  there is nothing to attach the order to, so it stays blocked. */}
+              {!qrTable && tableList.length === 0 ? (
+                <p className="cui-note cui-note--warn">
+                  <Icon name="alert" size={14} />
+                  {tableState === 'invalid'
+                    ? t('customer_table_invalid')
+                    : t('customer_table_scan_required')}
                 </p>
               ) : null}
 

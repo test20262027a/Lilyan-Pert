@@ -87,11 +87,18 @@ router.get(
       tableState = table ? 'resolved' : 'invalid';
     }
 
-    // Only the two modes that let a guest choose need the business's table list.
+    /*
+     * The main ordering menu always lets the guest pick a table inside the
+     * order form; the QR menu only offers the list when its configured mode
+     * allows a manual choice. Only active tables are ever listed, with the
+     * localized names and printed number the form shows.
+     */
     let tables = [];
-    if (menu.context === 'qr' && menu.table_mode !== 'qr') {
+    if (menu.context === 'main' || menu.table_mode !== 'qr') {
       const rows = await q(
-        'SELECT id, name, zone FROM tables WHERE business_id = $1 AND active = true ORDER BY name',
+        `SELECT id, name, table_number, zone, name_ku, name_fa, name_ar, name_en
+           FROM tables WHERE business_id = $1 AND active = true
+          ORDER BY display_order, name`,
         [business.id],
       );
       tables = rows.rows;
@@ -401,6 +408,8 @@ router.post(
        * token nor another tenant's table can be attached to an order.
        */
       let table = null;
+      // How the table was identified — kept on the order for the admin panel.
+      let tableSource = null;
       const mode = menu.table_mode;
       if (req.body?.table_token && mode !== 'manual') {
         const t = await c.query(
@@ -409,6 +418,7 @@ router.post(
         );
         table = t.rows[0] || null;
         if (!table) throw bad('INVALID_TABLE');
+        tableSource = 'qr';
       }
       if (!table && req.body?.table_id && mode !== 'qr') {
         if (!isUuid(String(req.body.table_id))) throw bad('INVALID_TABLE');
@@ -418,6 +428,7 @@ router.post(
         );
         table = t.rows[0] || null;
         if (!table) throw bad('INVALID_TABLE');
+        tableSource = 'manual';
       }
 
       /*
@@ -441,15 +452,16 @@ router.post(
       const orderNumber = seq.rows[0].order_seq;
 
       const order = await c.query(
-        `INSERT INTO orders (business_id, table_id, table_name, order_number, status, channel, customer_name,
-                             customer_phone, notes, subtotal, discount, tax, service_charge, total,
+        `INSERT INTO orders (business_id, table_id, table_name, table_source, order_number, status, channel,
+                             customer_name, customer_phone, notes, subtotal, discount, tax, service_charge, total,
                              promotion_id, promotion_code, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,'pending','customer',$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,now(),now())
+         VALUES ($1,$2,$3,$4,$5,'pending','customer',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,now(),now())
          RETURNING *`,
         [
           business.id,
           table?.id || null,
           table?.name || null,
+          tableSource,
           orderNumber,
           req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null,
           req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,

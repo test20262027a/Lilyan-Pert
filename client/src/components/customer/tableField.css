@@ -1,0 +1,278 @@
+/*
+ * The table block inside the customer order sheet (see TableField.jsx).
+ *
+ * Two faces of one field: a premium searchable dropdown for the manual choice
+ * and a read-only verified panel when the table came from a scanned QR code.
+ * Everything is tinted from the active business theme (`--primary` and the
+ * shared `--lysel-*` dropdown tokens), so all five themes repaint it.
+ */
+
+.tfield { display: flex; flex-direction: column; gap: 5px; }
+
+.tfield__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 760;
+  color: var(--muted);
+}
+.tfield__label svg { color: color-mix(in srgb, var(--primary) 72%, var(--muted)); }
+
+/* --------------------------------------------------------------- trigger */
+
+.tfield__trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 46px;
+  padding: 0 12px;
+  border: 1px solid var(--cui-sheet-line);
+  border-radius: 13px;
+  background: color-mix(in srgb, var(--surface-2) 88%, var(--surface));
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 620;
+  text-align: start;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 42%, transparent);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+[data-theme='dark'] .tfield__trigger {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.tfield__trigger:hover {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+}
+.tfield__trigger:focus-visible,
+.tfield__trigger.is-open {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: var(--surface);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.tfield__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  color: color-mix(in srgb, var(--primary) 82%, var(--text));
+  background: color-mix(in srgb, var(--primary) 13%, var(--surface));
+}
+.tfield__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+.tfield__value strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 700;
+}
+.tfield__value small {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 780;
+  color: color-mix(in srgb, var(--primary) 86%, var(--text));
+  background: color-mix(in srgb, var(--primary) 15%, var(--surface));
+}
+.tfield__value.is-placeholder { color: var(--muted); font-weight: 560; }
+.tfield__chevron {
+  flex: none;
+  color: var(--muted);
+  transition: transform 170ms cubic-bezier(0.2, 0.7, 0.3, 1), color 160ms ease;
+}
+.tfield__trigger.is-open .tfield__chevron { color: var(--primary); transform: rotate(180deg); }
+
+/* ------------------------------------------------------------ auto panel */
+
+.tfield__auto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 8px 11px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, #2f9e5c 34%, var(--cui-sheet-line));
+  background: color-mix(in srgb, #2f9e5c 8%, var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent);
+}
+.tfield__autoicon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: #1f7a45;
+  background: color-mix(in srgb, #2f9e5c 16%, var(--surface));
+}
+[data-theme='dark'] .tfield__autoicon { color: #7fe0a8; }
+.tfield__autotext {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tfield__autotext strong {
+  font-size: 13.5px;
+  font-weight: 780;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tfield__autotext small {
+  font-size: 10.8px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.tfield__verified {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: #2f9e5c;
+}
+
+/* ----------------------------------------------------------------- panel */
+
+.tfield-pop {
+  position: fixed;
+  /* Above the order sheet (80–95), below the delete dialog and toasts. */
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 7px;
+  border: 1px solid var(--lysel-border);
+  border-radius: var(--lysel-radius);
+  background: var(--lysel-bg);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--lysel-shadow);
+  transform-origin: top center;
+  animation: tfield-open 170ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@keyframes tfield-open {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+}
+
+.tfield-pop__search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  margin-bottom: 6px;
+  padding: 0 9px;
+  min-height: 38px;
+  border-radius: var(--lysel-row-radius);
+  border: 1px solid var(--cui-sheet-line);
+  background: color-mix(in srgb, var(--surface-2) 86%, var(--surface));
+  color: var(--muted);
+}
+.tfield-pop__search:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+.tfield-pop__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  outline: none;
+}
+
+.tfield-pop__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.tfield-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--lysel-row-height);
+  padding: 0 10px;
+  border-radius: var(--lysel-row-radius);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 560;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+.tfield-opt + .tfield-opt { margin-top: 2px; }
+.tfield-opt:hover { background: var(--lysel-row-hover); }
+.tfield-opt.is-selected {
+  background: var(--lysel-row-selected);
+  color: color-mix(in srgb, var(--primary) 86%, var(--text));
+  font-weight: 700;
+}
+.tfield-opt__lead {
+  display: inline-flex;
+  flex: none;
+  color: color-mix(in srgb, var(--primary) 74%, var(--muted));
+}
+.tfield-opt__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+.tfield-opt__text strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: inherit;
+}
+.tfield-opt__text small {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 780;
+  color: color-mix(in srgb, var(--primary) 86%, var(--text));
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+}
+/* The check keeps its slot in every row, so selection never shifts the text. */
+.tfield-opt__check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.tfield-opt.is-selected .tfield-opt__check { opacity: 1; }
+
+.tfield-pop__empty {
+  margin: 0;
+  padding: 12px 10px;
+  font-size: 12px;
+  font-weight: 620;
+  color: var(--muted);
+  text-align: center;
+}

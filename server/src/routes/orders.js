@@ -245,10 +245,12 @@ router.post(
     const result = await tx(async (c) => {
       let table = null;
       if (req.body?.table_id) {
-        const t = await c.query('SELECT id, name FROM tables WHERE id = $1 AND business_id = $2', [
-          req.body.table_id,
-          req.businessId,
-        ]);
+        // Only this business's own active table may be attached — a deleted or
+        // deactivated table is rejected instead of being guessed at.
+        const t = await c.query(
+          'SELECT id, name FROM tables WHERE id = $1 AND business_id = $2 AND active = true',
+          [req.body.table_id, req.businessId],
+        );
         if (!t.rows[0]) throw bad('INVALID_TABLE');
         table = t.rows[0];
       }
@@ -297,13 +299,15 @@ router.post(
       );
 
       const order = await c.query(
-        `INSERT INTO orders (business_id, table_id, table_name, order_number, status, channel, customer_name,
-                             customer_phone, notes, subtotal, discount, tax, service_charge, total, created_by)
-         VALUES ($1,$2,$3,$4,'pending','staff',$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
+        `INSERT INTO orders (business_id, table_id, table_name, table_source, order_number, status, channel,
+                             customer_name, customer_phone, notes, subtotal, discount, tax, service_charge, total,
+                             created_by)
+         VALUES ($1,$2,$3,$4,$5,'pending','staff',$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
         [
           req.businessId,
           table?.id || null,
           table?.name || null,
+          table ? 'manual' : null,
           seq.rows[0].order_seq,
           req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null,
           req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,

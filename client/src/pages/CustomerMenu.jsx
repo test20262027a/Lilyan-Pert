@@ -62,8 +62,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
   const storageKey = `lilyan.cart.${key}`;
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
     try {
       const url = new URL(`/api/public/menu/${key}`, window.location.origin);
       // The in-store ordering menu is the "main" context; a public visitor is "qr".
@@ -84,6 +84,20 @@ export default function CustomerMenu({ slug, adminMode = false }) {
 
   useEffect(() => {
     load();
+  }, [load]);
+
+  /*
+   * Menu Settings and the featured flags are saved on the server, so the menu
+   * re-reads them — without a spinner or losing the cart — whenever the guest
+   * comes back to this tab. That is how an Admin change reaches an open Customer
+   * Panel: a section appears or disappears with the next look at the page.
+   */
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') load({ silent: true });
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => document.removeEventListener('visibilitychange', onVisible);
   }, [load]);
 
   /*
@@ -116,6 +130,29 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(cart));
   }, [cart, storageKey]);
+
+  /*
+   * A manually chosen table survives a reload, but only while it is still one of
+   * this business's active tables — a deleted or deactivated table is dropped
+   * instead of silently ordering to it. A QR session never inherits it: the QR
+   * table is resolved from the scanned token on the server, not from storage.
+   */
+  const tableStoreKey = `lilyan.table.${key}`;
+  useEffect(() => {
+    if (!data) return;
+    const ids = new Set((data.tables || []).map((row) => row.id));
+    setTableId((current) => {
+      if (current && ids.has(current)) return current;
+      const saved = localStorage.getItem(tableStoreKey) || '';
+      return ids.has(saved) ? saved : '';
+    });
+  }, [data, tableStoreKey]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (tableId) localStorage.setItem(tableStoreKey, tableId);
+    else localStorage.removeItem(tableStoreKey);
+  }, [data, tableId, tableStoreKey]);
 
   // Counts one view per browser session per day.
   useEffect(() => {
@@ -201,8 +238,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       const items = cartLines.map((l) => ({ product_id: l.product.id, quantity: l.qty }));
       let res;
       if (adminMode) {
-        const tableId = data?.table?.id || null;
-        res = await post('/orders', { table_id: tableId, customer_name, customer_phone, notes, items });
+        // The main ordering menu has no QR link, so the table is the one the
+        // guest picked in the form.
+        res = await post('/orders', { table_id: tableId || null, customer_name, customer_phone, notes, items });
         res = { order: res.order };
       } else {
         // The code is only a hint: the server re-reads the promotion and
@@ -293,13 +331,19 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const ordering = data.menu?.ordering || {};
   const showFeature = (name) => features[name] !== false;
   const allowAction = (name) => ordering[name] !== false;
-  const tableMode = data.menu?.table_mode || 'qr';
   const cartEnabled = allowAction('cart');
   const checkoutEnabled = cartEnabled && allowAction('checkout');
   const orderingEnabled = checkoutEnabled && allowAction('order');
-  /* In manual mode the guest always picks a table; the fallback mode only asks
-     when the scanned QR did not identify one. */
-  const needsTableChoice = !data.table && (tableMode === 'manual' || tableMode === 'qr_fallback');
+  /*
+   * Table identification. A scanned QR token is resolved on the server and
+   * arrives as `data.table`: that table is final and is shown read-only. When no
+   * table was identified the order form offers the business's own active tables
+   * — that is the main ordering menu's normal mode, and the configured manual
+   * fallback of the QR menu (the server only sends the list then). With neither,
+   * no valid table exists and submission stays blocked.
+   */
+  const tables = data.tables || [];
+  const qrTable = data.table || null;
 
   /*
    * The API ranks this business's best sellers from its own order history and
@@ -312,10 +356,22 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     .map((row) => (data.products || []).find((p) => p.id === row.id))
     .filter(Boolean);
 
-  /* The featured strip is likewise resolved from the business's own products. */
-  const featuredProducts = (data.featured_ids || [])
-    .map((id) => products.find((p) => p.id === id))
-    .filter(Boolean);
+  /*
+   * Featured / special products. Two independent inputs decide this section:
+   *   1. the owner's own "Featured products" feature for this menu context —
+   *      switched off, the whole section (header, counter, carousel, arrows)
+   *      is not rendered at all, so no empty container or spacing is left;
+   *   2. the business's saved featured flags, which the API has already filtered
+   *      to products that are still active and available.
+   * It is resolved against the WHOLE menu — never the category- or
+   * search-filtered list — so picking a category cannot change this strip, its
+   * count or its order.
+   */
+  const featuredProducts = showFeature('featured')
+    ? (data.featured_ids || [])
+        .map((id) => (data.products || []).find((p) => p.id === id))
+        .filter(Boolean)
+    : [];
 
   /*
    * Advertisements arrive already filtered by the API (enabled AND inside their
@@ -547,9 +603,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           busy={busy}
           canCheckout={checkoutEnabled}
           canOrder={orderingEnabled}
-          tableMissing={!data.table && tableMode === 'qr'}
-          needsTableChoice={needsTableChoice}
-          tables={data.tables || []}
+          qrTable={qrTable}
+          tableState={data.table_state || 'none'}
+          tables={tables}
           tableId={tableId}
           onTable={setTableId}
           onClose={() => setCartOpen(false)}
