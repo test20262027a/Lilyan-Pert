@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import url from 'node:url';
 import { q, tx } from './db.js';
-import { hashPassword } from './auth.js';
+import { hashPassword, UNCLAIMED_PASSWORD } from './auth.js';
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
@@ -346,13 +346,31 @@ async function reconcileOrderSequence() {
   );
 }
 
+/** The one permanent Super Admin / Creator account of this application. */
+export const CREATOR_EMAIL = 'superadmin@work.app';
+export const CREATOR_NAME = 'Lilyan Pert Creator';
+
+/**
+ * Provisions the Creator record — exactly one, always with the canonical
+ * identifier. It is created (or migrated from an older seeded super-admin row)
+ * with the `unclaimed` password marker, so nobody can sign in to it until the
+ * verified business owner sets a password from User Management → Account
+ * Settings. Nothing here ever resets a password that has really been set.
+ */
 async function ensureSuperAdmin() {
-  const found = await q(`SELECT id FROM users WHERE is_super_admin = true LIMIT 1`);
-  if (found.rowCount > 0) return;
+  // Repoint an existing super-admin row (older seeds used admin@lilyan.app) at
+  // the canonical identifier, but never overwrite an account already holding it.
+  await q(
+    `UPDATE users SET email = $1, full_name = $2, password_hash = $3, updated_at = now()
+      WHERE is_super_admin = true AND email <> $1
+        AND NOT EXISTS (SELECT 1 FROM users WHERE email = $1)`,
+    [CREATOR_EMAIL, CREATOR_NAME, UNCLAIMED_PASSWORD],
+  );
+  // Role is only ever granted here, on insert — never by matching an email.
   await q(
     `INSERT INTO users (email, password_hash, full_name, is_super_admin)
      VALUES ($1,$2,$3,true)
-     ON CONFLICT (email) DO UPDATE SET is_super_admin = true`,
-    ['admin@lilyan.app', hashPassword('superadmin1234'), 'Platform Super Admin'],
+     ON CONFLICT (email) DO NOTHING`,
+    [CREATOR_EMAIL, UNCLAIMED_PASSWORD, CREATOR_NAME],
   );
 }

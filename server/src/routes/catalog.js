@@ -387,7 +387,7 @@ router.put(
               calories = $19,
               prep_minutes = $20,
               tags = $21,
-              -- A payload that does not mention `featured` keeps the stored
+              -- A payload that does not mention "featured" keeps the stored
               -- flag; only an explicit boolean overwrites it.
               featured = COALESCE($22, featured),
               updated_at = now()

@@ -23,6 +23,13 @@ ALTER TABLE users DROP CONSTRAINT IF EXISTS users_avatar_type_check;
 ALTER TABLE users ADD CONSTRAINT users_avatar_type_check
   CHECK (avatar_type IN ('default', 'male', 'female'));
 
+-- Account recovery contact for an internal login identifier. Optional: an
+-- identifier such as staff@lilyanpert.app is not a mailbox, so a recovery
+-- address has to be stored separately when the owner wants one.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_email text;
+-- Last successful sign-in, written by the login route only.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at timestamptz;
+
 CREATE TABLE IF NOT EXISTS businesses (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug          text UNIQUE NOT NULL,
@@ -52,11 +59,19 @@ CREATE TABLE IF NOT EXISTS businesses (
   currency      text NOT NULL DEFAULT 'IQD',
   tax_rate      numeric(6,3) NOT NULL DEFAULT 0,
   service_charge_rate numeric(6,3) NOT NULL DEFAULT 0,
+  -- The suffix new login identifiers are composed with ("@lilyanpert.app").
+  -- Persisted per business; changing it only affects identifiers generated
+  -- afterwards, never the ones already stored on an account.
+  login_suffix  text,
   order_seq     integer NOT NULL DEFAULT 1000,
   is_sample     boolean NOT NULL DEFAULT false,
   created_at    timestamptz NOT NULL DEFAULT now(),
   updated_at    timestamptz NOT NULL DEFAULT now()
 );
+
+-- Additive: businesses created before custom login identifiers existed simply
+-- have no saved suffix and fall back to the one suggested from their name.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS login_suffix text;
 
 CREATE TABLE IF NOT EXISTS memberships (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

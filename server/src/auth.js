@@ -15,6 +15,17 @@ if (!process.env.SESSION_SECRET) {
 
 /* ---------------------------------------------------------------- passwords */
 
+/*
+ * An account whose password has not been chosen yet carries this marker instead
+ * of a hash. It is not a valid scrypt record, so verifyPassword() refuses it:
+ * the record can exist (and already hold the Super Admin role) without anybody
+ * being able to sign in until its owner sets a real password.
+ */
+export const UNCLAIMED_PASSWORD = 'unclaimed';
+
+/** True while the account still waits for its owner to set a password. */
+export const needsPasswordSetup = (hash) => !hash || hash === UNCLAIMED_PASSWORD;
+
 export function hashPassword(password) {
   const salt = crypto.randomBytes(16).toString('hex');
   const key = crypto.scryptSync(String(password), salt, 64).toString('hex');
@@ -127,6 +138,30 @@ export async function attachSession(req, _res, next) {
           ...row,
           permissions: effectivePermissions(row.role, row.permissions),
         }));
+
+        /*
+         * The platform's own Super Admin belongs to no single business, but the
+         * whole admin panel is business-scoped. It therefore acts as owner of
+         * the platform's primary (first-created) business — the business its
+         * users, orders and settings live in.
+         */
+        if (rows[0].is_super_admin && req.memberships.length === 0) {
+          const first = await q(
+            `SELECT id, name AS business_name, slug, theme
+               FROM businesses ORDER BY created_at LIMIT 1`,
+          );
+          if (first.rows[0]) {
+            req.memberships = [
+              {
+                ...first.rows[0],
+                business_id: first.rows[0].id,
+                role: 'owner',
+                status: 'active',
+                permissions: effectivePermissions('owner', null),
+              },
+            ];
+          }
+        }
       }
     }
     next();

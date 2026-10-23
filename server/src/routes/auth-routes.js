@@ -13,6 +13,43 @@ import { normalizeAvatarType, normalizeProfileImageUrl } from '../lib/profile.js
 
 const router = express.Router();
 
+/*
+ * Sign-in throttling. A short, in-process sliding window per client + identifier
+ * is enough to stop password guessing on this single-instance API, and it never
+ * reveals whether the identifier exists: every failure answers INVALID_CREDENTIALS
+ * until the window closes, then 429 TOO_MANY_ATTEMPTS.
+ */
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_FAILURES = 8;
+const loginFailures = new Map();
+
+function throttleKey(req, identifier) {
+  const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+  return `${ip}|${identifier}`;
+}
+
+function isThrottled(key) {
+  const entry = loginFailures.get(key);
+  if (!entry) return false;
+  if (entry.resetAt < Date.now()) {
+    loginFailures.delete(key);
+    return false;
+  }
+  return entry.count >= LOGIN_MAX_FAILURES;
+}
+
+function noteFailure(key) {
+  // Keep the map bounded on a long-running process.
+  if (loginFailures.size > 5000) loginFailures.clear();
+  const entry = loginFailures.get(key);
+  if (!entry || entry.resetAt < Date.now()) {
+    loginFailures.set(key, { count: 1, resetAt: Date.now() + LOGIN_WINDOW_MS });
+    return;
+  }
+  entry.count += 1;
+}
+
+
 router.post(
   '/register',
   ah(async (req, res) => {
@@ -57,13 +94,23 @@ router.post(
 router.post(
   '/login',
   ah(async (req, res) => {
-    const email = String(req.body?.email || '').trim().toLowerCase();
+    // The identifier is an internal login name: `rebar@lilyanpert.app`,
+    // `owner@lilyan.app` — compared exactly, case-insensitively.
+    const identifier = String(req.body?.email || '').trim().toLowerCase();
     const password = String(req.body?.password || '');
-    const { rows } = await q('SELECT * FROM users WHERE email = $1', [email]);
+    if (!identifier || !password) return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
+
+    const key = throttleKey(req, identifier);
+    if (isThrottled(key)) return res.status(429).json({ error: 'TOO_MANY_ATTEMPTS' });
+
+    const { rows } = await q('SELECT * FROM users WHERE lower(email) = $1', [identifier]);
     const user = rows[0];
     if (!user || !verifyPassword(password, user.password_hash)) {
+      noteFailure(key);
       return res.status(401).json({ error: 'INVALID_CREDENTIALS' });
     }
+    loginFailures.delete(key);
+    await q('UPDATE users SET last_login_at = now() WHERE id = $1', [user.id]);
     setSessionCookie(res, signToken({ uid: user.id }));
     res.json({ ok: true });
   }),

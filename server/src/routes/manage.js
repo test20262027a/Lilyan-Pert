@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import express from 'express';
 import { q, tx } from '../db.js';
-import { requireAuth, withBusiness, perm, hashPassword } from '../auth.js';
+import { requireAuth, withBusiness, perm, hashPassword, needsPasswordSetup } from '../auth.js';
 import {
   MANDATORY,
   effectivePermissions,
@@ -10,8 +10,10 @@ import {
   rolePresets,
   sanitizePermissions,
 } from '../lib/permissions.js';
-import { ah, bad, conflict, isUuid, notFound } from '../lib/http.js';
+import { ah, bad, conflict, forbidden, isUuid, notFound } from '../lib/http.js';
 import { normalizeAvatarType, normalizeProfileImageUrl } from '../lib/profile.js';
+import { normalizeSuffix, resolveIdentity, splitIdentifier, suggestedSuffix } from '../lib/identity.js';
+import { recordActivity } from '../lib/activity.js';
 import { getVapidKeys } from '../lib/push.js';
 
 const router = express.Router();
@@ -952,6 +954,54 @@ function permissionPayload(req, role, submitted) {
   return sanitizePermissions(role, submitted, req.permissions);
 }
 
+/* ------------------------------------------- login identifier & creator */
+
+/** The platform's primary business: where the Creator account's work lives. */
+async function primaryBusinessId() {
+  const { rows } = await q('SELECT id FROM businesses ORDER BY created_at LIMIT 1');
+  return rows[0]?.id || null;
+}
+
+/** The one Super Admin / Creator record, whatever its current state. */
+async function creatorRecord() {
+  const { rows } = await q(
+    `SELECT id, email, full_name, password_hash
+       FROM users WHERE is_super_admin = true ORDER BY created_at LIMIT 1`,
+  );
+  return rows[0] || null;
+}
+
+/**
+ * Who may set the Creator's password: the Creator itself, or the owner of the
+ * platform's primary business (the verified owner). A brand-new registrant owns
+ * their own new business, not the primary one, so registration alone never
+ * grants this.
+ */
+async function mayManageCreator(req) {
+  if (req.user?.is_super_admin) return true;
+  const primary = await primaryBusinessId();
+  return Boolean(primary) && req.role === 'owner' && req.businessId === primary;
+}
+
+/** The identifier a new account is composed with when the caller sends none. */
+async function defaultSuffix(businessId) {
+  const { rows } = await q(
+    'SELECT slug, name, name_en, login_suffix FROM businesses WHERE id = $1',
+    [businessId],
+  );
+  const business = rows[0] || {};
+  return business.login_suffix || suggestedSuffix(business);
+}
+
+/** An optional recovery address; an internal login name is not a mailbox. */
+function recoveryEmail(raw) {
+  if (raw === undefined || raw === null) return null;
+  const value = String(raw).trim().toLowerCase();
+  if (!value) return null;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) || value.length > 200) throw bad('INVALID_RECOVERY_EMAIL');
+  return value;
+}
+
 router.get(
   '/users',
   withBusiness('manager'),
@@ -985,7 +1035,7 @@ router.get(
     const { rows } = await q(
       `SELECT m.id AS membership_id, m.role, m.status, m.permissions, m.created_at,
               u.id, u.email, u.full_name, u.phone, u.locale,
-              u.profile_image_url, u.avatar_type
+              u.profile_image_url, u.avatar_type, u.recovery_email
          FROM memberships m JOIN users u ON u.id = m.user_id
         WHERE ${where.join(' AND ')}
         ORDER BY CASE m.role WHEN 'owner' THEN 0 WHEN 'manager' THEN 1 WHEN 'staff' THEN 2 ELSE 3 END,
@@ -993,18 +1043,19 @@ router.get(
       params,
     );
 
-    const business = await q('SELECT id, name, name_ku, name_fa, name_ar, name_en FROM businesses WHERE id = $1', [
-      req.businessId,
-    ]);
-
-    // Each row carries what the membership really holds; the raw stored object
-    // and the role template are both resolved on the server.
-    const users = rows.map((r) => {
+    const business = await q(
+      `SELECT id, name, name_ku, name_fa, name_ar, name_en, slug, login_suffix
+         FROM businesses WHERE id = $1`,
+      [req.businessId],
+    );    const users = rows.map((r) => {
       const permissions = effectivePermissions(r.role, r.permissions);
       return {
         membership_id: r.membership_id,
         id: r.id,
         email: r.email,
+        // The identifier split back into the two fields the edit form edits.
+        ...splitIdentifier(r.email),
+        recovery_email: r.recovery_email || null,
         full_name: r.full_name,
         phone: r.phone,
         locale: r.locale,
@@ -1024,6 +1075,9 @@ router.get(
       ASSIGNABLE_ROLES.map((role) => [role, grantablePermissions(role, req.permissions)]),
     );
 
+    const creator = await creatorRecord();
+    const businessRow = business.rows[0] || null;
+
     res.json({
       users,
       can_manage: true,
@@ -1031,7 +1085,21 @@ router.get(
       grantable,
       presets: rolePresets(),
       mandatory: MANDATORY,
-      business: business.rows[0] || null,
+      business: businessRow,
+      // Everything the Account Settings card needs: the saved suffix, the one
+      // suggested from the business, and the Creator record's state.
+      account: {
+        login_suffix: businessRow?.login_suffix || '',
+        suggested_suffix: suggestedSuffix(businessRow || {}),
+        creator: creator
+          ? {
+            email: creator.email,
+            full_name: creator.full_name,
+            needs_setup: needsPasswordSetup(creator.password_hash),
+            can_set_password: await mayManageCreator(req),
+          }
+          : { email: null, full_name: null, needs_setup: true, can_set_password: await mayManageCreator(req) },
+      },
     });
   }),
 );
@@ -1042,14 +1110,20 @@ router.post(
   perm('users.create'),
   ah(async (req, res) => {
     const fullName = String(req.body?.full_name || '').trim().slice(0, 120);
-    const email = String(req.body?.email || '').trim().toLowerCase();
     const phone = String(req.body?.phone || '').trim().slice(0, 40) || null;
     const password = String(req.body?.password || '');
     const role = ASSIGNABLE_ROLES.includes(req.body?.role) ? req.body.role : 'staff';
     const status = req.body?.status === 'disabled' ? 'disabled' : 'active';
 
+    // The login identifier is composed here, on the server: username + the
+    // business's chosen suffix (or the one sent with this request).
+    const identity = resolveIdentity(req.body || {}, await defaultSuffix(req.businessId));
+    if (identity.error) throw bad(identity.error);
+    if (!identity.identifier) throw bad('INVALID_EMAIL');
+    const email = identity.identifier;
+    const recovery = recoveryEmail(req.body?.recovery_email);
+
     if (!fullName) throw bad('NAME_REQUIRED');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw bad('INVALID_EMAIL');
     if (!canActOnRole(req, role) || (role === 'owner' && !['owner', 'super_admin'].includes(req.role))) {
       throw bad('ROLE_NOT_ASSIGNABLE');
     }
@@ -1060,7 +1134,7 @@ router.post(
 
     const created = await tx(async (c) => {
       let userId;
-      const existing = await c.query('SELECT id FROM users WHERE email = $1', [email]);
+      const existing = await c.query('SELECT id FROM users WHERE lower(email) = lower($1)', [email]);
       if (existing.rows[0]) {
         // An existing identity is linked, never duplicated — and its password
         // is never touched by a business administrator.
@@ -1073,9 +1147,10 @@ router.post(
       } else {
         if (password.length < 8) throw bad('WEAK_PASSWORD');
         const u = await c.query(
-          `INSERT INTO users (email, password_hash, full_name, phone, profile_image_url, avatar_type)
-           VALUES ($1,$2,$3,$4,$5,$6) RETURNING id`,
-          [email, hashPassword(password), fullName, phone, profileImageUrl, avatarType],
+          `INSERT INTO users (email, password_hash, full_name, phone, profile_image_url,
+                              avatar_type, recovery_email)
+           VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`,
+          [email, hashPassword(password), fullName, phone, profileImageUrl, avatarType, recovery],
         );
         userId = u.rows[0].id;
       }
@@ -1091,6 +1166,7 @@ router.post(
       ok: true,
       user_id: created.userId,
       membership_id: created.membershipId,
+      login_identifier: email,
       linked: Boolean(created.userId) && Boolean(req.body?.link_only),
     });
   }),
@@ -1146,6 +1222,35 @@ router.patch(
     const profileImageUrl = normalizeProfileImageUrl(b.profile_image_url);
     const avatarType = normalizeAvatarType(b.avatar_type);
 
+    /*
+     * Changing the internal login identifier. Only the identifier is checked
+     * for uniqueness here — the database's unique index remains the real guard,
+     * and a collision is reported as EMAIL_TAKEN instead of a 500.
+     */
+    let nextIdentifier = null;
+    if (b.username !== undefined || b.login_suffix !== undefined || b.suffix !== undefined) {
+      const current = splitIdentifier(membership.email);
+      const identity = resolveIdentity(
+        {
+          username: b.username === undefined ? current.username : b.username,
+          login_suffix: b.login_suffix !== undefined ? b.login_suffix : b.suffix,
+        },
+        await defaultSuffix(req.businessId),
+      );
+      if (identity.error) throw bad(identity.error);
+      if (identity.identifier && identity.identifier !== membership.email) {
+        const taken = await q(
+          'SELECT 1 FROM users WHERE lower(email) = lower($1) AND id <> $2',
+          [identity.identifier, membership.user_id],
+        );
+        if (taken.rowCount) throw conflict('EMAIL_TAKEN');
+        nextIdentifier = identity.identifier;
+      }
+    }
+
+    const hasRecoveryEmail = b.recovery_email !== undefined;
+    const nextRecoveryEmail = hasRecoveryEmail ? recoveryEmail(b.recovery_email) : null;
+
     const updated = await tx(async (c) => {
       const saved = await c.query(
         `UPDATE memberships SET role = COALESCE($3, role),
@@ -1162,7 +1267,14 @@ router.patch(
         ],
       );
       // The identity's own profile fields live on `users`, not on the membership.
-      if (b.full_name !== undefined || b.phone !== undefined || hasProfileImage || avatarType !== undefined) {
+      if (
+        b.full_name !== undefined
+        || b.phone !== undefined
+        || hasProfileImage
+        || avatarType !== undefined
+        || nextIdentifier !== null
+        || hasRecoveryEmail
+      ) {
         const fullName = b.full_name === undefined ? null : String(b.full_name).trim().slice(0, 120);
         if (b.full_name !== undefined && !fullName) throw bad('NAME_REQUIRED');
         await c.query(
@@ -1170,6 +1282,8 @@ router.patch(
                             phone = COALESCE($3, phone),
                             profile_image_url = CASE WHEN $4::boolean THEN $5::text ELSE profile_image_url END,
                             avatar_type = COALESCE($6, avatar_type),
+                            email = COALESCE($7, email),
+                            recovery_email = CASE WHEN $8::boolean THEN $9::text ELSE recovery_email END,
                             updated_at = now()
             WHERE id = $1`,
           [
@@ -1179,6 +1293,9 @@ router.patch(
             hasProfileImage,
             profileImageUrl === undefined ? null : profileImageUrl,
             avatarType === undefined ? null : avatarType,
+            nextIdentifier,
+            hasRecoveryEmail,
+            nextRecoveryEmail,
           ],
         );
       }
@@ -1218,8 +1335,130 @@ router.delete(
   }),
 );
 
-/* --------------------------------------------------------------- media */
+/* --------------------------------------- account settings & credentials */
 
+/*
+ * Sets a new password for a member of this business. This is the supported
+ * recovery path for an internal login identifier (which has no mailbox): an
+ * administrator with the `users.edit` permission issues a new password, and the
+ * member changes it again from "My account" once signed in.
+ */
+router.post(
+  '/users/:membershipId/password',
+  withBusiness('manager'),
+  perm('users.edit'),
+  ah(async (req, res) => {
+    if (!isUuid(req.params.membershipId)) throw notFound('MEMBERSHIP_NOT_FOUND');
+    const password = String(req.body?.password || '');
+    if (password.length < 8) throw bad('WEAK_PASSWORD');
+
+    const { rows } = await q(
+      'SELECT * FROM memberships WHERE id = $1 AND business_id = $2',
+      [req.params.membershipId, req.businessId],
+    );
+    const membership = rows[0];
+    if (!membership) throw notFound('MEMBERSHIP_NOT_FOUND');
+    if (!canActOnRole(req, membership.role)) throw bad('ROLE_NOT_ASSIGNABLE');
+    // Your own password goes through /api/auth/change-password, which also
+    // verifies the current one.
+    if (membership.user_id === req.user.id) throw conflict('CANNOT_MODIFY_SELF');
+
+    await q('UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1', [
+      membership.user_id,
+      hashPassword(password),
+    ]);
+    res.json({ ok: true });
+  }),
+);
+
+/**
+ * The business's default login suffix. It is only a default: identifiers that
+ * were already generated keep their own suffix on the account record.
+ */
+router.put(
+  '/account-settings',
+  withBusiness('manager'),
+  perm('users.edit'),
+  ah(async (req, res) => {
+    const raw = String(req.body?.login_suffix ?? '').trim();
+    const suffix = raw === '' ? null : normalizeSuffix(raw);
+    if (suffix === null && raw !== '') throw bad('INVALID_SUFFIX');
+
+    await q('UPDATE businesses SET login_suffix = $2, updated_at = now() WHERE id = $1', [
+      req.businessId,
+      suffix,
+    ]);
+    await recordActivity({
+      businessId: req.businessId,
+      actorId: req.user.id,
+      actorName: req.user.full_name || req.user.email,
+      entity: 'settings',
+      action: 'updated',
+      entityLabel: suffix ? `Login suffix ${suffix}` : 'Login suffix cleared',
+      path: req.path,
+    });
+    res.json({ ok: true, login_suffix: suffix || '' });
+  }),
+);
+
+/*
+ * The one-time owner-controlled initialization (and later re-keying) of the
+ * Creator account.
+ *
+ * Authorized for: the Creator itself, or the owner of the platform's primary
+ * business — the verified owner. An anonymous visitor cannot reach it (the
+ * router requires a session and a business), registration creates a *different*
+ * business, and the platform role is never granted here: this endpoint only
+ * ever sets a password on the record that already carries it.
+ */
+router.post(
+  '/creator-password',
+  withBusiness('manager'),
+  perm('users.edit'),
+  ah(async (req, res) => {
+    if (!(await mayManageCreator(req))) throw forbidden('CREATOR_SETUP_NOT_ALLOWED');
+    const password = String(req.body?.password || '');
+    if (password.length < 8) throw bad('WEAK_PASSWORD');
+
+    const creator = await creatorRecord();
+    const isCreator = Boolean(creator) && creator.id === req.user.id;
+    // Once a password has really been set, only the Creator may replace it.
+    if (creator && !needsPasswordSetup(creator.password_hash) && !isCreator) {
+      throw conflict('CREATOR_ALREADY_CLAIMED');
+    }
+
+    let email = creator?.email || 'superadmin@work.app';
+    if (creator) {
+      await q(
+        `UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1`,
+        [creator.id, hashPassword(password)],
+      );
+    } else {
+      // Only reachable if the record was removed by hand; identity is fixed.
+      await q(
+        `INSERT INTO users (email, password_hash, full_name, is_super_admin)
+         VALUES ($1,$2,$3,true)`,
+        [email, hashPassword(password), 'Lilyan Pert Creator'],
+      );
+    }
+
+    const businessId = req.businessId || (await primaryBusinessId());
+    if (businessId) {
+      await recordActivity({
+        businessId,
+        actorId: req.user.id,
+        actorName: req.user.full_name || req.user.email,
+        entity: 'user',
+        action: 'updated',
+        entityLabel: email,
+        path: req.path,
+      });
+    }
+    res.json({ ok: true, email });
+  }),
+);
+
+/* --------------------------------------------------------------- media */
 router.post(
   '/media',
   withBusiness('staff'),
