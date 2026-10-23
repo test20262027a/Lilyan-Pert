@@ -729,9 +729,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       ) : null}
 
       {/* Opens only on a confirmed order: `placed` is the record the API
-          returned after saving it, never the click that started the request. */}
+          returned after saving it, never the click that started the request.
+          The order carries the currency it was actually saved in. */}
       {placed ? (
-        {/* The order carries the currency it was actually saved in. */}
         <OrderSuccessModal order={placed} currency={placed.currency || currency} onClose={() => setPlaced(null)} />
       ) : null}
     </div>
