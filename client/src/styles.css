@@ -667,8 +667,15 @@ a { color: var(--primary); }
 }
 
 /* Toggle is a real switch: label + input, keyboard reachable. */
-.switch { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
-.switch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.switch { position: relative; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+/* The checkbox is the hit target: it covers the whole switch, so a mouse or
+   touch anywhere on the pill flips it (a 1px input was only reachable by tab). */
+.switch input {
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%; margin: 0;
+  opacity: 0; cursor: pointer;
+}
+.switch input:disabled { cursor: not-allowed; }
 .switch__track {
   width: 44px; height: 25px; border-radius: var(--radius-pill);
   background: var(--border-strong); position: relative; flex: none; transition: background 0.18s;
@@ -822,6 +829,7 @@ table.data tr:hover td { background: var(--surface-2); }
 }
 .modal__close:hover { background: var(--surface-3); color: var(--text); }
 .modal__head {
+  position: relative; z-index: 1; flex: none;
   padding: 16px 60px 14px 18px; border-bottom: 1px solid var(--mint-line);
   background: linear-gradient(180deg, var(--mint-soft), var(--surface));
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
@@ -829,8 +837,14 @@ table.data tr:hover td { background: var(--surface-2); }
 [dir='rtl'] .modal__head { padding: 16px 18px 14px 60px; }
 .modal__title { font-size: 16px; font-weight: 800; }
 .modal__subtitle { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-.modal__body { padding: 18px; overflow-y: auto; }
+/* Only the body scrolls: the head and foot are fixed siblings of it, so a
+   long form can never carry the title or the actions away. */
+.modal__body {
+  flex: 1 1 auto; min-height: 0; padding: 18px;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable;
+}
 .modal__foot {
+  position: relative; z-index: 1; flex: none;
   padding: 13px 18px; border-top: 1px solid var(--border);
   display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
   background: var(--surface-2); border-radius: 0 0 var(--radius-lg) var(--radius-lg);

@@ -126,6 +126,7 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
   padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;

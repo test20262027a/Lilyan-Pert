@@ -374,6 +374,7 @@
 
 .ad-modal__head {
   position: relative;
+  z-index: 2;
   flex: none;
   min-height: 118px;
   display: flex;
@@ -469,7 +470,12 @@
 
 .ad-modal__body {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  /* The bar's space is always reserved, so a form that grows past the modal
+     height never narrows the body — the header and footer do not shift. */
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -751,6 +757,8 @@
 .ad-switch .switch input:checked + .switch__track { background: var(--ad-green); }
 
 .ad-modal__foot {
+  position: relative;
+  z-index: 2;
   flex: none;
   display: flex;
   align-items: center;

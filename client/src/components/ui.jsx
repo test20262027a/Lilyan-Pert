@@ -125,10 +125,13 @@ export function Field({ label, hint, error, children, className = '' }) {
 
 export function Switch({ checked, onChange, label, hint, disabled = false, ariaLabel }) {
   const { t } = useI18n();
+  // A <label> wrapping the checkbox: the whole control (pill, label, hint) is
+  // the hit target, and styles.css stretches the real checkbox over it.
   return (
-    <span className={`switch ${disabled ? 'switch--disabled' : ''}`}>
+    <label className={`switch ${disabled ? 'switch--disabled' : ''}`}>
       <input
         type="checkbox"
+        role="switch"
         checked={Boolean(checked)}
         disabled={disabled}
         aria-label={ariaLabel || label || t('label_status')}
@@ -137,7 +140,7 @@ export function Switch({ checked, onChange, label, hint, disabled = false, ariaL
       <span className="switch__track" aria-hidden="true" />
       {label ? <span className="switch__label">{label}</span> : null}
       {hint ? <span className="field__hint">{hint}</span> : null}
-    </span>
+    </label>
   );
 }
 

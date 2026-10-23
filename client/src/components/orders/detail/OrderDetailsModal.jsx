@@ -82,6 +82,18 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
   const timeZone = zoneFor(locale, business?.timezone || data?.business?.timezone);
   const locked = order ? ['completed', 'cancelled'].includes(order.status) : false;
   const canEdit = can('orders.edit');
+  // A receipt belongs to a finished order, and an edit window closes on it.
+  const completed = order?.status === 'completed';
+  const canPrint = completed && can('orders.print');
+
+  const editHint = !canEdit
+    ? t('od_cannot_edit')
+    : completed
+      ? t('od_completed_locked')
+      : locked
+        ? t('od_cannot_edit')
+        : t('od_edit');
+  const printHint = !completed ? t('od_print_locked') : can('orders.print') ? t('od_print') : t('od_no_permission');
 
   const requestClose = useCallback(() => {
     if (discountDirty) setConfirmDiscard(true);
@@ -169,8 +181,8 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
       setPrinting(true);
       setTimeout(() => window.print(), 80);
       await load({ silent: true });
-    } catch {
-      toast.error(t('error_generic'));
+    } catch (err) {
+      toast.error(err?.code === 'ORDER_NOT_COMPLETED' ? t('od_print_locked') : t('error_generic'));
     } finally {
       setBusy(false);
     }
@@ -425,7 +437,8 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
             className="odm__foot-btn"
             onClick={editOrder}
             disabled={!order || locked || !canEdit || busy}
-            title={!canEdit || locked ? t('od_cannot_edit') : t('od_edit')}
+            title={editHint}
+            aria-disabled={!order || locked || !canEdit || busy}
           >
             <Icon name="pencil" size={15} />
             {t('od_edit')}
@@ -434,9 +447,11 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
             type="button"
             className="odm__foot-btn odm__foot-btn--primary"
             onClick={doPrint}
-            disabled={!order || busy}
+            disabled={!order || busy || !canPrint}
+            title={printHint}
+            aria-disabled={!order || busy || !canPrint}
           >
-            {busy ? <span className="spinner" /> : <Icon name="print" size={15} />}
+            {busy && canPrint ? <span className="spinner" /> : <Icon name="print" size={15} />}
             {t('od_print')}
           </button>
         </footer>

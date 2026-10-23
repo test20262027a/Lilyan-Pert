@@ -262,6 +262,9 @@ router.post(
       // Previewing a receipt never creates an audit record.
       return res.json({ ok: true, recorded: false });
     }
+    // A receipt is only issued for a finished order — the button is disabled
+    // before that, and this is the rule a direct request cannot bypass.
+    if (order.status !== 'completed') throw conflict('ORDER_NOT_COMPLETED');
     const { rows } = await q(
       `INSERT INTO receipt_prints (business_id, order_id, printed_by, printed_by_name)
        VALUES ($1,$2,$3,$4) RETURNING id, printed_at`,

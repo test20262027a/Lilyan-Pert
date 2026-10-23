@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon';
-import { Alert, Select } from '../ui';
+import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import { toZonedInput } from '../../format';
-import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 import AdImageField from './AdImageField';
 import { adErrorText } from './errorText';
 import { AdModalArtwork } from './AdsArtwork';
@@ -162,82 +161,11 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
               <span className="ad-sec__label">{t('marketing_ad_image')}</span>
             </div>
 
-            <input
-              ref={fileInput}
-              type="file"
-              accept={ACCEPTED.join(',')}
-              hidden
-              onChange={(event) => {
-                const files = event.target.files;
-                event.target.value = '';
-                pickImage(files);
-              }}
+            <AdImageField
+              value={values.image_url}
+              onChange={(url) => set('image_url', url)}
+              onUploading={setUploading}
             />
-
-            {values.image_url ? (
-              <>
-                <div className="ad-upfilled">
-                  <img src={values.image_url} alt="" />
-                  <div className="ad-upfilled__actions">
-                    <button
-                      type="button"
-                      className="ad-mini"
-                      onClick={() => fileInput.current?.click()}
-                      disabled={uploading}
-                    >
-                      <Icon name="upload" size={14} />
-                      {t('ads_replace_image')}
-                    </button>
-                    <button
-                      type="button"
-                      className="ad-mini ad-mini--danger"
-                      onClick={() => set('image_url', '')}
-                      disabled={uploading}
-                    >
-                      <Icon name="trash" size={14} />
-                      {t('menu_remove_image')}
-                    </button>
-                  </div>
-                </div>
-                <p className="ad-sec__hint">{t('ads_recommended')}</p>
-              </>
-            ) : (
-              <div
-                className={`ad-drop ${dragOver ? 'is-over' : ''}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => !uploading && fileInput.current?.click()}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault();
-                    if (!uploading) fileInput.current?.click();
-                  }
-                }}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  setDragOver(false);
-                  if (!uploading) pickImage(event.dataTransfer?.files);
-                }}
-              >
-                <span className="ad-drop__icon" aria-hidden="true">
-                  <Icon name="upload" size={20} />
-                </span>
-                <span className="ad-drop__title">
-                  {uploading ? t('ads_uploading') : t('ads_upload_hint')}
-                </span>
-                <span className="ad-drop__hint">{t('ads_recommended')}</span>
-                {uploading ? (
-                  <span className="ad-drop__progress" aria-hidden="true">
-                    <i />
-                  </span>
-                ) : null}
-              </div>
-            )}
           </section>
 
           {/* 2 — title and description, in four languages */}
@@ -406,18 +334,14 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
           </div>
 
           {/* 7 — active state */}
-          <label className="ad-switch">
+          <div className="ad-switch">
             <span className="ad-switch__label">{t('label_active')}</span>
-            <span className="switch">
-              <input
-                type="checkbox"
-                checked={values.active !== false}
-                aria-label={t('label_active')}
-                onChange={(event) => set('active', event.target.checked)}
-              />
-              <span className="switch__track" />
-            </span>
-          </label>
+            <Switch
+              checked={values.active !== false}
+              onChange={(next) => set('active', next)}
+              ariaLabel={t('label_active')}
+            />
+          </div>
 
           {shownError ? <Alert kind="error">{adErrorText(shownError, t)}</Alert> : null}
         </div>

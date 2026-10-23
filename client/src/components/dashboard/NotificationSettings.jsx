@@ -15,11 +15,19 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
   const soundOn = settings.sound_enabled !== false;
   const soundKey = SOUND_OPTIONS.includes(settings.sound_key) ? settings.sound_key : DEFAULT_SOUND;
 
+  // A browser without the Web Audio API can never make a sound, and one whose
+  // permission was denied cannot raise a system notification. Both are said
+  // plainly instead of showing a switch that pretends to work.
+  const audioUnavailable =
+    typeof window !== 'undefined' && !(window.AudioContext || window.webkitAudioContext);
+
   const pushHint = !push.supported
     ? t('dash_push_unsupported')
     : push.subscribed
       ? `${t('dash_push_devices')}: ${fmtNumber(push.devices, locale)}`
-      : t('dash_enable_push');
+      : push.permission === 'denied'
+        ? t('dash_push_denied')
+        : t('dash_enable_push');
 
   return (
     <section className="card notif-card">
@@ -36,6 +44,7 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
         <SwitchRow
           icon="volume"
           title={t('dash_sound_new_order')}
+          hint={audioUnavailable ? t('dash_sound_unsupported') : undefined}
           checked={soundOn}
           onChange={(v) => onChange({ sound_enabled: v })}
         />

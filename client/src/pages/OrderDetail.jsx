@@ -47,6 +47,8 @@ export default function OrderDetail() {
   const currency = data?.business?.currency || business?.currency || 'IQD';
   const order = data?.order;
   const locked = order ? ['completed', 'cancelled'].includes(order.status) : false;
+  // The receipt is issued only once the order is completed.
+  const canPrint = order?.status === 'completed';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -149,8 +151,8 @@ export default function OrderDetail() {
       setPrinting(true);
       setTimeout(() => window.print(), 80);
       await load();
-    } catch {
-      toast.error(t('error_generic'));
+    } catch (err) {
+      toast.error(err?.code === 'ORDER_NOT_COMPLETED' ? t('od_print_locked') : t('error_generic'));
     } finally {
       setBusy(false);
     }
@@ -195,17 +197,15 @@ export default function OrderDetail() {
             <Icon name="eye" size={15} />
             {t('order_receipt_preview')}
           </button>
-          {!locked ? (
-            <button className="btn btn--primary btn--sm" onClick={doPrint} disabled={busy}>
-              <Icon name="print" size={15} />
-              {t('order_print')}
-            </button>
-          ) : (
-            <button className="btn btn--sm" onClick={doPrint} disabled={busy}>
-              <Icon name="print" size={15} />
-              {t('order_print')}
-            </button>
-          )}
+          <button
+            className={`btn btn--sm ${canPrint ? 'btn--primary' : ''}`.trim()}
+            onClick={doPrint}
+            disabled={busy || !canPrint}
+            title={canPrint ? t('order_print') : t('od_print_locked')}
+          >
+            <Icon name="print" size={15} />
+            {t('order_print')}
+          </button>
         </div>
       </div>
 
@@ -407,7 +407,12 @@ export default function OrderDetail() {
               <button className="btn" onClick={() => setPreview(false)}>
                 {t('action_close')}
               </button>
-              <button className="btn btn--primary" onClick={doPrint} disabled={busy}>
+              <button
+                className={`btn ${canPrint ? 'btn--primary' : ''}`.trim()}
+                onClick={doPrint}
+                disabled={busy || !canPrint}
+                title={canPrint ? t('order_print') : t('od_print_locked')}
+              >
                 <Icon name="print" size={16} />
                 {t('order_print')}
               </button>

@@ -387,7 +387,9 @@ router.put(
               calories = $19,
               prep_minutes = $20,
               tags = $21,
-              featured = $22,
+              -- A payload that does not mention `featured` keeps the stored
+              -- flag; only an explicit boolean overwrites it.
+              featured = COALESCE($22, featured),
               updated_at = now()
         WHERE id = $1 AND business_id = $2
         RETURNING *`,
@@ -413,7 +415,7 @@ router.put(
         optInt(b.calories, 'INVALID_CALORIES'),
         optInt(b.prep_minutes, 'INVALID_PREP_TIME'),
         tagList(b.tags),
-        b.featured === undefined ? false : Boolean(b.featured),
+        b.featured === undefined ? null : Boolean(b.featured),
         optPrice(b.price_ar),
         b.price_fa_unit === 'toman' || b.price_fa_unit === 'rial' ? b.price_fa_unit : null,
         b.price_ar !== undefined,

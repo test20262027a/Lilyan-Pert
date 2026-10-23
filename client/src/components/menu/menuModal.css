@@ -63,6 +63,7 @@
 
 .mcmodal__head {
   position: relative;
+  z-index: 2;
   flex: none;
   display: flex;
   align-items: center;
@@ -166,6 +167,9 @@
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* Reserve the bar's gutter so validation messages or a language card
+     appearing never changes the body's width under a fixed header. */
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -303,6 +307,8 @@
 /* ------------------------------------------------------------ footer */
 
 .mcmodal__foot {
+  position: relative;
+  z-index: 2;
   flex: none;
   display: flex;
   align-items: center;
