@@ -1268,6 +1268,18 @@ export default {
   menu_mode_qr_hint: 'تُحدد الطاولة تلقائياً من رمز QR الممسوح',
   menu_mode_fallback: 'تلقائي مع بديل يدوي',
   menu_mode_fallback_hint: 'تحديد تلقائي من QR، واختيار يدوي عند غيابه أو عدم صلاحيته',
+  menu_lang_title: 'إدارة اللغات',
+  menu_lang_subtitle: 'اختر اللغات التي تقدمها القائمة والنماذج ولوحة العميل.',
+  menu_lang_default: 'اللغة الافتراضية',
+  menu_lang_default_hint: 'تبقى اللغة الافتراضية مفعّلة دائماً وهي مرجع الواجهة.',
+  menu_lang_default_badge: 'افتراضية',
+  menu_lang_toggle_label: 'تفعيل أو تعطيل {language}',
+  menu_lang_note:
+    'إخفاء لغة يزيل عرضها فقط من الواجهة؛ تبقى كل الترجمات والأسعار المحفوظة في قاعدة البيانات وتعود عند إعادة تفعيلها.',
+  menu_lang_name_ku: 'الكردية السورانية',
+  menu_lang_name_fa: 'الفارسية',
+  menu_lang_name_ar: 'العربية',
+  menu_lang_name_en: 'الإنجليزية',
 
 
   /* ---- بازنشانی داده‌های نمونه / Reset Sample Data ---- */

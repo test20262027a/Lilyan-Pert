@@ -1,5 +1,5 @@
 import Icon from '../Icon';
-import { LOCALES, useI18n } from '../../i18n';
+import { useI18n } from '../../i18n';
 import { SettingsCard, SettingsToggleRow } from './SettingsCard';
 import { SetField } from './fields';
 
@@ -9,7 +9,7 @@ import { SetField } from './fields';
  * return button for a menu that is not there. The API enforces the same rule.
  */
 export default function CustomerMenuTab({ draft, patch, setEditable, canManage }) {
-  const { t } = useI18n();
+  const { t, locales } = useI18n();
   const menu = draft.menu_settings || {};
   const customerMenuOn = menu.show_customer_menu !== false;
   const text = draft.editable_text || {};
@@ -56,7 +56,7 @@ export default function CustomerMenuTab({ draft, patch, setEditable, canManage }
           <div>
             <div className="set-group-label">{t('settings_editable_menu_title')}</div>
             <div className="set-grid">
-              {LOCALES.map((l) => (
+              {locales.map((l) => (
                 <SetField key={l.code} label={l.label}>
                   <input
                     className="input"
@@ -75,7 +75,7 @@ export default function CustomerMenuTab({ draft, patch, setEditable, canManage }
               <Icon name="sparkles" size={13} /> {t('settings_editable_welcome')}
             </div>
             <div className="set-grid">
-              {LOCALES.map((l) => (
+              {locales.map((l) => (
                 <SetField key={l.code} label={l.label}>
                   <textarea
                     className="textarea"

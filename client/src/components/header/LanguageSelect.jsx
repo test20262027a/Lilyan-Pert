@@ -26,12 +26,12 @@ const ROW = 42;
  * the document direction; nothing else on the page is reset.
  */
 export default function LanguageSelect() {
-  const { t, locale, setLocale, LOCALES, dir } = useI18n();
+  const { t, locale, setLocale, locales, dir } = useI18n();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState(null);
   const wrapRef = useRef(null);
   const menuRef = useRef(null);
-  const current = LOCALES.find((l) => l.code === locale) || LOCALES[0];
+  const current = locales.find((l) => l.code === locale) || locales[0] || { code: locale, label: locale };
 
   const place = useCallback(() => {
     const trigger = wrapRef.current;
@@ -41,7 +41,7 @@ export default function LanguageSelect() {
     const vw = window.innerWidth;
     const vh = window.innerHeight;
     const width = Math.min(Math.max(rect.width, MENU_MIN_WIDTH), vw - EDGE * 2);
-    const need = LOCALES.length * ROW + 14;
+    const need = locales.length * ROW + 14;
     const below = vh - rect.bottom - EDGE;
     const above = rect.top - EDGE;
     const openUp = below < need && above > below;
@@ -57,7 +57,7 @@ export default function LanguageSelect() {
       maxHeight: Math.min(need, Math.max(ROW, (openUp ? above : below) - GAP)),
       ...(openUp ? { bottom: Math.max(EDGE, vh - rect.top + GAP) } : { top: rect.bottom + GAP }),
     });
-  }, [dir, LOCALES.length]);
+  }, [dir, locales.length]);
 
   useLayoutEffect(() => {
     if (open) place();
@@ -102,7 +102,7 @@ export default function LanguageSelect() {
             ...(pos.top === undefined ? { bottom: pos.bottom } : { top: pos.top }),
           }}
         >
-          {LOCALES.map((l) => {
+          {locales.map((l) => {
             const active = l.code === locale;
             return (
               <button

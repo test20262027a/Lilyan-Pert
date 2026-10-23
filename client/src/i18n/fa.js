@@ -1269,6 +1269,18 @@ export default {
   menu_mode_qr_hint: 'میز از QR اسکن شده خودکار شناسایی می‌شود',
   menu_mode_fallback: 'خودکار با پشتیبان دستی',
   menu_mode_fallback_hint: 'شناسایی خودکار از QR، پشتیبان دستی در صورت نبود یا نامعتبر',
+  menu_lang_title: 'مدیریت زبان‌ها',
+  menu_lang_subtitle: 'زبان‌های فعال منو، فرم‌ها و پنل مشتری را انتخاب کنید.',
+  menu_lang_default: 'زبان پیش‌فرض',
+  menu_lang_default_hint: 'زبان پیش‌فرض همیشه فعال می‌ماند و رابط کاربری به آن بازمی‌گردد.',
+  menu_lang_default_badge: 'پیش‌فرض',
+  menu_lang_toggle_label: 'فعال یا غیرفعال کردن {language}',
+  menu_lang_note:
+    'غیرفعال کردن یک زبان فقط نمایش آن را پنهان می‌کند؛ همه ترجمه‌ها و قیمت‌های ذخیره‌شده دست‌نخورده می‌مانند و با فعال‌سازی دوباره بازمی‌گردند.',
+  menu_lang_name_ku: 'کوردی سۆرانی',
+  menu_lang_name_fa: 'فارسی',
+  menu_lang_name_ar: 'عربی',
+  menu_lang_name_en: 'انگلیسی',
 
 
   /* ---- بازنشانی داده‌های نمونه / Reset Sample Data ---- */

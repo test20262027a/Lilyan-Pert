@@ -55,7 +55,10 @@ function initialValues(ad, timeZone) {
  * placement, priority, permission) is validated again on the server.
  */
 export default function AdFormModal({ modal, products, categories, timeZone, busy, error, onClose, onSave }) {
-  const { t, locale } = useI18n();
+  const { t, locale, enabledLanguages } = useI18n();
+  // Only enabled languages get title/subtitle inputs; hidden ones keep their
+  // saved text in `values` and are submitted back unchanged.
+  const cardCodes = CARD_ORDER.filter((code) => enabledLanguages.includes(code));
   const [values, setValues] = useState(() => initialValues(modal.values || {}, timeZone));
   const [initial] = useState(() => JSON.stringify(initialValues(modal.values || {}, timeZone)));
   const [localError, setLocalError] = useState(null);
@@ -122,7 +125,7 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
   );
 
   const submit = () => {
-    if (!CARD_ORDER.some((code) => String(values[`title_${code}`]).trim())) {
+    if (!cardCodes.some((code) => String(values[`title_${code}`]).trim())) {
       setLocalError('AD_TITLE_REQUIRED');
       return;
     }
@@ -273,7 +276,7 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
             </div>
 
             <div className="ad-langs">
-              {CARD_ORDER.map((code) => {
+              {cardCodes.map((code) => {
                 const language = languageOf(code);
                 return (
                   <div className="ad-lang" key={code}>

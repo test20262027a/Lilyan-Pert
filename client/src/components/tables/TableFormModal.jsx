@@ -58,12 +58,15 @@ const nextValue = (rows, field) =>
 
 /** The name the record is labelled with, by the same priority the API uses. */
 const NAME_PRIORITY = ['ku', 'fa', 'ar', 'en'];
-const displayName = (values) =>
-  NAME_PRIORITY.map((code) => values[code].trim()).find(Boolean) || '';
+const displayName = (values, codes = NAME_PRIORITY) =>
+  codes.map((code) => values[code].trim()).find(Boolean) || '';
 
 export default function TableFormModal({ modal, tables = [], busy, error, onClose, onSave }) {
-  const { t } = useI18n();
+  const { t, enabledLanguages } = useI18n();
   const isCreate = !modal.id;
+  // Only enabled languages get a name input; hidden ones keep and resubmit
+  // their saved names untouched.
+  const cardCodes = CARD_ORDER.filter((code) => enabledLanguages.includes(code));
 
   const initial = useMemo(() => {
     const v = modal.values || {};
@@ -112,7 +115,7 @@ export default function TableFormModal({ modal, tables = [], busy, error, onClos
   };
 
   const submit = () => {
-    const name = displayName(values);
+    const name = displayName(values, cardCodes);
     if (!name) {
       setLocalError('NAME_REQUIRED');
       return;
@@ -216,7 +219,7 @@ export default function TableFormModal({ modal, tables = [], busy, error, onClos
         <p className="tform__hint">{t('table_name')}</p>
 
         <div className="mcmodal__langs">
-          {CARD_ORDER.map((code) => {
+          {cardCodes.map((code) => {
             const language = localeFor(code);
             const inputId = `table-name-${code}`;
             return (

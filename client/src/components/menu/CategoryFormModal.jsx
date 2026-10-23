@@ -44,8 +44,12 @@ const cardFor = (code) => LOCALES.find((l) => l.code === code);
 const trimmed = (value) => String(value ?? '').trim();
 
 export default function CategoryFormModal({ modal, categories = [], busy, error, onClose, onSave }) {
-  const { t, locale } = useI18n();
+  const { t, locale, enabledLanguages } = useI18n();
   const isCreate = modal.mode !== 'edit';
+
+  /* Only the enabled languages get a name card; a hidden language keeps its
+     saved name and still submits it, so nothing stored is lost. */
+  const cards = CARDS.filter((code) => enabledLanguages.includes(code));
 
   // Suggested order: one past the highest saved order, or the app's initial
   // order when the business has no category yet.
@@ -114,7 +118,7 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
 
     // The default-language policy is the one the API already enforces: at least
     // one language must carry a name.
-    if (!CARDS.some((code) => names[code])) {
+    if (!cards.some((code) => names[code])) {
       setLocalError('NAME_REQUIRED');
       return;
     }
@@ -128,7 +132,7 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
     const duplicate = categories.some(
       (c) =>
         c.id !== modal.id &&
-        CARDS.some(
+        cards.some(
           (code) =>
             names[code] && trimmed(c[`name_${code}`]).toLowerCase() === names[code].toLowerCase(),
         ),
@@ -192,7 +196,7 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
         </div>
 
         <div className="mcmodal__langs">
-          {CARDS.map((code) => {
+          {cards.map((code) => {
             const locale = cardFor(code);
             const inputId = `menu-category-name-${code}`;
             return (

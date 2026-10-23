@@ -80,8 +80,19 @@ const parseTags = (raw) => {
 };
 
 export default function ProductFormModal({ modal, categories, currency = 'IQD', busy, error, onClose, onSave }) {
-  const { t, locale } = useI18n();
+  const { t, locale, enabledLanguages } = useI18n();
   const isCreate = modal.mode !== 'edit';
+
+  /* Only the languages the owner left enabled get their own name/description
+     card and price input. Hidden languages keep their saved values untouched —
+     the payload below still submits them, so nothing is ever cleared. */
+  const cardCodes = CARD_ORDER.filter((code) => enabledLanguages.includes(code));
+  const baseCode = enabledLanguages.includes('ku') ? 'ku' : enabledLanguages.includes('ar') ? 'ar' : 'ku';
+  const priceFields = PRICE_FIELDS.filter((field) =>
+    field.key === 'price'
+      ? field.code === baseCode || enabledLanguages.includes(field.code)
+      : enabledLanguages.includes(field.code),
+  );
 
   const initial = useMemo(
     () => ({
@@ -131,10 +142,8 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
   const submit = () => {
     if (uploading) return;
 
-    const names = Object.fromEntries(CARD_ORDER.map((code) => [code, values[code].trim()]));
-    // The default-language policy is the one the API already enforces: at least
-    // one language carries a name.
-    if (!CARD_ORDER.some((code) => names[code])) {
+    // At least one of the languages the owner offers must carry a name.
+    if (!cardCodes.some((code) => values[code].trim())) {
       setLocalError('NAME_REQUIRED');
       return;
     }
@@ -145,7 +154,8 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
       return;
     }
     const altPrices = { price_fa: amountOrNull(values.price_fa), price_en: amountOrNull(values.price_en) };
-    if (Object.values(altPrices).some((n) => Number.isNaN(n))) {
+    const visibleAltKeys = priceFields.filter((field) => field.key !== 'price').map((field) => field.key);
+    if (visibleAltKeys.some((key) => Number.isNaN(altPrices[key]))) {
       setLocalError('INVALID_PRICE');
       return;
     }
@@ -169,10 +179,10 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
     setLocalError(null);
     onSave(
       {
-        name_ku: names.ku,
-        name_fa: names.fa,
-        name_ar: names.ar,
-        name_en: names.en,
+        name_ku: values.ku.trim(),
+        name_fa: values.fa.trim(),
+        name_ar: values.ar.trim(),
+        name_en: values.en.trim(),
         description_ku: values.desc_ku,
         description_fa: values.desc_fa,
         description_ar: values.desc_ar,
@@ -247,7 +257,7 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
         </div>
 
         <div className="mcmodal__langs">
-          {CARD_ORDER.map((code) => {
+          {cardCodes.map((code) => {
             const language = localeFor(code);
             return (
               <div className="mcmodal__lang" key={code}>
@@ -287,7 +297,7 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
         </div>
 
         <div className="mform__prices">
-          {PRICE_FIELDS.map((field) => (
+          {priceFields.map((field) => (
             <label className="mform__price" key={field.code}>
               <span className="mform__price-label">
                 {localeFor(field.code).label} · {field.currency || currency}

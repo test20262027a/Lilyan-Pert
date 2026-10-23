@@ -1,5 +1,5 @@
 import Select from '../select/Select';
-import { useI18n, LOCALES } from '../../i18n';
+import { useI18n } from '../../i18n';
 import Flag from './Flags';
 
 /*
@@ -8,22 +8,25 @@ import Flag from './Flags';
  * above the trigger when there is no room below), follows the reading
  * direction and is keyboard operable — here dressed as a compact glass pill and
  * showing each language with its flag.
+ *
+ * Only the languages the owner left enabled are offered — the same list every
+ * other selector reads — so a disabled language can never be chosen here.
  */
-const OPTIONS = LOCALES.map((language) => ({
-  value: language.code,
-  label: language.label,
-  leading: <Flag code={language.code} />,
-}));
-
 export default function LanguageMenu() {
-  const { t, locale, setLocale } = useI18n();
+  const { t, locale, setLocale, locales } = useI18n();
+  const options = locales.map((language) => ({
+    value: language.code,
+    label: language.label,
+    leading: <Flag code={language.code} />,
+  }));
+
   return (
     <div className="au__lang">
       <Select
         className="au-lang"
         value={locale}
         onChange={setLocale}
-        options={OPTIONS}
+        options={options}
         ariaLabel={t('label_language')}
       />
     </div>

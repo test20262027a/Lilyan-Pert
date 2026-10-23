@@ -12,8 +12,11 @@ const NAME_ORDER = ['en', 'ku', 'fa', 'ar'];
 const BUSINESS_TYPES = ['cafe', 'restaurant', 'fast_food', 'bakery', 'juice_bar'];
 
 export default function BusinessInfoTab({ draft, setField, setVal, canManage }) {
-  const { t } = useI18n();
-  const locales = NAME_ORDER.map((code) => LOCALES.find((l) => l.code === code)).filter(Boolean);
+  const { t, enabledLanguages } = useI18n();
+  const locales = NAME_ORDER
+    .filter((code) => enabledLanguages.includes(code))
+    .map((code) => LOCALES.find((l) => l.code === code))
+    .filter(Boolean);
 
   return (
     <>

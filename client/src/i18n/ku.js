@@ -1270,6 +1270,18 @@ export default {
   menu_mode_qr_hint: 'مێز بە شێوەی خۆکار لە QR ی سکانکراو دەناسرێتەوە',
   menu_mode_fallback: 'خۆکار لەگەڵ پشتیوانی دەستی',
   menu_mode_fallback_hint: 'ناسینەوەی خۆکار لە QR، دەستی ئەگەر نەبێت یان نادروست بێت',
+  menu_lang_title: 'بەڕێوەبردنی زمانەکان',
+  menu_lang_subtitle: 'ئەو زمانانە هەڵبژێرە کە مێنیۆ، فۆرمەکان و پانێڵی کڕیار پێشکەشی دەکەن.',
+  menu_lang_default: 'زمانی بنەڕەت',
+  menu_lang_default_hint: 'زمانی بنەڕەت هەمیشە چالاک دەمێنێت و ڕووکاری بەکارهێنەر بۆی دەگەڕێتەوە.',
+  menu_lang_default_badge: 'بنەڕەت',
+  menu_lang_toggle_label: 'چالاک یان ناچالاک کردنی {language}',
+  menu_lang_note:
+    'ناچالاک کردنی زمان تەنها پیشاندانی دەشارێتەوە؛ هەموو وەرگێڕان و نرخە پاشەکەوتکراوەکان دەستکاری ناکرێن و بە چالاککردنەوە دەگەڕێنەوە.',
+  menu_lang_name_ku: 'کوردی سۆرانی',
+  menu_lang_name_fa: 'فارسی',
+  menu_lang_name_ar: 'عەرەبی',
+  menu_lang_name_en: 'ئینگلیزی',
 
 
   /* ---- بازنشانی داده‌های نمونه / Reset Sample Data ---- */

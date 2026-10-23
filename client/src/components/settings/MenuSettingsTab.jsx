@@ -2,6 +2,7 @@ import { useI18n } from '../../i18n';
 import { SettingsCard } from './SettingsCard';
 import MenuFeatureMatrix from './menu/MenuFeatureMatrix';
 import TableModeCards from './menu/TableModeCards';
+import LanguageManagementCard from './menu/LanguageManagementCard';
 import { normalizeMenuSettings } from './menu/menuSettingsModel';
 
 /*
@@ -85,6 +86,12 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
 
   return (
     <>
+      <LanguageManagementCard
+        value={menu.language_settings}
+        disabled={!canManage}
+        onChange={(next) => patch('menu_settings', { language_settings: next })}
+      />
+
       <SettingsCard
         icon="eye"
         tone="green"

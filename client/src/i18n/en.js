@@ -1271,6 +1271,18 @@ export default {
   menu_mode_qr_hint: 'The table is identified automatically from the scanned QR',
   menu_mode_fallback: 'Automatic with manual fallback',
   menu_mode_fallback_hint: 'Automatic from QR, manual choice when it is missing or invalid',
+  menu_lang_title: 'Language management',
+  menu_lang_subtitle: 'Choose the languages the menu, forms and customer panel offer.',
+  menu_lang_default: 'Default language',
+  menu_lang_default_hint: 'The default language always stays enabled and is the interface fallback.',
+  menu_lang_default_badge: 'Default',
+  menu_lang_toggle_label: 'Enable or disable {language}',
+  menu_lang_note:
+    'Hiding a language only removes it from the interface; every saved translation and price stays in the database and returns when you enable it again.',
+  menu_lang_name_ku: 'Kurdish Sorani',
+  menu_lang_name_fa: 'Persian',
+  menu_lang_name_ar: 'Arabic',
+  menu_lang_name_en: 'English',
 
 
   /* ---- بازنشانی داده‌های نمونه / Reset Sample Data ---- */
