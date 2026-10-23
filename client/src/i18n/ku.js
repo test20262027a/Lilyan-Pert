@@ -864,6 +864,7 @@ export default {
   customer_menu_qty_increase: 'زیادکردنی بڕ',
   customer_menu_qty_decrease: 'کەمکردنەوەی بڕ',
   customer_menu_unavailable_item: 'ئێستا بەردەست نییە',
+  customer_menu_price_unavailable: 'نرخی بۆ ئەم زمانە نییە',
   customer_menu_zoom_open: 'گەورەکردنی وێنە',
   customer_menu_zoom_in: 'گەورەکردن',
   customer_menu_zoom_out: 'بچووککردن',

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { localized, useI18n } from '../../i18n';
+import { productPrice } from '../../languages';
 import { fmtMoneyParts } from '../../format';
 import { appearanceOf } from '../menu/categoryIcons';
 import ProductQuantityControl from './ProductQuantityControl';
@@ -46,7 +47,12 @@ export default function ProductDetailModal({
   const categoryName = localized(category, 'name', locale);
   const appearance = appearanceOf(category);
   const available = product.available !== false;
-  const amount = fmtMoneyParts(product.promo_price ?? product.price, currency, locale);
+  /* The sheet prices the product in the language the guest is reading. */
+  const price = productPrice(product, locale, currency);
+  const priced = price.valid;
+  const buyable = available && priced;
+  const onSale = priced && Boolean(product.has_promotion);
+  const amount = fmtMoneyParts(priced ? price.amount : 0, currency, locale);
 
   /* Escape closes the magnification first, then the sheet itself. */
   useEffect(() => {
@@ -105,7 +111,7 @@ export default function ProductDetailModal({
           </header>
 
           <div className="cui-pd__status">
-            {available ? (
+            {buyable ? (
               <span className="cui-pd__stock">
                 <i aria-hidden="true" />
                 {t('customer_menu_in_stock')}
@@ -126,19 +132,25 @@ export default function ProductDetailModal({
                 <span className="cui-pd__coin" aria-hidden="true">
                   <Icon name="banknote" size={17} />
                 </span>
-                <span className="cui-pd__amount">{amount.number}</span>
-                <span className="cui-pd__curr">{amount.symbol}</span>
-                {product.promo_price ? (
-                  <s className="cui-pd__was">
-                    {fmtMoneyParts(product.price, currency, locale).number}
-                  </s>
-                ) : null}
-                {product.promo_price && promoLabel ? (
-                  <span className="cui-pd__promo">
-                    <Icon name="percent" size={11} />
-                    {promoLabel}
-                  </span>
-                ) : null}
+                {priced ? (
+                  <>
+                    <span className="cui-pd__amount">{amount.number}</span>
+                    <span className="cui-pd__curr">{amount.symbol}</span>
+                    {onSale && price.base !== null && price.base !== price.amount ? (
+                      <s className="cui-pd__was">
+                        {fmtMoneyParts(price.base, currency, locale).number}
+                      </s>
+                    ) : null}
+                    {onSale && promoLabel ? (
+                      <span className="cui-pd__promo">
+                        <Icon name="percent" size={11} />
+                        {promoLabel}
+                      </span>
+                    ) : null}
+                  </>
+                ) : (
+                  <span className="cui-pd__offlabel">{t('customer_menu_price_unavailable')}</span>
+                )}
               </div>
             ) : (
               <span />
@@ -152,13 +164,14 @@ export default function ProductDetailModal({
                     size="lg"
                     onIncrease={() => onAdd?.(product)}
                     onDecrease={() => onDecrease?.(product)}
+                    disabled={!buyable}
                   />
                 ) : (
                   <button
                     type="button"
                     className="cui-pd__add"
                     onClick={() => onAdd?.(product)}
-                    disabled={!available}
+                    disabled={!buyable}
                   >
                     <Icon name="plus" size={18} />
                     <span>{addLabel || t('customer_menu_add_to_cart')}</span>

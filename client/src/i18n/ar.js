@@ -862,6 +862,7 @@ export default {
   customer_menu_qty_increase: 'زيادة الكمية',
   customer_menu_qty_decrease: 'تقليل الكمية',
   customer_menu_unavailable_item: 'غير متوفر حالياً',
+  customer_menu_price_unavailable: 'لا يوجد سعر لهذه اللغة',
   customer_menu_zoom_open: 'تكبير الصورة',
   customer_menu_zoom_in: 'تكبير',
   customer_menu_zoom_out: 'تصغير',

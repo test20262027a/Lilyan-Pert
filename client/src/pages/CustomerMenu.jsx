@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { EmptyState, Loading, Money, useToast } from '../components/ui';
 import { localized, useI18n, LOCALES } from '../i18n';
+import { currencyForLanguage, productPrice, setLanguageSettings } from '../languages';
 import { useAuth } from '../context/AuthContext';
 import { get, post } from '../api';
 import { applyTheme } from '../theme';
@@ -88,6 +89,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       const res = await fetch(url.toString(), { credentials: 'include' });
       const payload = await res.json();
       if (!res.ok) throw new Error(payload?.error || 'ERROR');
+      /*
+       * The menu payload carries the owner's saved Language Management — the one
+       * source of truth — and feeds it into the shared store, so the language
+       * selector offers exactly the enabled languages and a language the owner
+       * just disabled falls back to the configured default immediately.
+       */
+      setLanguageSettings(payload.language_settings);
       setData(payload);
       applyTheme(payload.business?.theme);
     } catch (err) {
@@ -192,7 +200,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   };
 
   const timeZone = zoneFor(locale, data?.business?.timezone);
-  const currency = data?.business?.currency || 'IQD';
+  /* One order is one currency: the ordering language's own (Kurdish/Arabic IQD,
+     Persian TOMAN — never Rial — and English USD). Nothing is converted. */
+  const businessCurrency = data?.business?.currency || 'IQD';
+  const currency = currencyForLanguage(locale, businessCurrency);
 
   /*
    * Whether the business is taking orders right now, re-read on the business's
@@ -231,16 +242,28 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         .map(([id, qty]) => {
           const product = (data?.products || []).find((p) => p.id === id);
           if (!product) return null;
-          const unit = product.promo_price ?? product.price;
-          return { product, qty, unit: Number(unit), total: Number(unit) * qty };
+          /*
+           * Every line is re-priced from the active language's own saved amount,
+           * so switching language recalculates the whole cart instead of keeping
+           * the previous language's money. A line with no price in this language
+           * stays listed but is marked unavailable and cannot be checked out.
+           */
+          const price = productPrice(product, locale, businessCurrency);
+          const unit = price.valid ? price.amount : null;
+          return { product, qty, unit, total: unit === null ? 0 : unit * qty, valid: price.valid };
         })
         .filter(Boolean),
-    [cart, data],
+    [cart, data, locale, businessCurrency],
   );
   const cartCount = cartLines.reduce((s, l) => s + l.qty, 0);
   const cartTotal = cartLines.reduce((s, l) => s + l.total, 0);
+  /* A line the current language cannot price blocks checkout — never a silent
+     charge in another language's currency. */
+  const cartBlocked = cartLines.some((line) => !line.valid);
 
   const add = (product) => {
+    // Only a product with a real price in the active language may be ordered.
+    if (!productPrice(product, locale, businessCurrency).valid) return;
     setCart((c) => ({ ...c, [product.id]: (c[product.id] || 0) + 1 }));
   };
   const setQty = (product, qty) => {
@@ -256,14 +279,24 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const removeOne = (product) => setQty(product, (cart[product.id] || 0) - 1);
 
   const placeOrder = async ({ customer_name, customer_phone, notes, promotion_code }) => {
+    // A line without a price in this language can never be sent to the server.
+    if (cartBlocked) return;
     setBusy(true);
     try {
       const items = cartLines.map((l) => ({ product_id: l.product.id, quantity: l.qty }));
       let res;
       if (adminMode) {
         // The main ordering menu has no QR link, so the table is the one the
-        // guest picked in the form.
-        res = await post('/orders', { table_id: tableId || null, customer_name, customer_phone, notes, items });
+        // guest picked in the form. The language is sent too, so the server
+        // prices the order in the currency the guest is reading.
+        res = await post('/orders', {
+          table_id: tableId || null,
+          customer_name,
+          customer_phone,
+          notes,
+          items,
+          language: locale,
+        });
         res = { order: res.order };
       } else {
         // The code is only a hint: the server re-reads the promotion and
@@ -280,6 +313,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           customer_phone,
           notes,
           promotion_code: promotion_code ? promotion_code.trim() : null,
+          // The server re-validates that this language is still enabled and that
+          // every product really has a price in it before saving the order.
+          language: locale,
           items,
         });
       }
@@ -292,7 +328,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       else if (err.code === 'ORDERING_DISABLED') toast.error(t('customer_ordering_disabled'));
       else if (err.code === 'INVALID_TABLE') toast.error(t('customer_table_invalid'));
       else if (err.code === 'PROMO_MIN_ORDER') toast.error(t('customer_promo_min_order'));
-      else if (String(err.code || '').startsWith('PROMO_')) toast.error(t('customer_promo_invalid'));
+      else if (err.code === 'LANGUAGE_UNAVAILABLE' || err.code === 'PRODUCT_PRICE_UNAVAILABLE') {
+        toast.error(t('customer_menu_price_unavailable'));
+      } else if (String(err.code || '').startsWith('PROMO_')) toast.error(t('customer_promo_invalid'));
       else toast.error(t('error_generic'));
     } finally {
       setBusy(false);
@@ -656,6 +694,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           lines={cartLines}
           currency={currency}
           locale={locale}
+          language={locale}
+          hasUnavailable={cartBlocked}
           busy={busy}
           canCheckout={checkoutEnabled}
           canOrder={orderingEnabled}
@@ -691,7 +731,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       {/* Opens only on a confirmed order: `placed` is the record the API
           returned after saving it, never the click that started the request. */}
       {placed ? (
-        <OrderSuccessModal order={placed} currency={currency} onClose={() => setPlaced(null)} />
+        {/* The order carries the currency it was actually saved in. */}
+        <OrderSuccessModal order={placed} currency={placed.currency || currency} onClose={() => setPlaced(null)} />
       ) : null}
     </div>
   );

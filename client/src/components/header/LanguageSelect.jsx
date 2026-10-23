@@ -32,6 +32,9 @@ export default function LanguageSelect() {
   const wrapRef = useRef(null);
   const menuRef = useRef(null);
   const current = locales.find((l) => l.code === locale) || locales[0] || { code: locale, label: locale };
+  /* One enabled language means one choice: the current language is shown, and
+     the control offers no list to open. */
+  const single = locales.length <= 1;
 
   const place = useCallback(() => {
     const trigger = wrapRef.current;
@@ -131,19 +134,25 @@ export default function LanguageSelect() {
     <span className="hdr-lang" ref={wrapRef}>
       <button
         type="button"
-        className="hdr-lang__btn"
-        aria-haspopup="listbox"
-        aria-expanded={open}
+        className={`hdr-lang__btn ${single ? 'is-single' : ''}`.trim()}
+        aria-haspopup={single ? undefined : 'listbox'}
+        aria-expanded={single ? undefined : open}
+        aria-disabled={single || undefined}
         aria-label={t('label_language')}
         title={t('label_language')}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => {
+          if (single) return;
+          setOpen((v) => !v);
+        }}
       >
         <LanguageFlag code={current.code} />
         <span className="hdr-lang__label">{current.label}</span>
-        <Icon name="chevronDown" size={14} className={`hdr-lang__caret ${open ? 'is-open' : ''}`} />
+        {single ? null : (
+          <Icon name="chevronDown" size={14} className={`hdr-lang__caret ${open ? 'is-open' : ''}`} />
+        )}
       </button>
 
-      {menu}
+      {single ? null : menu}
     </span>
   );
 }

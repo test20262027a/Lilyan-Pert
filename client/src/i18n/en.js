@@ -865,6 +865,7 @@ export default {
   customer_menu_qty_increase: 'Increase quantity',
   customer_menu_qty_decrease: 'Decrease quantity',
   customer_menu_unavailable_item: 'Currently unavailable',
+  customer_menu_price_unavailable: 'No price in this language',
   customer_menu_zoom_open: 'Zoom image',
   customer_menu_zoom_in: 'Zoom in',
   customer_menu_zoom_out: 'Zoom out',

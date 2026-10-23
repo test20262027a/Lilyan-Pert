@@ -863,6 +863,7 @@ export default {
   customer_menu_qty_increase: 'افزایش تعداد',
   customer_menu_qty_decrease: 'کاهش تعداد',
   customer_menu_unavailable_item: 'در حال حاضر موجود نیست',
+  customer_menu_price_unavailable: 'برای این زبان قیمتی ثبت نشده',
   customer_menu_zoom_open: 'بزرگ‌نمایی تصویر',
   customer_menu_zoom_in: 'بزرگ‌نمایی',
   customer_menu_zoom_out: 'کوچک‌نمایی',

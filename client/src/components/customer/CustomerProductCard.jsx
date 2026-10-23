@@ -1,6 +1,7 @@
 import Icon from '../Icon';
 import { Money } from '../ui';
 import { localized, useI18n } from '../../i18n';
+import { productPrice } from '../../languages';
 import { fmtMoneyParts } from '../../format';
 import ProductQuantityControl from './ProductQuantityControl';
 import '../../customerProduct.css';
@@ -43,13 +44,22 @@ export default function CustomerProductCard({
   const { t } = useI18n();
   const name = localized(product, 'name', locale);
   const available = product.available !== false;
+  /*
+   * The card shows the active language's own saved price — never another
+   * language's amount under this language's currency label. A language without
+   * a valid price keeps the card visible but makes it non-orderable.
+   */
+  const price = productPrice(product, locale, currency);
+  const priced = price.valid;
+  const buyable = available && priced;
+  const onSale = priced && Boolean(product.has_promotion);
   const open = () => onOpen?.(product);
   const canOpen = Boolean(onOpen) && !disabled;
-  const amount = fmtMoneyParts(product.promo_price ?? product.price, currency, locale);
+  const amount = fmtMoneyParts(priced ? price.amount : 0, currency, locale);
 
   return (
     <article
-      className={`cui-prod ${canOpen ? 'is-openable' : ''} ${available ? '' : 'is-out'} ${disabled ? 'is-locked' : ''}`.trim()}
+      className={`cui-prod ${canOpen ? 'is-openable' : ''} ${available ? '' : 'is-out'} ${priced ? '' : 'is-noprice'} ${disabled ? 'is-locked' : ''}`.trim()}
       onClick={canOpen ? open : undefined}
       onKeyDown={
         canOpen
@@ -74,7 +84,7 @@ export default function CustomerProductCard({
             <Icon name="coffee" size={30} />
           </span>
         )}
-        {badge || product.promo_price ? (
+        {badge || onSale || !priced ? (
           <div className="cui-prod__badges">
             {badge ? (
               <span className="cui-prod__badge cui-prod__badge--star">
@@ -82,12 +92,18 @@ export default function CustomerProductCard({
                 {badge}
               </span>
             ) : null}
-            {product.promo_price ? (
+            {onSale ? (
               <span className="cui-prod__badge cui-prod__badge--promo">
                 <Icon name="percent" size={11} />
                 {promoLabel}
               </span>
             ) : null}
+            {priced ? null : (
+              <span className="cui-prod__badge cui-prod__badge--off">
+                <Icon name="alert" size={11} />
+                {t('customer_menu_price_unavailable')}
+              </span>
+            )}
           </div>
         ) : null}
       </div>
@@ -97,15 +113,20 @@ export default function CustomerProductCard({
           {name}
         </h3>
 
-        {categoryName || available ? (
+        {categoryName || !buyable ? (
           <div className="cui-prod__meta">
             {categoryName ? <span className="cui-prod__cat">{categoryName}</span> : <span />}
-            {available ? (
+            {buyable ? (
               <span className="cui-prod__stock">
                 <i aria-hidden="true" />
                 {t('customer_menu_in_stock')}
               </span>
-            ) : null}
+            ) : (
+              <span className="cui-prod__stock cui-prod__stock--off">
+                <i aria-hidden="true" />
+                {t('customer_menu_unavailable_item')}
+              </span>
+            )}
           </div>
         ) : null}
 
@@ -114,13 +135,19 @@ export default function CustomerProductCard({
             <span className="cui-prod__priceicon" aria-hidden="true">
               <Icon name="banknote" size={16} />
             </span>
-            <span className="cui-prod__amount">{amount.number}</span>
-            <span className="cui-prod__curr">{amount.symbol}</span>
-            {product.promo_price ? (
-              <s className="cui-prod__was">
-                <Money value={product.price} currency={currency} />
-              </s>
-            ) : null}
+            {priced ? (
+              <>
+                <span className="cui-prod__amount">{amount.number}</span>
+                <span className="cui-prod__curr">{amount.symbol}</span>
+                {onSale && price.base !== null && price.base !== price.amount ? (
+                  <s className="cui-prod__was">
+                    <Money value={price.base} currency={currency} />
+                  </s>
+                ) : null}
+              </>
+            ) : (
+              <span className="cui-prod__offlabel">{t('customer_menu_price_unavailable')}</span>
+            )}
           </div>
         ) : null}
 
@@ -135,13 +162,13 @@ export default function CustomerProductCard({
                 quantity={quantity}
                 onIncrease={() => onAdd(product)}
                 onDecrease={() => onDecrease?.(product)}
-                disabled={!available || disabled}
+                disabled={!buyable || disabled}
               />
             ) : (
               <button
                 type="button"
                 className="cui-prod__add"
-                disabled={!available || disabled}
+                disabled={!buyable || disabled}
                 onClick={(event) => {
                   event.stopPropagation();
                   onAdd(product);

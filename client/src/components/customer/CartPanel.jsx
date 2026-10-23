@@ -24,6 +24,11 @@ export default function CartPanel({
   lines,
   currency,
   locale,
+  /* The language the order is being placed in — the server prices the quote in
+     exactly this language's currency, never a mixed one. */
+  language = 'ku',
+  /* At least one line has no price in the active language: checkout is blocked. */
+  hasUnavailable = false,
   busy,
   canCheckout,
   canOrder,
@@ -74,12 +79,12 @@ export default function CartPanel({
   confirmRef.current = confirmClear;
 
   useEffect(() => {
-    if (!itemsKey) {
+    if (!itemsKey || hasUnavailable) {
       setQuote(null);
       return undefined;
     }
     let alive = true;
-    post(`/public/quote/${menuKey}`, { items, promotion_code: appliedCode || null })
+    post(`/public/quote/${menuKey}`, { items, promotion_code: appliedCode || null, language })
       .then((res) => {
         if (alive) setQuote(res);
       })
@@ -91,7 +96,14 @@ export default function CartPanel({
     };
     // `itemsKey` is the stable signature of `items`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsKey, appliedCode, menuKey]);
+  }, [itemsKey, appliedCode, menuKey, language, hasUnavailable]);
+
+  /* A saved code was validated against the previous language's currency, so a
+     language change clears it instead of reusing a discount in another unit. */
+  useEffect(() => {
+    setAppliedCode('');
+    setPromoError(null);
+  }, [language]);
 
   /* Modal behaviour: focus moves into the sheet, Tab stays inside it, Escape
      closes it — unless the clear-cart confirmation is on top, which owns Escape
@@ -141,7 +153,7 @@ export default function CartPanel({
     setChecking(true);
     setPromoError(null);
     try {
-      const res = await post(`/public/quote/${menuKey}`, { items, promotion_code: code });
+      const res = await post(`/public/quote/${menuKey}`, { items, promotion_code: code, language });
       setQuote(res);
       setAppliedCode(res.promotion_code || code);
       setCodeInput('');
@@ -152,7 +164,7 @@ export default function CartPanel({
       setChecking(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [codeInput, itemsKey, menuKey, t]);
+  }, [codeInput, itemsKey, menuKey, t, language]);
 
   const subtotal = quote?.subtotal ?? localSubtotal;
   const discount = quote?.discount ?? 0;
@@ -170,7 +182,7 @@ export default function CartPanel({
   const validatedTableId = qrTable?.id
     || (tableList.some((row) => row.id === tableId) ? tableId : '');
   const tableReady = Boolean(validatedTableId);
-  const canSubmit = canOrder && tableReady && !isEmpty && !busy && !submitted;
+  const canSubmit = canOrder && tableReady && !isEmpty && !hasUnavailable && !busy && !submitted;
   /* The main ordering menu has no QR code to rely on, so there the missing
      table is a choice the guest still has to make — never a QR problem. */
   const isMain = context === 'main';
@@ -244,7 +256,7 @@ export default function CartPanel({
 
               <ul className="cui-lines">
                 {lines.map((line) => (
-                  <li className="cui-line" key={line.product.id}>
+                  <li className={`cui-line ${line.valid === false ? 'cui-line--off' : ''}`.trim()} key={line.product.id}>
                     <span className="cui-line__thumb">
                       {line.product.image_url ? (
                         <img src={line.product.image_url} alt="" />
@@ -255,9 +267,13 @@ export default function CartPanel({
 
                     <span className="cui-line__text">
                       <strong>{localized(line.product, 'name', locale)}</strong>
-                      <small>
-                        <Money value={line.unit} currency={currency} />
-                      </small>
+                      {line.valid === false ? (
+                        <small className="cui-line__off">{t('customer_menu_price_unavailable')}</small>
+                      ) : (
+                        <small>
+                          <Money value={line.unit} currency={currency} />
+                        </small>
+                      )}
                     </span>
 
                     <span className="cui-qty">
@@ -424,6 +440,15 @@ export default function CartPanel({
                     : tableState === 'invalid'
                       ? t('customer_table_invalid')
                       : t('customer_table_scan_required')}
+                </p>
+              ) : null}
+
+              {/* A line this language cannot price is named before the totals,
+                  so the guest knows why checkout is blocked. */}
+              {hasUnavailable ? (
+                <p className="cui-note cui-note--warn">
+                  <Icon name="alert" size={14} />
+                  {t('customer_menu_price_unavailable')}
                 </p>
               ) : null}
 

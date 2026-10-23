@@ -148,7 +148,8 @@ router.get(
         [business.id],
       ),
       q(
-        `SELECT id, product_id, discount_type, discount_value, title_ku, title_fa, title_ar, title_en
+        `SELECT id, product_id, discount_type, discount_value, currency_amounts,
+                title_ku, title_fa, title_ar, title_en
            FROM promotions
           WHERE business_id = $1 AND active = true AND product_id IS NOT NULL
             AND (starts_at IS NULL OR starts_at <= now())
@@ -616,6 +617,10 @@ router.post(
         status: result.order.status,
         total: result.order.total,
         subtotal: result.order.subtotal,
+        // The language and currency the order was really saved in, so the
+        // confirmation reads the same unit as the cart did.
+        language: result.order.language,
+        currency: result.order.currency,
         created_at: result.order.created_at,
       },
       table: result.tableName,

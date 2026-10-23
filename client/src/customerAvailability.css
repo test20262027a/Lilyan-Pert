@@ -271,3 +271,39 @@
 @media (max-width: 400px) {
   .cui-nav__brand { max-width: 34%; }
 }
+
+/* --------------------------------------------- price-unavailable product -- */
+
+/*
+ * A product with no valid price in the language the guest is reading. It stays
+ * in place — only the amount is missing — so the card keeps its layout and its
+ * ordering controls simply switch off. The photograph loses a little colour,
+ * which reads as "not orderable in this language" without pretending the
+ * product itself is sold out.
+ */
+.cui-prod.is-noprice .cui-prod__media img { filter: grayscale(0.38) saturate(0.72); }
+
+.cui-prod__badge--off {
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+  background: color-mix(in srgb, var(--surface) 92%, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--muted) 26%, transparent);
+}
+
+.cui-prod__stock--off {
+  border-color: color-mix(in srgb, var(--muted) 26%, transparent);
+  background: color-mix(in srgb, var(--muted) 12%, var(--surface));
+  color: color-mix(in srgb, var(--muted) 82%, var(--text));
+}
+
+.cui-prod__offlabel,
+.cui-pd__offlabel {
+  font-size: 12px;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text));
+}
+
+.cui-line--off .cui-line__thumb img { filter: grayscale(0.4) saturate(0.7); }
+.cui-line__off {
+  color: color-mix(in srgb, var(--danger, #d9534f) 62%, var(--muted));
+  font-weight: 700;
+}
