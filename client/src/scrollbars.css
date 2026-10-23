@@ -1,45 +1,58 @@
 /* ==========================================================================
-   Lilyan Pert — global scrollbar system
+   Lilyan Pert — the one global scrollbar system
 
    One ultra-thin, theme-aware scrollbar for the whole app (admin panel,
    customer menu, modals, dropdowns, sidebars, horizontal strips).
 
+   ── Why it used to grow on hover ───────────────────────────────────────────
+   The bar is drawn with ::-webkit-scrollbar at exactly `--app-scrollbar-size`.
+   Chromium only honours those pseudo-elements while the standard properties
+   stay at their `auto` value: the moment an element computes a real
+   `scrollbar-color`, the engine throws the pseudo-element styling away and
+   paints its own native scrollbar instead — 15px wide, filled with that
+   colour. A previous global rule (`:where(*):hover { scrollbar-color: … }`)
+   therefore repainted every scrollbar into a thick theme-coloured bar as soon
+   as the pointer entered the page, and reverted when it left.
+
+   So the rule now is simple and enforced below: `scrollbar-width` /
+   `scrollbar-color` are only declared for Firefox (the one engine without the
+   pseudo-elements), and nothing anywhere sets them for WebKit/Chromium. The
+   thickness is `--app-scrollbar-size` in every state — idle, hover, drag.
+
    Colours derive from `--primary`, which `applyTheme()` writes onto <html>
    whenever the business theme changes, so every scrollbar follows the active
-   theme live — there is no separate scrollbar theme.
+   theme live. There is no separate scrollbar theme.
 
    Rules use :where() (zero specificity) so a component can still opt out
    deliberately (e.g. `scrollbar-width: none` on strips that have their own
-   arrows / swipe) without specificity fights.
-
-   Thickness never changes: the bar is `--sb-size` in every state. Hover and
-   drag only shift the thumb's colour and its glossy highlight — never its
-   width, so nothing reflows under the pointer.
+   arrows / swipe).
 
    Tokens (override per-surface if ever needed):
-     --sb-size         thumb thickness, idle / hover / drag   (4px)
-     --sb-thumb        idle thumb colour
-     --sb-thumb-hover  hover thumb colour (a little stronger)
-     --sb-thumb-active drag thumb colour  (full theme colour)
-     --sb-track        track colour       (transparent)
+     --app-scrollbar-size         thumb thickness, idle / hover / drag (4px)
+     --app-scrollbar-track        track colour (transparent)
+     --app-scrollbar-thumb        idle thumb colour
+     --app-scrollbar-thumb-hover  hover thumb colour (a little stronger)
+     --app-scrollbar-thumb-active drag thumb colour  (full theme colour)
+     --app-scrollbar-radius       pill radius
 
    Browser notes
      • Chromium / Edge / Safari (desktop): exact 4px via ::-webkit-scrollbar.
      • Firefox: only `scrollbar-width: thin` + `scrollbar-color` exist, so the
        width is the browser's thin size (≈8px) and hover width is not
-       configurable; colours still follow the theme.
+       configurable — colour follows the theme, the width never changes.
      • Mobile / tablet (touch, coarse pointer): native overlay scrollbars are
        left untouched.
    ========================================================================== */
 
 :root {
-  --sb-size: 4px;
-  --sb-track: transparent;
-  --sb-thumb: color-mix(in srgb, var(--primary, #7c67e4) 42%, transparent);
-  --sb-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 72%, transparent);
-  --sb-thumb-active: color-mix(in srgb, var(--primary, #7c67e4) 92%, transparent);
+  --app-scrollbar-size: 4px;
+  --app-scrollbar-radius: 999px;
+  --app-scrollbar-track: transparent;
+  --app-scrollbar-thumb: color-mix(in srgb, var(--primary, #7c67e4) 42%, transparent);
+  --app-scrollbar-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 72%, transparent);
+  --app-scrollbar-thumb-active: color-mix(in srgb, var(--primary, #7c67e4) 92%, transparent);
   /* The soft top-lit sheen that gives the pill its restrained depth. */
-  --sb-gloss: linear-gradient(
+  --app-scrollbar-gloss: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.55),
     rgba(255, 255, 255, 0.08) 55%,
@@ -48,10 +61,10 @@
 }
 
 [data-theme='dark'] {
-  --sb-thumb: color-mix(in srgb, var(--primary, #7c67e4) 52%, transparent);
-  --sb-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 80%, transparent);
-  --sb-thumb-active: var(--primary, #7c67e4);
-  --sb-gloss: linear-gradient(
+  --app-scrollbar-thumb: color-mix(in srgb, var(--primary, #7c67e4) 52%, transparent);
+  --app-scrollbar-thumb-hover: color-mix(in srgb, var(--primary, #7c67e4) 80%, transparent);
+  --app-scrollbar-thumb-active: var(--primary, #7c67e4);
+  --app-scrollbar-gloss: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.34),
     rgba(255, 255, 255, 0.06) 55%,
@@ -61,55 +74,55 @@
 
 /* Everything except primarily-touch devices: those keep native overlay bars. */
 @media not all and (pointer: coarse) {
-  /* Firefox (and any engine implementing the standard properties). */
-  :where(*) {
-    scrollbar-width: thin;
-    scrollbar-color: var(--sb-thumb) var(--sb-track);
-  }
-
-  :where(*):hover {
-    scrollbar-color: var(--sb-thumb-hover) var(--sb-track);
-  }
-
   /*
-   * Chromium / Safari. Chromium 121+ also honours scrollbar-width/color above,
-   * and when those are set it ignores ::-webkit-scrollbar sizing. To keep the
-   * exact 4px bar there, the standard properties are reset to `auto` where the
-   * webkit pseudo-elements are supported, so the pseudo-elements take effect.
+   * Firefox only. `-moz-appearance` is the one property no other engine
+   * supports, so this block never leaks the standard scrollbar properties into
+   * Chromium — where a real `scrollbar-color` would replace the thin bar.
+   * Scrolling and its colour-changing hover are untouched; the width cannot
+   * change in Firefox at all.
    */
-  @supports selector(::-webkit-scrollbar) {
+  @supports (-moz-appearance: none) {
     :where(*) {
-      scrollbar-width: auto;
-      scrollbar-color: auto;
+      scrollbar-width: thin;
+      scrollbar-color: var(--app-scrollbar-thumb) var(--app-scrollbar-track);
     }
 
-    /* One thickness for every state — idle, hover and dragging alike. */
+    :where(*):hover {
+      scrollbar-color: var(--app-scrollbar-thumb-hover) var(--app-scrollbar-track);
+    }
+  }
+
+  /* Chromium / Edge / Safari. One thickness for every interaction state. */
+  @supports selector(::-webkit-scrollbar) {
     :where(*)::-webkit-scrollbar {
-      width: var(--sb-size);
-      height: var(--sb-size);
+      width: var(--app-scrollbar-size);
+      height: var(--app-scrollbar-size);
       background: transparent;
     }
 
     :where(*)::-webkit-scrollbar-track,
     :where(*)::-webkit-scrollbar-track-piece {
-      background: var(--sb-track);
+      background: var(--app-scrollbar-track);
       border: 0;
       box-shadow: none;
     }
 
     :where(*)::-webkit-scrollbar-thumb {
-      background-color: var(--sb-thumb);
-      background-image: var(--sb-gloss);
+      background-color: var(--app-scrollbar-thumb);
+      background-image: var(--app-scrollbar-gloss);
       background-clip: padding-box;
-      border-radius: 999px;
+      border-radius: var(--app-scrollbar-radius);
       border: 0;
+      /* A floor on the pill's length keeps the 4px bar grabbable. */
       min-height: 32px;
       min-width: 32px;
+      /* No width animation exists anywhere: hover only shifts the colour. */
+      transition: background-color 160ms ease;
     }
 
     /* Hover only deepens the colour and the sheen; the width is untouched. */
     :where(*)::-webkit-scrollbar-thumb:hover {
-      background-color: var(--sb-thumb-hover);
+      background-color: var(--app-scrollbar-thumb-hover);
       background-image: linear-gradient(
         180deg,
         rgba(255, 255, 255, 0.72),
@@ -119,7 +132,7 @@
     }
 
     :where(*)::-webkit-scrollbar-thumb:active {
-      background-color: var(--sb-thumb-active);
+      background-color: var(--app-scrollbar-thumb-active);
       background-image: linear-gradient(
         180deg,
         rgba(255, 255, 255, 0.82),
@@ -139,5 +152,10 @@
       width: 0;
       height: 0;
     }
+  }
+
+  /* A page scrollbar never steals layout width when content appears. */
+  :where(html) {
+    scrollbar-gutter: auto;
   }
 }

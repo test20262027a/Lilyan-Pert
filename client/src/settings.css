@@ -309,12 +309,14 @@
 .set-social__icon.is-instagram { color: #c13584; background: #fdf0f7; border-color: #f6dced; }
 .set-social__icon.is-facebook { color: #1877f2; background: #eef4ff; border-color: #dbe8fd; }
 .set-social__icon.is-x { color: #111827; background: #f4f5f7; border-color: #e4e6ea; }
+.set-social__icon.is-tiktok { color: #111111; background: #f2f3f5; border-color: #e3e5ea; }
 .set-social__icon.is-whatsapp { color: #1aa855; background: #ecfbf1; border-color: #d3f2df; }
 .set-social__icon.is-website { color: #0d9488; background: #e9f8f5; border-color: #cfefea; }
 [data-theme='dark'] .set-social__icon { background: var(--surface-3); border-color: var(--border-strong); }
 [data-theme='dark'] .set-social__icon.is-instagram { color: #f0a2c5; }
 [data-theme='dark'] .set-social__icon.is-facebook { color: #9dc0f7; }
 [data-theme='dark'] .set-social__icon.is-x { color: #e5e7eb; background: #262a33; }
+[data-theme='dark'] .set-social__icon.is-tiktok { color: #f3f4f6; background: #23262c; border-color: #33373f; }
 [data-theme='dark'] .set-social__icon.is-whatsapp { color: #7fe0a6; }
 [data-theme='dark'] .set-social__icon.is-website { color: #7fe3d6; }
 

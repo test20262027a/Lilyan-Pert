@@ -1,0 +1,315 @@
+/* ==========================================================================
+   The order-success card
+
+   A compact frosted-glass confirmation for the customer menu: theme-tinted
+   glass, soft layered depth, one celebration illustration and the real order
+   facts. It carries no close button — it times out on its own and can be
+   dismissed by tapping the dimmed area.
+
+   Every accent is mixed from `--primary`, so the card follows the business
+   theme (Default / Ocean / Forest / Sunset / Midnight…) and the dark mode.
+   ========================================================================== */
+
+.osx-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: max(16px, env(safe-area-inset-top, 0px)) 16px max(16px, env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, #08130f 46%, transparent);
+  backdrop-filter: blur(7px) saturate(0.96);
+  -webkit-backdrop-filter: blur(7px) saturate(0.96);
+  animation: osx-fade 220ms ease-out both;
+}
+.osx-overlay.is-leaving { animation: osx-fade 240ms ease-in reverse both; }
+
+@keyframes osx-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.osx-card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  width: min(100%, 440px);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: 26px 26px 22px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, rgba(255, 255, 255, 0.6));
+  /* Frosted, theme-tinted glass: enough transparency for the blurred page to
+     read through, enough surface for the text to stay perfectly legible. */
+  background:
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--surface, #ffffff) 74%, transparent),
+      color-mix(in srgb, var(--primary) 12%, color-mix(in srgb, var(--surface, #ffffff) 56%, transparent))
+    );
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.55) inset,
+    0 -1px 0 color-mix(in srgb, var(--primary) 12%, transparent) inset,
+    0 30px 64px -28px color-mix(in srgb, var(--primary) 52%, rgba(6, 18, 13, 0.55)),
+    0 12px 26px -18px rgba(6, 18, 13, 0.35);
+  text-align: center;
+  outline: none;
+  animation: osx-in 420ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+.osx-overlay.is-leaving .osx-card { animation: osx-out 240ms ease-in both; }
+
+@keyframes osx-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.94); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes osx-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(6px) scale(0.96); }
+}
+
+/* A single diagonal light reflection across the glass. */
+.osx-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(
+    125deg,
+    rgba(255, 255, 255, 0.5),
+    rgba(255, 255, 255, 0) 42%,
+    color-mix(in srgb, var(--primary) 10%, transparent) 100%
+  );
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------- artwork --- */
+
+.osx-emoji {
+  display: grid;
+  place-items: center;
+  width: 108px;
+  height: 108px;
+  margin-bottom: 6px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 50% 46%,
+    color-mix(in srgb, var(--primary) 16%, rgba(255, 255, 255, 0.72)),
+    transparent 72%
+  );
+  animation: osx-pop 560ms cubic-bezier(0.18, 0.9, 0.24, 1.08) both;
+}
+.osx-emoji .emoji3d {
+  display: block;
+  width: 96px;
+  height: 96px;
+  filter: drop-shadow(0 10px 14px color-mix(in srgb, var(--primary) 26%, rgba(8, 20, 14, 0.32)));
+  animation: osx-float 3200ms ease-in-out 560ms infinite;
+}
+
+@keyframes osx-pop {
+  0% { opacity: 0; transform: scale(0.7) rotate(-6deg); }
+  62% { opacity: 1; transform: scale(1.05) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes osx-float {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-5px) rotate(1.5deg); }
+}
+
+/* Tiny celebratory glints around the illustration. */
+.osx-spark {
+  position: absolute;
+  top: 34px;
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--primary) 70%, #ffffff);
+  opacity: 0;
+  animation: osx-twinkle 2600ms ease-in-out 480ms infinite;
+}
+.osx-spark--a { inset-inline-start: calc(50% - 62px); animation-delay: 520ms; }
+.osx-spark--b { inset-inline-start: calc(50% + 54px); top: 62px; animation-delay: 900ms; width: 5px; height: 5px; }
+.osx-spark--c { inset-inline-start: calc(50% + 30px); top: 24px; animation-delay: 1500ms; width: 4px; height: 4px; }
+
+@keyframes osx-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.6); }
+  45% { opacity: 0.85; transform: scale(1); }
+}
+
+/* ---------------------------------------------------------------- copy --- */
+
+.osx-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+  color: var(--text, #14231b);
+}
+.osx-note {
+  margin: 7px 0 0;
+  max-width: 32ch;
+  font-size: 12.8px;
+  line-height: 1.65;
+  color: var(--text-soft, rgba(20, 35, 27, 0.68));
+}
+
+/* ----------------------------------------------------------- order facts - */
+
+.osx-facts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.osx-number {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 10px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border, rgba(20, 35, 27, 0.12)));
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface, #ffffff));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 6px 14px -12px color-mix(in srgb, var(--primary) 60%, transparent);
+}
+.osx-number__label {
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--text-soft, rgba(20, 35, 27, 0.66));
+}
+.osx-number__value {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--primary) 82%, var(--text, #14231b));
+  font-variant-numeric: tabular-nums;
+}
+
+.osx-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: color-mix(in srgb, var(--primary) 78%, var(--text, #14231b));
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+}
+/* Completed and cancelled are the only two facts that must not read "brand". */
+.osx-status--completed,
+.osx-status--served {
+  color: #0f7a44;
+  background: color-mix(in srgb, #16a34a 12%, transparent);
+  border-color: color-mix(in srgb, #16a34a 28%, transparent);
+}
+.osx-status--cancelled {
+  color: #a32a2a;
+  background: color-mix(in srgb, #dc2626 10%, transparent);
+  border-color: color-mix(in srgb, #dc2626 26%, transparent);
+}
+
+.osx-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid color-mix(in srgb, var(--primary) 14%, var(--border, rgba(20, 35, 27, 0.12)));
+  font-size: 12px;
+  color: var(--text-soft, rgba(20, 35, 27, 0.7));
+}
+.osx-total strong {
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text, #14231b);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ countdown -- */
+
+.osx-progress {
+  display: block;
+  width: 100%;
+  height: 3px;
+  margin-top: 16px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  overflow: hidden;
+}
+.osx-progress__fill {
+  display: block;
+  height: 100%;
+  width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 55%, transparent),
+    var(--primary)
+  );
+  transform-origin: left center;
+  animation: osx-countdown 5500ms linear both;
+}
+[dir='rtl'] .osx-progress__fill { transform-origin: right center; }
+.osx-progress[data-paused='true'] .osx-progress__fill { animation-play-state: paused; }
+
+@keyframes osx-countdown {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+/* ----------------------------------------------------------- responsive -- */
+
+@media (max-width: 640px) {
+  .osx-card {
+    width: min(100%, calc(100vw - 32px));
+    padding: 22px 20px 18px;
+    border-radius: 22px;
+  }
+  .osx-emoji { width: 92px; height: 92px; }
+  .osx-emoji .emoji3d { width: 82px; height: 82px; }
+  .osx-title { font-size: 18px; }
+  .osx-note { font-size: 12.2px; }
+  .osx-total strong { font-size: 17.5px; }
+  .osx-spark--a { inset-inline-start: calc(50% - 54px); }
+  .osx-spark--b { inset-inline-start: calc(50% + 46px); }
+}
+
+@media (max-height: 460px) {
+  .osx-card { padding-top: 16px; padding-bottom: 14px; }
+  .osx-emoji { width: 78px; height: 78px; margin-bottom: 2px; }
+  .osx-emoji .emoji3d { width: 70px; height: 70px; }
+  .osx-facts { margin-top: 10px; }
+  .osx-total { margin-top: 10px; padding-top: 10px; }
+  .osx-progress { margin-top: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .osx-overlay,
+  .osx-overlay.is-leaving,
+  .osx-card,
+  .osx-overlay.is-leaving .osx-card,
+  .osx-emoji,
+  .osx-emoji .emoji3d,
+  .osx-spark {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+  }
+  .osx-emoji .emoji3d { animation: none; }
+  .osx-spark { display: none; }
+  /* The bar still shows the remaining time, it just does not glide. */
+  .osx-progress__fill { animation-timing-function: steps(12, end); }
+}

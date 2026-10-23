@@ -1226,7 +1226,7 @@
   transition: transform 240ms cubic-bezier(0.22, 0.75, 0.3, 1), box-shadow 240ms ease;
 }
 /* The raised look of the tile's own sheen: a soft top highlight on the mark. */
-.cui-link__icon .brand { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.22)); }
+.cui-link__icon .brand-icon { filter: drop-shadow(0 1px 1.5px rgba(0, 0, 0, 0.22)); }
 .cui-link__label {
   /* Two label lines are reserved so every tile keeps the same height even when
      only one label in the card wraps. */

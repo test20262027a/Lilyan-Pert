@@ -852,6 +852,7 @@ export default {
   customer_menu_in_stock: 'In stock',
   customer_menu_place_order: 'Place order',
   customer_menu_order_placed: 'Order received',
+  customer_menu_order_placed_hint: 'Your order reached the counter and is being prepared.',
   customer_menu_order_number: 'Order number',
   customer_menu_your_order: 'Your order',
   customer_menu_view_order: 'View order',

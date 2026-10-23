@@ -851,6 +851,7 @@ export default {
   customer_menu_in_stock: 'بەردەستە',
   customer_menu_place_order: 'ناردنی داواکاری',
   customer_menu_order_placed: 'داواکاری وەرگیرا',
+  customer_menu_order_placed_hint: 'داواکاریەکەت گەیشتە کاونتیەر و ئێستا ئامادە دەکرێت.',
   customer_menu_order_number: 'ژمارەی داواکاری',
   customer_menu_your_order: 'داواکاریەکەت',
   customer_menu_view_order: 'بینینی داواکاری',

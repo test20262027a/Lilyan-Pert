@@ -850,6 +850,7 @@ export default {
   customer_menu_in_stock: 'موجود',
   customer_menu_place_order: 'ثبت سفارش',
   customer_menu_order_placed: 'سفارش دریافت شد',
+  customer_menu_order_placed_hint: 'سفارش شما به پیشخوان رسید و در حال آماده‌سازی است.',
   customer_menu_order_number: 'شماره سفارش',
   customer_menu_your_order: 'سفارش شما',
   customer_menu_view_order: 'مشاهده سفارش',

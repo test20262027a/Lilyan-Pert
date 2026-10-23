@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { EmptyState, Loading, Modal, Money, useToast } from '../components/ui';
+import { EmptyState, Loading, Money, useToast } from '../components/ui';
 import { localized, useI18n, LOCALES } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { get, post } from '../api';
@@ -21,6 +21,7 @@ import CustomerAbout from '../components/customer/CustomerAbout';
 import CustomerPanel from '../components/customer/CustomerPanel';
 import CustomerContact from '../components/customer/CustomerContact';
 import CartPanel from '../components/customer/CartPanel';
+import OrderSuccessModal from '../components/customer/OrderSuccessModal';
 import ReviewModal from '../components/customer/ReviewModal';
 import '../customer.css';
 
@@ -574,37 +575,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         />
       ) : null}
 
+      {/* Opens only on a confirmed order: `placed` is the record the API
+          returned after saving it, never the click that started the request. */}
       {placed ? (
-        <Modal
-          title={t('customer_menu_order_placed')}
-          onClose={() => setPlaced(null)}
-          footer={
-            <>
-              <button className="btn" onClick={() => setPlaced(null)}>
-                {t('action_close')}
-              </button>
-              {adminMode ? (
-                <Link className="btn btn--primary" to={`/orders/${placed.id}`}>
-                  <Icon name="eye" size={16} />
-                  {t('customer_menu_view_order')}
-                </Link>
-              ) : null}
-            </>
-          }
-        >
-          <div className="receipt-center" style={{ padding: '10px 0' }}>
-            <Icon name="check" size={34} />
-            <div style={{ fontSize: 15, fontWeight: 700, marginTop: 8 }}>
-              {t('customer_menu_order_number')}: #{placed.order_number}
-            </div>
-            <div style={{ marginTop: 6 }} className="badge badge--pending">
-              {t(`status_${placed.status}`)}
-            </div>
-            <div style={{ marginTop: 12 }}>
-              <Money value={placed.total} currency={currency} />
-            </div>
-          </div>
-        </Modal>
+        <OrderSuccessModal order={placed} currency={currency} onClose={() => setPlaced(null)} />
       ) : null}
     </div>
   );

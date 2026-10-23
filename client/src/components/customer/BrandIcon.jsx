@@ -32,6 +32,8 @@ export const hasBrandIcon = (name) => Object.prototype.hasOwnProperty.call(PATHS
 export default function BrandIcon({ name, size = 20 }) {
   const path = PATHS[name];
   if (!path) return null;
+  /* `brand-icon`, never `brand`: the sidebar's `.brand` block carries flex
+     padding and a gap, which would crop the mark down to a few pixels. */
   return (
     <svg
       viewBox="0 0 24 24"
@@ -39,7 +41,7 @@ export default function BrandIcon({ name, size = 20 }) {
       height={size}
       fill="currentColor"
       stroke="none"
-      className="icon brand"
+      className="icon brand-icon"
       aria-hidden="true"
       focusable="false"
     >

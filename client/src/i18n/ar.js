@@ -849,6 +849,7 @@ export default {
   customer_menu_in_stock: 'متوفر',
   customer_menu_place_order: 'إرسال الطلب',
   customer_menu_order_placed: 'تم استلام الطلب',
+  customer_menu_order_placed_hint: 'وصل طلبك إلى الكاونتر وهو قيد التحضير الآن.',
   customer_menu_order_number: 'رقم الطلب',
   customer_menu_your_order: 'طلبك',
   customer_menu_view_order: 'عرض الطلب',
