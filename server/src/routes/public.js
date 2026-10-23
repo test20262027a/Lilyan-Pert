@@ -33,6 +33,22 @@ async function loadBusiness(key) {
   return rows[0];
 }
 
+/** Brand shown on the sign-in pages: the first business's name and logo only. */
+router.get(
+  '/brand',
+  ah(async (_req, res) => {
+    const { rows } = await q(
+      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url
+         FROM businesses ORDER BY is_sample DESC, created_at LIMIT 1`,
+    );
+    const b = rows[0];
+    res.json({
+      name: b?.name || 'Lilyan Pert',
+      logo_url: b ? publicMediaUrl(b.logo_url) : null,
+    });
+  }),
+);
+
 /**
  * Public menu payload. Only customer-safe fields leave the server: no member
  * emails, no user ids, no internal settings.

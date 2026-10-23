@@ -69,6 +69,20 @@ router.post(
   }),
 );
 
+/*
+ * Password-reset request. The answer is identical whether or not the address
+ * belongs to an account, so the endpoint cannot be used to discover users. No
+ * mail transport is configured in this project, so nothing is emailed yet.
+ */
+router.post(
+  '/forgot-password',
+  ah(async (req, res) => {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw bad('INVALID_EMAIL');
+    res.json({ ok: true });
+  }),
+);
+
 router.post('/logout', (req, res) => {
   clearSessionCookie(res);
   res.json({ ok: true });
