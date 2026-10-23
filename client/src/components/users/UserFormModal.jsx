@@ -25,7 +25,18 @@ import {
  * turned on from the page. The server validates the same rules again on save.
  */
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/*
+ * The login identifier is composed from a username and the business's suffix —
+ * `rebar@lilyanpert.app`. These mirror the server's own rules (lib/identity.js)
+ * so a typo is reported before the request instead of after it.
+ */
+const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]{0,62})$/;
+const SUFFIX_RE = /^@[a-z0-9](?:[a-z0-9.-]{0,61}[a-z0-9])$/;
+
+const normalizeSuffixInput = (raw) => {
+  const value = String(raw ?? '').trim().toLowerCase().replace(/^@+/, '');
+  return value ? `@${value}` : '';
+};
 
 function Section({ title, children, aside }) {
   return (
@@ -117,6 +128,7 @@ export default function UserFormModal({
   grantable = {},
   presets = {},
   mandatory = {},
+  loginSuffix = '',
   busy,
   onClose,
   onSubmit,
@@ -125,7 +137,10 @@ export default function UserFormModal({
   const titleId = useId();
 
   const [fullName, setFullName] = useState(user?.full_name || '');
-  const [email, setEmail] = useState(user?.email || '');
+  // The identifier is edited as its two parts; an existing account keeps the
+  // suffix it was created with until the owner changes it.
+  const [username, setUsername] = useState(user?.username || '');
+  const [suffix, setSuffix] = useState(user?.suffix || loginSuffix || '');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState(user?.role || 'staff');
@@ -161,9 +176,14 @@ export default function UserFormModal({
   const currentGrantable = grantable[role] || [];
   const currentMandatory = mandatory[role] || [];
 
+  const cleanUsername = username.trim().toLowerCase();
+  const cleanSuffix = normalizeSuffixInput(suffix);
+  const identifier = cleanUsername && cleanSuffix ? `${cleanUsername}${cleanSuffix}` : '';
+
   const dirty =
     fullName !== (user?.full_name || '')
-    || email !== (user?.email || '')
+    || cleanUsername !== (user?.username || '')
+    || cleanSuffix !== (user?.suffix || '')
     || password.length > 0
     || role !== (user?.role || 'staff')
     || active !== (user ? user.status === 'active' : true)
@@ -214,14 +234,18 @@ export default function UserFormModal({
   const submit = () => {
     const name = fullName.trim();
     if (!name) return setError(t('user_name_required'));
-    if (!EMAIL_RE.test(email.trim())) return setError(t('user_invalid_email'));
-    if (password && password.length < 8) return setError(t('auth_weak_password'));
+    if (!USERNAME_RE.test(cleanUsername)) return setError(t('user_invalid_username'));
+    if (!SUFFIX_RE.test(cleanSuffix)) return setError(t('user_invalid_suffix'));
+    // A new account needs a working password; an edit keeps the current one
+    // unless a new one is typed.
+    if ((mode === 'create' || password) && password.length < 8) return setError(t('auth_weak_password'));
     if (password !== confirmPassword) return setError(t('user_password_mismatch'));
     if (uploading) return setError(t('user_photo_wait'));
     setError(null);
     return onSubmit({
       full_name: name,
-      email: email.trim(),
+      username: cleanUsername,
+      login_suffix: cleanSuffix,
       password: password || undefined,
       role,
       status: active ? 'active' : 'disabled',
@@ -279,17 +303,38 @@ export default function UserFormModal({
                   autoComplete="name"
                 />
               </label>
-              <label className="um-field">
-                <span className="um-field__label">{t('user_email_username')}</span>
-                <input
-                  className="um-input"
-                  dir="ltr"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  autoComplete="email"
-                />
-              </label>
+              <div className="um-fields--2">
+                <label className="um-field">
+                  <span className="um-field__label">{t('user_username')}</span>
+                  <input
+                    className="um-input"
+                    dir="ltr"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+                <label className="um-field">
+                  <span className="um-field__label">{t('user_login_suffix')}</span>
+                  <input
+                    className="um-input"
+                    dir="ltr"
+                    value={suffix}
+                    onChange={(e) => setSuffix(e.target.value)}
+                    placeholder={loginSuffix || '@lilyanpert.app'}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                </label>
+              </div>
+              {/* The identifier the person will actually sign in with. */}
+              <div className="um-preview" dir="ltr">
+                <Icon name="mail" size={13} />
+                <span className={identifier ? '' : 'um-preview__empty'}>
+                  {identifier || t('user_login_preview_empty')}
+                </span>
+              </div>
             </div>
           </Section>
 

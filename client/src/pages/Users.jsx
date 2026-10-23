@@ -28,6 +28,14 @@ import '../users.css';
 
 const EMPTY = { users: [], grantable: {}, presets: {}, mandatory: {}, business: null };
 
+/* Why a list request can fail, in the reader's language. */
+const LOAD_ERROR_KEYS = {
+  AUTH_REQUIRED: 'user_session_expired',
+  PERMISSION_DENIED: 'access_denied',
+  INSUFFICIENT_ROLE: 'access_denied',
+  NO_BUSINESS_ACCESS: 'access_denied',
+};
+
 const ERROR_KEYS = {
   LAST_OWNER: 'user_last_owner',
   CANNOT_MODIFY_SELF: 'user_cannot_modify_self',
@@ -37,18 +45,24 @@ const ERROR_KEYS = {
   ALREADY_MEMBER: 'user_already_member',
   WEAK_PASSWORD: 'auth_weak_password',
   INVALID_EMAIL: 'user_invalid_email',
+  INVALID_USERNAME: 'user_invalid_username',
+  INVALID_SUFFIX: 'user_invalid_suffix',
+  INVALID_IDENTIFIER: 'user_invalid_suffix',
+  EMAIL_TAKEN: 'user_email_taken',
   NAME_REQUIRED: 'user_name_required',
 };
 
 export default function Users() {
   const { t } = useI18n();
   const { business } = useBusiness();
-  const { user: me, can, updateProfile, refresh } = useAuth();
+  const { user: me, can, role: myRole, isSuperAdmin, updateProfile, refresh } = useAuth();
   const toast = useToast();
 
   const [data, setData] = useState(EMPTY);
   const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
+  // The failed request itself, not just a flag: the alert can then say what
+  // really went wrong instead of a generic message.
+  const [loadError, setLoadError] = useState(null);
   const [busy, setBusy] = useState(false);
   // `search` is what is typed; `query` is what the server was last asked for.
   // Typing settles into `query` after a short debounce, Enter commits at once.
@@ -60,6 +74,7 @@ export default function Users() {
   const [confirm, setConfirm] = useState(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [creatorOpen, setCreatorOpen] = useState(false);
   const requestId = useRef(0);
 
   const canCreate = can('users.create');
@@ -69,19 +84,22 @@ export default function Users() {
   const load = useCallback(async () => {
     const id = ++requestId.current;
     setLoading(true);
-    setFailed(false);
+    setLoadError(null);
     try {
       const params = new URLSearchParams();
       if (query.trim()) params.set('q', query.trim());
       if (role !== 'all') params.set('role', role);
       if (status !== 'all') params.set('status', status);
-      const query = params.toString();
-      const res = await get(`/manage/users${query ? `?${query}` : ''}`);
+      // Never name this `query`: that identifier is the state above, and a local
+      // `const query` here would shadow it before its own initialisation and
+      // throw on every load.
+      const search = params.toString();
+      const res = await get(`/manage/users${search ? `?${search}` : ''}`);
       // Only the newest request may write the list (a slow older search must not
       // overwrite a newer one).
       if (id === requestId.current) setData({ ...EMPTY, ...res });
-    } catch {
-      if (id === requestId.current) setFailed(true);
+    } catch (err) {
+      if (id === requestId.current) setLoadError(err);
     } finally {
       if (id === requestId.current) setLoading(false);
     }
@@ -115,6 +133,8 @@ export default function Users() {
       if (modal.mode === 'edit') {
         await patch(`/manage/users/${modal.user.membership_id}`, {
           full_name: values.full_name,
+          username: values.username,
+          login_suffix: values.login_suffix,
           role: values.role,
           status: values.status,
           permissions: values.permissions,
@@ -186,6 +206,10 @@ export default function Users() {
   ];
 
   const filtered = Boolean(search.trim() || role !== 'all' || status !== 'all');
+  const creator = data.account?.creator || null;
+  // The identifier a new account is composed with: the business's saved suffix,
+  // or the one suggested from its name while none is saved yet.
+  const loginSuffix = data.account?.login_suffix || data.account?.suggested_suffix || '';
 
   return (
     <div className="users-page">
@@ -203,6 +227,12 @@ export default function Users() {
           <Icon name="key" size={14} />
           {t('user_change_password')}
         </button>
+        {creator?.can_set_password && creator?.needs_setup ? (
+          <button type="button" className="btn btn--sm" onClick={() => setCreatorOpen(true)}>
+            <Icon name="shield" size={14} />
+            {t('user_creator_setup')}
+          </button>
+        ) : null}
         {canCreate ? (
           <button type="button" className="um-add" onClick={openCreate}>
             <span className="um-add__plus" aria-hidden="true">
@@ -212,6 +242,23 @@ export default function Users() {
           </button>
         ) : null}
       </PageHeroBanner>
+
+      {data.counts ? (
+        <div className="um-stats">
+          <div className="um-stat">
+            <span className="um-stat__value">{data.counts.total}</span>
+            <span className="um-stat__label">{t('user_count_total')}</span>
+          </div>
+          <div className="um-stat um-stat--active">
+            <span className="um-stat__value">{data.counts.active}</span>
+            <span className="um-stat__label">{t('user_active')}</span>
+          </div>
+          <div className="um-stat um-stat--off">
+            <span className="um-stat__value">{data.counts.disabled}</span>
+            <span className="um-stat__label">{t('user_inactive')}</span>
+          </div>
+        </div>
+      ) : null}
 
       <div className="um-toolbar">
         <div className="um-search lilyan-search">
@@ -247,10 +294,10 @@ export default function Users() {
         </div>
       </div>
 
-      {failed ? (
+      {loadError ? (
         <Alert kind="error">
-          {t('error_generic')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load}>
+          {t(LOAD_ERROR_KEYS[loadError.code] || 'user_load_failed')}{' '}
+          <button type="button" className="btn btn--sm" onClick={load} disabled={loading}>
             {t('action_retry')}
           </button>
         </Alert>
@@ -266,6 +313,14 @@ export default function Users() {
               <span className="um-skel" style={{ width: 130, height: 11 }} />
             </div>
           ))
+        ) : loadError ? (
+          // A failed request is never dressed up as "no members": the alert
+          // above says what went wrong and the list stays out of the way.
+          <EmptyState
+            icon="alert"
+            title={t('user_load_failed')}
+            hint={t('user_load_failed_hint')}
+          />
         ) : data.users.length === 0 ? (
           <EmptyState
             icon="users"
@@ -356,6 +411,7 @@ export default function Users() {
           grantable={data.grantable}
           presets={data.presets}
           mandatory={data.mandatory}
+          loginSuffix={loginSuffix}
           busy={busy}
           onClose={() => setModal(null)}
           onSubmit={submitUser}
@@ -395,9 +451,21 @@ export default function Users() {
       {profileOpen ? (
         <ProfileModal
           user={me}
+          role={isSuperAdmin ? 'super_admin' : myRole}
           onClose={() => setProfileOpen(false)}
           updateProfile={updateProfile}
           onSaved={() => toast.success(t('state_saved'))}
+        />
+      ) : null}
+
+      {creatorOpen && creator ? (
+        <CreatorSetupModal
+          email={creator.email}
+          onClose={() => setCreatorOpen(false)}
+          onSaved={async () => {
+            toast.success(t('user_creator_password_set'));
+            await load();
+          }}
         />
       ) : null}
     </div>
@@ -406,19 +474,42 @@ export default function Users() {
 
 function ChangePasswordModal({ onClose, onSaved }) {
   const { t } = useI18n();
-  const [values, setValues] = useState({ current_password: '', new_password: '' });
+  const [values, setValues] = useState({
+    current_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
   const submit = async () => {
-    setBusy(true);
     setError(null);
+    // Checked here first so the reader gets the exact problem without a round
+    // trip; the server repeats every one of these checks on its own.
+    if (!values.current_password) {
+      setError(t('user_current_password_required'));
+      return;
+    }
+    if (values.new_password.length < 8) {
+      setError(t('auth_weak_password'));
+      return;
+    }
+    if (values.new_password !== values.confirm_password) {
+      setError(t('user_password_mismatch'));
+      return;
+    }
+    setBusy(true);
     try {
-      await post('/auth/change-password', values);
+      await post('/auth/change-password', {
+        current_password: values.current_password,
+        new_password: values.new_password,
+      });
       onSaved();
       onClose();
     } catch (err) {
-      setError(err.code === 'CURRENT_PASSWORD_INCORRECT' ? t('user_current_password_wrong') : t('auth_weak_password'));
+      if (err.code === 'CURRENT_PASSWORD_INCORRECT') setError(t('user_current_password_wrong'));
+      else if (err.code === 'WEAK_PASSWORD') setError(t('auth_weak_password'));
+      else setError(t('error_generic'));
     } finally {
       setBusy(false);
     }
@@ -458,12 +549,21 @@ function ChangePasswordModal({ onClose, onSaved }) {
             onChange={(e) => setValues((v) => ({ ...v, new_password: e.target.value }))}
           />
         </Field>
+        <Field label={t('user_confirm_new_password')}>
+          <input
+            className="input"
+            type="password"
+            value={values.confirm_password}
+            onChange={(e) => setValues((v) => ({ ...v, confirm_password: e.target.value }))}
+          />
+        </Field>
       </div>
+      <p className="um-note">{t('user_password_min_notice')}</p>
     </Modal>
   );
 }
 
-function ProfileModal({ user, onClose, updateProfile, onSaved }) {
+function ProfileModal({ user, role, onClose, updateProfile, onSaved }) {
   const { t } = useI18n();
   const [values, setValues] = useState({
     full_name: user?.full_name || '',
@@ -472,6 +572,27 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
     profile_image_url: user?.profile_image_url || null,
     avatar_type: user?.avatar_type || 'default',
   });
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const save = async () => {
+    setError(null);
+    if (!values.full_name.trim()) {
+      setError(t('user_name_required'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await updateProfile({ ...values, full_name: values.full_name.trim() });
+      onSaved();
+      onClose();
+    } catch {
+      setError(t('error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Modal
       title={t('user_my_account')}
@@ -480,16 +601,15 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
         <ModalActions
           primaryLabel={t('action_save')}
           primaryIcon="check"
-          onPrimary={async () => {
-            await updateProfile(values);
-            onSaved();
-            onClose();
-          }}
+          onPrimary={save}
+          loading={busy}
           secondaryLabel={t('action_cancel')}
           onSecondary={onClose}
+          secondaryDisabled={busy}
         />
       }
     >
+      {error ? <Alert kind="error">{error}</Alert> : null}
       <UserPhotoField
         photo={values.profile_image_url}
         avatarType={values.avatar_type}
@@ -498,6 +618,19 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
         onAvatarChange={(kind) => setValues((v) => ({ ...v, avatar_type: kind }))}
       />
       <div className="form-grid">
+        {/* Account facts, read from the signed-in record: the login identifier
+            and role are shown, never edited from this card. */}
+        <Field label={t('user_login_identifier')}>
+          <input className="input" dir="ltr" value={user?.email || ''} readOnly disabled />
+        </Field>
+        <Field label={t('user_role')}>
+          <input
+            className="input"
+            value={role ? (role === 'super_admin' ? t('user_super_admin') : t(`role_${role}`)) : ''}
+            readOnly
+            disabled
+          />
+        </Field>
         <Field label={t('label_full_name')}>
           <input
             className="input"
@@ -526,6 +659,92 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
           />
         </Field>
       </div>
+    </Modal>
+  );
+}
+
+/*
+ * One-time initialization of the Creator (Super Admin) account.
+ *
+ * The record already exists and already carries its platform role; this dialog
+ * only lets the verified owner give it a password, so the owner of
+ * `superadmin@work.app` can sign in. The endpoint refuses anyone else and never
+ * creates a second Creator, so the account cannot be duplicated from here.
+ */
+function CreatorSetupModal({ email, onClose, onSaved }) {
+  const { t } = useI18n();
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async () => {
+    setError(null);
+    if (password.length < 8) {
+      setError(t('auth_weak_password'));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t('user_password_mismatch'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await post('/manage/creator-password', { password });
+      await onSaved?.();
+      onClose();
+    } catch (err) {
+      if (err.code === 'CREATOR_SETUP_NOT_ALLOWED') setError(t('access_denied'));
+      else if (err.code === 'CREATOR_ALREADY_CLAIMED') setError(t('user_creator_already_claimed'));
+      else if (err.code === 'WEAK_PASSWORD') setError(t('auth_weak_password'));
+      else setError(t('error_generic'));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal
+      title={t('user_creator_setup')}
+      subtitle={t('user_creator_setup_hint')}
+      onClose={onClose}
+      footer={
+        <ModalActions
+          primaryLabel={t('action_save')}
+          primaryIcon="check"
+          onPrimary={submit}
+          loading={busy}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+          secondaryDisabled={busy}
+        />
+      }
+    >
+      {error ? <Alert kind="error">{error}</Alert> : null}
+      <div className="form-grid">
+        <Field label={t('user_login_identifier')}>
+          <input className="input" dir="ltr" value={email || 'superadmin@work.app'} readOnly disabled />
+        </Field>
+        <Field label={t('label_new_password')}>
+          <input
+            className="input"
+            type="password"
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </Field>
+        <Field label={t('user_confirm_new_password')}>
+          <input
+            className="input"
+            type="password"
+            autoComplete="new-password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </Field>
+      </div>
+      <p className="um-note">{t('user_password_min_notice')}</p>
     </Modal>
   );
 }

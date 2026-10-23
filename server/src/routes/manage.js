@@ -1075,11 +1075,23 @@ router.get(
       ASSIGNABLE_ROLES.map((role) => [role, grantablePermissions(role, req.permissions)]),
     );
 
+    // Counts describe the whole membership list, never the filtered page: the
+    // three tiles must keep meaning "this business", whatever the admin types
+    // into the search box or picks in the filters.
+    const totals = await q(
+      `SELECT count(*)::int AS total,
+              count(*) FILTER (WHERE status = 'active')::int AS active,
+              count(*) FILTER (WHERE status = 'disabled')::int AS disabled
+         FROM memberships WHERE business_id = $1`,
+      [req.businessId],
+    );
+
     const creator = await creatorRecord();
     const businessRow = business.rows[0] || null;
 
     res.json({
       users,
+      counts: totals.rows[0],
       can_manage: true,
       actor_role: req.role,
       grantable,
