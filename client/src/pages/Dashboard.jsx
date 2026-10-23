@@ -105,14 +105,19 @@ export default function Dashboard() {
   };
 
   const onPushToggle = async () => {
+    if (push.busy) return; // one request at a time, never a double subscription
     setPushError('');
     const res = push.subscribed ? await push.disable() : await push.enable();
     if (res.ok) {
       toast.success(push.subscribed ? t('action_saved') : t('dash_push_enabled'));
       return;
     }
+    // A browser-side context restriction is explained by the card itself
+    // (with the way out), so it is not repeated as a red error.
+    if (res.reason === 'preview' || res.reason === 'denied') return;
     if (res.reason === 'unsupported') setPushError(t('dash_push_unsupported'));
-    else if (res.reason === 'denied') setPushError(t('dash_push_denied'));
+    else if (res.reason === 'insecure') setPushError(t('dash_push_insecure'));
+    else if (res.reason === 'dismissed') setPushError(t('dash_push_dismissed'));
     else setPushError(`${t('dash_sw_failed')}${res.error ? ` — ${res.error}` : ''}`);
   };
 

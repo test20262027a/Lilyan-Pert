@@ -197,6 +197,38 @@
 /* --------------------------------------------------- notification card */
 
 .notif-card__warning { margin-top: 10px; }
+
+/*
+ * Context notice under the system-notification switch. It states a browser-side
+ * restriction plainly instead of leaving a switch that silently snaps back, and
+ * it is the only place the preview frame is named — never the whole card.
+ */
+.notif-note {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-top: 10px; padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-line);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 10px 20px -16px rgba(16, 22, 38, 0.55);
+}
+[data-theme='dark'] .notif-note {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 20px -16px rgba(0, 0, 0, 0.85);
+}
+.notif-note__badge {
+  display: grid; place-items: center; flex: none;
+  width: 30px; height: 30px; border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 2px 6px rgba(16, 22, 38, 0.08);
+}
+.notif-note--warn .notif-note__badge { background: var(--warning-soft); color: var(--warning); }
+.notif-note--danger .notif-note__badge { background: var(--danger-soft); color: var(--danger); }
+.notif-note__main { min-width: 0; }
+.notif-note__title { font-size: 12.5px; font-weight: 700; line-height: 1.5; color: var(--text); }
+.notif-note__body { font-size: 11.5px; line-height: 1.65; margin-top: 2px; color: var(--muted); }
+.notif-note__action { margin-top: 9px; }
 /* Small raised badge that sits beside a setting's description. */
 .switch-row__icon {
   display: inline-grid; place-items: center;

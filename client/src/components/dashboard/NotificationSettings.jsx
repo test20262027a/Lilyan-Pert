@@ -4,11 +4,18 @@ import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 import { playSound, SOUND_OPTIONS, DEFAULT_SOUND } from '../../sound';
 
+/* The app's own address, so "open in a new tab" leaves the preview frame. */
+const appHref = () => (typeof window === 'undefined' ? '#' : window.location.href);
+
 /**
  * Notification settings. Both switches persist through the dashboard's
- * whitelisted endpoint, the sound dropdown drives real synthesised sounds and
- * previews exactly the sound that is stored. A warning appears only when the
- * Service Worker or the permission request actually failed.
+ * whitelisted endpoint and the sound dropdown drives real synthesised sounds.
+ *
+ * The browser switch is never faked: it is on only while a real push
+ * subscription exists. When the browser itself refuses to ask — inside the
+ * preview frame, on an insecure origin, or because the user blocked the site —
+ * the card says exactly which one it is and offers the way out, while in-app
+ * alerts and the sound keep working.
  */
 export default function NotificationSettings({ settings = {}, onChange, push, onPushToggle, pushError, locale }) {
   const { t } = useI18n();
@@ -21,13 +28,57 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
   const audioUnavailable =
     typeof window !== 'undefined' && !(window.AudioContext || window.webkitAudioContext);
 
+  const granted = push.permission === 'granted';
+
+  /*
+   * One reason at a time, most specific first. "preview" is a frame
+   * restriction, not a user decision, so it never reads as a permanent denial.
+   */
+  const context = !push.supported
+    ? 'unsupported'
+    : !push.secure
+      ? 'insecure'
+      : push.embedded && !granted
+        ? 'preview'
+        : push.permission === 'denied' && !push.subscribed
+          ? 'denied'
+          : null;
+
+  const NOTICES = {
+    preview: {
+      tone: 'warn',
+      icon: 'bell',
+      title: t('dash_push_preview_blocked'),
+      body: `${t('dash_push_preview_help')} ${t('dash_push_inapp_note')}`,
+      action: t('dash_push_open_tab'),
+    },
+    denied: {
+      tone: 'danger',
+      icon: 'lock',
+      title: t('dash_push_denied'),
+      body: `${t('dash_push_denied_help')} ${t('dash_push_inapp_note')}`,
+    },
+    insecure: {
+      tone: 'warn',
+      icon: 'shield',
+      title: t('dash_push_insecure'),
+      body: t('dash_push_inapp_note'),
+    },
+  };
+
+  const notice = NOTICES[context];
+
   const pushHint = !push.supported
     ? t('dash_push_unsupported')
     : push.subscribed
       ? `${t('dash_push_devices')}: ${fmtNumber(push.devices, locale)}`
-      : push.permission === 'denied'
-        ? t('dash_push_denied')
-        : t('dash_enable_push');
+      : context === 'preview'
+        ? t('dash_push_preview_hint')
+        : context === 'denied'
+          ? t('dash_push_denied')
+          : context === 'insecure'
+            ? t('dash_push_insecure')
+            : t('dash_enable_push');
 
   return (
     <section className="card notif-card">
@@ -54,9 +105,34 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
           title={t('dash_push_background')}
           hint={pushHint}
           checked={push.subscribed}
-          disabled={!push.supported || push.busy}
+          // Deliberately stays clickable inside the preview: a frame restriction
+          // must not lock the control for the real website behind it.
+          disabled={!push.supported || !push.secure || push.busy}
           onChange={onPushToggle}
         />
+
+        {notice ? (
+          <div className={`notif-note notif-note--${notice.tone}`} role="status">
+            <span className="notif-note__badge" aria-hidden="true">
+              <Icon name={notice.icon} size={16} />
+            </span>
+            <div className="notif-note__main">
+              <p className="notif-note__title">{notice.title}</p>
+              <p className="notif-note__body">{notice.body}</p>
+              {notice.action ? (
+                <a
+                  className="btn btn--sm btn--primary notif-note__action"
+                  href={appHref()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Icon name="link" size={14} />
+                  {notice.action}
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
         {pushError ? (
           <div className="notif-card__warning">
