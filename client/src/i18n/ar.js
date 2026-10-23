@@ -1218,6 +1218,7 @@ export default {
   customer_table_scan_required: 'امسح رمز QR الموجود على طاولتك لتقديم الطلب.',
   customer_table_search: 'ابحث عن طاولة',
   customer_table_empty: 'لا توجد طاولة مطابقة لبحثك.',
+  customer_table_none: 'لا توجد طاولة متاحة لتقديم الطلب الآن.',
   order_table_manual: 'اختيار يدوي',
   order_table_qr: 'تم التعرف بواسطة QR',
   customer_ordering_disabled: 'إرسال الطلب معطّل في هذه القائمة.',

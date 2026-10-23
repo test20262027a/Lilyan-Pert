@@ -192,7 +192,7 @@ router.get(
     const primaryTotal = currencyTotals.find((row) => row.currency === primaryCurrency);
     const revenue = currencyTotals.length > 1
       ? primaryTotal?.amount || 0
-      : currencyTotals[0]?.amount ?? Number(finance.revenue) || 0;
+      : (currencyTotals[0]?.amount ?? Number(finance.revenue)) || 0;
 
     /* ---- order-flow series: real orders, bucketed in the business zone ---- */
     const seriesFrom = win.from || firstRow.rows[0]?.first_day || null;

@@ -1219,6 +1219,7 @@ export default {
   customer_table_scan_required: 'برای ثبت سفارش، کد QR روی میز خود را اسکن کنید.',
   customer_table_search: 'جستجوی میز',
   customer_table_empty: 'میزی با جستجوی شما مطابقت ندارد.',
+  customer_table_none: 'در حال حاضر میزی برای ثبت سفارش موجود نیست.',
   order_table_manual: 'انتخاب دستی',
   order_table_qr: 'شناسایی با QR',
   customer_ordering_disabled: 'ثبت سفارش در این منو غیرفعال است.',

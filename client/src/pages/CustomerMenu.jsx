@@ -246,6 +246,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         // The code is only a hint: the server re-reads the promotion and
         // recalculates the discount, so the amount is never taken from here.
         res = await post(`/public/orders/${key}`, {
+          // The ordering context this menu was served in, so the server reads
+          // the same Admin ordering policy the guest was shown.
+          context: data?.menu?.context === 'main' ? 'main' : 'qr',
           table_token: data?.table?.qr_token || null,
           // Only sent in the modes that allow choosing a table; the server
           // validates it against this business before attaching it.
@@ -605,6 +608,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           canOrder={orderingEnabled}
           qrTable={qrTable}
           tableState={data.table_state || 'none'}
+          context={data.menu?.context === 'main' ? 'main' : 'qr'}
           tables={tables}
           tableId={tableId}
           onTable={setTableId}

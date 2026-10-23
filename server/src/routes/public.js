@@ -16,6 +16,21 @@ import {
 
 const router = express.Router();
 
+/*
+ * Which ordering context a request belongs to.
+ *
+ * An explicit `main`/`qr` wins — the in-store menu and the customer menu both
+ * report the context they were served in. Without one, a request that carries a
+ * scanned table token is a QR order, and anything else is the main ordering
+ * menu, which needs no QR code and lets the guest choose a table by hand. It
+ * only decides which of the owner's two policies applies; a table is still
+ * validated against the business before it is attached to an order.
+ */
+function menuContextFor(explicit, tableToken) {
+  if (explicit === 'main' || explicit === 'qr') return explicit;
+  return tableToken ? 'qr' : 'main';
+}
+
 function activePromotionFor(promotions, productId) {
   return promotions.find((p) => p.product_id === productId) || null;
 }
@@ -69,11 +84,15 @@ router.get(
     const business = await loadBusiness(req.params.key);
 
     /*
-     * The same payload serves both menu contexts. The in-store ordering menu
-     * asks for `context=main`; every public visitor is the `qr` context.
+     * The same payload serves both menu contexts. The ordering context is
+     * explicit: the in-store menu asks for `context=main`, and a customer menu
+     * is the `qr` context only when it was opened from a table's QR link (the
+     * `table` token is that link's identifier). A menu opened normally carries
+     * no token, so it is the main ordering menu — it offers a manual table
+     * choice instead of demanding a QR scan.
      */
     const settings = normalizeMenuSettings(business.menu_settings);
-    const menu = menuContext(settings, req.query.context === 'main' ? 'main' : 'qr');
+    const menu = menuContext(settings, menuContextFor(req.query.context, req.query.table));
 
     /*
      * Table identification follows the configured mode:
@@ -436,7 +455,10 @@ router.post(
      * an order by calling this endpoint directly.
      */
     const settings = normalizeMenuSettings(business.menu_settings);
-    const menu = menuContext(settings, 'qr');
+    // The order is judged by the same context the menu was served in: an order
+    // carrying a scanned table token is a QR order, everything else is the main
+    // ordering menu.
+    const menu = menuContext(settings, menuContextFor(req.body?.context, req.body?.table_token));
     if (!menu.can_order) throw bad('ORDERING_DISABLED');
 
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
@@ -463,7 +485,10 @@ router.post(
         if (!table) throw bad('INVALID_TABLE');
         tableSource = 'qr';
       }
-      if (!table && req.body?.table_id && mode !== 'qr') {
+      // The main ordering menu has no QR code to identify the table, so its
+      // manual choice is accepted regardless of the QR identification mode —
+      // exactly like the table list the menu was served with.
+      if (!table && req.body?.table_id && (menu.context === 'main' || mode !== 'qr')) {
         if (!isUuid(String(req.body.table_id))) throw bad('INVALID_TABLE');
         const t = await c.query(
           'SELECT id, name FROM tables WHERE id = $1 AND business_id = $2 AND active = true',

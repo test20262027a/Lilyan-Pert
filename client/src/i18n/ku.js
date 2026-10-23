@@ -1220,6 +1220,7 @@ export default {
   customer_table_scan_required: 'کۆدی QR ی سەر مێزەکەت سکان بکە بۆ تۆمارکردنی داواکاری.',
   customer_table_search: 'گەڕان بەدوای مێز',
   customer_table_empty: 'هیچ مێزێک لەگەڵ گەڕانەکەت ناگونجێت.',
+  customer_table_none: 'ئێستا هیچ مێزێک بەردەست نییە بۆ تۆمارکردنی داواکاری.',
   order_table_manual: 'بە دەستی هەڵبژێردراوە',
   order_table_qr: 'بە QR ناسراوە',
   customer_ordering_disabled: 'تۆمارکردنی داواکاری لەم مێنیۆ ناچالاکە.',

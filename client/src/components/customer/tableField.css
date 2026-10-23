@@ -7,7 +7,9 @@
  * shared `--lysel-*` dropdown tokens), so all five themes repaint it.
  */
 
-.tfield { display: flex; flex-direction: column; gap: 5px; }
+/* Full width and free to shrink, so the field lines up with the inputs above
+   and below it at every breakpoint. */
+.tfield { display: flex; flex-direction: column; gap: 5px; width: 100%; min-width: 0; }
 
 .tfield__label {
   display: inline-flex;

@@ -210,11 +210,27 @@
 
 /* ------------------------------------------------------------ cart lines - */
 
-.cui-lines { display: flex; flex-direction: column; gap: 8px; }
+/* The list must not keep the browser's default list insets (40px inline-start,
+   1em block): that is what used to shift and narrow the product rows against
+   the form fields below them. With them removed, the rows share the exact
+   width and edges of every input, the totals card and the sheet footer. */
+.cui-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
 .cui-line {
   display: flex;
   align-items: center;
   gap: 9px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   padding: 8px;
   border-radius: 16px;
   border: 1px solid var(--cui-sheet-line);

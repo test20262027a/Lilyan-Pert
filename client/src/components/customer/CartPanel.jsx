@@ -31,6 +31,10 @@ export default function CartPanel({
   qrTable,
   /* 'resolved' | 'invalid' | 'missing' | 'none' — how the QR link resolved. */
   tableState,
+  /* 'main' — the ordering menu opened without a QR code, 'qr' — a scanned
+     table. It comes from the menu payload, never from a guessed URL state, and
+     decides whether a missing table is a choice or a bad QR link. */
+  context = 'qr',
   tables,
   tableId,
   onTable,
@@ -167,6 +171,10 @@ export default function CartPanel({
     || (tableList.some((row) => row.id === tableId) ? tableId : '');
   const tableReady = Boolean(validatedTableId);
   const canSubmit = canOrder && tableReady && !isEmpty && !busy && !submitted;
+  /* The main ordering menu has no QR code to rely on, so there the missing
+     table is a choice the guest still has to make — never a QR problem. */
+  const isMain = context === 'main';
+  const canPickTable = tableList.length > 0;
 
   const submit = async () => {
     if (submitted || busy) return;
@@ -291,20 +299,6 @@ export default function CartPanel({
 
               {canCheckout ? (
                 <div className="cui-form">
-                  {/* A table resolved from the scanned QR code is final and
-                      read-only; otherwise the guest picks one of the business's
-                      own active tables. */}
-                  {qrTable ? (
-                    <TableField mode="auto" table={qrTable} />
-                  ) : tableList.length > 0 ? (
-                    <TableField
-                      mode="manual"
-                      tables={tableList}
-                      value={validatedTableId}
-                      onChange={onTable}
-                    />
-                  ) : null}
-
                   <label className="cui-field">
                     <span className="cui-field__label">
                       <Icon name="user" size={14} />
@@ -330,6 +324,21 @@ export default function CartPanel({
                       onChange={(event) => setForm((f) => ({ ...f, customer_phone: event.target.value }))}
                     />
                   </label>
+
+                  {/* The table the order belongs to, right before the notes.
+                      A table resolved from the scanned QR code is final and
+                      read-only; otherwise the guest picks one of the business's
+                      own active tables — the main ordering menu's normal mode. */}
+                  {qrTable ? (
+                    <TableField mode="auto" table={qrTable} />
+                  ) : canPickTable ? (
+                    <TableField
+                      mode="manual"
+                      tables={tableList}
+                      value={validatedTableId}
+                      onChange={onTable}
+                    />
+                  ) : null}
 
                   <label className="cui-field">
                     <span className="cui-field__label">
@@ -403,14 +412,18 @@ export default function CartPanel({
                 </p>
               )}
 
-              {/* No table was identified and this menu offers no manual choice:
-                  there is nothing to attach the order to, so it stays blocked. */}
-              {!qrTable && tableList.length === 0 ? (
+              {/* A missing table, worded for where the guest actually is: the
+                  main ordering menu never mentions the QR code, and a scanned
+                  QR menu reports a bad link instead of asking for a scan the
+                  guest has already made. */}
+              {!qrTable && !canPickTable ? (
                 <p className="cui-note cui-note--warn">
                   <Icon name="alert" size={14} />
-                  {tableState === 'invalid'
-                    ? t('customer_table_invalid')
-                    : t('customer_table_scan_required')}
+                  {isMain
+                    ? t('customer_table_none')
+                    : tableState === 'invalid'
+                      ? t('customer_table_invalid')
+                      : t('customer_table_scan_required')}
                 </p>
               ) : null}
 
@@ -457,7 +470,9 @@ export default function CartPanel({
                   {busy || submitted ? <span className="spinner" /> : <Icon name="send" size={17} />}
                   <span>{t('customer_menu_cart_submit')}</span>
                 </button>
-                {!tableReady ? <p className="cui-note cui-note--center">{t('customer_menu_cart_table_required')}</p> : null}
+                {!tableReady && canPickTable ? (
+                  <p className="cui-note cui-note--center">{t('customer_menu_cart_table_required')}</p>
+                ) : null}
               </footer>
             ) : null}
           </>

@@ -1221,6 +1221,7 @@ export default {
   customer_table_scan_required: 'Scan the QR code on your table to place an order.',
   customer_table_search: 'Search tables',
   customer_table_empty: 'No table matches your search.',
+  customer_table_none: 'No table is available to order to right now.',
   order_table_manual: 'Manually selected',
   order_table_qr: 'Identified by QR',
   customer_ordering_disabled: 'Ordering is disabled in this menu.',
