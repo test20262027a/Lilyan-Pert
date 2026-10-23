@@ -18,13 +18,14 @@ import { appearanceOf } from '../menu/categoryIcons';
  * The arrows are *physical*: the left button always moves the strip leftwards,
  * in RTL too, so their meaning never flips with the language.
  */
-function CategoryCard({ row, active, onSelect }) {
+function CategoryCard({ row, active, disabled, onSelect }) {
   const appearance = row.category ? appearanceOf(row.category) : null;
   return (
     <button
       type="button"
       className={`cui-cat ${active ? 'is-active' : ''}`}
       aria-pressed={active}
+      disabled={disabled}
       onClick={(event) => {
         onSelect(row.id);
         // Keep the chosen card in view when the strip is scrolled.
@@ -43,7 +44,7 @@ function CategoryCard({ row, active, onSelect }) {
   );
 }
 
-export default function CustomerCategoryNav({ categories, activeCat, onSelect }) {
+export default function CustomerCategoryNav({ categories, activeCat, onSelect, disabled = false }) {
   const { t, locale, rtl } = useI18n();
   const scroller = useRef(null);
   const [edges, setEdges] = useState({ start: false, end: false, more: false });
@@ -104,7 +105,7 @@ export default function CustomerCategoryNav({ categories, activeCat, onSelect })
           type="button"
           className="cui-catbar__arrow cui-catbar__arrow--left"
           onClick={() => step(rtl ? 'next' : 'prev')}
-          disabled={rtl ? !edges.end : !edges.start}
+          disabled={disabled || (rtl ? !edges.end : !edges.start)}
           aria-label={t('customer_menu_scroll_left')}
         >
           <Icon name="chevronLeft" size={17} />
@@ -113,7 +114,13 @@ export default function CustomerCategoryNav({ categories, activeCat, onSelect })
 
       <div className="cui-catbar__scroll" ref={scroller}>
         {rows.map((row) => (
-          <CategoryCard key={row.id || 'all'} row={row} active={activeCat === row.id} onSelect={onSelect} />
+          <CategoryCard
+            key={row.id || 'all'}
+            row={row}
+            active={activeCat === row.id}
+            disabled={disabled}
+            onSelect={onSelect}
+          />
         ))}
       </div>
 
@@ -122,7 +129,7 @@ export default function CustomerCategoryNav({ categories, activeCat, onSelect })
           type="button"
           className="cui-catbar__arrow cui-catbar__arrow--right"
           onClick={() => step(rtl ? 'prev' : 'next')}
-          disabled={rtl ? !edges.start : !edges.end}
+          disabled={disabled || (rtl ? !edges.start : !edges.end)}
           aria-label={t('customer_menu_scroll_right')}
         >
           <Icon name="chevronRight" size={17} />

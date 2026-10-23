@@ -26,6 +26,8 @@ export default function CustomerCarousel({
   className = '',
   count = 0,
   capacity = DEFAULT_CAPACITY,
+  /* The business is paused: the cards stay, the arrows stop responding. */
+  disabled = false,
 }) {
   const { t, rtl } = useI18n();
   const track = useRef(null);
@@ -94,7 +96,7 @@ export default function CustomerCarousel({
           type="button"
           className="cui-car__nav cui-car__nav--left"
           onClick={() => step('left')}
-          disabled={!edges.left}
+          disabled={disabled || !edges.left}
           aria-label={t('customer_menu_scroll_left')}
         >
           <Icon name="caretLeft" size={17} />
@@ -102,9 +104,9 @@ export default function CustomerCarousel({
       ) : null}
 
       <div
-        className={`cui-car__track ${trackClassName}`.trim()}
+        className={`cui-car__track ${trackClassName} ${disabled ? 'is-locked' : ''}`.trim()}
         ref={track}
-        tabIndex={edges.more ? 0 : -1}
+        tabIndex={edges.more && !disabled ? 0 : -1}
         role="group"
       >
         {children}
@@ -115,7 +117,7 @@ export default function CustomerCarousel({
           type="button"
           className="cui-car__nav cui-car__nav--right"
           onClick={() => step('right')}
-          disabled={!edges.right}
+          disabled={disabled || !edges.right}
           aria-label={t('customer_menu_scroll_right')}
         >
           <Icon name="caretRight" size={17} />

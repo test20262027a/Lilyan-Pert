@@ -23,7 +23,10 @@ import CustomerContact from '../components/customer/CustomerContact';
 import CartPanel from '../components/customer/CartPanel';
 import OrderSuccessModal from '../components/customer/OrderSuccessModal';
 import ReviewModal from '../components/customer/ReviewModal';
+import CustomerClosedNotice from '../components/customer/CustomerClosedNotice';
+import useOpeningStatus from '../hooks/useOpeningStatus';
 import '../customer.css';
+import '../customerAvailability.css';
 
 const sessionKey = () => {
   let key = localStorage.getItem('lilyan.session');
@@ -33,6 +36,18 @@ const sessionKey = () => {
   }
   return key;
 };
+
+/*
+ * The business name in the language the guest is reading.
+ *
+ * The ordering is explicit: the active language's saved name, then the
+ * business's own default language, then the main name — so a menu whose
+ * translation was left empty still shows a real name instead of a blank header.
+ */
+function businessNameIn(business, locale, fallback) {
+  const read = (code) => (code ? String(business?.[`name_${code}`] || '').trim() : '');
+  return read(locale) || read(fallback) || business?.name || '';
+}
 
 export default function CustomerMenu({ slug, adminMode = false }) {
   const params = useParams();
@@ -179,6 +194,14 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const timeZone = zoneFor(locale, data?.business?.timezone);
   const currency = data?.business?.currency || 'IQD';
 
+  /*
+   * Whether the business is taking orders right now, re-read on the business's
+   * own clock every 30 seconds — so a menu left open across the opening minute
+   * re-enables itself, and one left open past closing pauses itself, with no
+   * reload. Everything ordering-related hangs off this one verdict.
+   */
+  const opening = useOpeningStatus(data?.business?.working_hours, data?.business?.timezone);
+
   const categories = data?.categories || [];
   /* Every category that still has a product, independent of the current
      selection — the rail, drawer and chips always list them all, so a guest can
@@ -305,8 +328,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   }
 
   const biz = data.business;
-  const brandName = localized(biz, 'name', locale) || biz.name;
-  /* The banner's heading: the owner's saved welcome line, or the business name. */
+  /* The banner heading follows the guest's language, then the business's own
+     default language, then the main name. */
+  const brandName = businessNameIn(biz, locale, data.language_settings?.default_language);
+  /* The owner's saved welcome line, shown under the name when it exists. */
   const welcome = biz.editable_text?.welcome?.[locale] || '';
 
   if (data.menu_disabled) {
@@ -338,6 +363,16 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const checkoutEnabled = cartEnabled && allowAction('checkout');
   const orderingEnabled = checkoutEnabled && allowAction('order');
   /*
+   * The ordering panel is live only while the business is actually trading. The
+   * pause is the saved Working Hours verdict — closed, not open yet, an off day
+   * or no usable schedule — never the stock state of a product, and it switches
+   * every ordering control off at once.
+   */
+  const orderingLive = !opening.closed;
+  const cartLive = cartEnabled && orderingLive;
+  const checkoutLive = checkoutEnabled && orderingLive;
+  const orderingLiveEnabled = orderingEnabled && orderingLive;
+  /*
    * Table identification. A scanned QR token is resolved on the server and
    * arrives as `data.table`: that table is final and is shown read-only. When no
    * table was identified the order form offers the business's own active tables
@@ -347,6 +382,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
    */
   const tables = data.tables || [];
   const qrTable = data.table || null;
+  /* What the header badge shows: a scanned table is final, otherwise the guest's
+     own pick from the ordering form — and nothing at all until one exists. */
+  const shownTable = qrTable || tables.find((row) => row.id === tableId) || null;
+  const shownTableMode = qrTable ? 'auto' : 'manual';
 
   /*
    * The API ranks this business's best sellers from its own order history and
@@ -407,9 +446,11 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         <CustomerTopBar
           variant="bar"
           cartEnabled={cartEnabled}
+          cartDisabled={!orderingLive}
           cartCount={cartCount}
-          onCart={() => setCartOpen(true)}
+          onCart={() => orderingLive && setCartOpen(true)}
           adminReturn={showAdminReturn}
+          brand={{ name: brandName, logoUrl: biz.logo_url }}
         />
       </CustomerStickyHeader>
 
@@ -420,29 +461,36 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         business={biz}
         brandName={brandName}
         welcome={welcome}
-        table={data.table}
+        table={shownTable}
+        tableMode={shownTableMode}
         heroRef={heroRef}
       >
         <CustomerTopBar
           cartEnabled={cartEnabled}
+          cartDisabled={!orderingLive}
           cartCount={cartCount}
-          onCart={() => setCartOpen(true)}
+          onCart={() => orderingLive && setCartOpen(true)}
           adminReturn={showAdminReturn}
         />
       </CustomerHero>
 
       <main className="customer-body">
+        {/* Why ordering is paused, stated once at the top of the ordering panel,
+            with the day and the saved hours beside it. */}
+        {orderingLive ? null : <CustomerClosedNotice status={opening} timeZone={timeZone} />}
+
         {/* Search, summary strip and working hours share one centred column,
             so the banner stays wide while the controls below it read as a
             single, calm vertical rhythm. */}
         <div className="cui-head">
           {showFeature('search') ? (
-            <div className="cui-search">
+            <div className={`cui-search ${orderingLive ? '' : 'is-disabled'}`.trim()}>
               <Icon name="search" size={18} />
               <input
                 value={query}
                 placeholder={t('customer_menu_search')}
                 aria-label={t('customer_menu_search')}
+                disabled={!orderingLive}
                 onChange={(e) => setQuery(e.target.value)}
               />
             </div>
@@ -455,10 +503,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             hours={data.hours}
           />
 
-          <CustomerHours hours={data.hours} timeZone={timeZone} />
+          <CustomerHours hours={data.hours} timeZone={timeZone} status={opening} />
         </div>
 
-        <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={openAd} />
+        <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={orderingLive ? openAd : undefined} />
 
         {featuredProducts.length > 0 ? (
           <CustomerPanel
@@ -470,6 +518,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             <CustomerCarousel
               count={featuredProducts.length}
               capacity={{ desktop: 4, tablet: 2, mobile: 1 }}
+              disabled={!orderingLive}
             >
               {featuredProducts.map((p) => (
                 <CustomerProductCard
@@ -483,6 +532,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   addLabel={t('customer_menu_add')}
                   promoLabel={t('customer_menu_promo')}
                   quantity={cart[p.id] || 0}
+                  disabled={!orderingLive}
                   onAdd={add}
                   onDecrease={removeOne}
                   onOpen={showFeature('details') ? setDetail : undefined}
@@ -502,6 +552,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
             <CustomerCarousel
               count={bestProducts.length}
               capacity={{ desktop: 4, tablet: 2, mobile: 1 }}
+              disabled={!orderingLive}
             >
               {bestProducts.map((p) => (
                 <CustomerProductCard
@@ -516,6 +567,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                   promoLabel={t('customer_menu_promo')}
                   badge={t('customer_menu_best_badge')}
                   quantity={cart[p.id] || 0}
+                  disabled={!orderingLive}
                   onAdd={add}
                   onDecrease={removeOne}
                   onOpen={showFeature('details') ? setDetail : undefined}
@@ -555,6 +607,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
                     addLabel={t('customer_menu_add_to_cart')}
                     promoLabel={t('customer_menu_promo')}
                     quantity={cart[p.id] || 0}
+                    disabled={!orderingLive}
                     onAdd={add}
                     onDecrease={removeOne}
                     onOpen={showFeature('details') ? setDetail : undefined}

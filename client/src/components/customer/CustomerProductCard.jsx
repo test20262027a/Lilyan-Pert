@@ -33,6 +33,9 @@ export default function CustomerProductCard({
   promoLabel,
   badge,
   quantity = 0,
+  /* The business is paused (closed, not open yet, holiday): the card stays on
+     screen but every gesture on it is blocked. */
+  disabled = false,
   onAdd,
   onDecrease,
   onOpen,
@@ -41,14 +44,15 @@ export default function CustomerProductCard({
   const name = localized(product, 'name', locale);
   const available = product.available !== false;
   const open = () => onOpen?.(product);
+  const canOpen = Boolean(onOpen) && !disabled;
   const amount = fmtMoneyParts(product.promo_price ?? product.price, currency, locale);
 
   return (
     <article
-      className={`cui-prod ${onOpen ? 'is-openable' : ''} ${available ? '' : 'is-out'}`}
-      onClick={onOpen ? open : undefined}
+      className={`cui-prod ${canOpen ? 'is-openable' : ''} ${available ? '' : 'is-out'} ${disabled ? 'is-locked' : ''}`.trim()}
+      onClick={canOpen ? open : undefined}
       onKeyDown={
-        onOpen
+        canOpen
           ? (event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault();
@@ -57,9 +61,10 @@ export default function CustomerProductCard({
             }
           : undefined
       }
-      role={onOpen ? 'button' : undefined}
-      tabIndex={onOpen ? 0 : undefined}
-      aria-label={onOpen ? name : undefined}
+      role={canOpen ? 'button' : undefined}
+      tabIndex={canOpen ? 0 : undefined}
+      aria-label={canOpen ? name : undefined}
+      aria-disabled={disabled || undefined}
     >
       <div className="cui-prod__media">
         {product.image_url ? (
@@ -130,13 +135,13 @@ export default function CustomerProductCard({
                 quantity={quantity}
                 onIncrease={() => onAdd(product)}
                 onDecrease={() => onDecrease?.(product)}
-                disabled={!available}
+                disabled={!available || disabled}
               />
             ) : (
               <button
                 type="button"
                 className="cui-prod__add"
-                disabled={!available}
+                disabled={!available || disabled}
                 onClick={(event) => {
                   event.stopPropagation();
                   onAdd(product);

@@ -1,0 +1,273 @@
+/*
+ * Business availability for the ordering menus.
+ *
+ * Three things live here, all driven by the saved Working Hours:
+ *   1. the closed / not-yet-open / holiday notice at the top of the menu,
+ *   2. the working-hours card's own state (open, soon, closed, holiday),
+ *   3. the inactive ordering surface — dimmed, desaturated products with blocked
+ *      controls. It is deliberately NOT the out-of-stock style: nothing is sold
+ *      out here, the whole ordering service is paused.
+ *
+ * Everything is scoped to `.customer-shell` and mixed from the active theme, so
+ * the admin panel and the five appearance presets are untouched.
+ */
+
+/* --------------------------------------------------------- closed notice -- */
+
+.cui-closed {
+  --nc: #e05252;
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid color-mix(in srgb, var(--nc) 26%, var(--cui-line));
+  background:
+    radial-gradient(120% 130% at 0% 0%, color-mix(in srgb, var(--nc) 12%, transparent), transparent 68%),
+    color-mix(in srgb, var(--surface) 96%, var(--nc));
+  box-shadow: var(--cui-shadow-2), var(--cui-inset);
+}
+.cui-closed--soon { --nc: #e08a1e; }
+.cui-closed--holiday { --nc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
+
+.cui-closed__icon {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  color: color-mix(in srgb, var(--nc) 82%, #17110c);
+  background: color-mix(in srgb, var(--nc) 15%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--nc) 28%, transparent);
+  box-shadow:
+    0 10px 20px color-mix(in srgb, var(--nc) 20%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+[data-theme='dark'] .cui-closed__icon { color: color-mix(in srgb, var(--nc) 70%, #ffffff); }
+
+.cui-closed__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+
+.cui-closed__pill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--nc) 84%, #17110c);
+  background: color-mix(in srgb, var(--nc) 14%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--nc) 26%, transparent);
+}
+
+.cui-closed__title {
+  margin: 0;
+  font-size: clamp(15px, 1.5vw, 17px);
+  font-weight: 850;
+  line-height: 1.4;
+  color: var(--text);
+  text-wrap: balance;
+}
+.cui-closed__hint {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 62ch;
+}
+
+.cui-closed__meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
+.cui-closed__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--text) 88%, var(--nc));
+  background: color-mix(in srgb, var(--surface) 80%, var(--nc));
+  border: 1px solid color-mix(in srgb, var(--nc) 18%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cui-closed__chip--time { font-variant-numeric: tabular-nums; }
+
+.cui-closed__note {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: color-mix(in srgb, var(--muted) 88%, var(--nc));
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .cui-closed { flex-wrap: wrap; }
+  .cui-closed__note { width: 100%; padding-inline-start: 55px; white-space: normal; }
+}
+
+/* ------------------------------------------------------ working hours card -- */
+
+/*
+ * The card states follow the same verdict: an accent bar and a tinted header
+ * per state, so the answer is readable at a glance without reading the range.
+ */
+.cui-hours { position: relative; }
+.cui-hours::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: var(--hc, color-mix(in srgb, var(--primary) 70%, transparent));
+}
+.cui-hours.is-open { --hc: #16a34a; }
+.cui-hours.is-soon { --hc: #e08a1e; }
+.cui-hours.is-closed { --hc: #e05252; }
+.cui-hours.is-holiday { --hc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
+
+.cui-hours.is-soon .cui-hours__head {
+  background: linear-gradient(180deg, color-mix(in srgb, #e08a1e 14%, var(--surface)), color-mix(in srgb, #e08a1e 6%, var(--surface)));
+}
+.cui-hours.is-closed .cui-hours__head {
+  background: linear-gradient(180deg, color-mix(in srgb, #e05252 12%, var(--surface)), color-mix(in srgb, #e05252 5%, var(--surface)));
+}
+.cui-hours.is-holiday .cui-hours__head {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hc) 14%, var(--surface)),
+    color-mix(in srgb, var(--hc) 6%, var(--surface))
+  );
+}
+
+.cui-state.is-soon {
+  color: #96600c;
+  background: color-mix(in srgb, #f0a531 16%, var(--surface));
+  border-color: color-mix(in srgb, #f0a531 34%, transparent);
+}
+.cui-state.is-holiday {
+  color: color-mix(in srgb, var(--primary) 84%, #221a4d);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+[data-theme='dark'] .cui-state.is-soon { color: #f5c169; }
+[data-theme='dark'] .cui-state.is-holiday { color: color-mix(in srgb, var(--primary) 66%, #ffffff); }
+
+/* -------------------------------------------------------- inactive state -- */
+
+/*
+ * The paused ordering surface. The photographs lose their colour and the cards
+ * sit behind a soft veil, so they read as "not now" rather than "sold out" —
+ * the stock badge is untouched and no card is ever marked unavailable.
+ */
+.cui-search.is-disabled {
+  opacity: 0.72;
+  box-shadow: 0 14px 30px rgba(16, 32, 26, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.cui-search.is-disabled input { cursor: not-allowed; }
+.cui-search.is-disabled svg { opacity: 0.7; }
+
+.cui-prod.is-locked {
+  cursor: default;
+  filter: grayscale(0.62) saturate(0.62);
+}
+.cui-prod.is-locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--surface) 26%, transparent);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .cui-prod.is-locked:hover {
+    transform: none;
+    border-color: var(--cui-line);
+    box-shadow: 0 1px 2px rgba(16, 32, 26, 0.05), 0 14px 30px -18px rgba(16, 32, 26, 0.28), var(--cui-inset);
+  }
+  .cui-prod.is-locked:hover .cui-prod__media img { transform: none; }
+}
+
+.cui-cat:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+.cui-cat:disabled:hover { transform: none; box-shadow: none; }
+
+.cui-nav__cart:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--cui-inset);
+}
+
+/* The card list keeps its snap points but no user dragging while paused. */
+.cui-car__track.is-locked { cursor: default; }
+
+/* ------------------------------------------- compact header identity ----- */
+
+/*
+ * The small business identity in the compact header: the same localized name
+ * the banner shows, with the logo mark. It truncates instead of pushing the
+ * cart or the language control out of the row.
+ */
+.cui-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(46%, 320px);
+  height: 38px;
+  padding: 4px 13px 4px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+[dir='rtl'] .cui-nav__brand { padding: 4px 5px 4px 13px; }
+
+.cui-nav__brandmark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  color: var(--primary-ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 90%, #ffffff), var(--primary));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.cui-nav__brandmark img { width: 100%; height: 100%; object-fit: contain; }
+
+.cui-nav__brandname {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .cui-nav__brand { max-width: 42%; padding: 4px 10px 4px 4px; }
+  .cui-nav__brandname { font-size: 12px; }
+}
+@media (max-width: 400px) {
+  .cui-nav__brand { max-width: 34%; }
+}
