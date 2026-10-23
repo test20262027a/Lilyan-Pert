@@ -22,6 +22,9 @@ const TONE_ICON = {
   activities: { icon: 'info', tone: 'red' },
 };
 
+/** A status transition reads better with the status glyph than a generic one. */
+const iconOf = (item) => (item.type === 'status_change' ? 'refresh' : TONE_ICON[categoryOf(item.type)].icon);
+
 const STATUS_KEYS = {
   pending: 'status_pending',
   preparing: 'status_preparing',
@@ -34,15 +37,20 @@ const STATUS_KEYS = {
 function describe(item, t) {
   const category = categoryOf(item.type);
 
+  // An order status change: order number, previous → new status, and who did it.
+  if (item.type === 'status_change') {
+    const number = item.order_number ? `#${item.order_number}` : item.title || '';
+    const [from = '', to = ''] = String(item.body || '').split('>');
+    const label = (status) => (status ? t(STATUS_KEYS[status] || `status_${status}`) : '');
+    const move = [label(from), label(to)].filter(Boolean).join(' → ');
+    return {
+      title: [t('notif_order_status'), number].filter(Boolean).join(' · '),
+      description: [move, item.actor_name].filter(Boolean).join(' · '),
+    };
+  }
+
   if (category === 'orders') {
     const number = item.order_number ? `#${item.order_number}` : '';
-    if (item.type === 'status_change') {
-      const status = item.body ? t(STATUS_KEYS[item.body] || `status_${item.body}`) : '';
-      return {
-        title: [t('notif_order_status'), number].filter(Boolean).join(' · '),
-        description: status,
-      };
-    }
     return {
       title: [t('notif_order_new'), number].filter(Boolean).join(' · '),
       description: item.body || '',
@@ -80,7 +88,8 @@ export default function NotificationPanel({
   const { t } = useI18n();
   const [tab, setTab] = useState('all');
 
-  const visible = tab === 'all' ? items : lists[tab] || [];
+  const visible =
+    tab === 'all' ? items : tab === 'unread' ? items.filter((i) => !i.read_at) : lists[tab] || [];
   const time = (value) => relativeTime(value, locale, (d) => fmtDateTime(d, locale, timeZone));
 
   return (
@@ -104,7 +113,7 @@ export default function NotificationPanel({
 
       <div className="notif-panel__tabs" role="tablist" aria-label={t('dash_notifications')}>
         {CATEGORY_TABS.map((key) => {
-          const count = key === 'all' ? unread.total : unread[key] || 0;
+          const count = key === 'all' || key === 'unread' ? unread.total : unread[key] || 0;
           return (
             <button
               key={key}
@@ -143,7 +152,7 @@ export default function NotificationPanel({
         ) : (
           visible.map((item) => {
             const category = categoryOf(item.type);
-            const visual = TONE_ICON[category];
+            const visual = { ...TONE_ICON[category], icon: iconOf(item) };
             const { title, description } = describe(item, t);
             const allowed = canOpen(item);
             return (

@@ -435,13 +435,28 @@ router.patch(
          VALUES ($1,$2,$3,$4,$5,$6)`,
         [req.businessId, order.id, order.status, next, req.user.id, req.user.full_name || req.user.email],
       );
-      if (next === 'completed' || next === 'cancelled') {
-        await c.query(
-          `INSERT INTO notifications (business_id, type, title, body, order_id)
-           VALUES ($1,'status_change',$2,$3,$4)`,
-          [req.businessId, `#${order.order_number}`, next, order.id],
-        );
-      }
+      /*
+       * Every real status transition is an activity, never a new order: the
+       * body carries `from>to` so the panel can name both statuses and the
+       * actor in the reader's language. The NOT EXISTS guard keeps a repeated
+       * request from writing the same transition twice.
+       */
+      await c.query(
+        `INSERT INTO notifications (business_id, type, title, body, order_id, actor_name)
+         SELECT $1,'status_change',$2,$3,$4,$5
+          WHERE NOT EXISTS (
+            SELECT 1 FROM notifications
+             WHERE business_id = $1 AND type = 'status_change'
+               AND order_id = $4 AND body = $3
+          )`,
+        [
+          req.businessId,
+          `#${order.order_number}`,
+          `${order.status}>${next}`,
+          order.id,
+          req.user.full_name || req.user.email,
+        ],
+      );
       return rows[0];
     });
 

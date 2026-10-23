@@ -1411,6 +1411,7 @@ export default {
   /* Header notification feed */
   dash_notifications: 'Notifications',
   notif_tab_all: 'All',
+  notif_tab_unread: 'Unread',
   notif_tab_orders: 'Orders',
   notif_tab_reviews: 'Reviews',
   notif_tab_activities: 'Activities',
@@ -1422,6 +1423,7 @@ export default {
   notif_empty_orders: 'No order notifications yet',
   notif_empty_reviews: 'No review notifications yet',
   notif_empty_activities: 'No activity notifications yet',
+  notif_empty_unread: 'Nothing unread — all caught up',
   notif_load_failed: 'Notifications could not be loaded',
   notif_no_access: 'You do not have access to this section',
   settings_dash_show_date_hours: 'Date and working hours',

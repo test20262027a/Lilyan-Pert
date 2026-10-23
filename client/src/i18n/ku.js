@@ -1410,6 +1410,7 @@ export default {
   /* Header notification feed */
   dash_notifications: 'ئاگادارکردنەوەکان',
   notif_tab_all: 'هەموو',
+  notif_tab_unread: 'نەخوێندراوە',
   notif_tab_orders: 'داواکارییەکان',
   notif_tab_reviews: 'هەڵسەنگاندنەکان',
   notif_tab_activities: 'چالاکییەکان',
@@ -1421,6 +1422,7 @@ export default {
   notif_empty_orders: 'هیچ ئاگادارکردنەوەیەکی داواکاری نییە',
   notif_empty_reviews: 'هیچ ئاگادارکردنەوەیەکی هەڵسەنگاندن نییە',
   notif_empty_activities: 'هیچ ئاگادارکردنەوەیەکی چالاکی نییە',
+  notif_empty_unread: 'هیچ نەخوێندراوەیەک نییە — هەموو بینراوە',
   notif_load_failed: 'نەتوانرا ئاگادارکردنەوەکان باربکرێن',
   notif_no_access: 'دەستگەیشتن بۆ ئەم بەشە نییە',
   settings_dash_show_date_hours: 'بەروار و کاتژمێری کار',

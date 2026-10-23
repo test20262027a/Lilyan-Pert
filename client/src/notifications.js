@@ -11,14 +11,21 @@
  * colour follows the highest-priority category that still has unread rows.
  */
 
-/** Category of a stored notification type. */
+/**
+ * Category of a stored notification type. Read from the event type itself, so
+ * a translation or a title can never move a row between tabs:
+ *   new_order     → orders      (an order was created)
+ *   status_change → activities  (an existing order moved status)
+ *   activity      → activities  (any other system event)
+ *   review        → reviews
+ */
 export function categoryOf(type) {
   if (type === 'review') return 'reviews';
-  if (type === 'activity') return 'activities';
-  return 'orders'; // new_order + status_change
+  if (type === 'activity' || type === 'status_change') return 'activities';
+  return 'orders';
 }
 
-export const CATEGORY_TABS = ['all', 'orders', 'reviews', 'activities'];
+export const CATEGORY_TABS = ['all', 'orders', 'reviews', 'activities', 'unread'];
 
 /** Highest-priority unread category wins; the number is the full total. */
 export function priorityOf(unread) {

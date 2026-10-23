@@ -1,3 +1,4 @@
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
@@ -128,6 +129,7 @@ export default function DateRangeModal({ value, timeZone, locale, onApply, onClo
     >
       <div className="dash-modal__card" role="dialog" aria-modal="true" aria-labelledby="dash-modal-title" ref={cardRef}>
         <header className="dash-modal__head">
+          <HeaderBackdrop section="analytics" />
           <h2 className="dash-modal__title" id="dash-modal-title">
             {t('dash_range_custom')}
           </h2>

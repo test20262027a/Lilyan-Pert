@@ -1500,14 +1500,16 @@ router.get(
  * Notification feed, grouped by the three dashboard priorities.
  *
  * The stored `type` is the only thing that decides a category — orders
- * (`new_order`, `status_change`), reviews and activities. Counts are computed
+ * (`new_order`), reviews, and activities (`activity` + `status_change`). Counts are computed
  * from the same scoped rows the list is built from, so the badge can never
  * disagree with what the panel shows. Everything stays inside this business.
  */
 const NOTIF_CATEGORY_SQL = {
-  orders: "type IN ('new_order','status_change')",
+  // Only a genuinely created order lands in Orders; every status transition
+  // and system event is an activity, whatever it is titled.
+  orders: "type = 'new_order'",
   reviews: "type = 'review'",
-  activities: "type = 'activity'",
+  activities: "type IN ('activity','status_change')",
 };
 
 /** Newest rows per category, so one busy stream can never hide another. */

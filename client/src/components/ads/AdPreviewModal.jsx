@@ -1,3 +1,4 @@
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { useEffect } from 'react';
 import Icon from '../Icon';
 import { localized, useI18n } from '../../i18n';
@@ -49,6 +50,7 @@ export default function AdPreviewModal({ ad, locale, timeZone, onClose }) {
     >
       <div className="adp" role="dialog" aria-modal="true" aria-label={t('ads_preview_title')}>
         <header className="adp__head">
+          <HeaderBackdrop section="advertising" />
           <span className="adp__icon" aria-hidden="true">
             <Icon name="eye" size={18} />
           </span>

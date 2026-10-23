@@ -303,10 +303,17 @@ CREATE TABLE IF NOT EXISTS notifications (
   title       text NOT NULL,
   body        text,
   order_id    uuid REFERENCES orders(id) ON DELETE CASCADE,
+  actor_name  text,
   read_at     timestamptz,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS notifications_business_idx ON notifications(business_id, created_at DESC);
+-- Who made an order status change (shown on the Activity notification).
+ALTER TABLE notifications ADD COLUMN IF NOT EXISTS actor_name text;
+-- Older status changes stored only the new status; give them the from:to body
+-- the Activity tab renders, so the whole history is categorised the same way.
+UPDATE notifications SET body = '>' || body
+  WHERE type = 'status_change' AND body IS NOT NULL AND body NOT LIKE '%>%';
 
 CREATE TABLE IF NOT EXISTS business_views (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

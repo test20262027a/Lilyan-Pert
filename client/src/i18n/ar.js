@@ -1408,6 +1408,7 @@ export default {
   /* Header notification feed */
   dash_notifications: 'الإشعارات',
   notif_tab_all: 'الكل',
+  notif_tab_unread: 'غير مقروء',
   notif_tab_orders: 'الطلبات',
   notif_tab_reviews: 'التقييمات',
   notif_tab_activities: 'الأنشطة',
@@ -1419,6 +1420,7 @@ export default {
   notif_empty_orders: 'لا توجد إشعارات طلبات بعد',
   notif_empty_reviews: 'لا توجد إشعارات تقييمات بعد',
   notif_empty_activities: 'لا توجد إشعارات أنشطة بعد',
+  notif_empty_unread: 'لا شيء غير مقروء — كل شيء مقروء',
   notif_load_failed: 'تعذّر تحميل الإشعارات',
   notif_no_access: 'ليس لديك صلاحية الوصول إلى هذا القسم',
   settings_dash_show_date_hours: 'التاريخ وساعات العمل',

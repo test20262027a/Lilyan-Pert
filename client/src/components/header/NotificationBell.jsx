@@ -48,6 +48,7 @@ export default function NotificationBell() {
       setUnread({ ...EMPTY_COUNTS, ...(data.unread || {}) });
       setFailed(false);
 
+      // Only a newly created order alerts; status changes never make a sound.
       const newestOrder = (data.lists?.orders || []).find((n) => n.type === 'new_order');
       if (newestOrder) {
         if (seenRef.current === null) {
@@ -112,6 +113,7 @@ export default function NotificationBell() {
   const canOpen = (item) => {
     if (item.type === 'review') return can('reviews.view');
     if (item.type === 'activity') return can('activity.view');
+    // A status change belongs to the order it changed.
     return can('orders.view');
   };
 
