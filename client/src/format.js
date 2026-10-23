@@ -107,8 +107,23 @@ export function fmtNumber(value, locale) {
   return new Intl.NumberFormat(safeLocale(locale)).format(n);
 }
 
+/** Currencies Intl does not know are formatted with the label the guest reads. */
+const CURRENCY_LABEL = { TOMAN: { en: 'Toman', other: 'تومان' } };
+
+export function localizedCurrencyLabel(currency, locale) {
+  const label = CURRENCY_LABEL[currency];
+  if (label) return locale === 'en' ? label.en : label.other;
+  return currency || '';
+}
+
 export function fmtMoney(value, currency, locale) {
   const n = Number(value) || 0;
+  const label = CURRENCY_LABEL[currency];
+  if (label) {
+    // Toman is a whole-number currency in every language; the label is written
+    // in the guest's own script, never as IRR/ریال.
+    return `${fmtNumber(n, locale)} ${localizedCurrencyLabel(currency, locale)}`;
+  }
   const zeroDecimal = ['IQD', 'IRR'].includes(currency);
   try {
     return new Intl.NumberFormat(safeLocale(locale), {
@@ -129,6 +144,9 @@ export function fmtMoney(value, currency, locale) {
  */
 export function fmtMoneyParts(value, currency, locale) {
   const n = Number(value) || 0;
+  if (CURRENCY_LABEL[currency]) {
+    return { number: fmtNumber(n, locale), symbol: localizedCurrencyLabel(currency, locale) };
+  }
   const zeroDecimal = ['IQD', 'IRR'].includes(currency);
   try {
     const parts = new Intl.NumberFormat(safeLocale(locale), {

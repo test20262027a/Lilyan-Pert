@@ -77,7 +77,7 @@ const MODULE_DEFS = {
     exportMode: 'rows',
     table: 'products',
     columns: [
-      'id', 'category_id', 'price', 'price_fa', 'price_en', 'image_url',
+      'id', 'category_id', 'price', 'price_fa', 'price_en', 'price_ar', 'price_fa_unit', 'price_fa_review', 'image_url',
       'active', 'available', 'featured', 'sort_order', 'calories', 'prep_minutes', 'tags',
       'name_ku', 'name_fa', 'name_ar', 'name_en',
       'description_ku', 'description_fa', 'description_ar', 'description_en',
@@ -100,7 +100,7 @@ const MODULE_DEFS = {
     columns: [
       'id', 'table_id', 'table_name', 'order_number', 'status', 'channel', 'customer_name',
       'customer_phone', 'notes', 'subtotal', 'discount', 'tax', 'service_charge',
-      'total', 'created_at', 'completed_at',
+      'total', 'language', 'currency', 'created_at', 'completed_at',
     ],
     orderBy: 'created_at',
   },
@@ -151,7 +151,7 @@ const MODULE_DEFS = {
     columns: [
       'id', 'code', 'product_id', 'category_id', 'target_type', 'discount_type', 'discount_value',
       'min_order', 'max_uses', 'used_count', 'starts_at', 'ends_at',
-      'active', 'title_ku', 'title_fa', 'title_ar', 'title_en',
+      'active', 'title_ku', 'title_fa', 'title_ar', 'title_en', 'currency_amounts',
     ],
   },
   team_members: {

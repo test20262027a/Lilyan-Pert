@@ -475,3 +475,71 @@ CREATE INDEX IF NOT EXISTS ads_public_idx
 -- visibility flags every dashboard has always shown.
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS addresses jsonb NOT NULL DEFAULT '{}'::jsonb;
 ALTER TABLE businesses ADD COLUMN IF NOT EXISTS dashboard_settings jsonb NOT NULL DEFAULT '{"show_overview":true,"show_insights":true,"show_order_notifications":true,"show_recent_orders":true,"show_notification_settings":true}'::jsonb;
+
+-- ---------------------------------------------------------------------------
+-- Language-based pricing.
+--
+-- Each language owns its own, independently entered product price:
+--   ku → `price`     (business currency, IQD)
+--   ar → `price_ar`  (IQD)
+--   fa → `price_fa`  (TOMAN — never Rial)
+--   en → `price_en`  (USD)
+-- No value is ever derived from another language's price and no exchange rate
+-- is stored or applied anywhere.
+--
+-- `price_fa_unit` records which unit a Persian price was entered in, and
+-- `price_fa_review` marks a price saved before that unit existed: such a value
+-- is preserved untouched and is NOT orderable until its owner confirms it, so a
+-- historical Rial amount can never be silently charged as Toman.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_ar numeric(12,2) CHECK (price_ar >= 0);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_fa_unit text;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS price_fa_review boolean NOT NULL DEFAULT false;
+
+ALTER TABLE products DROP CONSTRAINT IF EXISTS products_price_fa_unit_check;
+ALTER TABLE products ADD CONSTRAINT products_price_fa_unit_check
+  CHECK (price_fa_unit IS NULL OR price_fa_unit IN ('toman', 'rial'));
+
+-- Fixed-amount discounts and minimum order values per currency, so a 5,000 IQD
+-- promotion never becomes a 5,000 Toman or 5,000 USD one. Percentage
+-- promotions keep using `discount_value` alone.
+ALTER TABLE promotions ADD COLUMN IF NOT EXISTS currency_amounts jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+-- Every order keeps the language it was placed in and the currency its amounts
+-- were recorded in. Historical amounts are never rewritten.
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS language text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS currency text;
+
+CREATE INDEX IF NOT EXISTS orders_business_currency_idx ON orders (business_id, currency);
+
+-- One-time, audited data migrations. Each writes its own marker in app_settings,
+-- so re-running this schema (it runs on every boot) can never convert a price
+-- twice or overwrite a value the owner has since edited.
+DO $$
+BEGIN
+  -- The old product form bound the Arabic price field to the SAME `price` column
+  -- as Kurdish, so the stored `price` already IS the Arabic price of that
+  -- product: copying it is faithful, not a derived conversion.
+  IF NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'migration.price_ar_from_price') THEN
+    UPDATE products SET price_ar = price WHERE price_ar IS NULL;
+    INSERT INTO app_settings (key, value) VALUES ('migration.price_ar_from_price', 'done')
+      ON CONFLICT (key) DO NOTHING;
+  END IF;
+
+  -- Zero Persian prices carry no unit risk; any non-zero historical Persian
+  -- price is left exactly as stored and flagged for its owner to review.
+  IF NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'migration.price_fa_unit') THEN
+    UPDATE products SET price_fa_unit = 'toman' WHERE price_fa IS NOT NULL AND price_fa = 0;
+    UPDATE products SET price_fa_review = true WHERE price_fa IS NOT NULL AND price_fa > 0;
+    INSERT INTO app_settings (key, value) VALUES ('migration.price_fa_unit', 'review-flagged')
+      ON CONFLICT (key) DO NOTHING;
+  END IF;
+
+  -- Every existing order was recorded in its business's own currency.
+  IF NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'migration.orders_currency') THEN
+    UPDATE orders o SET currency = COALESCE(b.currency, 'IQD')
+      FROM businesses b WHERE b.id = o.business_id AND o.currency IS NULL;
+    UPDATE orders SET currency = 'IQD' WHERE currency IS NULL;
+    INSERT INTO app_settings (key, value) VALUES ('migration.orders_currency', 'done')
+      ON CONFLICT (key) DO NOTHING;
+  END IF;
+END $$;

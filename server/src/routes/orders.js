@@ -3,6 +3,13 @@ import { q, tx } from '../db.js';
 import { requireAuth, withBusiness, perm } from '../auth.js';
 import { ah, bad, conflict, isUuid, notFound, num } from '../lib/http.js';
 import { safeZone } from '../lib/ranges.js';
+import {
+  currencyForLanguage,
+  languagePrice,
+  localizedName,
+  normalizeLanguageSettings,
+  resolveLanguage,
+} from '../lib/languages.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -241,6 +248,7 @@ router.post(
     const business = (
       await q('SELECT * FROM businesses WHERE id = $1', [req.businessId])
     ).rows[0];
+    const languageSettings = normalizeLanguageSettings(business.menu_settings?.language_settings);
 
     const result = await tx(async (c) => {
       let table = null;
@@ -256,23 +264,37 @@ router.post(
       }
       const ids = [...new Set(items.map((i) => String(i.product_id)))].filter(isUuid);
       const found = await c.query(
-        'SELECT id, price, name_en, name_ku, name_fa, name_ar FROM products WHERE business_id = $1 AND id = ANY($2::uuid[])',
+        `SELECT id, price, price_ar, price_fa, price_en, price_fa_review,
+                name_en, name_ku, name_fa, name_ar
+           FROM products WHERE business_id = $1 AND id = ANY($2::uuid[])`,
         [req.businessId, ids],
       );
       const byId = new Map(found.rows.map((r) => [r.id, r]));
+
+      /*
+       * The order is priced in the language it is placed in — the main ordering
+       * menu's current language, or the business's default one. Its currency
+       * (IQD, TOMAN, USD) is frozen with the order, and a product without a
+       * valid price in that language is refused rather than priced from another.
+       */
+      const language = resolveLanguage(languageSettings, req.body?.language);
+      if (req.body?.language && language !== req.body.language) throw bad('LANGUAGE_UNAVAILABLE');
+      const currency = currencyForLanguage(language, business.currency);
 
       let subtotal = 0;
       const lines = [];
       for (const raw of items) {
         const product = byId.get(String(raw.product_id));
         if (!product) throw bad('PRODUCT_NOT_FOUND');
+        const price = languagePrice(product, language, business.currency || 'IQD');
+        if (!price.valid) throw bad('PRODUCT_PRICE_UNAVAILABLE', localizedName(product, language) || product.id);
         const quantity = Math.max(1, Math.min(99, Math.floor(Number(raw.quantity) || 1)));
-        const unitPrice = Number(product.price);
+        const unitPrice = price.amount;
         const lineTotal = round2(unitPrice * quantity);
         subtotal = round2(subtotal + lineTotal);
         lines.push({
           product_id: product.id,
-          name: product.name_en || product.name_ku || product.name_fa || product.name_ar,
+          name: localizedName(product, language),
           unit_price: unitPrice,
           quantity,
           line_total: lineTotal,
@@ -301,8 +323,8 @@ router.post(
       const order = await c.query(
         `INSERT INTO orders (business_id, table_id, table_name, table_source, order_number, status, channel,
                              customer_name, customer_phone, notes, subtotal, discount, tax, service_charge, total,
-                             created_by)
-         VALUES ($1,$2,$3,$4,$5,'pending','staff',$6,$7,$8,$9,$10,$11,$12,$13,$14) RETURNING *`,
+                             created_by, language, currency)
+         VALUES ($1,$2,$3,$4,$5,'pending','staff',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
         [
           req.businessId,
           table?.id || null,
@@ -318,6 +340,8 @@ router.post(
           service,
           total,
           req.user.id,
+          language,
+          currency,
         ],
       );
 

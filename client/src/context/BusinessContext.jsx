@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { get, put } from '../api';
 import { applyTheme } from '../theme';
+import { setLanguageSettings } from '../languages';
 
 const BusinessContext = createContext(null);
 
@@ -30,6 +31,12 @@ export function BusinessProvider({ children }) {
   useEffect(() => {
     if (business?.theme) applyTheme(business.theme);
   }, [business?.theme]);
+
+  // The enabled languages come from the same saved settings record, so every
+  // selector and multilingual form follows Menu Settings without a second copy.
+  useEffect(() => {
+    if (business) setLanguageSettings(business.menu_settings?.language_settings);
+  }, [business]);
 
   const save = useCallback(async (patchBody) => {
     const data = await put('/business', patchBody);

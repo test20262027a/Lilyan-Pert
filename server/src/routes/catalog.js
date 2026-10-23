@@ -303,17 +303,24 @@ router.post(
     if (!b.category_id) throw bad('CATEGORY_REQUIRED');
     await loadCategory(req.businessId, b.category_id);
     const { rows } = await q(
-      `INSERT INTO products (business_id, category_id, price, price_fa, price_en, image_url,
+      `INSERT INTO products (business_id, category_id, price, price_fa, price_en, price_ar,
+                             price_fa_unit, image_url,
                              active, available, featured, sort_order, calories, prep_minutes, tags,
                              name_ku, name_fa, name_ar, name_en,
                              description_ku, description_fa, description_ar, description_en)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+       RETURNING *`,
       [
         req.businessId,
         b.category_id,
         price,
         optPrice(b.price_fa),
         optPrice(b.price_en),
+        // Arabic always keeps its own IQD price. An omitted value starts as the
+        // same amount the Kurdish field holds, which is what one product used to
+        // share — never a derived or converted number.
+        optPrice(b.price_ar) ?? price,
+        optPrice(b.price_fa) === null ? null : 'toman',
         b.image_url ? String(b.image_url).slice(0, 2000) : null,
         b.active === undefined ? true : Boolean(b.active),
         b.available === undefined ? true : Boolean(b.available),
@@ -369,6 +376,14 @@ router.put(
               -- submits the product's complete payload.
               price_fa = $17,
               price_en = $18,
+              -- An Arabic price the form did not send (its language is disabled)
+              -- is preserved; a sent empty value really clears it.
+              price_ar = CASE WHEN $25 THEN $23 ELSE price_ar END,
+              -- A Persian price is Toman unless the owner explicitly confirms a
+              -- stored legacy value; an ambiguous price stays flagged instead of
+              -- being silently reinterpreted.
+              price_fa_unit = COALESCE($24, price_fa_unit),
+              price_fa_review = CASE WHEN $24 = 'toman' THEN false ELSE price_fa_review END,
               calories = $19,
               prep_minutes = $20,
               tags = $21,
@@ -399,6 +414,9 @@ router.put(
         optInt(b.prep_minutes, 'INVALID_PREP_TIME'),
         tagList(b.tags),
         b.featured === undefined ? false : Boolean(b.featured),
+        optPrice(b.price_ar),
+        b.price_fa_unit === 'toman' || b.price_fa_unit === 'rial' ? b.price_fa_unit : null,
+        b.price_ar !== undefined,
       ],
     );
     res.json({ product: rows[0] });

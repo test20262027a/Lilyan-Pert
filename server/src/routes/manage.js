@@ -695,6 +695,29 @@ function promoMoney(raw, code) {
   return Math.round(n * 100) / 100;
 }
 
+/**
+ * Fixed discount and minimum order per currency — `{ IQD: { discount, … }, … }`.
+ * Each currency keeps its own entered amount so an IQD offer is never reused as
+ * a Toman or USD one; an empty entry simply means "not offered in that currency".
+ */
+function promoCurrencyAmounts(raw) {
+  const source = raw && typeof raw === 'object' ? raw : {};
+  const out = {};
+  for (const currency of ['IQD', 'TOMAN', 'USD']) {
+    const row = source[currency];
+    if (!row || typeof row !== 'object') continue;
+    const entry = {};
+    if (row.discount !== undefined && row.discount !== null && String(row.discount).trim() !== '') {
+      entry.discount = promoMoney(row.discount, 'INVALID_DISCOUNT');
+    }
+    if (row.min_order !== undefined && row.min_order !== null && String(row.min_order).trim() !== '') {
+      entry.min_order = promoMoney(row.min_order, 'INVALID_MIN_ORDER');
+    }
+    if (Object.keys(entry).length) out[currency] = entry;
+  }
+  return out;
+}
+
 /** ISO timestamp for a submitted date; an end date covers its whole day. */
 function promoDate(raw, endOfDay = false) {
   if (raw === undefined || raw === null || raw === '') return null;
@@ -745,6 +768,7 @@ async function promotionInput(businessId, body, excludeId) {
     minOrder: promoMoney(body.min_order, 'INVALID_MIN_ORDER'),
     maxUses: usageLimit(body.max_uses),
     active: body.active === undefined ? true : Boolean(body.active),
+    currencyAmounts: promoCurrencyAmounts(body.currency_amounts),
   };
 }
 
@@ -758,8 +782,9 @@ router.post(
     const { rows } = await q(
       `INSERT INTO promotions (business_id, code, product_id, category_id, target_type,
                                discount_type, discount_value, min_order, starts_at, ends_at,
-                               active, title_ku, title_fa, title_ar, title_en, max_uses)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+                               active, title_ku, title_fa, title_ar, title_en, max_uses,
+                               currency_amounts)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17) RETURNING *`,
       [
         req.businessId,
         input.code,
@@ -777,6 +802,7 @@ router.post(
         b.title_ar || null,
         b.title_en || null,
         input.maxUses,
+        JSON.stringify(input.currencyAmounts || {}),
       ],
     );
     res.status(201).json({ promotion: rows[0] });
@@ -799,7 +825,8 @@ router.put(
               discount_type = $7, discount_value = $8, min_order = $9,
               starts_at = $10, ends_at = $11, active = $12, max_uses = $13,
               title_ku = COALESCE($14, title_ku), title_fa = COALESCE($15, title_fa),
-              title_ar = COALESCE($16, title_ar), title_en = COALESCE($17, title_en)
+              title_ar = COALESCE($16, title_ar), title_en = COALESCE($17, title_en),
+              currency_amounts = $18
         WHERE id = $1 AND business_id = $2 RETURNING *`,
       [
         req.params.id,
@@ -819,6 +846,7 @@ router.put(
         b.title_fa || null,
         b.title_ar || null,
         b.title_en || null,
+        JSON.stringify(input.currencyAmounts || {}),
       ],
     );
     if (!rows[0]) throw notFound('PROMOTION_NOT_FOUND');

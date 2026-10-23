@@ -164,8 +164,35 @@ router.get(
     ]);
 
     const finance = financeRow.rows[0];
-    const revenue = Number(finance.revenue) || 0;
     const orderCount = Number(finance.orders) || 0;
+
+    /*
+     * Revenue per recorded currency. IQD, Toman and USD orders are never added
+     * together — each currency keeps its own total, and the headline figure is
+     * the business's own currency (or the only currency there is). Nothing is
+     * converted and no exchange rate is invented.
+     */
+    const byCurrencyParams = [...params, biz.currency || 'IQD'];
+    const byCurrency = await q(
+      `SELECT coalesce(currency, $${byCurrencyParams.length}::text) AS currency,
+              count(*) FILTER (WHERE status <> 'cancelled' ${curOrder ? `AND ${curOrder}` : ''})::int AS orders,
+              coalesce(sum(total) FILTER (WHERE status <> 'cancelled' ${curOrder ? `AND ${curOrder}` : ''}), 0)::numeric(12,2) AS amount
+         FROM orders WHERE business_id = $1
+        GROUP BY 1 ORDER BY amount DESC`,
+      byCurrencyParams,
+    );
+    const currencyTotals = byCurrency.rows
+      .map((row) => ({
+        currency: row.currency || biz.currency || 'IQD',
+        orders: Number(row.orders) || 0,
+        amount: Number(row.amount) || 0,
+      }))
+      .filter((row) => row.orders > 0);
+    const primaryCurrency = biz.currency || 'IQD';
+    const primaryTotal = currencyTotals.find((row) => row.currency === primaryCurrency);
+    const revenue = currencyTotals.length > 1
+      ? primaryTotal?.amount || 0
+      : currencyTotals[0]?.amount ?? Number(finance.revenue) || 0;
 
     /* ---- order-flow series: real orders, bucketed in the business zone ---- */
     const seriesFrom = win.from || firstRow.rows[0]?.first_day || null;
@@ -233,8 +260,15 @@ router.get(
         from: win.from,
         to: win.to,
         revenue,
+        currency: primaryCurrency,
+        // One entry per currency actually used — never a mixed sum.
+        revenue_by_currency: currencyTotals,
         orders: orderCount,
-        avg_order: orderCount > 0 ? Number((revenue / orderCount).toFixed(2)) : 0,
+        avg_order: (primaryTotal?.orders || 0) > 0
+          ? Number((revenue / primaryTotal.orders).toFixed(2))
+          : orderCount > 0 && currencyTotals.length <= 1
+            ? Number((revenue / orderCount).toFixed(2))
+            : 0,
         views: Number(viewsRow.rows[0].views) || 0,
         views_prev: viewsRow.rows[0].views_prev === null ? null : Number(viewsRow.rows[0].views_prev) || 0,
         views_pct: pctChange(viewsRow.rows[0].views, viewsRow.rows[0].views_prev),

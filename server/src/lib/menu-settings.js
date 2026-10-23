@@ -12,6 +12,8 @@
  * the public menu already did with a scanned table token.
  */
 
+import { normalizeLanguageSettings } from './languages.js';
+
 export const MENU_FEATURE_KEYS = [
   'search',
   'categories',
@@ -48,6 +50,9 @@ export function normalizeMenuSettings(raw) {
     features,
     ordering,
     table_mode: TABLE_MODES.includes(source.table_mode) ? source.table_mode : 'qr',
+    // Which languages the owner allows, and the one the interface falls back
+    // to. Kept inside menu_settings so the existing settings save persists it.
+    language_settings: normalizeLanguageSettings(source.language_settings),
   };
 }
 

@@ -1,10 +1,27 @@
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import en from './en';
 import ku from './ku';
 import fa from './fa';
 import ar from './ar';
 import { applyDirection } from '../theme';
+import {
+  LANGUAGE_CODES,
+  getEnabledLanguages,
+  getLanguageSettings,
+  subscribeLanguageSettings,
+} from '../languages';
 
+/* Every language the platform knows, with its label and flag. The enabled
+   subset — what a selector may actually offer — comes from the shared language
+   store below, never from a second list. */
 export const LOCALES = [
   { code: 'ku', label: 'کوردی', rtl: true },
   { code: 'fa', label: 'فارسی', rtl: true },
@@ -25,13 +42,36 @@ function interpolate(str, vars) {
 }
 
 export function I18nProvider({ children, overrideLocale }) {
+  const settings = useSyncExternalStore(
+    subscribeLanguageSettings,
+    getLanguageSettings,
+    getLanguageSettings,
+  );
+  const enabled = LANGUAGE_CODES.filter((code) => settings.languages[code].enabled);
+  const enabledKey = enabled.join(',');
+
   const [locale, setLocaleState] = useState(
-    () => overrideLocale || localStorage.getItem(STORAGE_KEY) || 'ku',
+    () => overrideLocale || localStorage.getItem(STORAGE_KEY) || settings.default_language || 'ku',
   );
 
   useEffect(() => {
     if (overrideLocale) setLocaleState(overrideLocale);
   }, [overrideLocale]);
+
+  /*
+   * A language the owner disables — or a stored choice that is no longer
+   * offered — falls back to the business's default enabled language, so the
+   * interface never stays on a language it is not allowed to show.
+   */
+  useEffect(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!enabled.includes(locale)) {
+      localStorage.setItem(STORAGE_KEY, settings.default_language);
+      setLocaleState(settings.default_language);
+    } else if (!stored) {
+      setLocaleState(settings.default_language);
+    }
+  }, [enabledKey, enabled, locale, settings.default_language]);
 
   const dir = isRtl(locale) ? 'rtl' : 'ltr';
 
@@ -39,11 +79,16 @@ export function I18nProvider({ children, overrideLocale }) {
     applyDirection(locale, dir === 'rtl');
   }, [locale, dir]);
 
-  const setLocale = useCallback((next) => {
-    if (!DICTS[next]) return;
-    localStorage.setItem(STORAGE_KEY, next);
-    setLocaleState(next);
-  }, []);
+  const setLocale = useCallback(
+    (next) => {
+      if (!DICTS[next]) return;
+      // A disabled language can never be selected, whatever called this.
+      if (!getEnabledLanguages().includes(next)) return;
+      localStorage.setItem(STORAGE_KEY, next);
+      setLocaleState(next);
+    },
+    [],
+  );
 
   /** Never returns a raw internal key: unknown keys fall back to English, then humanized. */
   const t = useCallback(
@@ -58,9 +103,27 @@ export function I18nProvider({ children, overrideLocale }) {
     [locale],
   );
 
+  /* The selectors only ever offer the enabled languages, in platform order. */
+  const locales = useMemo(
+    () => LOCALES.filter((item) => enabled.includes(item.code)),
+    // `enabled` is a fresh array each render; its contents are the real input.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [enabledKey],
+  );
+
   const value = useMemo(
-    () => ({ locale, setLocale, t, dir, rtl: dir === 'rtl', LOCALES }),
-    [locale, setLocale, t, dir],
+    () => ({
+      locale,
+      setLocale,
+      t,
+      dir,
+      rtl: dir === 'rtl',
+      LOCALES,
+      locales,
+      languageSettings: settings,
+      enabledLanguages: enabled,
+    }),
+    [locale, setLocale, t, dir, locales, settings, enabled],
   );
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -72,10 +135,17 @@ export function useI18n() {
   return ctx;
 }
 
-/** Picks a localized field with a graceful fallback chain. */
+/**
+ * Picks a localized field with a graceful fallback chain.
+ *
+ * The chain prefers the active language, then the languages the owner left
+ * enabled, then the remaining ones — so a disabled language's old translation is
+ * never shown in its place.
+ */
 export function localized(row, field, locale) {
   if (!row) return '';
-  const order = [locale, 'en', 'ku', 'fa', 'ar'];
+  const enabled = getEnabledLanguages();
+  const order = [...new Set([locale, ...enabled.filter((code) => code !== locale), 'en', 'ku', 'fa', 'ar'])];
   for (const code of order) {
     const v = row[`${field}_${code}`];
     if (v !== null && v !== undefined && String(v).trim() !== '') return v;

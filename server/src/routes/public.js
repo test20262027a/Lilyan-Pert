@@ -5,6 +5,14 @@ import { pushNewOrder } from '../lib/push.js';
 import { menuContext, normalizeMenuSettings } from '../lib/menu-settings.js';
 import { openStatus, zonedNow } from '../lib/hours.js';
 import { promoUnitPrice, quoteOrder } from '../lib/order-quote.js';
+import {
+  LANGUAGE_CODES,
+  currencyForLanguage,
+  languagePrice,
+  localizedName,
+  normalizeLanguageSettings,
+  resolveLanguage,
+} from '../lib/languages.js';
 
 const router = express.Router();
 
@@ -38,7 +46,7 @@ router.get(
   '/brand',
   ah(async (_req, res) => {
     const { rows } = await q(
-      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url, theme
+      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url, theme, menu_settings
          FROM businesses ORDER BY is_sample DESC, created_at LIMIT 1`,
     );
     const b = rows[0];
@@ -112,7 +120,8 @@ router.get(
         [business.id],
       ),
       q(
-        `SELECT p.id, p.category_id, p.price, p.image_url, p.name_ku, p.name_fa, p.name_ar, p.name_en,
+        `SELECT p.id, p.category_id, p.price, p.price_ar, p.price_fa, p.price_en, p.price_fa_review,
+                p.image_url, p.name_ku, p.name_fa, p.name_ar, p.name_en,
                 p.description_ku, p.description_fa, p.description_ar, p.description_en, p.sort_order
            FROM products p JOIN categories c ON c.id = p.category_id
           WHERE p.business_id = $1 AND p.active = true AND p.available = true AND c.active = true
@@ -163,13 +172,37 @@ router.get(
       ),
     ]);
 
+    /*
+     * Every product arrives with one price per language — its own, independently
+     * entered amount in that language's currency — plus the product offer applied
+     * in that currency. The menu never converts anything: a language without a
+     * valid price simply says so (`valid: false`), and the card renders the
+     * existing unavailable state for that language only.
+     */
+    const languageSettings = normalizeLanguageSettings(business.menu_settings?.language_settings);
+    const businessCurrency = business.currency || 'IQD';
     const products = prods.rows.map((p) => {
       const promotion = activePromotionFor(promos.rows, p.id);
+      const prices = {};
+      for (const code of LANGUAGE_CODES) {
+        const price = languagePrice(p, code, businessCurrency);
+        const currency = currencyForLanguage(code, businessCurrency);
+        prices[code] = {
+          amount: promotion && price.valid
+            ? promoUnitPrice(p, promotion, price.amount, currency, businessCurrency)
+            : price.amount,
+          base: price.amount,
+          currency,
+          valid: price.valid,
+          review: price.review,
+        };
+      }
       return {
         ...p,
         image_url: publicMediaUrl(p.image_url),
+        prices,
         promotion_id: promotion?.id || null,
-        promo_price: promotion ? promoUnitPrice(p, promotion) : null,
+        has_promotion: Boolean(promotion),
         promotion_titles: promotion
           ? {
               ku: promotion.title_ku,
@@ -256,6 +289,8 @@ router.get(
       },
       menu_disabled: business.menu_settings?.show_customer_menu === false,
       menu,
+      // Which languages the owner allows, and the one to fall back to.
+      language_settings: languageSettings,
       table,
       table_state: tableState,
       /*
@@ -354,8 +389,16 @@ router.post(
     if (!items.length) throw bad('EMPTY_ORDER');
     if (items.length > 60) throw bad('TOO_MANY_ITEMS');
 
-    const quote = await quoteOrder((sql, params) => q(sql, params), business, items, req.body?.promotion_code);
+    const quote = await quoteOrder(
+      (sql, params) => q(sql, params),
+      business,
+      items,
+      req.body?.promotion_code,
+      req.body?.language,
+    );
     res.json({
+      language: quote.language,
+      currency: quote.currency,
       subtotal: quote.subtotal,
       discount: quote.discount,
       tax: quote.tax,
@@ -441,8 +484,12 @@ router.post(
         business,
         items,
         req.body?.promotion_code,
+        req.body?.language,
       );
       const { lines, subtotal, discount, tax, service, total, codePromotion, appliedPromotionIds } = quote;
+      // The order freezes both the language it was placed in and the currency
+      // its amounts are expressed in (TOMAN for Persian — never Rial).
+      const { language, currency } = quote;
       const appliedPromotions = new Set(appliedPromotionIds);
 
       const seq = await c.query(
@@ -454,8 +501,8 @@ router.post(
       const order = await c.query(
         `INSERT INTO orders (business_id, table_id, table_name, table_source, order_number, status, channel,
                              customer_name, customer_phone, notes, subtotal, discount, tax, service_charge, total,
-                             promotion_id, promotion_code, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,'pending','customer',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,now(),now())
+                             promotion_id, promotion_code, language, currency, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,'pending','customer',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,now(),now())
          RETURNING *`,
         [
           business.id,
@@ -473,6 +520,8 @@ router.post(
           total,
           codePromotion?.id || [...appliedPromotions][0] || null,
           codePromotion?.code || null,
+          language,
+          currency,
         ],
       );
 
