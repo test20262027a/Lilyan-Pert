@@ -172,7 +172,11 @@ router.get(
      * the business's own currency (or the only currency there is). Nothing is
      * converted and no exchange rate is invented.
      */
-    const byCurrencyParams = [...params, biz.currency || 'IQD'];
+    /* This query gets its own placeholders: pg rejects a statement that
+       receives parameters it never references (it cannot type them). */
+    const byCurrencyParams = [b];
+    if (win.from) byCurrencyParams.push(timezone, win.from, win.to);
+    byCurrencyParams.push(biz.currency || 'IQD');
     const byCurrency = await q(
       `SELECT coalesce(currency, $${byCurrencyParams.length}::text) AS currency,
               count(*) FILTER (WHERE status <> 'cancelled' ${curOrder ? `AND ${curOrder}` : ''})::int AS orders,
