@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
@@ -81,6 +82,7 @@ export default function ReviewModal({ busy, onClose, onSubmit }) {
     >
       <div className="cui-sheet cui-sheet--review" ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="cui-sheet__art">
+          <HeaderBackdrop section="customer" className="sh-bg--cart" />
           <ReviewArtwork />
           <span className="cui-sheet__artbar">
             <span className="cui-sheet__badge cui-sheet__badge--star" aria-hidden="true">

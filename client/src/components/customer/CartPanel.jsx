@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { Money, useToast } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { post } from '../../api';
@@ -213,6 +214,7 @@ export default function CartPanel({
         aria-labelledby={titleId}
       >
         <header className="cui-sheet__art">
+          <HeaderBackdrop section={isEmpty ? 'cartEmpty' : 'cartFull'} className="sh-bg--cart" />
           <CartArtwork />
           <span className="cui-sheet__artbar">
             <span className="cui-sheet__badge" aria-hidden="true">

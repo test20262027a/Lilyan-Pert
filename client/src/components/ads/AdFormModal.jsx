@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import Icon from '../Icon';
 import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
@@ -132,6 +133,7 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
         aria-label={modal.id ? t('marketing_edit_ad') : t('ads_add')}
       >
         <header className="ad-modal__head">
+          <HeaderBackdrop />
           <div className="ad-modal__artwrap" aria-hidden="true">
             <AdModalArtwork />
           </div>

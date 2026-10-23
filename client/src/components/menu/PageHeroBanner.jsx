@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import MenuArtwork from './MenuArtwork';
 
 /*
@@ -14,9 +15,10 @@ import MenuArtwork from './MenuArtwork';
  * artwork only ever fills the flexible middle column. Titles and controls stay
  * separate from the decorative image.
  */
-export default function PageHeroBanner({ icon, title, subtitle, art, image, imageAlt = '', children }) {
+export default function PageHeroBanner({ icon, title, subtitle, art, image, imageAlt = '', section, children }) {
   return (
     <section className="mhero">
+      <HeaderBackdrop section={section} />
       <div className="mhero__identity">
         <span className="mhero__icon">
           <Icon name={icon} size={24} />

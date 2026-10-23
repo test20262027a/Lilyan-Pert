@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import Icon from '../Icon';
 import { Alert, Select } from '../ui';
 import { localized, useI18n } from '../../i18n';
@@ -82,6 +83,7 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
         aria-label={modal.id ? t('marketing_edit_promotion') : t('disc_add')}
       >
         <header className="promo-modal__head">
+          <HeaderBackdrop />
           <div className="promo-modal__titlewrap">
             <span className="promo-modal__icon" aria-hidden="true">
               <Icon name="tag" size={22} />

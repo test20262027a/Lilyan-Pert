@@ -9,6 +9,7 @@ import {
 } from 'react';
 import Icon from './Icon';
 import ModalActions from './ModalActions';
+import SectionHeader from '../headers/SectionHeader';
 import { useI18n } from '../i18n';
 import { fmtMoney } from '../format';
 
@@ -45,7 +46,7 @@ export function SectionCard({ icon, iconClass = 'ic-purple', title, subtitle, ac
 
 /* ------------------------------------------------------------------ modal */
 
-export function Modal({ title, subtitle, onClose, children, footer, wide = false }) {
+export function Modal({ title, subtitle, onClose, children, footer, wide = false, section }) {
   const { t } = useI18n();
 
   useEffect(() => {
@@ -73,10 +74,7 @@ export function Modal({ title, subtitle, onClose, children, footer, wide = false
         <button className="modal__close" onClick={onClose} aria-label={t('action_close')} title={t('action_close')}>
           <Icon name="close" size={17} />
         </button>
-        <header className="modal__head">
-          <div className="modal__title">{title}</div>
-          {subtitle ? <div className="modal__subtitle">{subtitle}</div> : null}
-        </header>
+        <SectionHeader section={section} title={title} subtitle={subtitle} />
         <div className="modal__body">{children}</div>
         {footer ? <div className="modal__foot">{footer}</div> : null}
       </div>

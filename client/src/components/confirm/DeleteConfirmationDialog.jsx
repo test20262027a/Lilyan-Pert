@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { Alert } from '../ui';
 import { useI18n } from '../../i18n';
 import { entityVisual } from './entityVisuals';
@@ -113,6 +114,7 @@ export function ConfirmSurface({
         aria-labelledby={titleId}
         aria-describedby={descId}
       >
+        <HeaderBackdrop className="sh-bg--dcd" />
         <button
           ref={closeRef}
           type="button"

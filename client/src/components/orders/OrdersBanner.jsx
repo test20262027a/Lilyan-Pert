@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import OrdersArtwork from './OrdersArtwork';
 
 /*
@@ -16,6 +17,7 @@ import OrdersArtwork from './OrdersArtwork';
 export default function OrdersBanner({ icon = 'cart', title, subtitle, art, children }) {
   return (
     <section className="obanner">
+      <HeaderBackdrop section="orders" />
       <div className="obanner__identity">
         <span className="obanner__icon">
           <Icon name={icon} size={22} />

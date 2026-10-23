@@ -1,0 +1,94 @@
+/*
+ * Section header system. The picture is a panorama, so it is always
+ * `cover`-cropped around its centre; a theme-aware scrim keeps text readable.
+ * Light mode keeps the picture bright; dark mode dims it and deepens the scrim.
+ */
+.sh-host, .mhero, .obanner, .welcome, .modal__head, .mcmodal__head, .cui-sheet__art, .dcd { isolation: isolate; }
+
+.sh-bg {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  border-radius: inherit;
+}
+.sh-bg::before {
+  content: ''; position: absolute; inset: 0;
+  background: var(--sh-img) center / cover no-repeat;
+  transition: filter 0.2s ease;
+}
+.sh-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right,
+    color-mix(in srgb, var(--surface) 80%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 46%, transparent) 55%,
+    color-mix(in srgb, var(--surface) 12%, transparent) 100%);
+}
+[dir='rtl'] .sh-bg::after {
+  background: linear-gradient(to left,
+    color-mix(in srgb, var(--surface) 80%, transparent) 0%,
+    color-mix(in srgb, var(--surface) 46%, transparent) 55%,
+    color-mix(in srgb, var(--surface) 12%, transparent) 100%);
+}
+[data-theme='dark'] .sh-bg::before { filter: brightness(0.5) saturate(0.85); }
+[data-theme='dark'] .sh-bg::after {
+  background: linear-gradient(to right, rgba(10, 13, 18, 0.82), rgba(10, 13, 18, 0.55) 60%, rgba(10, 13, 18, 0.32));
+}
+[data-theme='dark'][dir='rtl'] .sh-bg::after,
+[dir='rtl'] [data-theme='dark'] .sh-bg::after {
+  background: linear-gradient(to left, rgba(10, 13, 18, 0.82), rgba(10, 13, 18, 0.55) 60%, rgba(10, 13, 18, 0.32));
+}
+
+/* Page banners: the old drawn artwork gives way to the section picture. */
+.mhero:has(> .sh-bg) > .mhero__art,
+.obanner:has(> .sh-bg) > .obanner__art,
+.welcome:has(> .sh-bg) > :not(.sh-bg):not(.welcome__text) { display: none; }
+.mhero:has(> .sh-bg) > .mhero__controls,
+.obanner:has(> .sh-bg) > .obanner__controls { margin-inline-start: auto; }
+.mhero:has(> .sh-bg), .obanner:has(> .sh-bg), .welcome:has(> .sh-bg) { background-image: none; }
+.mhero:has(> .sh-bg) .mhero__icon,
+.obanner:has(> .sh-bg) .obanner__icon {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 14px -8px rgba(16, 22, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.mhero:has(> .sh-bg) .mhero__title, .obanner:has(> .sh-bg) .obanner__title, .welcome:has(> .sh-bg) .welcome__title { color: var(--text); }
+.mhero:has(> .sh-bg) .mhero__sub, .obanner:has(> .sh-bg) .obanner__sub, .welcome:has(> .sh-bg) .welcome__sub { color: var(--text-soft); }
+
+/* Modal / drawer header. */
+.sh-head {
+  position: relative; flex: none; display: flex; align-items: center; gap: 12px;
+  min-height: 84px; padding: 16px 62px 16px 18px; overflow: hidden;
+  border-bottom: 1px solid var(--mint-line);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+[dir='rtl'] .sh-head { padding: 16px 18px 16px 62px; }
+.sh-head__icon {
+  flex: none; width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center;
+  color: var(--theme-primary-strong, var(--primary));
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 14px -8px rgba(16, 22, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.sh-head__text { min-width: 0; }
+.sh-head__title { font-size: 16px; font-weight: 800; color: var(--text); line-height: 1.35; }
+.sh-head__sub { font-size: 12.5px; color: var(--text-soft); margin-top: 2px; }
+
+/* Confirmation dialogs: a soft banner fades out behind the top of the card. */
+.sh-bg--dcd { inset: 0 0 auto 0; height: 92px; border-radius: 19px 19px 0 0; opacity: 0.9;
+  -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); }
+
+/* Customer cart sheet header. */
+.sh-bg--cart { z-index: 0; }
+.sh-bg--cart::after { background: linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent)); }
+.cui-sheet__art:has(> .sh-bg) > .cui-art { display: none; }
+.cui-sheet__art:has(> .sh-bg) .cui-sheet__artbar { z-index: 1; }
+.cui-sheet__art:has(> .sh-bg) .cui-sheet__close { z-index: 2; }
+@media (max-width: 560px) { .sh-head { min-height: 74px; } .sh-head__icon { width: 38px; height: 38px; } }
+
+/* Section-specific modal headers share the same picture; their drawn art yields. */
+.um-modal__head, .promo-modal__head, .ad-modal__head, .odm__head { isolation: isolate; }
+.um-modal__head:has(> .sh-bg) > .um-modal__art,
+.promo-modal__head:has(> .sh-bg) > .promo-modal__art-wrap,
+.ad-modal__head:has(> .sh-bg) > .ad-modal__artwrap,
+.odm__head:has(> .sh-bg) > .odm__art,
+.cui-sheet__art:has(> .sh-bg) > svg { display: none; }
+.um-modal__head:has(> .sh-bg), .promo-modal__head:has(> .sh-bg), .ad-modal__head:has(> .sh-bg), .odm__head:has(> .sh-bg) { background-image: none; }

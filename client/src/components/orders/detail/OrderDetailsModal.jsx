@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import HeaderBackdrop from '../../../headers/HeaderBackdrop';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../Icon';
 import { ConfirmDialog, Loading, Money, StatusBadge, useToast } from '../../ui';
@@ -217,6 +218,7 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
     >
       <section className="odm" role="dialog" aria-modal="true" aria-label={t('od_title')}>
         <header className="odm__head">
+          <HeaderBackdrop section="orders" />
           <div className="odm__art" aria-hidden="true">
             <OrdersArtwork />
           </div>

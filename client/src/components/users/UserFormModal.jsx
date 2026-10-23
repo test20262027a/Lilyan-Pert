@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import Icon from '../Icon';
 import { Select } from '../ui';
 import { useI18n } from '../../i18n';
@@ -241,6 +242,7 @@ export default function UserFormModal({
     >
       <div className="um-modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="um-modal__head">
+          <HeaderBackdrop />
           <div className="um-modal__art" aria-hidden="true">
             <UsersArtwork />
           </div>

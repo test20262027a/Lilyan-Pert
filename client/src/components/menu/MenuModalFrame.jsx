@@ -1,6 +1,6 @@
 import { useEffect, useId } from 'react';
 import Icon from '../Icon';
-import MenuArtwork from './MenuArtwork';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { useI18n } from '../../i18n';
 import './menuModal.css';
 
@@ -20,7 +20,7 @@ export default function MenuModalFrame({
   title,
   icon = 'package',
   wide = false,
-  art,
+  section,
   className = '',
   onClose,
   children,
@@ -57,9 +57,7 @@ export default function MenuModalFrame({
       >
         <header className="mcmodal__head">
           {/* Decorative: the banner illustration never carries UI text. */}
-          <div className="mcmodal__art" aria-hidden="true">
-            {art || <MenuArtwork />}
-          </div>
+          <HeaderBackdrop section={section} />
 
           <div className="mcmodal__identity">
             <span className="mcmodal__glyph">
