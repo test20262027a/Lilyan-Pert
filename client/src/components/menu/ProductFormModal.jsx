@@ -3,6 +3,7 @@ import Icon from '../Icon';
 import { Alert, ConfirmDialog, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
+import ModalActions from '../ModalActions';
 import ProductImageField from './ProductImageField';
 import { catalogErrorText } from './errorText';
 
@@ -214,25 +215,15 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
       /* While the discard confirmation is up it owns the Escape key. */
       onClose={confirmDiscard ? () => {} : requestClose}
       footer={
-        <>
-          <button
-            type="button"
-            className="mcmodal__btn mcmodal__btn--save"
-            onClick={submit}
-            disabled={busy || uploading}
-          >
-            {busy ? <span className="spinner" /> : null}
-            {t('action_save')}
-          </button>
-          <button
-            type="button"
-            className="mcmodal__btn mcmodal__btn--cancel"
-            onClick={requestClose}
-            disabled={busy}
-          >
-            {t('action_cancel')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_save')}
+          onPrimary={submit}
+          loading={busy}
+          primaryDisabled={uploading}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={requestClose}
+          secondaryDisabled={busy}
+        />
       }
     >
       {error || localError ? <Alert kind="error">{catalogErrorText(error || localError, t)}</Alert> : null}

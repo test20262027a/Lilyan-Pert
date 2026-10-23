@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Icon from '../Icon';
 import { Alert, Select } from '../ui';
 import { localized, useI18n } from '../../i18n';
+import ModalActions from '../ModalActions';
 import { promotionsErrorText } from './errorText';
 import { PromotionModalArtwork } from './PromotionsArtwork';
 
@@ -275,13 +276,14 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
         </div>
 
         <footer className="promo-modal__foot">
-          <button type="button" className="promo-save" onClick={submit} disabled={busy}>
-            {busy ? <span className="spinner" /> : null}
-            {t('action_save')}
-          </button>
-          <button type="button" className="promo-cancel" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
+          <ModalActions
+            primaryLabel={t('action_save')}
+            onPrimary={submit}
+            loading={busy}
+            secondaryLabel={t('action_cancel')}
+            onSecondary={onClose}
+            secondaryDisabled={busy}
+          />
         </footer>
       </div>
     </div>

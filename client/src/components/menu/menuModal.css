@@ -319,39 +319,8 @@
   border-top: 1px solid var(--mm-line);
 }
 
-.mcmodal__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  min-height: 40px;
-  padding: 0 20px;
-  border-radius: 11px;
-  border: 1px solid transparent;
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.mcmodal__btn--save {
-  background: var(--mm-green);
-  color: #ffffff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--mm-green) 26%, transparent);
-}
-.mcmodal__btn--save:hover:not(:disabled) { background: color-mix(in srgb, var(--mm-green) 88%, #000); }
-.mcmodal__btn--save:disabled {
-  background: color-mix(in srgb, var(--mm-green) 42%, #ffffff);
-  box-shadow: none;
-  cursor: not-allowed;
-}
-.mcmodal__btn--cancel {
-  background: var(--mm-card);
-  border-color: var(--mm-line);
-  color: var(--mm-ink);
-}
-.mcmodal__btn--cancel:hover:not(:disabled) { background: var(--mm-body); }
-.mcmodal__btn:disabled { cursor: not-allowed; }
-.mcmodal__btn:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
+/* The footer's Save / Cancel pair is the shared `ModalActions` row, so the
+   action order, disabled treatment and hover states match every other dialog. */
 
 /* -------------------------------------------------------- responsive */
 
@@ -368,7 +337,6 @@
 
 @media (max-width: 420px) {
   .mcmodal__foot { flex-wrap: wrap; }
-  .mcmodal__btn { flex: 1 1 auto; padding: 0 14px; }
 }
 
 /* ==========================================================================

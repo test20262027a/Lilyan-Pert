@@ -4,6 +4,7 @@ import { Select } from '../ui';
 import { useI18n } from '../../i18n';
 import UsersArtwork from './UsersArtwork';
 import UserPhotoField from './UserPhotoField';
+import ModalActions from '../ModalActions';
 import {
   PERMISSION_CARDS,
   actionLabelKey,
@@ -385,18 +386,14 @@ export default function UserFormModal({
         </div>
 
         <footer className="um-modal__foot">
-          <button type="button" className="um-btn" onClick={close} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button
-            type="button"
-            className="um-btn um-btn--primary"
-            onClick={submit}
-            disabled={busy || uploading}
-          >
-            {busy || uploading ? <span className="spinner" /> : null}
-            {t('action_save')}
-          </button>
+          <ModalActions
+            primaryLabel={t('action_save')}
+            onPrimary={submit}
+            loading={busy || uploading}
+            secondaryLabel={t('action_cancel')}
+            onSecondary={close}
+            secondaryDisabled={busy || uploading}
+          />
         </footer>
       </div>
     </div>

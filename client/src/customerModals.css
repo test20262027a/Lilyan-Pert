@@ -514,7 +514,14 @@
 }
 .cui-submit:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -14px color-mix(in srgb, var(--primary) 88%, transparent); }
 .cui-submit:active { transform: scale(0.99); }
-.cui-submit:disabled { opacity: 0.55; cursor: not-allowed; transform: none; box-shadow: none; }
+.cui-submit:disabled {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--primary) 58%, var(--text));
+  background: color-mix(in srgb, var(--primary) 20%, var(--surface));
+}
+.cui-submit:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 /* -------------------------------------------------------------- review --- */
 

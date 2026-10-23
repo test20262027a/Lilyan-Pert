@@ -3,6 +3,7 @@ import Icon from '../Icon';
 import { Alert, ConfirmDialog, Switch } from '../ui';
 import { LOCALES, useI18n } from '../../i18n';
 import MenuModalFrame from '../menu/MenuModalFrame';
+import ModalActions from '../ModalActions';
 import TablesArtwork from './TablesArtwork';
 import { tablesErrorText } from './errorText';
 
@@ -187,25 +188,14 @@ export default function TableFormModal({ modal, tables = [], busy, error, onClos
       /* While the discard confirmation is up it owns the Escape key. */
       onClose={confirmDiscard ? () => {} : requestClose}
       footer={
-        <>
-          <button
-            type="button"
-            className="mcmodal__btn mcmodal__btn--save"
-            onClick={submit}
-            disabled={busy}
-          >
-            {busy ? <span className="spinner" /> : null}
-            {t('action_save')}
-          </button>
-          <button
-            type="button"
-            className="mcmodal__btn mcmodal__btn--cancel"
-            onClick={requestClose}
-            disabled={busy}
-          >
-            {t('action_cancel')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_save')}
+          onPrimary={submit}
+          loading={busy}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={requestClose}
+          secondaryDisabled={busy}
+        />
       }
     >
       {error || localError ? <Alert kind="error">{tablesErrorText(error || localError, t)}</Alert> : null}

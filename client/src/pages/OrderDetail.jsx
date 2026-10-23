@@ -16,6 +16,7 @@ import {
   useToast,
 } from '../components/ui';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
+import ModalActions from '../components/ModalActions';
 import OrderTableLabel from '../components/orders/OrderTableLabel';
 import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
@@ -478,15 +479,15 @@ function EditMetaModal({ order, busy, onClose, onSave }) {
       title={t('action_edit')}
       onClose={onClose}
       footer={
-        <>
-          <button className="btn" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button className="btn btn--primary" onClick={() => onSave(values)} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-            {t('action_save')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_save')}
+          primaryIcon="check"
+          onPrimary={() => onSave(values)}
+          loading={busy}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+          secondaryDisabled={busy}
+        />
       }
     >
       <div className="form-grid">
@@ -522,25 +523,21 @@ function EditItemsModal({ items, products, discount, currency, busy, onClose, on
       onClose={onClose}
       wide
       footer={
-        <>
-          <button className="btn" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button
-            className="btn btn--primary"
-            disabled={busy}
-            onClick={() =>
-              onSave(
-                lines.filter((l) => l.product_id).map((l) => ({ product_id: l.product_id, quantity: Number(l.quantity) })),
-                Number(discountValue) || 0,
-                percent,
-              )
-            }
-          >
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-            {t('action_save')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_save')}
+          primaryIcon="check"
+          loading={busy}
+          onPrimary={() =>
+            onSave(
+              lines.filter((l) => l.product_id).map((l) => ({ product_id: l.product_id, quantity: Number(l.quantity) })),
+              Number(discountValue) || 0,
+              percent,
+            )
+          }
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+          secondaryDisabled={busy}
+        />
       }
     >
       {lines.map((line, idx) => (

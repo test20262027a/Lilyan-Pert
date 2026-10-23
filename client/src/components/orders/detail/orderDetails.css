@@ -632,7 +632,19 @@
   transition: background-color 150ms ease, color 150ms ease, transform 140ms ease;
 }
 .odm__foot-btn:hover:not(:disabled) { color: var(--text); transform: translateY(-1px); }
-.odm__foot-btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+/* A locked (already-completed) order dims its actions but stays readable. */
+.odm__foot-btn:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+  color: var(--muted);
+  border-color: var(--border);
+  background: var(--surface-2);
+}
+.odm__foot-btn--primary:disabled {
+  color: color-mix(in srgb, var(--primary) 58%, var(--text));
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface));
+}
 
 .odm__foot-btn--primary {
   color: var(--theme-primary-foreground);

@@ -12,6 +12,7 @@ import {
   Switch,
   useToast,
 } from '../components/ui';
+import ModalActions from '../components/ModalActions';
 import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
@@ -353,15 +354,15 @@ function CreateOrderModal({ products, tables, currency, onClose, onCreated }) {
       onClose={onClose}
       wide
       footer={
-        <>
-          <button className="btn" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button className="btn btn--primary" onClick={submit} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-            {t('action_create')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_create')}
+          primaryIcon="check"
+          onPrimary={submit}
+          loading={busy}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+          secondaryDisabled={busy}
+        />
       }
     >
       {error ? <Alert kind="error">{t('error_generic')}</Alert> : null}

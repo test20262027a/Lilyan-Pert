@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../components/Icon';
 import { Alert, ConfirmDialog, EmptyState, Field, Modal, Select, useToast } from '../components/ui';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
+import ModalActions from '../components/ModalActions';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
@@ -428,15 +429,15 @@ function ChangePasswordModal({ onClose, onSaved }) {
       title={t('user_change_password')}
       onClose={onClose}
       footer={
-        <>
-          <button className="btn" onClick={onClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button className="btn btn--primary" onClick={submit} disabled={busy}>
-            {busy ? <span className="spinner" /> : <Icon name="check" size={16} />}
-            {t('action_save')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_save')}
+          primaryIcon="check"
+          onPrimary={submit}
+          loading={busy}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+          secondaryDisabled={busy}
+        />
       }
     >
       {error ? <Alert kind="error">{error}</Alert> : null}
@@ -476,22 +477,17 @@ function ProfileModal({ user, onClose, updateProfile, onSaved }) {
       title={t('user_my_account')}
       onClose={onClose}
       footer={
-        <>
-          <button className="btn" onClick={onClose}>
-            {t('action_cancel')}
-          </button>
-          <button
-            className="btn btn--primary"
-            onClick={async () => {
-              await updateProfile(values);
-              onSaved();
-              onClose();
-            }}
-          >
-            <Icon name="check" size={16} />
-            {t('action_save')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('action_save')}
+          primaryIcon="check"
+          onPrimary={async () => {
+            await updateProfile(values);
+            onSaved();
+            onClose();
+          }}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+        />
       }
     >
       <UserPhotoField

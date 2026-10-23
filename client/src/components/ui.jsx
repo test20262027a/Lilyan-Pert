@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import Icon from './Icon';
+import ModalActions from './ModalActions';
 import { useI18n } from '../i18n';
 import { fmtMoney } from '../format';
 
@@ -90,19 +91,15 @@ export function ConfirmDialog({ title, message, confirmLabel, danger = false, on
       title={title || t('confirm_title')}
       onClose={onCancel}
       footer={
-        <>
-          <button className="btn" onClick={onCancel} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button
-            className={`btn ${danger ? 'btn--danger' : 'btn--primary'}`}
-            onClick={onConfirm}
-            disabled={busy}
-          >
-            {busy ? <span className="spinner" /> : null}
-            {confirmLabel || t('action_confirm')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={confirmLabel || t('action_confirm')}
+          primaryVariant={danger ? 'danger' : 'primary'}
+          onPrimary={onConfirm}
+          loading={busy}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onCancel}
+          secondaryDisabled={busy}
+        />
       }
     >
       <p style={{ fontSize: 14, color: 'var(--text-soft)' }}>{message}</p>

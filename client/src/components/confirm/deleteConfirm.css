@@ -276,10 +276,22 @@
   transition: box-shadow 0.15s ease, background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
 }
 .dcd__btn > span { min-width: 0; }
-.dcd__btn:disabled { cursor: not-allowed; opacity: 0.72; }
+/* Disabled keeps its boundary and a readable label instead of fading away. */
+.dcd__btn:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  transform: none;
+}
 .dcd__btn:focus-visible {
-  outline: 2px solid var(--theme-focus-ring);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+.dcd__btn--danger:focus-visible { outline-color: var(--focus-ring-danger); }
+.dcd__btn--cancel:disabled {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--muted);
+  box-shadow: none;
 }
 
 .dcd__btn--cancel {
@@ -306,6 +318,16 @@
 }
 .dcd__btn--danger:hover:not(:disabled) {
   background: linear-gradient(180deg, #f25c5c 0%, #d61f1f 100%);
+}
+/*
+ * A blocked destructive action is muted red with a readable label — never a
+ * washed-out pink carrying white text that nobody can read.
+ */
+.dcd__btn--danger:disabled {
+  color: color-mix(in srgb, var(--danger) 72%, var(--text));
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  box-shadow: none;
 }
 .dcd__btn--danger:active:not(:disabled) {
   transform: translateY(1px);

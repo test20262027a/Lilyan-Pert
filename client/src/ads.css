@@ -825,8 +825,8 @@
 .ad-discard__title { margin: 0; font-size: 15px; font-weight: 800; color: var(--ad-ink); }
 .ad-discard__text { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--ad-muted); }
 .ad-discard__actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
-.ad-discard__actions .ad-save,
-.ad-discard__actions .ad-cancel { height: 38px; padding: 0 16px; font-size: 13px; }
+.ad-discard__actions { margin-top: 2px; }
+.ad-discard__actions > .ma-btn { min-height: 38px; padding: 0 16px; font-size: 13px; }
 
 /* ------------------------------------------------------------- the preview */
 

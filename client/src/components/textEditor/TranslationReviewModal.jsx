@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import Icon from '../Icon';
 import { Modal } from '../ui';
+import ModalActions from '../ModalActions';
 import { useI18n } from '../../i18n';
 
 /*
@@ -37,15 +37,14 @@ export default function TranslationReviewModal({ values, occupied, onApply, onCl
       subtitle={t('text_editor_translate_review_hint')}
       onClose={onClose}
       footer={
-        <>
-          <button type="button" className="btn" onClick={onClose}>
-            {t('action_cancel')}
-          </button>
-          <button type="button" className="btn btn--primary" onClick={() => onApply(chosen)} disabled={!chosen.length}>
-            <Icon name="check" size={15} />
-            {t('text_editor_translate_apply')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('text_editor_translate_apply')}
+          primaryIcon="check"
+          onPrimary={() => onApply(chosen)}
+          primaryDisabled={!chosen.length}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onClose}
+        />
       }
     >
       <div className="tx-review">

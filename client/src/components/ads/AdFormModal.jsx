@@ -3,6 +3,7 @@ import Icon from '../Icon';
 import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import { toZonedInput } from '../../format';
+import ModalActions from '../ModalActions';
 import AdImageField from './AdImageField';
 import { adErrorText } from './errorText';
 import { AdModalArtwork } from './AdsArtwork';
@@ -347,13 +348,15 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
         </div>
 
         <footer className="ad-modal__foot">
-          <button type="button" className="ad-save" onClick={submit} disabled={busy || uploading}>
-            {busy ? <span className="spinner" /> : null}
-            {t('action_save')}
-          </button>
-          <button type="button" className="ad-cancel" onClick={requestClose} disabled={busy}>
-            {t('action_cancel')}
-          </button>
+          <ModalActions
+            primaryLabel={t('action_save')}
+            onPrimary={submit}
+            loading={busy}
+            primaryDisabled={uploading}
+            secondaryLabel={t('action_cancel')}
+            onSecondary={requestClose}
+            secondaryDisabled={busy}
+          />
         </footer>
 
         {askDiscard ? (
@@ -361,14 +364,14 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
             <div className="ad-discard__card" role="alertdialog" aria-modal="true" aria-label={t('ads_discard_title')}>
               <h3 className="ad-discard__title">{t('ads_discard_title')}</h3>
               <p className="ad-discard__text">{t('ads_discard_text')}</p>
-              <div className="ad-discard__actions">
-                <button type="button" className="ad-save" onClick={onClose}>
-                  {t('ads_discard_confirm')}
-                </button>
-                <button type="button" className="ad-cancel" onClick={() => setAskDiscard(false)}>
-                  {t('ads_discard_keep')}
-                </button>
-              </div>
+              <ModalActions
+                className="ad-discard__actions"
+                primaryLabel={t('ads_discard_confirm')}
+                primaryVariant="danger"
+                onPrimary={onClose}
+                secondaryLabel={t('ads_discard_keep')}
+                onSecondary={() => setAskDiscard(false)}
+              />
             </div>
           </div>
         ) : null}

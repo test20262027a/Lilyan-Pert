@@ -317,7 +317,13 @@
   outline: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
 }
-.cui-pd__add:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.cui-pd__add:disabled {
+  cursor: not-allowed;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--primary) 58%, var(--text));
+  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+}
 .cui-pd__add span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* ----------------------------------------------------- photograph side --- */

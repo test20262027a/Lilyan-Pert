@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Icon from '../Icon';
 import { Modal, Switch } from '../ui';
+import ModalActions from '../ModalActions';
 import { useI18n } from '../../i18n';
 import { get } from '../../api';
 import { fmtDateTime, fmtNumber, zoneFor } from '../../format';
@@ -61,20 +62,17 @@ export default function RestoreDialog({ backup, business, busy, onCancel, onConf
       onClose={onCancel}
       wide
       footer={
-        <>
-          <button type="button" className="btn" onClick={onCancel} disabled={busy}>
-            {t('action_cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger"
-            onClick={() => onConfirm({ pre_restore_backup: safety })}
-            disabled={busy || !valid || !ack}
-          >
-            {busy ? <span className="spinner" /> : <Icon name="refresh" size={15} />}
-            {t('backup_restore_start')}
-          </button>
-        </>
+        <ModalActions
+          primaryLabel={t('backup_restore_start')}
+          primaryVariant="danger"
+          primaryIcon="refresh"
+          onPrimary={() => onConfirm({ pre_restore_backup: safety })}
+          loading={busy}
+          primaryDisabled={!valid || !ack}
+          secondaryLabel={t('action_cancel')}
+          onSecondary={onCancel}
+          secondaryDisabled={busy}
+        />
       }
     >
       {failed ? (
