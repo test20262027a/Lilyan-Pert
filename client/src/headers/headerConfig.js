@@ -11,6 +11,7 @@
  * supplied yet borrow the nearest related one through `image: '<other key>'`.
  */
 const img = (name) => `/headers/${name}.avif`;
+const png = (name) => `/headers/${name}.png`;
 
 export const SECTION_HEADERS = {
   dashboard: { image: img('dashboard'), icon: 'dashboard' },
@@ -28,8 +29,9 @@ export const SECTION_HEADERS = {
   users: { image: 'business', icon: 'users' },
   restore: { image: 'audit', icon: 'database' },
   reset: { image: 'audit', icon: 'refresh' },
-  cartEmpty: { image: 'menu', icon: 'cart' },
-  cartFull: { image: 'orders', icon: 'cart' },
+  'customer-cart-empty': { image: png('customer-cart-empty'), icon: 'cart' },
+  'customer-cart-full': { image: png('customer-cart-full'), icon: 'cart' },
+  'customer-review': { image: png('customer-review'), icon: 'star' },
   // Customer-side windows that are not the cart (product, review…).
   customer: { image: 'menu', icon: 'utensils' },
 };

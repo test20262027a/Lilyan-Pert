@@ -214,7 +214,7 @@ export default function CartPanel({
         aria-labelledby={titleId}
       >
         <header className="cui-sheet__art">
-          <HeaderBackdrop section={isEmpty ? 'cartEmpty' : 'cartFull'} className="sh-bg--cart" />
+          <HeaderBackdrop section={isEmpty ? 'customer-cart-empty' : 'customer-cart-full'} className="sh-bg--cart" />
           <CartArtwork />
           <span className="cui-sheet__artbar">
             <span className="cui-sheet__badge" aria-hidden="true">

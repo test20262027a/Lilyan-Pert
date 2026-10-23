@@ -82,7 +82,7 @@ export default function ReviewModal({ busy, onClose, onSubmit }) {
     >
       <div className="cui-sheet cui-sheet--review" ref={sheetRef} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <header className="cui-sheet__art">
-          <HeaderBackdrop section="customer" className="sh-bg--cart" />
+          <HeaderBackdrop section="customer-review" className="sh-bg--cart" />
           <ReviewArtwork />
           <span className="cui-sheet__artbar">
             <span className="cui-sheet__badge cui-sheet__badge--star" aria-hidden="true">
