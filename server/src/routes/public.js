@@ -38,13 +38,15 @@ router.get(
   '/brand',
   ah(async (_req, res) => {
     const { rows } = await q(
-      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url
+      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url, theme
          FROM businesses ORDER BY is_sample DESC, created_at LIMIT 1`,
     );
     const b = rows[0];
     res.json({
       name: b?.name || 'Lilyan Pert',
       logo_url: b ? publicMediaUrl(b.logo_url) : null,
+      // The sign-in pages paint themselves in the business's own appearance.
+      theme: b?.theme || null,
     });
   }),
 );

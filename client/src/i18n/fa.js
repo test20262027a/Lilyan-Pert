@@ -136,6 +136,7 @@ export default {
   auth_weak_password: 'حداقل ۸ کاراکتر استفاده کنید',
   auth_demo_accounts: 'حساب‌های نمونه',
   auth_account: 'حساب',
+  auth_login_note: 'فضای کاری محافظت‌شده · به دسترسی نیاز دارید؟ با مدیر خود تماس بگیرید.',
 
   dash_title: 'داشبورد',
   dash_subtitle: 'نمای زنده کسب‌وکار شما',

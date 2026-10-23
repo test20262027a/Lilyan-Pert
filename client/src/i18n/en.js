@@ -136,6 +136,7 @@ export default {
   auth_weak_password: 'Use at least 8 characters',
   auth_demo_accounts: 'Sample accounts',
   auth_account: 'Account',
+  auth_login_note: 'Protected workspace · Need access? Contact your manager.',
 
   dash_title: 'Dashboard',
   dash_subtitle: 'Live overview of your business',

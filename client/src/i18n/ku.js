@@ -136,6 +136,7 @@ export default {
   auth_weak_password: 'لانیکەم ٨ پیت بەکاربهێنە',
   auth_demo_accounts: 'هەژمارە نموونەییەکان',
   auth_account: 'هەژمار',
+  auth_login_note: 'شوێنی کاری پارێزراو · پێویستت بە دەستگەیشتنە؟ پەیوەندی بە بەڕێوەبەرەکەت بکە.',
 
   dash_title: 'داشبۆرد',
   dash_subtitle: 'دیمەنی ڕاستەوخۆی کارەکەت',

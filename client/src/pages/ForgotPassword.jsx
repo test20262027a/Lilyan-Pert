@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Icon from '../components/Icon';
 import {
   AuthCard,
@@ -11,7 +11,6 @@ import {
 } from '../components/auth/AuthKit';
 import { useI18n } from '../i18n';
 import { post } from '../api';
-import { applyTheme, DEFAULT_THEME } from '../theme';
 
 export default function ForgotPassword() {
   const { t } = useI18n();
@@ -20,10 +19,6 @@ export default function ForgotPassword() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
-
-  useEffect(() => {
-    applyTheme(DEFAULT_THEME);
-  }, []);
 
   const submit = async (e) => {
     e.preventDefault();

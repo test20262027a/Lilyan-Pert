@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
@@ -13,7 +13,6 @@ import {
 } from '../components/auth/AuthKit';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
-import { applyTheme, DEFAULT_THEME } from '../theme';
 
 const SAMPLES = [
   { email: 'owner@lilyan.app', password: 'lilyan1234', role: 'role_owner' },
@@ -31,10 +30,6 @@ export default function Login() {
   const [fieldErrors, setFieldErrors] = useState({});
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    applyTheme(DEFAULT_THEME);
-  }, []);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -112,6 +107,10 @@ export default function Login() {
         </form>
         <p className="au-foot">
           {t('auth_no_account')} <Link to="/register">{t('auth_register')}</Link>
+        </p>
+        <p className="au-note">
+          <Icon name="shield" size={13} />
+          {t('auth_login_note')}
         </p>
       </AuthCard>
     </AuthLayout>

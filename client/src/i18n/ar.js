@@ -136,6 +136,7 @@ export default {
   auth_weak_password: 'استخدم ٨ أحرف على الأقل',
   auth_demo_accounts: 'حسابات تجريبية',
   auth_account: 'الحساب',
+  auth_login_note: 'مساحة عمل محمية · تحتاج إلى وصول؟ تواصل مع مديرك.',
 
   dash_title: 'لوحة التحكم',
   dash_subtitle: 'نظرة مباشرة على نشاطك',

@@ -1,25 +1,32 @@
-import { useEffect, useId, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Icon from '../Icon';
-import { useI18n, LOCALES } from '../../i18n';
+import { useI18n } from '../../i18n';
 import { get } from '../../api';
+import { applyTheme, DEFAULT_THEME } from '../../theme';
+import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
 /*
- * The shared pieces of the sign-in family (login, forgot password): a full
- * screen café backdrop, one cream card, the business's own logo, soft 3D
- * inputs and a green call-to-action. Every page composes these so they always
- * read as one set.
+ * The shared pieces of the sign-in family (login, forgot password): one
+ * cinematic café backdrop, a frosted glass card, the business's own logo, soft
+ * 3D inputs and a themed call-to-action. Everything is tinted from `--primary`,
+ * so the login page follows whatever appearance the business has selected.
  */
 
-/** Business name + logo from the public brand endpoint (no login needed). */
+const BrandContext = createContext(null);
+
+/**
+ * Business name, logo and theme from the public brand endpoint (no login
+ * needed). `undefined` means still loading, `null` means the request failed.
+ */
 function useBrand() {
-  const [brand, setBrand] = useState(null);
+  const [brand, setBrand] = useState(undefined);
   useEffect(() => {
     let live = true;
     get('/public/brand')
       .then((b) => live && setBrand(b))
-      .catch(() => {});
+      .catch(() => live && setBrand(null));
     return () => {
       live = false;
     };
@@ -28,36 +35,40 @@ function useBrand() {
 }
 
 export function AuthLayout({ children, footer }) {
-  const { t, locale, setLocale } = useI18n();
+  const brand = useBrand();
+
+  // The business picked this appearance for its public pages; the sign-in
+  // screen is the first thing anyone sees, so it must not fall back to a
+  // stock palette. Nothing is painted until the brand answers, which avoids a
+  // flash of the default theme on the way in.
+  useEffect(() => {
+    if (brand === undefined) return;
+    applyTheme(brand?.theme || DEFAULT_THEME);
+  }, [brand]);
+
   return (
-    <div className="au">
-      <div className="au__bg" aria-hidden="true" />
-      <div className="au__veil" aria-hidden="true" />
-      <div className="au__lang">
-        <Icon name="globe" size={15} />
-        <select value={locale} onChange={(e) => setLocale(e.target.value)} aria-label={t('label_language')}>
-          {LOCALES.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.label}
-            </option>
-          ))}
-        </select>
+    <BrandContext.Provider value={brand}>
+      <div className="au">
+        <div className="au__bg" aria-hidden="true" />
+        <div className="au__veil" aria-hidden="true" />
+        <LanguageMenu />
+        <main className="au__main">
+          {children}
+          {footer}
+        </main>
       </div>
-      <main className="au__main">
-        {children}
-        {footer}
-      </main>
-    </div>
+    </BrandContext.Provider>
   );
 }
 
 export function AuthCard({ title, subtitle, children }) {
   const { t } = useI18n();
-  const brand = useBrand();
+  const brand = useContext(BrandContext);
   return (
     <section className="au-card">
+      {/* The logo sits directly on the glass — no plate, box or tint behind it. */}
       <div className="au-card__logo">
-        {brand?.logo_url ? (
+        {brand === undefined ? null : brand?.logo_url ? (
           <img src={brand.logo_url} alt={brand.name || t('app_name')} />
         ) : (
           <span className="au-card__mark" aria-hidden="true">LP</span>
