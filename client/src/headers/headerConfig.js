@@ -7,8 +7,11 @@
  * (it is resolved from the current route), and swapping a picture is a
  * one-line change here.
  *
- * Pictures live in /public/headers. Sections whose own picture has not been
- * supplied yet borrow the nearest related one through `image: '<other key>'`.
+ * Pictures live in /public/headers. A section names its OWN picture file; while
+ * that file is still missing the header falls back to the nearest related one
+ * through `fallback: '<other key>'`, painted underneath in the same layer, so a
+ * header is never blank or broken and uploading the dedicated file is all it
+ * takes to switch the section over.
  */
 const img = (name) => `/headers/${name}.avif`;
 const png = (name) => `/headers/${name}.png`;
@@ -24,11 +27,11 @@ export const SECTION_HEADERS = {
   analytics: { image: img('analytics'), icon: 'chart' },
   audit: { image: img('audit'), icon: 'history' },
   business: { image: img('business'), icon: 'store' },
-  // Pending pictures — borrowed until the dedicated ones are added.
-  textEditor: { image: 'business', icon: 'type' },
-  users: { image: 'business', icon: 'users' },
-  restore: { image: 'audit', icon: 'database' },
-  reset: { image: 'audit', icon: 'refresh' },
+  // Own picture slot per section; the fallback shows until that file exists.
+  textEditor: { image: img('text-editor'), fallback: 'business', icon: 'type' },
+  users: { image: img('users'), fallback: 'business', icon: 'users' },
+  restore: { image: img('restore'), fallback: 'audit', icon: 'database' },
+  reset: { image: img('reset'), fallback: 'audit', icon: 'refresh' },
   'customer-cart-empty': { image: png('customer-cart-empty'), icon: 'cart' },
   'customer-cart-full': { image: png('customer-cart-full'), icon: 'cart' },
   'customer-review': { image: png('customer-review'), icon: 'star' },
@@ -63,8 +66,21 @@ export function sectionForPath(pathname = '/') {
   return hit ? hit[1] : 'dashboard';
 }
 
+/** A direct file path, or the picture of another section used as its slot. */
+function pictureOf(reference) {
+  if (typeof reference !== 'string') return null;
+  return reference.startsWith('/') ? reference : SECTION_HEADERS[reference]?.image || null;
+}
+
 export function sectionHeader(key) {
   const entry = SECTION_HEADERS[key] || SECTION_HEADERS.dashboard;
-  const image = entry.image.startsWith('/') ? entry.image : SECTION_HEADERS[entry.image]?.image;
-  return { key, icon: entry.icon, image: image || SECTION_HEADERS.dashboard.image };
+  const image = pictureOf(entry.image) || SECTION_HEADERS.dashboard.image;
+  return {
+    key,
+    icon: entry.icon,
+    image,
+    // Painted underneath `image`, so a section whose own file is not in
+    // /public/headers yet still shows a complete, matching header.
+    fallback: pictureOf(entry.fallback) || image,
+  };
 }
