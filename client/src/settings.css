@@ -176,6 +176,9 @@
 
 .set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .set-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* Content-driven columns: whatever is left after a language is switched off
+   shares the row evenly, and never leaves a reserved empty cell behind. */
+.set-grid--auto { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .set-grid .span-2 { grid-column: 1 / -1; }
 .set-stack { display: flex; flex-direction: column; gap: 14px; }
 .set-group-label {

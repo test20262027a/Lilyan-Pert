@@ -59,6 +59,11 @@ const BASE_PATHS = {
   eye: <><path d="M1.5 12S5 5.5 12 5.5 22.5 12 22.5 12 19 18.5 12 18.5 1.5 12 1.5 12z" /><circle cx="12" cy="12" r="3" /></>,
   eyeOff: <><path d="M2 2l20 20" /><path d="M6.7 6.7C3.6 8.6 1.5 12 1.5 12S5 18.5 12 18.5c1.9 0 3.5-.4 4.9-1.1" /><path d="M9.8 5.8A10.6 10.6 0 0 1 12 5.5c7 0 10.5 6.5 10.5 6.5a17 17 0 0 1-2.6 3.5" /><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2" /></>,
   layers: <><path d="m12 2 9 5-9 5-9-5z" /><path d="m3 12 9 5 9-5" /><path d="m3 17 9 5 9-5" /></>,
+  /* Navigation drawer: a panel with its rail drawn on the inline-start side.
+     `sidebarOpen` adds the collapse chevron, so the toggle reads as one control
+     in both states instead of swapping to an unrelated glyph. */
+  sidebar: <><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /><path d="M5.4 10.8h1.2M5.4 13.6h1.2" /></>,
+  sidebarOpen: <><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M9 4v16" /><path d="m15 9.2-2.6 2.8 2.6 2.8" /></>,
   sparkles: <><path d="M12 3v4M12 17v4M3 12h4M17 12h4" /><path d="m6.3 6.3 2.1 2.1M15.6 15.6l2.1 2.1M17.7 6.3l-2.1 2.1M8.4 15.6l-2.1 2.1" /></>,
   chart: <><path d="M3 20h18" /><rect x="5" y="11" width="3.5" height="6" rx="1" /><rect x="10.2" y="7" width="3.5" height="10" rx="1" /><rect x="15.5" y="13" width="3.5" height="4" rx="1" /></>,
   chartBars: <path d="M5.5 20V11M12 20V4.5M18.5 20v-6.5" />,

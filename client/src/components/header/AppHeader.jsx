@@ -17,7 +17,7 @@ import './header.css';
  * right in RTL) and the action controls follow the reference order:
  * profile, theme, notifications, sound, language.
  */
-export default function AppHeader({ onOpenSidebar }) {
+export default function AppHeader({ onOpenSidebar, sidebarOpen = false }) {
   const { t, locale } = useI18n();
   const { business, setBusiness } = useBusiness();
   const toast = useToast();
@@ -64,14 +64,19 @@ export default function AppHeader({ onOpenSidebar }) {
   return (
     <div className="hdr-wrap">
       <header className="hdr">
+        {/* The drawer toggle is its own physical control: a sidebar glyph when
+            the navigation is closed, the same panel with a collapse chevron and
+            a filled accent state while it is open. */}
         <button
           type="button"
-          className="hdr-btn sidebar-mobile-toggle"
-          aria-label={t('label_actions')}
-          title={t('label_actions')}
+          className={`hdr-btn sidebar-mobile-toggle ${sidebarOpen ? 'is-open' : ''}`}
+          aria-label={sidebarOpen ? t('nav_collapse') : t('nav_expand')}
+          title={sidebarOpen ? t('nav_collapse') : t('nav_expand')}
+          aria-expanded={sidebarOpen}
+          aria-controls="admin-sidebar-nav"
           onClick={onOpenSidebar}
         >
-          <Icon name="layers" size={18} />
+          <Icon name={sidebarOpen ? 'sidebarOpen' : 'sidebar'} size={19} />
         </button>
 
         <div className="hdr__brand">

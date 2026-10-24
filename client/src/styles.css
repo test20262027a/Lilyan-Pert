@@ -1497,7 +1497,56 @@ table.data tr:hover td { background: var(--surface-2); }
 
 /* ------------------------------------------------------------ responsive */
 
-.sidebar-mobile-toggle { display: none; }
+/*
+ * Mobile / tablet drawer toggle. A mint "pillow" button that sits in the same
+ * control family as the rest of the header, with an unmistakable open state:
+ * the accent fill plus a pressed inner shadow while the drawer covers the page.
+ */
+.sidebar-mobile-toggle {
+  display: none;
+  color: var(--theme-primary-strong);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--theme-primary-soft) 100%);
+  border-color: var(--theme-primary-line);
+  box-shadow:
+    0 2px 6px color-mix(in srgb, var(--theme-primary) 12%, rgba(23, 26, 43, 0.06)),
+    inset 0 1px 0 #ffffff;
+}
+.sidebar-mobile-toggle:hover:not(:disabled) {
+  color: var(--theme-primary-strong);
+  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--primary) 16%, var(--surface)) 100%);
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--border-strong));
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--theme-primary) 20%, rgba(23, 26, 43, 0.06)),
+    inset 0 1px 0 #ffffff;
+}
+.sidebar-mobile-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.sidebar-mobile-toggle.is-open {
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-primary-active) 100%);
+  border-color: var(--theme-primary-active);
+  box-shadow:
+    0 3px 10px color-mix(in srgb, var(--theme-primary) 38%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.16);
+}
+[data-theme='dark'] .sidebar-mobile-toggle {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  border-color: var(--theme-primary-line);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+[data-theme='dark'] .sidebar-mobile-toggle.is-open {
+  color: var(--primary-ink);
+  box-shadow:
+    0 3px 12px color-mix(in srgb, var(--theme-primary) 42%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.24);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-mobile-toggle { transition: none; }
+}
 
 @media (max-width: 1000px) {
   .app-shell { flex-direction: column; padding-inline-start: 0; transition: none; }

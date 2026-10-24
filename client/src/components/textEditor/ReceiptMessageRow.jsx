@@ -1,21 +1,21 @@
 import { useEffect, useRef } from 'react';
 import Icon from '../Icon';
+import LanguageFlag from '../header/LanguageFlag';
 import { useI18n } from '../../i18n';
 import { MESSAGE_LOCALES } from '../../receiptMessages';
 
 /*
- * One receipt message: a compact accordion header plus the four language
- * fields once it is open. The row is fully controlled — every keystroke
- * reaches the page's single draft store, so opening another row, searching or
+ * One receipt message: a compact accordion header plus the field of the
+ * language that is active in the interface right now. The row is fully
+ * controlled — every keystroke reaches the page's single draft store, so
+ * opening another row, searching, switching the interface language or
  * collapsing never loses what was typed.
+ *
+ * Only the active language is rendered and editable: the message the customer
+ * reads depends on the menu they opened, so editing it in one language at a
+ * time keeps the field wide enough to read, and a disabled language can never
+ * leave an empty slot behind.
  */
-
-const FIELDS = [
-  { code: 'ku', label: 'کوردی سۆرانی', rtl: true },
-  { code: 'fa', label: 'فارسی', rtl: true },
-  { code: 'ar', label: 'العربية', rtl: true },
-  { code: 'en', label: 'English', rtl: false },
-];
 
 const MAX_LENGTH = 1000;
 
@@ -31,21 +31,19 @@ export default function ReceiptMessageRow({
   onTranslate,
   translating,
 }) {
-  const { t } = useI18n();
-  const refs = useRef({});
+  const { t, locale, rtl } = useI18n();
+  const ref = useRef(null);
   const label = String(number).padStart(2, '0');
+  const languageLabel = t(`menu_lang_name_${locale}`);
   const hasPlaceholder = MESSAGE_LOCALES.some((code) => /\{[a-z_]+\}/i.test(values?.[code] || ''));
 
   // Auto-grow so a long message is never clipped while it is being edited.
   useEffect(() => {
-    if (!open) return;
-    for (const code of MESSAGE_LOCALES) {
-      const el = refs.current[code];
-      if (!el) continue;
-      el.style.height = 'auto';
-      el.style.height = `${Math.min(Math.max(el.scrollHeight, 88), 340)}px`;
-    }
-  }, [open, values]);
+    const el = ref.current;
+    if (!open || !el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(Math.max(el.scrollHeight, 88), 340)}px`;
+  }, [open, locale, values]);
 
   return (
     <article className={`tx-row ${open ? 'is-open' : ''} ${dirty ? 'is-dirty' : ''}`}>
@@ -74,25 +72,24 @@ export default function ReceiptMessageRow({
 
       {open ? (
         <div className="tx-row__body" id={`tx-message-${number}`}>
-          <div className="tx-langs">
-            {FIELDS.map((field) => (
-              <label className="tx-lang" key={field.code}>
-                <span className="tx-lang__label">{field.label}</span>
-                <textarea
-                  ref={(node) => {
-                    refs.current[field.code] = node;
-                  }}
-                  className="tx-lang__input"
-                  dir={field.rtl ? 'rtl' : 'ltr'}
-                  rows={3}
-                  maxLength={MAX_LENGTH}
-                  value={values?.[field.code] || ''}
-                  disabled={!canManage}
-                  placeholder={t('text_editor_field_placeholder')}
-                  onChange={(event) => onChange(field.code, event.target.value)}
-                />
-              </label>
-            ))}
+          <div className="tx-langs" data-lang={locale}>
+            <label className="tx-lang">
+              <span className="tx-lang__label">
+                <LanguageFlag code={locale} />
+                {languageLabel}
+              </span>
+              <textarea
+                ref={ref}
+                className="tx-lang__input"
+                dir={rtl ? 'rtl' : 'ltr'}
+                rows={3}
+                maxLength={MAX_LENGTH}
+                value={values?.[locale] || ''}
+                disabled={!canManage}
+                placeholder={t('text_editor_field_placeholder')}
+                onChange={(event) => onChange(locale, event.target.value)}
+              />
+            </label>
           </div>
 
           {hasPlaceholder ? <p className="tx-placeholders">{t('text_editor_placeholders_hint')}</p> : null}

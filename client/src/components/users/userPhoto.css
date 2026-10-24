@@ -153,6 +153,127 @@
 
 .uphoto__hint { margin-top: -2px; }
 
+/* --------------------------------------------------------- avatar picker */
+
+/*
+ * Three portraits in ONE centred row: equal cards, even spacing and a shared
+ * baseline, so the choice never leans to one side of the panel. The selected
+ * card lifts out of the row with a themed ring and its check badge.
+ */
+.uavatar-picker {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 320px;
+  margin-inline: auto;
+  justify-content: center;
+}
+
+.uavatar-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+  min-width: 0;
+  padding: 10px 8px 9px;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 650;
+  text-align: center;
+  cursor: pointer;
+  box-shadow:
+    0 1px 2px rgba(23, 26, 43, 0.05),
+    inset 0 1px 0 #ffffff;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+.uavatar-option:hover:not(:disabled):not(.is-selected) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--theme-primary) 40%, var(--border-strong));
+  background: linear-gradient(180deg, var(--surface) 0%, var(--theme-primary-soft) 100%);
+  box-shadow:
+    0 5px 14px -8px color-mix(in srgb, var(--theme-primary) 60%, transparent),
+    inset 0 1px 0 #ffffff;
+}
+.uavatar-option:focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+.uavatar-option:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+.uavatar-option.is-selected {
+  border-color: var(--theme-selected-border);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--theme-primary-soft) 100%);
+  color: var(--theme-primary-strong);
+  box-shadow:
+    0 8px 18px -10px color-mix(in srgb, var(--theme-primary) 75%, transparent),
+    inset 0 1px 0 #ffffff;
+}
+
+.uavatar-option__disc {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow:
+    inset 0 0 0 1px var(--border),
+    0 3px 8px -4px rgba(23, 26, 43, 0.3);
+  transition: box-shadow 180ms ease, transform 180ms ease;
+}
+.uavatar-option.is-selected .uavatar-option__disc {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--theme-primary) 55%, transparent),
+    0 4px 10px -4px color-mix(in srgb, var(--theme-primary) 70%, transparent);
+  transform: translateY(-1px);
+}
+.uavatar-option__label {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.uavatar-option__check {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--theme-primary);
+  color: var(--theme-primary-foreground, #ffffff);
+  box-shadow: 0 2px 5px -1px color-mix(in srgb, var(--theme-primary) 70%, transparent);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+.uavatar-option.is-selected .uavatar-option__check { opacity: 1; transform: scale(1); }
+
+[data-theme='dark'] .uavatar-option {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uavatar-option,
+  .uavatar-option__disc,
+  .uavatar-option__check { transition: none; }
+}
+
 /* --------------------------------------------------------------- mobile */
 
 @media (max-width: 600px) {

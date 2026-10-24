@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../ui';
 import ModalActions from '../ModalActions';
 import { useI18n } from '../../i18n';
@@ -17,19 +17,25 @@ const TARGETS = [
 ];
 
 export default function TranslationReviewModal({ values, occupied, onApply, onClose }) {
-  const { t } = useI18n();
+  const { t, enabledLanguages } = useI18n();
   const [selected, setSelected] = useState({});
 
+  // A disabled language is never offered — the review lists only what the menu
+  // can actually print, so no empty language block appears here either.
+  const enabledKey = enabledLanguages.join(',');
+  const targets = useMemo(
+    () => TARGETS.filter((target) => enabledKey.split(',').includes(target.code)),
+    [enabledKey],
+  );
+
   useEffect(() => {
-    setSelected({
-      fa: !occupied.includes('fa'),
-      ar: !occupied.includes('ar'),
-      en: !occupied.includes('en'),
-    });
-  }, [occupied]);
+    setSelected(
+      Object.fromEntries(targets.map((target) => [target.code, !occupied.includes(target.code)])),
+    );
+  }, [occupied, targets]);
 
   const toggle = (code) => setSelected((s) => ({ ...s, [code]: !s[code] }));
-  const chosen = TARGETS.filter((target) => selected[target.code]).map((target) => target.code);
+  const chosen = targets.filter((target) => selected[target.code]).map((target) => target.code);
 
   return (
     <Modal
@@ -48,7 +54,7 @@ export default function TranslationReviewModal({ values, occupied, onApply, onCl
       }
     >
       <div className="tx-review">
-        {TARGETS.map((target) => (
+        {targets.map((target) => (
           <label className={`tx-review__item ${occupied.includes(target.code) ? 'is-replace' : ''}`} key={target.code}>
             <span className="tx-review__head">
               <input type="checkbox" checked={Boolean(selected[target.code])} onChange={() => toggle(target.code)} />

@@ -582,10 +582,21 @@
 @media (max-width: 900px) {
   .obanner { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
   .obanner__controls { justify-content: space-between; }
+  /*
+   * Tablet keeps the search and the status pills on ONE line: the search gives
+   * up width, the pills scroll sideways inside their own track instead of
+   * wrapping to a second row. Only a phone stacks the two groups.
+   */
+  .otoolbar { flex-wrap: nowrap; gap: 8px; padding: 7px 10px; }
+  .osearch { flex: 1 1 180px; }
+  .ofilters { flex: 1 1 auto; }
+  .obanner__title { white-space: normal; }
+}
+
+@media (max-width: 520px) {
   .otoolbar { flex-wrap: wrap; }
   .osearch { flex: 1 1 100%; }
   .ofilters { flex: 1 1 100%; }
-  .obanner__title { white-space: normal; }
 }
 
 @media (max-width: 480px) {

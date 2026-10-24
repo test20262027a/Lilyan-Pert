@@ -21,7 +21,9 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
   return (
     <>
       <SettingsCard icon="building" tone="green" title={t('settings_business_card')}>
-        <div className="set-grid">
+        {/* Auto-fit keeps the visible names in ONE filled row: three enabled
+            languages share the width instead of leaving a hole next to two. */}
+        <div className="set-grid set-grid--auto">
           {locales.map((l) => (
             <SetField
               key={l.code}

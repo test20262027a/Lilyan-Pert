@@ -11,7 +11,10 @@ const ADDRESSES = [
 ];
 
 export default function ContactTab({ draft, setField, setJson, canManage }) {
-  const { t } = useI18n();
+  const { t, enabledLanguages } = useI18n();
+  // Only the enabled languages get an address field; a hidden language keeps
+  // its saved address untouched, and the remaining fields fill the row.
+  const languages = ADDRESSES.filter((entry) => enabledLanguages.includes(entry.code));
 
   return (
     <SettingsCard
@@ -43,17 +46,19 @@ export default function ContactTab({ draft, setField, setJson, canManage }) {
           />
         </SetField>
 
-        {ADDRESSES.map((entry) => (
-          <SetField key={entry.code} label={t(entry.labelKey)}>
-            <input
-              className="input"
-              dir={entry.rtl ? 'rtl' : 'ltr'}
-              value={draft.addresses?.[entry.code] || ''}
-              onChange={(event) => setJson('addresses', entry.code, event.target.value)}
-              disabled={!canManage}
-            />
-          </SetField>
-        ))}
+        <div className="set-grid set-grid--auto">
+          {languages.map((entry) => (
+            <SetField key={entry.code} label={t(entry.labelKey)}>
+              <input
+                className="input"
+                dir={entry.rtl ? 'rtl' : 'ltr'}
+                value={draft.addresses?.[entry.code] || ''}
+                onChange={(event) => setJson('addresses', entry.code, event.target.value)}
+                disabled={!canManage}
+              />
+            </SetField>
+          ))}
+        </div>
       </div>
     </SettingsCard>
   );

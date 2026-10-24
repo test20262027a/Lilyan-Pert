@@ -27,7 +27,7 @@ function Shell() {
       <Sidebar open={menuOpen} onNavigate={() => setMenuOpen(false)} />
 
       <div className="main">
-        <AppHeader onOpenSidebar={() => setMenuOpen((v) => !v)} />
+        <AppHeader sidebarOpen={menuOpen} onOpenSidebar={() => setMenuOpen((v) => !v)} />
 
         <main className="page">
           <Outlet />

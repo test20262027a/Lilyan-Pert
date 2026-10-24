@@ -260,13 +260,27 @@
 
 /* ------------------------------------------------------ language fields */
 
-/* Columns come from LanguageFieldsGrid (only enabled languages are rendered). */
+/*
+ * One field, one column: the row edits the language that is active in the
+ * interface, so the input always fills the whole body instead of leaving the
+ * empty slots of the languages that are hidden or switched off.
+ */
 .tx-langs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   padding-top: 11px;
   border-top: 1px dashed var(--border);
 }
 .tx-lang { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
-.tx-lang__label { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+.tx-lang__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.tx-lang__label .lang-flag { box-shadow: 0 1px 2px rgba(23, 26, 43, 0.16); }
 .tx-lang__input {
   width: 100%;
   min-height: 88px;
