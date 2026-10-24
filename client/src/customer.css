@@ -291,6 +291,26 @@
 }
 .cui-hero__logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
 
+/* A stored logo is shown as the artwork itself: the frosted plate, its padding,
+   hairline border and blur are all removed, so nothing paints a box behind it.
+   The image is never stretched (contain), stays on the pixel grid and carries a
+   soft drop shadow for separation — and the rounded clip only shows on a logo
+   file whose own background is opaque, so that case still reads as a mark
+   instead of a hard square. */
+.cui-hero__logo.has-image {
+  padding: 0;
+  overflow: visible;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.cui-hero__logo.has-image img {
+  border-radius: 22px;
+  filter: drop-shadow(0 8px 18px rgba(6, 14, 12, 0.34));
+}
+
 /* The welcome line is the banner's main heading — larger, softer tracking,
    shadowed for readability over any photograph, and it never overflows. */
 .cui-hero__name {

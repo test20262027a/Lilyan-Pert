@@ -374,32 +374,51 @@
 
 /* Compact category tabs — the active one is a filled green pill. */
 .notif-panel__tabs {
-  display: flex; align-items: center; gap: 5px;
+  display: flex; align-items: center; gap: 6px;
   padding: 10px 14px;
   border-bottom: 1px solid color-mix(in srgb, var(--mint) 12%, var(--border));
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scrollbar-width: none;
+  scroll-padding-inline: 14px;
 }
 .notif-panel__tabs::-webkit-scrollbar { display: none; }
+/* Every tab is one flex row: label and count always share a baseline, the tab
+   never grows past its content, and the count pill keeps a fixed foot print so
+   a number going from 9 to 12 to 99+ cannot push the row around. */
 .notif-tab {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   flex: none;
-  padding: 6px 12px;
+  /* One fixed height for every tab, with or without a count pill inside, so the
+     row never steps up or down as counts appear and disappear. */
+  height: 28px;
+  padding: 0 10px;
   border: 1px solid transparent; border-radius: var(--radius-pill);
   background: transparent;
-  font: inherit; font-size: 12px; font-weight: 700;
+  font: inherit; font-size: 12px; font-weight: 700; line-height: 1.2;
   color: var(--muted); cursor: pointer; white-space: nowrap;
   transition: background 0.16s ease, color 0.16s ease;
 }
+.notif-tab__label { display: inline-block; min-width: 0; }
 .notif-tab:hover { background: var(--mint-soft); color: var(--mint-ink); }
 .notif-tab.is-active {
   background: var(--mint-deep); color: #ffffff;
   box-shadow: 0 3px 8px color-mix(in srgb, var(--mint-deep) 30%, transparent);
 }
 .notif-tab__count {
-  font-size: 10.5px; font-weight: 800;
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 17px;
   padding: 0 5px; border-radius: var(--radius-pill);
+  font-size: 10.5px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
   background: color-mix(in srgb, currentColor 16%, transparent);
+}
+@media (max-width: 560px) {
+  .notif-panel__tabs { gap: 5px; padding: 9px 12px; }
+  .notif-tab { font-size: 11.5px; padding: 0 8px; gap: 5px; }
+  .notif-tab__count { min-width: 18px; padding: 0 4px; }
 }
 
 .notif-panel__list {

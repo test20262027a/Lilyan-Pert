@@ -1298,8 +1298,27 @@ export default {
   customer_menu_contact: 'ارتباط و شبکه‌های اجتماعی',
   customer_menu_best_badge: 'پرفروش',
   customer_menu_closed_today: 'امروز تعطیل است',
+  customer_closed_ordering_paused: 'ثبت سفارش متوقف است',
+  customer_closed_today: 'امروز',
+  customer_closed_before_title: 'هنوز باز نکرده‌ایم',
+  customer_closed_before_hint:
+    'ثبت سفارش از زمان باز شدن شروع می‌شود. تا آن موقع منو را ببینید — دکمه‌های سفارش خودبه‌خود برمی‌گردند.',
+  customer_closed_after_title: 'فعلاً بسته‌ایم',
+  customer_closed_after_hint:
+    'ثبت سفارش تا زمان باز شدن بعدی متوقف است. همه منو برای دیدن در دسترس است.',
+  customer_closed_holiday_title: 'امروز روز تعطیل ماست',
+  customer_closed_holiday_hint:
+    'امروز بسته‌ایم. در روز کاری بعدی بازگردید — منو همیشه در دسترس شماست.',
+  customer_closed_schedule_title: 'ساعت کاری در حال به‌روزرسانی است',
+  customer_closed_schedule_hint:
+    'به‌محض ثبت ساعت کاری، سفارش‌دهی دوباره فعال می‌شود. دیدن منو همچنان ممکن است.',
+  customer_closed_browse: 'می‌توانید منو را ببینید',
+  customer_hours_before: 'هنوز باز نشده',
+  customer_hours_holiday: 'تعطیل',
+  customer_hours_unset: 'ساعت تعیین نشده',
   customer_menu_open_map: 'نمایش روی نقشه',
   customer_table_select: 'انتخاب میز',
+  customer_table_pick_hint: 'برای انتخاب میز ضربه بزنید',
   customer_table_select_placeholder: 'یک میز انتخاب کنید',
   customer_table_missing: 'میز شناسایی نشد؛ سفارش بدون میز ثبت می‌شود.',
   customer_table_invalid: 'لینک QR میز معتبر نیست.',

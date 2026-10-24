@@ -61,7 +61,7 @@ export default function CustomerTopBar({
 
       {showBrand ? (
         <span className="cui-nav__brand" dir={dir} title={brand.name}>
-          <span className="cui-nav__brandmark" aria-hidden="true">
+          <span className={`cui-nav__brandmark ${brand.logoUrl ? 'has-image' : ''}`.trim()} aria-hidden="true">
             {brand.logoUrl ? <img src={brand.logoUrl} alt="" /> : <Icon name="store" size={15} />}
           </span>
           <span className="cui-nav__brandname">{brand.name}</span>

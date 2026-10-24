@@ -123,7 +123,7 @@ export default function NotificationPanel({
               className={`notif-tab ${tab === key ? 'is-active' : ''}`}
               onClick={() => setTab(key)}
             >
-              {t(`notif_tab_${key}`)}
+              <span className="notif-tab__label">{t(`notif_tab_${key}`)}</span>
               {count > 0 ? <span className="notif-tab__count">{compactCount(count)}</span> : null}
             </button>
           );

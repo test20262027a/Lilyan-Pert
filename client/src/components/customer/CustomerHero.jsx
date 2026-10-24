@@ -38,7 +38,11 @@ export default function CustomerHero({ business, brandName, welcome, table, tabl
       <div className="cui-hero__bg" aria-hidden="true" />
       {children}
       <div className="cui-hero__body">
-        <span className="cui-hero__logo">
+        {/* A real logo is shown on its own — no glass plate, padding or fill
+            behind it — so the artwork keeps its transparent edges. The frosted
+            frame remains for the business-type mark that replaces a missing
+            logo, because that glyph needs a surface to sit on. */}
+        <span className={`cui-hero__logo ${business?.logo_url ? 'has-image' : ''}`.trim()}>
           {business?.logo_url ? <img src={business.logo_url} alt="" /> : <Icon name={icon} size={36} />}
         </span>
         <h1 className="cui-hero__name">{brandName}</h1>

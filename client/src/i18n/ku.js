@@ -1299,8 +1299,27 @@ export default {
   customer_menu_contact: 'پەیوەندی و سۆشیال',
   customer_menu_best_badge: 'زۆرترین فرۆش',
   customer_menu_closed_today: 'ئەمڕۆ داخراوە',
+  customer_closed_ordering_paused: 'داواکردن ڕاگیراوە',
+  customer_closed_today: 'ئەمڕۆ',
+  customer_closed_before_title: 'هێشتا نەکراوەتەوە',
+  customer_closed_before_hint:
+    'داواکردن لە کاتی کردنەوەمان دەست پێدەکات. هەتا ئەو کاتە سەیری مێنیۆ بکە — دوگمەی داواکردن خۆکارانە دەگەڕێتەوە.',
+  customer_closed_after_title: 'بۆ ئێستا داخراوە',
+  customer_closed_after_hint:
+    'داواکردن تا کاتی کردنەوەی داهاتوو ڕاگیراوە. هەموو مێنیۆکە بۆ بینین کراوەیە.',
+  customer_closed_holiday_title: 'ئەمڕۆ پشووە',
+  customer_closed_holiday_hint:
+    'ئەمڕۆ داخراوین. لە ڕۆژی کاری داهاتوو بگەڕێوە — مێنیۆ هەر کاتێک بیت لەبەردەستدایە.',
+  customer_closed_schedule_title: 'کاتژمێری کارکردن نوێ دەکرێتەوە',
+  customer_closed_schedule_hint:
+    'هەر کاتێک کاتژمێری کارکردن بڵاوکرایەوە، داواکردن دەگەڕێتەوە. هێشتا دەتوانیت سەیری هەموو مێنیۆ بکەیت.',
+  customer_closed_browse: 'هێشتا دەتوانیت سەیری مێنیۆ بکەیت',
+  customer_hours_before: 'هێشتا نەکراوەتەوە',
+  customer_hours_holiday: 'پشوو',
+  customer_hours_unset: 'کاتژمێر دیاری نەکراوە',
   customer_menu_open_map: 'کردنەوەی نەخشە',
   customer_table_select: 'هەڵبژاردنی مێز',
+  customer_table_pick_hint: 'بۆ هەڵبژاردنی مێز لێی بدە',
   customer_table_select_placeholder: 'مێزێک هەڵبژێرە',
   customer_table_missing: 'مێز نەناسرایەوە؛ داواکاری بەبێ مێز تۆمار دەکرێت.',
   customer_table_invalid: 'لینکی QR ی مێز دروست نییە.',

@@ -1300,8 +1300,27 @@ export default {
   customer_menu_contact: 'Contact & social',
   customer_menu_best_badge: 'Best seller',
   customer_menu_closed_today: 'Closed today',
+  customer_closed_ordering_paused: 'Ordering paused',
+  customer_closed_today: 'Today',
+  customer_closed_before_title: "We're not open yet",
+  customer_closed_before_hint:
+    'Ordering starts when we open. Browse the menu in the meantime — the order buttons come back on their own.',
+  customer_closed_after_title: "We're closed for now",
+  customer_closed_after_hint:
+    'Ordering is paused until our next opening time. The whole menu stays available to browse.',
+  customer_closed_holiday_title: "It's our day off today",
+  customer_closed_holiday_hint:
+    'We are closed today. Come back on our next working day — the menu is here whenever you are.',
+  customer_closed_schedule_title: 'Opening hours are being updated',
+  customer_closed_schedule_hint:
+    'Ordering returns as soon as our schedule is published. You can still browse everything on the menu.',
+  customer_closed_browse: 'You can still browse the menu',
+  customer_hours_before: 'Not open yet',
+  customer_hours_holiday: 'Day off',
+  customer_hours_unset: 'Hours not set',
   customer_menu_open_map: 'Open in maps',
   customer_table_select: 'Select a table',
+  customer_table_pick_hint: 'Tap to choose your table',
   customer_table_select_placeholder: 'Choose a table',
   customer_table_missing: 'No table was identified; the order will be placed without a table.',
   customer_table_invalid: 'The table QR link is not valid.',

@@ -40,7 +40,6 @@ export default function HoursTab({ draft, setJson, canManage }) {
           const isToday = today === day;
           return (
             <div key={day} className={`set-day ${isToday ? 'is-today' : ''} ${closed ? 'is-closed' : ''}`}>
-              {isToday ? <span className="set-day__badge">{t('settings_today')}</span> : null}
               <div className="set-day__name">
                 <span>{t(`settings_day_${day}`)}</span>
                 <SwitchControl
@@ -50,8 +49,11 @@ export default function HoursTab({ draft, setJson, canManage }) {
                   onChange={(open) => setJson('working_hours', day, { ...value, closed: !open })}
                 />
               </div>
+              {/* Today sits on the same line as the open/closed verdict, so the
+                  two read as one answer instead of two separate rows. */}
               <span className={`set-day__state ${closed ? 'is-closed' : ''}`}>
                 {closed ? t('settings_status_closed') : t('settings_status_open')}
+                {isToday ? <span className="set-day__badge">{t('settings_today')}</span> : null}
               </span>
 
               <div className="set-day__times">
