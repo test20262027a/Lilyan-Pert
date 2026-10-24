@@ -22,6 +22,7 @@ export default function BestSelling({ rows = [], locale }) {
           {rows.map((row, i) => {
             const units = Number(row.units) || 0;
             const width = max > 0 ? Math.max(3, Math.round((units / max) * 100)) : 0;
+            const amount = fmtNumber(units, locale);
             return (
               <div className="best-row" key={`${row.name}-${i}`}>
                 <div className="best-row__top">
@@ -34,11 +35,15 @@ export default function BestSelling({ rows = [], locale }) {
                   <span
                     className="best-row__track"
                     role="img"
-                    aria-label={`${row.name}: ${fmtNumber(units, locale)} ${t('dash_units')}`}
+                    aria-label={`${row.name}: ${amount} ${t('dash_units')}`}
                   >
                     <span className="best-row__fill" style={{ width: `${width}%` }} />
                   </span>
-                  <span className="best-row__badge">{fmtNumber(units, locale)}</span>
+                  {/* The count only: a number that fits its circle, however
+                      many digits the locale writes it with. */}
+                  <span className={`best-row__badge ${amount.length > 2 ? 'is-tight' : ''}`.trim()}>
+                    {amount}
+                  </span>
                 </div>
               </div>
             );

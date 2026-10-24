@@ -22,10 +22,21 @@ export function primaryFor(theme) {
 }
 
 /**
- * The readable ink for a filled accent surface. A saturated purple or blue
- * carries white text; a light gold or amber needs dark text, so the choice is
- * made from the colour's relative luminance instead of assuming white.
+ * The readable ink for a filled accent surface.
+ *
+ * A filled button (and every label, icon and badge drawn on it) is meant to be
+ * white on a colour: the saturated blues, purples, greens, corals and roses the
+ * presets offer all carry white. Only a genuinely pale accent — the golden
+ * "Default" preset or a light amber — needs near-black ink, or its label
+ * disappears into the surface.
+ *
+ * The split is therefore a luminance threshold rather than "whichever contrast
+ * ratio is numerically higher": the pure ratio comparison flipped the ocean
+ * blue (and the sunset coral) to near-black, which is why icons inside the blue
+ * action buttons read as dark, off-brand glyphs.
  */
+const DARK_INK_MAX_LUMINANCE = 0.35;
+
 function inkFor(hex) {
   const match = /^#?([0-9a-f]{6})$/i.exec(String(hex || '').trim());
   if (!match) return '#ffffff';
@@ -35,8 +46,8 @@ function inkFor(hex) {
     return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
   });
   const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  // Whichever of white / near-black contrasts more with the accent.
-  return 1.05 / (luminance + 0.05) >= (luminance + 0.05) / 0.05 ? '#ffffff' : '#171a12';
+  // White on every saturated accent; near-black only on a pale one.
+  return luminance <= DARK_INK_MAX_LUMINANCE ? '#ffffff' : '#171a12';
 }
 
 /** Applies a business theme to the document root (light/dark + primary color). */

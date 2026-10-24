@@ -872,27 +872,40 @@
 /* ------------------------------------------------------ categories button */
 
 @media (min-width: 768px) and (max-width: 1199px) {
+  /* A full-width bar at the head of the category area — the same width as the
+     category summary and the product statistics under it — instead of a small
+     chip floating at the far edge of the column. */
   .mcat-toggle {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     gap: 10px;
-    align-self: flex-start;
-    max-width: 100%;
-    min-height: 46px;
-    padding: 6px 12px;
-    border-radius: 14px;
-    border: 1px solid color-mix(in srgb, var(--mp-green) 26%, var(--mp-line));
-    background: var(--surface);
+    flex: none;
+    align-self: stretch;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--mp-green) 28%, var(--mp-line));
+    background:
+      radial-gradient(120% 150% at 50% -35%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 62%),
+      linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--mp-green) 5%, var(--surface)));
     color: var(--mp-ink);
     font: inherit;
     cursor: pointer;
     box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.75),
-      0 10px 20px -18px rgba(24, 46, 30, 0.7);
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 color-mix(in srgb, var(--mp-green) 8%, transparent),
+      0 2px 4px rgba(24, 46, 30, 0.05),
+      0 12px 24px -20px rgba(24, 46, 30, 0.75);
     transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease;
   }
   .mcat-toggle:hover:not(:disabled) {
     border-color: color-mix(in srgb, var(--mp-green) 50%, var(--mp-line));
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 3px 6px rgba(24, 46, 30, 0.06),
+      0 16px 28px -20px rgba(24, 46, 30, 0.8);
   }
   .mcat-toggle:active:not(:disabled) { transform: translateY(1px); }
   /* The glyph is the action (open / close), never a category's identity. */
@@ -912,10 +925,16 @@
       inset 0 1px 0 rgba(255, 255, 255, 0.75),
       0 0 0 3px color-mix(in srgb, var(--mp-green) 12%, transparent);
   }
+  .mcat-toggle__glyph {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
   .mcat-toggle__text {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
+    flex: 1 1 auto;
     min-width: 0;
     text-align: start;
   }
@@ -923,7 +942,7 @@
   .mcat-toggle__current {
     font-size: 11px;
     color: var(--mp-muted);
-    max-width: 180px;
+    max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

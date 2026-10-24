@@ -3,6 +3,7 @@ import Icon from '../Icon';
 import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 import ModalActions from '../ModalActions';
 import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import ProductImageField from './ProductImageField';
@@ -248,7 +249,7 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
           <span className="mcmodal__req" aria-hidden="true">*</span>
         </div>
 
-        <div className="mcmodal__langs">
+        <LanguageFieldsGrid count={cardCodes.length} className="mcmodal__langs">
           {cardCodes.map((code) => {
             const language = localeFor(code);
             return (
@@ -279,7 +280,7 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
               </div>
             );
           })}
-        </div>
+        </LanguageFieldsGrid>
       </section>
 
       <section className="mcmodal__section">

@@ -560,7 +560,7 @@
 /* --------------------------------------------------------- best selling */
 
 .best-list { display: flex; flex-direction: column; gap: 12px; }
-.best-row { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.best-row { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .best-row__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .best-row__rank {
   width: 22px; height: 22px; border-radius: 7px; flex: none;
@@ -569,22 +569,31 @@
   color: var(--mint-ink); font-size: 11px; font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
+/* A long name wraps to a second line instead of being cut off — the product
+   name is the row's identity, and Kurdish / Persian / Arabic names are often
+   longer than one line. Never more than two, so every row keeps its height. */
 .best-row__name {
   flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 650; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  line-height: 1.35; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 /* Bar plus a fixed value column: the column is what keeps every circle on the
-   same vertical line, whatever the quantity's digit count. */
+   same vertical line, whatever the quantity's digit count. The line is indented
+   by the rank marker so the bar starts under the name, not under the number. */
 .best-row__line {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 34px;
   align-items: center; gap: 9px;
+  padding-inline-start: 30px;
+  min-width: 0;
 }
 .best-row__track {
   height: 9px; border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--border-strong) 45%, transparent);
   box-shadow: inset 0 1px 2px rgba(20, 45, 30, 0.09);
   overflow: hidden;
+  min-width: 0;
 }
 .best-row__fill {
   display: block; height: 100%; border-radius: inherit;
@@ -612,7 +621,11 @@
     0 2px 5px color-mix(in srgb, var(--mint) 22%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -1px 2px color-mix(in srgb, var(--mint) 14%, transparent);
+  white-space: nowrap;
 }
+/* Three digits and up (a locale may also group them) shrink instead of
+   spilling out of the circle or pushing the bar sideways. */
+.best-row__badge.is-tight { font-size: 10.5px; letter-spacing: -0.02em; }
 
 /* --------------------------------------------------------- status tiles */
 

@@ -3,6 +3,7 @@ import Icon from '../Icon';
 import { Alert, Switch } from '../ui';
 import { LOCALES, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 import ModalActions from '../ModalActions';
 import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import CategoryIdentityIcon from './CategoryIdentityIcon';
@@ -186,7 +187,7 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
           <span className="mcmodal__req" aria-hidden="true">*</span>
         </div>
 
-        <div className="mcmodal__langs">
+        <LanguageFieldsGrid count={cards.length} className="mcmodal__langs">
           {cards.map((code) => {
             const locale = cardFor(code);
             const inputId = `menu-category-name-${code}`;
@@ -209,7 +210,7 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
               </div>
             );
           })}
-        </div>
+        </LanguageFieldsGrid>
       </section>
 
       {/* Identity: a live preview of the glyph + accent that will be saved. */}

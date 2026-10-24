@@ -195,8 +195,15 @@
 
 /* --------------------------------------------------- language inputs */
 
-/* Columns come from LanguageFieldsGrid, which counts the enabled languages. */
+/*
+ * Columns come from LanguageFieldsGrid, which is given the number of languages
+ * the owner actually enabled: one language fills the row, two sit side by side,
+ * three use two columns with the last card spanning the row, four make a clean
+ * 2×2 block. Nothing reserves an empty column for a switched-off language, and
+ * every visible input/textarea grows into the width it is given.
+ */
 .mcmodal__langs { width: 100%; }
+.mcmodal__langs .lang-grid { gap: 10px; }
 
 .mcmodal__lang {
   display: flex;
@@ -330,10 +337,8 @@
   .mcmodal__foot { padding: 12px 16px; }
 }
 
-/* Only once the two columns stop being readable do the cards stack. */
-@media (max-width: 380px) {
-  .mcmodal__langs { grid-template-columns: minmax(0, 1fr); }
-}
+/* The language cards stack on their own (languageGrid.css) once the form is
+   too narrow for two readable columns — no fixed breakpoint here. */
 
 @media (max-width: 420px) {
   .mcmodal__foot { flex-wrap: wrap; }

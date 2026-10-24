@@ -571,6 +571,38 @@ a { color: var(--primary); }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
 /* --------------------------------------------------------------------------
+   Icon ink inside filled action buttons — one rule, every button family.
+
+   A filled button already carries the readable foreground for its own surface
+   in `--primary-ink` (white on a saturated blue / purple / green / coral,
+   near-black on a pale gold). Its glyphs therefore draw in that same ink
+   instead of a brand-coloured icon, and the circular glyph chip some create
+   buttons show is a translucent disc of the button's own ink — never a white
+   plate that re-colours the icon to the accent.
+
+   Outlined, ghost, soft and white buttons opt out: they inherit their own
+   text colour, so their icons stay readable rather than turning white on
+   white.
+   -------------------------------------------------------------------------- */
+
+:is(.btn--primary, .btn--danger, .mbtn, .mcard__btn, .mcmodal__btn, .mform__mini,
+    .tadd, .ad-add, .ad-save, .ad2-btn, .promo-add, .promo-save, .um-add,
+    .um-btn--primary, .bk-btn, .dash-modal__btn, .tx-translate, .rv-more)
+  :is(svg, .icon) {
+  color: inherit;
+}
+
+/* A glyph chip inside a solid button: tinted from the button's ink, so the
+   icon and the disc can never disagree about which colour they are. */
+:is(.mbtn, .tadd, .ad-add, .promo-add, .um-add)
+  > :is(.mbtn__plus, .tadd__dot, .ad-add__dot, .promo-add__dot, .um-add__plus) {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  color: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* --------------------------------------------------------------------------
    Labelled action buttons — the icon sits at the LOGICAL END of the label.
 
    RTL (Kurdish / Persian / Arabic): label on the right, icon on the left.
