@@ -41,6 +41,12 @@ export default function AvatarFigure({ kind = 'male', className = '' }) {
           <stop offset="0%" stopColor="#4a352a" />
           <stop offset="100%" stopColor="#2c1f18" />
         </linearGradient>
+        {/* A single warm highlight across the crown: it keeps the hair from
+            reading as a flat silhouette at small sizes. */}
+        <linearGradient id={`${uid}-sheen`} x1="18%" y1="0%" x2="72%" y2="86%">
+          <stop offset="0%" stopColor="#ffffff" stopOpacity="0.34" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </linearGradient>
       </defs>
 
       <rect width="100" height="100" fill={`url(#${uid}-bg)`} />
@@ -65,6 +71,7 @@ export default function AvatarFigure({ kind = 'male', className = '' }) {
             fill={`url(#${uid}-hair)`}
           />
           <path d="M32 42c3-9 8-14 18-14 9 0 15 5 18 14-6-5-11-6-18-6s-12 1-18 6z" fill="#5b4133" opacity="0.55" />
+          <path d="M35 33c5-6 10-8 15-8 6 0 11 2 16 8-5-3-10-4-16-4s-11 1-15 4z" fill={`url(#${uid}-sheen)`} />
           {/* Eyes, lashes, blush, smile. */}
           <ellipse cx="43.5" cy="45" rx="2.2" ry="2.7" fill="#3b2c24" />
           <ellipse cx="56.5" cy="45" rx="2.2" ry="2.7" fill="#3b2c24" />
@@ -95,6 +102,7 @@ export default function AvatarFigure({ kind = 'male', className = '' }) {
             fill={`url(#${uid}-hair)`}
           />
           <path d="M33 36c4-7 9-10 17-10 7 0 13 3 17 10-5-4-10-5-17-5s-12 1-17 5z" fill="#5b4133" opacity="0.5" />
+          <path d="M35 32c4-5 9-7 15-7 7 0 12 2 16 7-5-2-10-3-16-3s-11 1-15 3z" fill={`url(#${uid}-sheen)`} />
           {/* Eyes and brows. */}
           <ellipse cx="43.5" cy="45" rx="2.3" ry="2.8" fill="#3b2c24" />
           <ellipse cx="56.5" cy="45" rx="2.3" ry="2.8" fill="#3b2c24" />

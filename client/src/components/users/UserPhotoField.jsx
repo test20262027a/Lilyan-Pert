@@ -101,78 +101,86 @@ export default function UserPhotoField({
 
   return (
     <div className="uphoto">
-      <div className="uphoto__stage">
-        <span className={`uphoto__frame ${busy ? 'is-busy' : ''}`}>
-          <UserAvatar src={photo || null} avatarType={avatarType} size={104} alt={name || ''} />
+      {/* Live preview beside the upload controls: the large circular frame is
+          the same avatar component the rest of the app shows, so what the
+          administrator sees here is exactly what the account will look like. */}
+      <div className="uphoto__head">
+        <span className={`uphoto__stage ${busy ? 'is-busy' : ''}`}>
+          <span className="uphoto__frame">
+            <UserAvatar src={photo || null} avatarType={avatarType} size={96} alt={name || ''} />
+          </span>
           <span className="uphoto__badge" aria-hidden="true">
-            {busy ? <span className="spinner" /> : <Icon name="camera" size={13} />}
+            {busy ? <span className="spinner" /> : <Icon name="camera" size={12} />}
           </span>
         </span>
+
+        <div className="uphoto__panel">
+          <div className="uphoto__actions">
+            <label className={`uphoto__btn uphoto__btn--primary ${disabled || busy ? 'is-disabled' : ''}`}>
+              <Icon name="upload" size={14} />
+              <span>{t('user_upload_photo')}</span>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                hidden
+                disabled={disabled || busy}
+                onChange={(e) => pick(e.target.files?.[0])}
+              />
+            </label>
+            {photo ? (
+              <button
+                type="button"
+                className="uphoto__btn"
+                disabled={disabled || busy}
+                onClick={() => onPhotoChange?.(null)}
+              >
+                <Icon name="trash" size={14} />
+                <span>{t('user_remove_photo')}</span>
+              </button>
+            ) : null}
+          </div>
+          <p className="um-note uphoto__hint">{t('user_photo_hint')}</p>
+        </div>
       </div>
 
-      <div className="uphoto__panel">
-        <div className="uphoto__actions">
-          <label className={`uphoto__btn uphoto__btn--primary ${disabled || busy ? 'is-disabled' : ''}`}>
-            <Icon name="upload" size={14} />
-            <span>{t('user_upload_photo')}</span>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              hidden
-              disabled={disabled || busy}
-              onChange={(e) => pick(e.target.files?.[0])}
-            />
-          </label>
-          {photo ? (
-            <button
-              type="button"
-              className="uphoto__btn"
-              disabled={disabled || busy}
-              onClick={() => onPhotoChange?.(null)}
-            >
-              <Icon name="trash" size={14} />
-              <span>{t('user_remove_photo')}</span>
-            </button>
-          ) : null}
-        </div>
-
-        <div className="uphoto__field">
+      <div className="uphoto__field">
+        <div className="uphoto__fieldhead">
           <span className="uphoto__label">{t('user_avatar_choose')}</span>
-          {/* Three premium portraits side by side: the chosen one lifts, gains a
-              themed ring and a check mark, so the selection is unmistakable. */}
-          <div
-            className="uavatar-picker"
-            role="radiogroup"
-            aria-label={t('user_avatar_label')}
-          >
-            {avatarOptions.map((option) => {
-              const selected = avatarType === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  aria-label={option.label}
-                  className={`uavatar-option ${selected ? 'is-selected' : ''}`}
-                  onClick={() => onAvatarChange?.(option.value)}
-                  disabled={disabled}
-                >
-                  <span className="uavatar-option__disc">
-                    <UserAvatar avatarType={option.value} size={48} />
-                  </span>
-                  <span className="uavatar-option__label">{option.label}</span>
-                  <span className="uavatar-option__check" aria-hidden="true">
-                    <Icon name="check" size={11} />
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+          <span className="uphoto__rule" aria-hidden="true" />
         </div>
-
-        <p className="um-note uphoto__hint">{t('user_photo_hint')}</p>
+        {/* Three premium portrait cards side by side: the chosen one lifts out
+            of the row, gains a themed ring and a check mark, so the selection
+            is unmistakable while every option stays easy to hit. */}
+        <div
+          className="uavatar-picker"
+          role="radiogroup"
+          aria-label={t('user_avatar_label')}
+        >
+          {avatarOptions.map((option) => {
+            const selected = avatarType === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={option.label}
+                className={`uavatar-option ${selected ? 'is-selected' : ''}`}
+                onClick={() => onAvatarChange?.(option.value)}
+                disabled={disabled}
+              >
+                <span className="uavatar-option__disc">
+                  <UserAvatar avatarType={option.value} size={54} />
+                  <span className="uavatar-option__check" aria-hidden="true">
+                    <Icon name="check" size={10} />
+                  </span>
+                </span>
+                <span className="uavatar-option__label">{option.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
