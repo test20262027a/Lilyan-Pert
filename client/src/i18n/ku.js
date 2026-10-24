@@ -625,6 +625,7 @@ export default {
   backup_card_title: 'پاڵپشت: {name}',
   backup_checksum_ok: 'تەواوی پشتڕاستکرایەوە',
   backup_ref_only: 'تەنها بۆ سەرچاوە هەناردەکرا — ناگەڕێندرێتەوە',
+  backup_deps_included: 'داتای {sections}ی پەیوەندیدار وەک پێداویستییەکی تەکنیکی پێویست لەگەڵدایە.',
   backup_sections: 'بەشەکان',
   backup_rows_skipped: 'پەڕێنرا',
   backup_restore_skipped:

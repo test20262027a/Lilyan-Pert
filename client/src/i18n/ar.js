@@ -625,6 +625,7 @@ export default {
   backup_card_title: 'نسخة: {name}',
   backup_checksum_ok: 'تم التحقق من السلامة',
   backup_ref_only: 'صُدّرت للمرجع فقط — لا تُكتب مرة أخرى',
+  backup_deps_included: 'يُضمَّن بيانات {sections} المرتبطة كاعتماد تقني مطلوب.',
   backup_sections: 'الأقسام',
   backup_rows_skipped: 'تم تخطيها',
   backup_restore_skipped: 'أقسام المرجع فقط (وصول الفريق وسجل النشاط) بقيت كما هي.',

@@ -9,6 +9,7 @@ import OrderFlow from '../components/dashboard/OrderFlow';
 import BestSelling from '../components/dashboard/BestSelling';
 import StatusBreakdown from '../components/dashboard/StatusBreakdown';
 import NewOrders from '../components/dashboard/NewOrders';
+import OrderDetailsModal from '../components/orders/detail/OrderDetailsModal';
 import ScrollTop from '../components/dashboard/ScrollTop';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
@@ -33,6 +34,9 @@ export default function Dashboard() {
   const [pushError, setPushError] = useState('');
   const [range, setRange] = useState('today');
   const [custom, setCustom] = useState({ from: '', to: '' });
+  // The order the shared details modal is open on — dashboard rows never
+  // navigate away from the page any more.
+  const [openOrderId, setOpenOrderId] = useState(null);
 
   const query =
     range === 'custom' && custom.from && custom.to
@@ -202,10 +206,19 @@ export default function Dashboard() {
           timeZone={timeZone}
           failed={failed}
           onRetry={() => load(false)}
+          onOpenOrder={setOpenOrderId}
         />
       ) : null}
 
       <ScrollTop />
+
+      {openOrderId ? (
+        <OrderDetailsModal
+          orderId={openOrderId}
+          onClose={() => setOpenOrderId(null)}
+          onChanged={() => load(true)}
+        />
+      ) : null}
     </div>
   );
 }

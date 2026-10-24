@@ -16,6 +16,7 @@ export default function NewOrders({
   timeZone,
   failed = false,
   onRetry,
+  onOpenOrder,
 }) {
   const { t } = useI18n();
 
@@ -28,6 +29,7 @@ export default function NewOrders({
         timeZone={timeZone}
         failed={failed}
         onRetry={onRetry}
+        onOpenOrder={onOpenOrder}
       />
     </SectionCard>
   );

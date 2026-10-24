@@ -450,6 +450,139 @@
   color: var(--bk-check);
 }
 
+/* ---------------------------------------- independently selectable sections */
+
+/*
+ * Every section is its own checkbox. It rests as a soft pill with a small
+ * tick-box, and the selected pill lifts with a themed fill, ring and check —
+ * distinct from the card's own state, so a part-selected card reads clearly.
+ */
+.bk-chip--choice {
+  font: inherit;
+  font-size: 10.5px;
+  font-weight: 650;
+  cursor: pointer;
+  text-align: start;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background 160ms ease,
+    box-shadow 160ms ease,
+    color 160ms ease;
+}
+.bk-chip--choice:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--theme-primary) 42%, #e4e9e4);
+  color: var(--theme-primary-strong);
+  box-shadow:
+    0 4px 10px -6px color-mix(in srgb, var(--theme-primary) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.bk-chip--choice:focus-visible {
+  outline: 2px solid var(--theme-primary);
+  outline-offset: 2px;
+}
+.bk-chip--choice:disabled { cursor: default; opacity: 0.6; }
+
+.bk-chip__box {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 5px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 26%, #dfe5df);
+  background: #ffffff;
+  color: color-mix(in srgb, var(--theme-primary) 55%, #8c948c);
+  box-shadow: inset 0 1px 1px rgba(23, 26, 43, 0.04);
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+.bk-chip--ref .bk-chip__box { border-style: dashed; }
+
+.bk-chip--choice.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 52%, #ffffff);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-primary) 15%, #ffffff),
+    color-mix(in srgb, var(--theme-primary) 9%, #ffffff)
+  );
+  color: var(--theme-primary-strong);
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--theme-primary) 16%, transparent),
+    0 5px 12px -7px color-mix(in srgb, var(--theme-primary) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+.bk-chip--choice.is-on .bk-chip__box {
+  border-color: transparent;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--theme-primary) 84%, #ffffff),
+    var(--theme-primary)
+  );
+  color: #ffffff;
+  box-shadow: 0 2px 5px -2px color-mix(in srgb, var(--theme-primary) 80%, transparent);
+}
+.bk-chip__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* A card whose sections are only partly picked: no full-card highlight, but a
+   dashed accent and a mixed-state tick. */
+.bk-sel-card.is-partial {
+  border-color: color-mix(in srgb, var(--theme-primary) 38%, #e9eee9);
+  background: color-mix(in srgb, var(--theme-primary) 9%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 8px 18px rgba(25, 55, 35, 0.05);
+}
+.bk-tick.is-partial {
+  background: color-mix(in srgb, var(--theme-primary) 16%, #ffffff);
+  border-color: color-mix(in srgb, var(--theme-primary) 48%, #ffffff);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.bk-tick__dash {
+  display: block;
+  width: 9px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--theme-primary-strong);
+}
+
+/* Required-dependency note, shown before the archive is created. */
+.bk-depnote {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 0;
+  padding: 9px 15px 12px;
+  color: var(--bk-muted, #6b746c);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+.bk-depnote .icon { flex: none; margin-top: 2px; color: var(--theme-primary-strong); }
+
+[data-theme='dark'] .bk-chip__box {
+  background: #23261f;
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, #414a3f);
+  color: color-mix(in srgb, var(--theme-primary) 55%, #c9d2c9);
+}
+[data-theme='dark'] .bk-chip--choice.is-on {
+  background: color-mix(in srgb, var(--theme-primary) 18%, #232b24);
+  border-color: color-mix(in srgb, var(--theme-primary) 52%, transparent);
+  color: color-mix(in srgb, var(--theme-primary) 55%, #ffffff);
+}
+[data-theme='dark'] .bk-sel-card.is-partial {
+  background: color-mix(in srgb, var(--theme-primary) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--line));
+}
+[data-theme='dark'] .bk-tick.is-partial {
+  background: color-mix(in srgb, var(--theme-primary) 22%, #23261f);
+  border-color: color-mix(in srgb, var(--theme-primary) 48%, transparent);
+}
+
 .bk-tick {
   margin-inline-start: auto;
   width: 22px;

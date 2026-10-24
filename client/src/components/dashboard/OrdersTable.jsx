@@ -1,4 +1,3 @@
-import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { fmtDate, fmtMoney, fmtTime } from '../../format';
@@ -8,8 +7,8 @@ const COLUMNS = 6;
 /*
  * The dashboard's compact six-column order table. It renders only the real
  * rows the API returned for this business — no placeholder orders — and each
- * row opens the existing order detail page (the order number is the keyboard
- * reachable link, the row itself is the pointer shortcut).
+ * row opens the same order modal the Orders page uses, so the dashboard never
+ * navigates away and never falls back to the old detail page.
  */
 export default function OrdersTable({
   orders = [],
@@ -18,9 +17,10 @@ export default function OrdersTable({
   timeZone,
   failed = false,
   onRetry,
+  onOpenOrder,
 }) {
   const { t } = useI18n();
-  const navigate = useNavigate();
+  const open = (order) => onOpenOrder?.(order.id);
 
   return (
     <div className="orders-table__wrap">
@@ -61,14 +61,18 @@ export default function OrdersTable({
             </tr>
           ) : (
             orders.map((o) => (
-              <tr key={o.id} className="orders-table__row" onClick={() => navigate(`/orders/${o.id}`)}>
+              <tr key={o.id} className="orders-table__row" onClick={() => open(o)}>
                 <td className="orders-table__no">
-                  <Link
-                    to={`/orders/${o.id}`}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    type="button"
+                    className="orders-table__link"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      open(o);
+                    }}
                   >
                     #{o.order_number}
-                  </Link>
+                  </button>
                 </td>
                 <td className="orders-table__when">
                   <span>{fmtDate(o.created_at, locale, timeZone, { short: true })}</span>

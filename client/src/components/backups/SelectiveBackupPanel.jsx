@@ -5,16 +5,22 @@ import { fmtNumber } from '../../format';
 import { categoryLabel, categoryVisual, sectionLabel, sectionVisual } from './backupMeta';
 
 /*
- * Section-by-section backup: twelve selectable cards, each listing the manifest
- * sections it covers. Selecting a card selects every section inside it — the
- * chips are labels, not controls, because the API takes whole cards.
+ * Section-by-section backup.
+ *
+ * Twelve cards, and every section inside a card is its own control: picking
+ * "Products" never drags "Categories" along. The card's own tick is a shortcut
+ * that selects or clears every section it holds and reports its real
+ * state — empty, mixed or full — so the card always tells the truth about what
+ * the archive will contain.
  */
 export default function SelectiveBackupPanel({
   categories = [],
   sections = [],
+  modules = [],
   selected = [],
   busy,
-  onToggle,
+  onToggleSection,
+  onToggleCategory,
   onSelectAll,
   onClear,
   onCreate,
@@ -29,9 +35,27 @@ export default function SelectiveBackupPanel({
     return map;
   }, [sections]);
 
+  const moduleByKey = useMemo(() => new Map(modules.map((mod) => [mod.key, mod])), [modules]);
+
+  /* A section can require another one's data (order history needs its orders).
+     The server includes only those modules, and the page says so up front. */
+  const requiredSections = useMemo(() => {
+    const picked = new Set(selected);
+    const extra = new Set();
+    for (const section of sections) {
+      if (!picked.has(section.key)) continue;
+      for (const moduleKey of section.modules || []) {
+        for (const dep of moduleByKey.get(moduleKey)?.dependencies || []) {
+          const depSection = moduleByKey.get(dep)?.section;
+          if (depSection && !picked.has(depSection)) extra.add(depSection);
+        }
+      }
+    }
+    return [...extra];
+  }, [selected, sections, moduleByKey]);
+
   const count = selected.length;
-  const selectable = categories.length;
-  const allSelected = count > 0 && count === selectable;
+  const allSelected = count > 0 && count === sections.length;
 
   return (
     <section className="bk-panel">
@@ -84,13 +108,16 @@ export default function SelectiveBackupPanel({
 
       <div className="bk-sel-grid">
         {categories.map((category) => {
-          const on = selected.includes(category.key);
+          const cardSections = sectionsByCategory[category.key] || [];
+          const picked = cardSections.filter((section) => selected.includes(section.key));
+          const all = cardSections.length > 0 && picked.length === cardSections.length;
+          const part = picked.length > 0 && !all;
           const visual = categoryVisual(category.key);
+          const name = categoryLabel(t, category.key);
           return (
             <article
               key={category.key}
-              className={`bk-sel-card ${on ? 'is-on' : ''}`}
-              onClick={() => onToggle(category.key)}
+              className={`bk-sel-card ${all ? 'is-on' : ''} ${part ? 'is-partial' : ''}`}
             >
               <div className="bk-sel-card__top">
                 <span className={`bk-ico bk-tone--${visual.tone}`} aria-hidden="true">
@@ -98,34 +125,43 @@ export default function SelectiveBackupPanel({
                 </span>
                 <button
                   type="button"
-                  className="bk-tick"
+                  className={`bk-tick ${part ? 'is-partial' : ''}`}
                   role="checkbox"
-                  aria-checked={on}
-                  aria-label={categoryLabel(t, category.key)}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onToggle(category.key);
-                  }}
+                  aria-checked={all ? 'true' : part ? 'mixed' : 'false'}
+                  aria-label={name}
+                  title={name}
+                  onClick={() => onToggleCategory?.(category.key)}
                 >
-                  {on ? <Icon name="check" size={13} /> : null}
+                  {all ? <Icon name="check" size={13} /> : null}
+                  {part ? <span className="bk-tick__dash" aria-hidden="true" /> : null}
                 </button>
               </div>
 
-              <span className="bk-sel-card__name">{categoryLabel(t, category.key)}</span>
+              <span className="bk-sel-card__name">{name}</span>
 
-              <div className="bk-sel-card__body">
-                {(sectionsByCategory[category.key] || []).map((section) => {
+              <div className="bk-sel-card__body" role="group" aria-label={name}>
+                {cardSections.map((section) => {
                   const sectionStyle = sectionVisual(section.key);
+                  const on = selected.includes(section.key);
+                  const reference = section.restorable === false;
                   return (
-                    <span
-                      className={`bk-chip ${section.restorable === false ? 'bk-chip--ref' : ''}`}
+                    <button
+                      type="button"
                       key={section.key}
-                      title={section.restorable === false ? t('backup_ref_only') : undefined}
+                      role="checkbox"
+                      aria-checked={on}
+                      className={`bk-chip bk-chip--choice ${on ? 'is-on' : ''} ${
+                        reference ? 'bk-chip--ref' : ''
+                      }`}
+                      title={reference ? t('backup_ref_only') : sectionLabel(t, section.key)}
+                      onClick={() => onToggleSection?.(section.key)}
+                      disabled={busy}
                     >
-                      <Icon name={sectionStyle.icon} size={11} />
-                      {sectionLabel(t, section.key)}
-                      {on ? <Icon name="check" size={11} className="bk-chip__tick" /> : null}
-                    </span>
+                      <span className="bk-chip__box" aria-hidden="true">
+                        {on ? <Icon name="check" size={9} /> : <Icon name={sectionStyle.icon} size={10} />}
+                      </span>
+                      <span className="bk-chip__label">{sectionLabel(t, section.key)}</span>
+                    </button>
                   );
                 })}
               </div>
@@ -133,6 +169,17 @@ export default function SelectiveBackupPanel({
           );
         })}
       </div>
+
+      {requiredSections.length ? (
+        <p className="bk-depnote" role="note">
+          <Icon name="alert" size={13} />
+          <span>
+            {t('backup_deps_included', {
+              sections: requiredSections.map((key) => sectionLabel(t, key)).join(' · '),
+            })}
+          </span>
+        </p>
+      ) : null}
     </section>
   );
 }

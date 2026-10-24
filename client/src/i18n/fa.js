@@ -625,6 +625,7 @@ export default {
   backup_card_title: 'پشتیبان: {name}',
   backup_checksum_ok: 'یکپارچگی تأیید شد',
   backup_ref_only: 'فقط برای مرجع صادر شد — بازنویسی نمی‌شود',
+  backup_deps_included: 'داده‌های مرتبط {sections} به‌عنوان وابستگی فنی لازم گنجانده می‌شود.',
   backup_sections: 'بخش‌ها',
   backup_rows_skipped: 'رد شد',
   backup_restore_skipped: 'بخش‌های فقط‌مرجعی (دسترسی تیم و گزارش فعالیت) بدون تغییر باقی ماندند.',

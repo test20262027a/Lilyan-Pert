@@ -175,8 +175,19 @@ export default function Backups() {
     }
   };
 
-  const toggle = (key) =>
+  /* Selection is section-level: the archive is built from exactly these keys. */
+  const toggleSection = (key) =>
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+
+  const toggleCategory = (categoryKey) => {
+    const keys = (categories.find((c) => c.key === categoryKey)?.sections || []).filter((key) =>
+      sections.some((section) => section.key === key),
+    );
+    setSelected((prev) => {
+      const all = keys.length > 0 && keys.every((key) => prev.includes(key));
+      return all ? prev.filter((key) => !keys.includes(key)) : [...new Set([...prev, ...keys])];
+    });
+  };
 
   return (
     <div className="bk-page">
@@ -210,12 +221,14 @@ export default function Backups() {
           <SelectiveBackupPanel
             categories={categories}
             sections={sections}
+            modules={modules}
             selected={selected}
             busy={busy}
-            onToggle={toggle}
-            onSelectAll={() => setSelected(categories.map((c) => c.key))}
+            onToggleSection={toggleSection}
+            onToggleCategory={toggleCategory}
+            onSelectAll={() => setSelected(sections.map((section) => section.key))}
             onClear={() => setSelected([])}
-            onCreate={() => createBackup({ mode: 'custom', categories: selected })}
+            onCreate={() => createBackup({ mode: 'custom', sections: selected })}
           />
 
           <section className="bk-panel">

@@ -625,6 +625,7 @@ export default {
   backup_card_title: 'Backup: {name}',
   backup_checksum_ok: 'Integrity verified',
   backup_ref_only: 'Exported for reference — never written back',
+  backup_deps_included: 'Includes the related {sections} data as a required technical dependency.',
   backup_sections: 'Sections',
   backup_rows_skipped: 'skipped',
   backup_restore_skipped:

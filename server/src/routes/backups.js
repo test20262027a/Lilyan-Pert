@@ -12,8 +12,11 @@ import {
   categoryByKey,
   moduleByKey,
   modulesForCategories,
+  modulesForSections,
+  sectionByKey,
   sectionsCoveredBy,
   sortByDependencies,
+  withRequiredModules,
 } from '../lib/backup-modules.js';
 import { recordActivity } from '../lib/activity.js';
 import { EXECUTION_ORDER, PROTECTED, moduleByKey as resetModule, resetStats } from '../lib/reset-modules.js';
@@ -87,10 +90,14 @@ function buildSections(modules, payload) {
 }
 
 /** Creates and persists a real archive. Returns the stored row plus manifest. */
-async function createBackup({ businessId, user, mode, categoryKeys }) {
+async function createBackup({ businessId, user, mode, categoryKeys, sectionKeys }) {
   let modules = BACKUP_MODULES;
   if (mode === 'custom') {
-    modules = modulesForCategories(categoryKeys || []);
+    // A section selection is exported exactly as chosen, plus only the modules
+    // those sections genuinely depend on (never a whole extra section).
+    modules = sectionKeys?.length
+      ? withRequiredModules(modulesForSections(sectionKeys))
+      : modulesForCategories(categoryKeys || []);
     if (!modules.length) throw bad('NO_MODULES_SELECTED');
   }
   modules = sortByDependencies(modules);
@@ -308,16 +315,24 @@ router.get(
 router.post(
   '/',
   ah(async (req, res) => {
+    // The page sends individual section keys; whole cards and bare module keys
+    // stay accepted so an older client keeps working.
+    const requestedSections = Array.isArray(req.body?.sections)
+      ? [...new Set(req.body.sections.filter((key) => sectionByKey(key)))]
+      : [];
     const requested = Array.isArray(req.body?.categories)
       ? req.body.categories.filter((key) => categoryByKey(key))
       : [];
     const legacyModules = Array.isArray(req.body?.modules)
       ? req.body.modules.filter((key) => moduleByKey(key))
       : [];
-    const mode = req.body?.mode === 'custom' || requested.length || legacyModules.length ? 'custom' : 'full';
+    const mode =
+      req.body?.mode === 'custom' || requestedSections.length || requested.length || legacyModules.length
+        ? 'custom'
+        : 'full';
 
     let categoryKeys = requested;
-    if (mode === 'custom' && !categoryKeys.length && legacyModules.length) {
+    if (mode === 'custom' && !requestedSections.length && !categoryKeys.length && legacyModules.length) {
       // Older clients sent module keys; map them back onto their cards.
       const sections = sectionsCoveredBy(legacyModules);
       categoryKeys = [...new Set(sections.map((s) => s.category))];
@@ -328,6 +343,7 @@ router.post(
       user: req.user,
       mode,
       categoryKeys,
+      sectionKeys: requestedSections,
     });
 
     const { payload, ...backup } = created;

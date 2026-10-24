@@ -736,15 +736,20 @@
 /* The order number is the row's real, keyboard-reachable destination. */
 .orders-table__col-no,
 .orders-table__no { text-align: start; }
-.orders-table__no a {
+.orders-table__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
   font-size: 13px;
   font-weight: 700;
   color: var(--text);
-  text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  border-radius: 6px;
 }
-.orders-table__no a:hover { color: var(--mint-ink); }
-.orders-table__no a:focus-visible { outline-offset: 2px; }
+.orders-table__link:hover { color: var(--mint-ink); }
+.orders-table__link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 
 .orders-table__when { color: var(--muted); font-size: 11.5px; line-height: 1.35; white-space: nowrap; }
 .orders-table__when > span { display: block; }

@@ -288,6 +288,36 @@ export function modulesForCategories(categoryKeys) {
   return BACKUP_MODULES.filter((m) => wanted.has(m.key));
 }
 
+/** Every module behind the given sections, in registry order. */
+export function modulesForSections(sectionKeys) {
+  const wanted = new Set();
+  for (const key of sectionKeys) {
+    const section = sectionByKey(key);
+    if (section) section.modules.forEach((m) => wanted.add(m));
+  }
+  return BACKUP_MODULES.filter((m) => wanted.has(m.key));
+}
+
+/**
+ * The modules a selection really needs, including the dependencies they declare
+ * (an order-history row cannot be restored without its order). Only the required
+ * module is added — never a whole unselected section.
+ */
+export function withRequiredModules(modules) {
+  const wanted = new Map(modules.map((m) => [m.key, m]));
+  const visit = (mod) => {
+    for (const depKey of mod.dependsOn || []) {
+      if (wanted.has(depKey)) continue;
+      const dep = moduleByKey(depKey);
+      if (!dep) continue;
+      wanted.set(dep.key, dep);
+      visit(dep);
+    }
+  };
+  for (const mod of [...modules]) visit(mod);
+  return BACKUP_MODULES.filter((m) => wanted.has(m.key));
+}
+
 /** The sections a list of module keys really covers, in registry order. */
 export function sectionsCoveredBy(moduleKeys) {
   const keys = new Set(moduleKeys);
