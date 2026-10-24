@@ -1,0 +1,1173 @@
+/* ==========================================================================
+   Menu Management page — illustrated banner, action toolbar, category panel,
+   selected-category summary and the image-focused product grid.
+   Layout only: the reference palette lives in local tokens on .menu-page so the
+   app-wide light/dark theme and the business primary colour keep working.
+   ========================================================================== */
+
+.menu-page {
+  --mp-green: var(--theme-primary);
+  --mp-green-ink: var(--theme-primary-strong);
+  --mp-ink: #222522;
+  --mp-muted: #898d88;
+  --mp-line: #ebefeb;
+  --mp-mint: var(--theme-primary-soft);
+  --mp-mint-strong: var(--theme-primary-soft);
+  --mp-orange: #f39a28;
+  --mp-orange-soft: #fff2e7;
+  --mp-red: #ef4444;
+  --mp-red-soft: #fff0f0;
+  --mp-panel-glass: rgba(253, 252, 247, 0.84);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+[data-theme='dark'] .menu-page {
+  --mp-green: var(--mint);
+  --mp-green-ink: var(--mint-ink);
+  --mp-ink: var(--text);
+  --mp-muted: var(--muted);
+  --mp-line: var(--border);
+  --mp-mint: var(--mint-soft);
+  --mp-mint-strong: color-mix(in srgb, var(--mint) 20%, var(--surface));
+  --mp-orange: #e9a24b;
+  --mp-orange-soft: rgba(243, 154, 40, 0.16);
+  --mp-red: #f27b7b;
+  --mp-red-soft: var(--danger-soft);
+  --mp-panel-glass: rgba(24, 27, 24, 0.82);
+}
+
+/* ------------------------------------------------------------ page banner */
+
+.mhero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 165px;
+  padding: 20px 24px;
+  border-radius: 20px;
+  border: 1px solid var(--theme-primary-line);
+  background:
+    radial-gradient(90% 150% at 24% 6%, var(--theme-primary-soft) 0%, transparent 62%),
+    radial-gradient(80% 140% at 88% 98%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+.mhero__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+.mhero__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--mp-orange-soft);
+  color: var(--mp-orange);
+  border: 1px solid color-mix(in srgb, var(--mp-orange) 26%, transparent);
+}
+.mhero__text { min-width: 0; }
+.mhero__title {
+  font-size: clamp(21px, 2.7vw, 28px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+.mhero__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+.mhero__art {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  padding-inline: 10px;
+}
+.mart,
+.mhero__image {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  max-height: 130px;
+  display: block;
+}
+.mhero__image { object-fit: contain; border-radius: 14px; }
+
+.mhero__controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+[data-theme='dark'] .mhero {
+  border-color: var(--mint-line);
+  background:
+    radial-gradient(90% 150% at 24% 6%, rgba(243, 214, 150, 0.12) 0%, transparent 62%),
+    radial-gradient(80% 140% at 88% 98%, color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, #1d1f1a, #191c18);
+}
+[data-theme='dark'] .mhero__title { color: #f0e9d8; }
+[data-theme='dark'] .mhero__sub { color: var(--muted); }
+
+/* ----------------------------------------------------------- action bar */
+
+.mtoolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 12px 16px;
+  border-radius: 20px;
+  border: 1px solid var(--mp-line);
+  background: rgba(255, 255, 255, 0.86);
+  -webkit-backdrop-filter: blur(12px) saturate(1.05);
+  backdrop-filter: blur(12px) saturate(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 14px 28px -22px rgba(24, 46, 30, 0.55),
+    0 2px 5px rgba(24, 46, 30, 0.04);
+}
+
+/* The surface and the focus ring come from the shared `.lilyan-search`. */
+.msearch {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  padding-inline: 12px;
+  border-radius: 14px;
+}
+.msearch__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  padding: 11px 0;
+}
+.msearch__clear {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: var(--surface-3);
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.msearch__clear:hover { color: var(--text); }
+
+.mtoolbar__actions { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+
+.mbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: none;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 750;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+}
+.mbtn--green {
+  color: #fff;
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mp-green) 86%, #fff),
+    var(--mp-green)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 10px 20px -12px color-mix(in srgb, var(--mp-green) 95%, transparent),
+    0 2px 4px rgba(24, 46, 30, 0.1);
+}
+.mbtn--green:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.48),
+    0 14px 24px -12px color-mix(in srgb, var(--mp-green) 95%, transparent),
+    0 3px 6px rgba(24, 46, 30, 0.12);
+}
+.mbtn--green:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 5px rgba(18, 40, 24, 0.22);
+}
+.mbtn:disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
+.mbtn__plus {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--mp-green-ink);
+  display: grid;
+  place-items: center;
+  flex: none;
+  box-shadow: 0 1px 3px rgba(18, 40, 24, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.04);
+}
+
+/* ------------------------------------------------------------- workspace */
+
+/*
+ * One column by default (products only); the desktop rail is added from the
+ * layout breakpoint below. Nothing reserves space for a hidden panel.
+ */
+.mworkspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+  min-width: 0;
+}
+
+/* -------------------------------------------------------- category panel */
+
+.mpanel {
+  background: var(--surface);
+  border: 1px solid var(--mp-line);
+  border-radius: 22px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 18px 32px -26px rgba(24, 46, 30, 0.55),
+    0 2px 6px rgba(24, 46, 30, 0.04);
+  min-width: 0;
+}
+
+/*
+ * Heading at the inline start, identity icon pushed to the opposite far corner
+ * (physical left under RTL, mirrored in LTR) and vertically centred with it.
+ */
+.mpanel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-width: 0;
+}
+.mpanel__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  /* Neutral fallback: follows the business theme, not a fixed hue. */
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 8%, var(--surface)),
+    color-mix(in srgb, var(--primary) 16%, var(--surface))
+  );
+  color: var(--primary);
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 color-mix(in srgb, var(--primary) 8%, transparent),
+    0 5px 12px -6px color-mix(in srgb, var(--primary) 60%, transparent),
+    0 2px 4px -2px rgba(24, 46, 30, 0.12);
+}
+.mpanel__text { min-width: 0; flex: 1 1 auto; }
+.mpanel__title { font-size: 16px; font-weight: 800; color: var(--mp-ink); }
+.mpanel__sub { font-size: 11.5px; color: var(--mp-muted); margin-top: 2px; line-height: 1.4; }
+
+.mcstats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.mcstat {
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 8px 9px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 6px 14px -12px rgba(24, 46, 30, 0.7);
+}
+.mcstat--total {
+  background: var(--mp-mint);
+  border-color: color-mix(in srgb, var(--mp-green) 22%, transparent);
+}
+.mcstat--active {
+  background: color-mix(in srgb, var(--mp-green) 17%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-green) 28%, transparent);
+}
+.mcstat--inactive {
+  background: var(--mp-red-soft);
+  border-color: color-mix(in srgb, var(--mp-red) 22%, transparent);
+}
+.mcstat__icon {
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, #fff 72%, transparent);
+  color: var(--mp-green-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.mcstat--inactive .mcstat__icon { color: var(--mp-red); }
+.mcstat__body { display: flex; flex-direction: column; min-width: 0; }
+.mcstat__value { font-size: 17px; font-weight: 800; color: var(--mp-ink); line-height: 1.15; }
+.mcstat__label {
+  font-size: 10px;
+  font-weight: 650;
+  color: var(--mp-muted);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcstat--inactive .mcstat__value { color: color-mix(in srgb, var(--mp-red) 82%, var(--mp-ink)); }
+
+.mclist {
+  list-style: none;
+  margin: 0;
+  padding: 0 2px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+[dir='rtl'] .mclist { padding: 0 0 0 2px; }
+
+.mrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 7px;
+  border-radius: 12px;
+  border: 1px solid var(--mp-line);
+  background: var(--surface);
+  min-width: 0;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+  box-shadow: 0 1px 2px rgba(24, 46, 30, 0.03);
+}
+.mrow:hover { background: var(--surface-2); }
+.mrow.is-selected {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mp-green) 15%, var(--surface)),
+    color-mix(in srgb, var(--mp-green) 8%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--mp-green) 52%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 8px 16px -12px color-mix(in srgb, var(--mp-green) 85%, transparent);
+}
+.mrow__pick {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 4px 2px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  color: var(--mp-ink);
+  text-align: start;
+  cursor: pointer;
+}
+/*
+ * Category identity icon (shared by rows, headings, previews and the delete
+ * dialog). `--mcat-ink` is the category's own saved accent — never the theme
+ * primary — and the soft container is mixed from it against the current
+ * surface, so it reads as pastel in light mode and stays legible in dark mode.
+ */
+.mcat {
+  width: var(--mcat-size, 34px);
+  height: var(--mcat-size, 34px);
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: calc(var(--mcat-size, 34px) * 0.32);
+  color: var(--mcat-ink, var(--primary));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mcat-ink, var(--primary)) 9%, var(--surface)),
+    color-mix(in srgb, var(--mcat-ink, var(--primary)) 17%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--mcat-ink, var(--primary)) 26%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 3px 7px -4px color-mix(in srgb, var(--mcat-ink, var(--primary)) 55%, transparent);
+}
+[data-theme='dark'] .mcat {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    0 3px 8px -4px color-mix(in srgb, var(--mcat-ink, var(--primary)) 65%, transparent);
+}
+/* Heading and form variants sit a little prouder than a list row. */
+.mcat--raised {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    inset 0 -1px 0 color-mix(in srgb, var(--mcat-ink, var(--primary)) 9%, transparent),
+    0 6px 14px -7px color-mix(in srgb, var(--mcat-ink, var(--primary)) 65%, transparent),
+    0 2px 4px -2px rgba(24, 46, 30, 0.14);
+}
+[data-theme='dark'] .mcat--raised {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 16px -8px color-mix(in srgb, var(--mcat-ink, var(--primary)) 70%, transparent);
+}
+.mrow__name {
+  font-size: 13.5px;
+  font-weight: 650;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mrow.is-selected .mrow__name { color: var(--mp-green-ink); font-weight: 750; }
+.mrow__actions { flex: none; display: flex; align-items: center; gap: 4px; }
+.mrow__btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--mp-line);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.mrow__btn:hover:not(:disabled) { background: var(--surface-3); color: var(--text); }
+.mrow__btn--danger {
+  color: var(--mp-red);
+  background: var(--mp-red-soft);
+  border-color: color-mix(in srgb, var(--mp-red) 24%, transparent);
+}
+.mrow__btn--danger:hover:not(:disabled) { color: var(--mp-red); background: var(--mp-red-soft); }
+.mrow__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Contextual icon colours, driven by the category's own saved icon key. */
+.mtone--orange { background: var(--mp-orange-soft); color: var(--mp-orange); }
+.mtone--blue { background: var(--pastel-blue); color: var(--pastel-blue-ink); }
+.mtone--pink { background: var(--pastel-pink); color: var(--pastel-pink-ink); }
+.mtone--purple { background: var(--pastel-lavender); color: var(--pastel-lavender-ink); }
+.mtone--yellow { background: var(--pastel-amber); color: var(--pastel-amber-ink); }
+.mtone--green { background: var(--pastel-green); color: var(--pastel-green-ink); }
+.mtone--aqua {
+  background: color-mix(in srgb, var(--accent-teal) 14%, transparent);
+  color: var(--accent-teal);
+}
+
+/* ------------------------------------------------------ products column */
+
+.mproducts { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+.msummary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-radius: 18px;
+  border: 1px solid var(--mp-line);
+  background: linear-gradient(
+    180deg,
+    var(--surface),
+    color-mix(in srgb, var(--mp-mint) 65%, var(--surface))
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 14px 28px -24px rgba(24, 46, 30, 0.5),
+    0 2px 5px rgba(24, 46, 30, 0.035);
+}
+.msummary__identity { display: flex; align-items: center; gap: 11px; flex: 1 1 160px; min-width: 0; }
+.msummary__text { min-width: 0; }
+.msummary__title {
+  font-size: clamp(18px, 0.45vw + 14px, 21px);
+  font-weight: 800;
+  color: var(--mp-ink);
+  letter-spacing: -0.01em;
+}
+.msummary__sub { font-size: 11.5px; color: var(--mp-muted); margin-top: 2px; }
+/*
+ * The three product counters are one fixed three-column row: Total, Active and
+ * Inactive only read correctly side by side, so the group never wraps and no
+ * card may claim a minimum width that pushes its neighbour onto a second line.
+ */
+.msummary__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+/* Compact counters: all three stay on the same line as the category identity. */
+.mpill {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  padding: 5px 9px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  white-space: nowrap;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 10px -8px rgba(24, 46, 30, 0.8);
+}
+.mpill__num { font-size: 13px; font-weight: 800; flex: none; }
+.mpill__icon { flex: none; }
+.mpill__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Full labels by default; the short forms take over on narrow phones. */
+.mpill__label--short { display: none; }
+.mpill--total {
+  background: var(--mp-mint);
+  border-color: color-mix(in srgb, var(--mp-green) 22%, transparent);
+  color: var(--mp-green-ink);
+}
+.mpill--active {
+  background: color-mix(in srgb, var(--mp-green) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-green) 28%, transparent);
+  color: var(--mp-green-ink);
+}
+.mpill--inactive {
+  background: var(--mp-red-soft);
+  border-color: color-mix(in srgb, var(--mp-red) 22%, transparent);
+  color: var(--mp-red);
+}
+
+/*
+ * Narrow phones: the labels shorten to their approved localized forms (کل /
+ * فعال / غیرفعال) instead of wrapping or shrinking the numbers — the counts stay
+ * whole, the three cards stay equal and the row stays one row.
+ */
+@media (max-width: 560px) {
+  .msummary { padding: 10px 12px; }
+  .mpill {
+    gap: 4px;
+    padding: 5px 6px;
+    font-size: 10px;
+    border-radius: 12px;
+  }
+  .mpill__num { font-size: 12.5px; }
+  .mpill__icon { width: 12px; height: 12px; }
+  .mpill__label--full { display: none; }
+  .mpill__label--short { display: inline; }
+}
+
+.mgrid { display: grid; gap: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* --------------------------------------------------------- product card */
+
+.mcard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--surface);
+  /* A thin white edge inside a delicate grey outer ring gives the card its
+     softly raised, glass-framed look. */
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px var(--mp-line),
+    0 20px 34px -28px rgba(24, 46, 30, 0.6),
+    0 4px 10px rgba(24, 46, 30, 0.04);
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+.mcard:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 1px color-mix(in srgb, var(--mp-green) 26%, var(--mp-line)),
+    0 28px 42px -28px rgba(24, 46, 30, 0.5),
+    0 6px 14px rgba(24, 46, 30, 0.06);
+}
+
+.mcard__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  display: flex;
+  background: linear-gradient(160deg, var(--surface-2), var(--surface-3));
+}
+.mcard__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mcard__placeholder { margin: auto; color: var(--muted); opacity: 0.75; }
+
+/* Frosted information panel over the lower edge of the photograph. */
+.mcard__panel {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 11px 13px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 18px 18px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.7);
+  background: linear-gradient(145deg, rgba(255, 250, 241, 0.79), rgba(245, 247, 246, 0.76));
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  box-shadow:
+    0 -8px 20px rgba(0, 0, 0, 0.035),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+.mcard__name {
+  font-size: clamp(15px, 0.5vw + 11px, 18px);
+  font-weight: 800;
+  color: #1f231f;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.mcard__meta { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.mcard__cat {
+  min-width: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #68716a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mcard__price {
+  margin-inline-start: auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+.mcard__amount { font-size: clamp(14px, 0.45vw + 11px, 16px); font-weight: 800; color: var(--theme-primary-strong); }
+.mcard__currency { font-size: 10px; font-weight: 700; color: #68716a; }
+
+.mcard__state {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px;
+  font-weight: 750;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.mcard__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.mcard__state--available { background: var(--theme-primary-soft); color: var(--theme-primary-strong); }
+.mcard__state--unavailable { background: var(--mp-orange-soft); color: #a8630f; }
+.mcard__state--inactive,
+.mcard__state--hidden { background: #eef1ee; color: #5a605c; }
+
+.mcard__actions { display: flex; gap: 9px; padding: 12px; }
+.mcard__btn {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 47px;
+  border: none;
+  border-radius: 13px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 750;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, filter 0.16s ease;
+}
+.mcard__btn--edit {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mp-green) 86%, #fff),
+    var(--mp-green)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 9px 18px -12px color-mix(in srgb, var(--mp-green) 95%, transparent);
+}
+.mcard__btn--delete {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mp-red) 88%, #fff),
+    var(--mp-red)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 9px 18px -12px color-mix(in srgb, var(--mp-red) 90%, transparent);
+}
+.mcard__btn--edit:hover:not(:disabled),
+.mcard__btn--delete:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: saturate(1.06) brightness(1.02);
+}
+.mcard__btn--edit:active:not(:disabled),
+.mcard__btn--delete:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 6px rgba(18, 40, 24, 0.28);
+}
+.mcard__btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+
+/* ------------------------------------------------------ theme & motion */
+
+[data-theme='dark'] .mtoolbar {
+  background: rgba(24, 27, 24, 0.82);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 14px 28px -22px rgba(0, 0, 0, 0.8);
+}
+[data-theme='dark'] .mpanel,
+[data-theme='dark'] .msummary {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 16px 30px -24px rgba(0, 0, 0, 0.85);
+}
+[data-theme='dark'] .mcard {
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 0 1px var(--mp-line),
+    0 20px 34px -28px rgba(0, 0, 0, 0.9);
+}
+[data-theme='dark'] .mcstat__icon { background: rgba(255, 255, 255, 0.08); }
+[data-theme='dark'] .mrow.is-selected {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 16px -12px rgba(0, 0, 0, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mcard,
+  .mcard__btn,
+  .mbtn,
+  .mrow { transition: none; }
+  .mcard:hover { transform: none; }
+  .mcard__btn--edit:hover:not(:disabled),
+  .mcard__btn--delete:hover:not(:disabled),
+  .mbtn--green:hover:not(:disabled) { transform: none; }
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 1180px) {
+  .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1000px) {
+  /* Narrow layouts keep the list scrollable inside the category drawer. */
+  .mclist { overflow-y: auto; }
+}
+
+@media (max-width: 860px) {
+  .mtoolbar { flex-wrap: wrap; }
+  .msearch { flex: 1 1 100%; }
+  .mtoolbar__actions { flex: 1 1 100%; }
+  .mbtn { flex: 1 1 0; justify-content: center; }
+}
+
+@media (max-width: 760px) {
+  .mhero {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    min-height: 0;
+    padding: 16px;
+  }
+  .mhero__art { padding: 0; }
+  .mart, .mhero__image { max-height: 92px; }
+  .mhero__title { white-space: normal; }
+  .mhero__icon { width: 42px; height: 42px; border-radius: 13px; }
+}
+
+@media (max-width: 560px) {
+  .mgrid { grid-template-columns: minmax(0, 1fr); }
+  .mhero__art { display: none; }
+  .mcstat__label { font-size: 10px; }
+}
+
+@media (max-width: 420px) {
+  .mbtn { min-height: 44px; padding: 8px 12px; font-size: 12.5px; }
+  .mcard__btn { font-size: 12.5px; }
+}
+
+/* ===================================================== category navigation
+ *
+ * The same category records and the same page-level selection, presented for
+ * three available widths and never duplicated in state:
+ *
+ *   ≥1200px  the sticky rail (inline start, so physical right under RTL)
+ *   768–1199 the rail becomes an on-demand drawer behind a Categories button
+ *   <768px   the sticky horizontal chip strip
+ *
+ * `--menu-sticky-top` is measured from the shared header by the page, so the
+ * rail and the chip strip hang below the real header height instead of a
+ * guessed offset.
+ * ====================================================================== */
+
+.mchipbar { display: none; }
+.mcat-toggle { display: none; }
+/* Intermediate widths keep the panel in the drawer only. */
+@media (max-width: 1199px) {
+  .mpanel--sidebar { display: none; }
+}
+
+/* ----------------------------------------------------- desktop rail ----- */
+
+@media (min-width: 1200px) {
+  .mworkspace {
+    grid-template-columns: minmax(300px, 26%) minmax(0, 1fr);
+  }
+
+  /* Sticks while the product column scrolls; both columns still start on the
+     same line because the grid row starts them together. */
+  .mpanel--sidebar {
+    position: sticky;
+    top: calc(var(--menu-sticky-top, 92px) + 12px);
+    align-self: start;
+    max-height: calc(100dvh - var(--menu-sticky-top, 92px) - 24px);
+    min-height: 0;
+  }
+
+  /* Only the category list scrolls; heading, statistics stay put. */
+  .mpanel--sidebar .mclist {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
+    overflow-y: auto;
+  }
+}
+
+/* ------------------------------------------------------ categories button */
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  /* A full-width bar at the head of the category area — the same width as the
+     category summary and the product statistics under it — instead of a small
+     chip floating at the far edge of the column. */
+  .mcat-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+    align-self: stretch;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px 14px;
+    border-radius: 16px;
+    border: 1px solid color-mix(in srgb, var(--mp-green) 28%, var(--mp-line));
+    background:
+      radial-gradient(120% 150% at 50% -35%, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0) 62%),
+      linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--mp-green) 5%, var(--surface)));
+    color: var(--mp-ink);
+    font: inherit;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1px 0 color-mix(in srgb, var(--mp-green) 8%, transparent),
+      0 2px 4px rgba(24, 46, 30, 0.05),
+      0 12px 24px -20px rgba(24, 46, 30, 0.75);
+    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.12s ease;
+  }
+  .mcat-toggle:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mp-green) 50%, var(--mp-line));
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      0 3px 6px rgba(24, 46, 30, 0.06),
+      0 16px 28px -20px rgba(24, 46, 30, 0.8);
+  }
+  .mcat-toggle:active:not(:disabled) { transform: translateY(1px); }
+  /* The glyph is the action (open / close), never a category's identity. */
+  .mcat-toggle__glyph {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--mp-green) 12%, var(--surface));
+    color: var(--mp-green-ink);
+  }
+  .mcat-toggle.is-open {
+    border-color: color-mix(in srgb, var(--mp-green) 60%, var(--mp-line));
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.75),
+      0 0 0 3px color-mix(in srgb, var(--mp-green) 12%, transparent);
+  }
+  .mcat-toggle__glyph {
+    width: 34px;
+    height: 34px;
+    border-radius: 11px;
+  }
+  .mcat-toggle__text {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: start;
+  }
+  .mcat-toggle__label { font-size: 13px; font-weight: 800; }
+  .mcat-toggle__current {
+    font-size: 11px;
+    color: var(--mp-muted);
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ----------------------------------------------------------- drawer ----- */
+
+.mdrawer-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  /* flex-start is the inline start: physical right under RTL. */
+  justify-content: flex-start;
+}
+
+.mdrawer-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 14, 18, 0.46);
+  animation: mdrawer-fade 0.2s ease;
+}
+
+.mdrawer {
+  position: relative;
+  width: min(380px, 90vw);
+  height: 100%;
+  max-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  backdrop-filter: blur(14px);
+  border-inline-end: 1px solid var(--mp-line);
+  border-start-end-radius: 22px;
+  border-end-end-radius: 22px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 24px 48px -26px rgba(10, 20, 14, 0.55);
+  animation: mdrawer-in 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mdrawer__bar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 2px 0 6px;
+  flex: none;
+}
+
+.mdrawer__close {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--mp-line);
+  background: var(--surface);
+  color: var(--mp-muted);
+  cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease;
+}
+.mdrawer__close:hover {
+  background: color-mix(in srgb, var(--mp-green) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-green) 34%, var(--mp-line));
+  color: var(--mp-green-ink);
+}
+
+.mdrawer__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+.mdrawer .mpanel { flex: 1 1 auto; min-height: 0; }
+.mdrawer .mclist {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+}
+
+@keyframes mdrawer-in {
+  from { transform: translateX(-100%); }
+  to { transform: none; }
+}
+/* Mirrored entrance: the drawer is anchored on the physical right under RTL. */
+[dir='rtl'] .mdrawer { animation-name: mdrawer-in-rtl; }
+@keyframes mdrawer-in-rtl {
+  from { transform: translateX(100%); }
+  to { transform: none; }
+}
+@keyframes mdrawer-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ----------------------------------------------------- mobile chip strip */
+
+@media (max-width: 767px) {
+  .mchipbar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: sticky;
+    /* Directly under the shared header, never over it. */
+    top: var(--menu-sticky-top, 92px);
+    z-index: 20;
+    min-width: 0;
+    max-width: 100%;
+    padding: 6px;
+    border-radius: 18px;
+    border: 1px solid var(--mp-line);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    backdrop-filter: blur(10px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.72),
+      0 12px 24px -22px rgba(24, 46, 30, 0.75);
+  }
+
+  .mchipbar__scroll {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-width: 0;
+    padding-block: 2px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scroll-behavior: smooth;
+    overscroll-behavior-x: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .mchipbar__scroll::-webkit-scrollbar { display: none; }
+
+  .mchip {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 42px;
+    padding-inline: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--mp-line);
+    background: var(--surface);
+    color: var(--mp-ink);
+    font: inherit;
+    font-size: 12.5px;
+    font-weight: 650;
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.72),
+      0 3px 8px -6px rgba(24, 46, 30, 0.5);
+    transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease,
+      transform 0.12s ease;
+  }
+  .mchip:active { transform: translateY(1px); }
+  .mchip.is-selected {
+    background: color-mix(in srgb, var(--mp-green) 14%, var(--surface));
+    border-color: color-mix(in srgb, var(--mp-green) 48%, transparent);
+    color: var(--mp-green-ink);
+    font-weight: 800;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.78),
+      0 6px 12px -8px color-mix(in srgb, var(--mp-green) 80%, transparent);
+  }
+  .mchip__label {
+    white-space: nowrap;
+    max-width: 42vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Physical scroll controls at both ends; only the chips between them scroll. */
+  .mchipbar__nav {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 11px;
+    border: 1px solid color-mix(in srgb, var(--mp-green) 24%, var(--mp-line));
+    background: linear-gradient(
+      180deg,
+      var(--surface),
+      color-mix(in srgb, var(--mp-mint) 75%, var(--surface))
+    );
+    color: var(--mp-green-ink);
+    cursor: pointer;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 4px 9px -7px rgba(24, 46, 30, 0.75);
+    transition: border-color 0.16s ease, transform 0.12s ease, box-shadow 0.16s ease;
+  }
+  .mchipbar__nav:hover:not(:disabled) {
+    border-color: color-mix(in srgb, var(--mp-green) 52%, var(--mp-line));
+    transform: translateY(-1px);
+  }
+  .mchipbar__nav:active:not(:disabled) { transform: translateY(1px); }
+  .mchipbar__nav:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--mp-green) 60%, transparent);
+    outline-offset: 2px;
+  }
+  /* Nothing hidden on that side: the control is visibly unavailable. */
+  .mchipbar__nav:disabled {
+    opacity: 0.36;
+    cursor: default;
+    box-shadow: none;
+  }
+
+  /* Physical left stays physically left in both writing directions. */
+  .mchipbar__nav--left { order: 1; }
+  .mchipbar__scroll { order: 2; }
+  .mchipbar__nav--right { order: 3; }
+  [dir='rtl'] .mchipbar__nav--left { order: 3; }
+  [dir='rtl'] .mchipbar__nav--right { order: 1; }
+
+  /* The desktop rail never occupies space on a phone. */
+  .mpanel--sidebar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mdrawer,
+  .mdrawer-scrim { animation: none; }
+  .mchipbar__scroll { scroll-behavior: auto; }
+}

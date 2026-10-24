@@ -1,0 +1,650 @@
+/* ==========================================================================
+   Menu module dialog — the illustrated banner header, the light form body and
+   the white action footer of the Add / Edit Category modal.
+
+   Everything is scoped to .mcmodal / .mcmodal-* so no other modal on the app
+   changes. Colours are local tokens: the reference (cream banner, light gray
+   body, mint green accents) is the design, and the dark theme only remaps the
+   surfaces around it.
+   ========================================================================== */
+
+.mcmodal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(12, 14, 22, 0.55);
+}
+
+.mcmodal {
+  --mm-green: var(--theme-primary);
+  --mm-green-ink: var(--theme-primary-strong);
+  --mm-mint: var(--theme-primary-soft);
+  --mm-red: #ef4444;
+  --mm-body: #f7f7f7;
+  --mm-card: #ffffff;
+  --mm-field: #fbfcfb;
+  --mm-ink: #23281f;
+  --mm-muted: #838a83;
+  --mm-line: #e9ece9;
+  --mm-scrim-a: rgba(255, 253, 245, 0.94);
+  --mm-scrim-b: rgba(255, 253, 245, 0);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 450px;
+  max-height: 92dvh;
+  overflow: hidden;
+  background: var(--mm-card);
+  border-radius: 18px;
+  box-shadow: 0 18px 44px rgba(23, 26, 43, 0.18);
+  color: var(--mm-ink);
+}
+
+[data-theme='dark'] .mcmodal {
+  --mm-body: #191c19;
+  --mm-card: var(--surface);
+  --mm-field: var(--surface-2);
+  --mm-ink: var(--text);
+  --mm-muted: var(--muted);
+  --mm-line: var(--border);
+  --mm-mint: color-mix(in srgb, var(--mm-green) 22%, var(--surface));
+  --mm-scrim-a: rgba(16, 18, 14, 0.86);
+  --mm-scrim-b: rgba(16, 18, 14, 0);
+  box-shadow: var(--shadow-lg);
+}
+
+/* ------------------------------------------- illustrated banner header */
+
+.mcmodal__head {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  min-height: 96px;
+  padding: 16px 18px;
+  padding-inline-end: 60px;
+  overflow: hidden;
+  background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+}
+
+/*
+ * The Menu banner artwork fills the header and is cropped by it, so the modal
+ * reuses the very illustration the page behind it shows.
+ */
+.mcmodal__art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.mcmodal__art .mart {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+}
+[data-theme='dark'] .mcmodal__art { opacity: 0.9; }
+
+/*
+ * A soft scrim over the reading edge keeps the heading legible where the
+ * illustration is busiest, without hiding it.
+ */
+.mcmodal__head::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+[dir='rtl'] .mcmodal__head::after {
+  background: linear-gradient(to left, var(--mm-scrim-a), var(--mm-scrim-b) 70%);
+}
+[dir='ltr'] .mcmodal__head::after {
+  background: linear-gradient(to right, var(--mm-scrim-a), var(--mm-scrim-b) 70%);
+}
+
+.mcmodal__identity {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mcmodal__glyph {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--mm-mint);
+  color: var(--mm-green-ink);
+  border: 1px solid color-mix(in srgb, var(--mm-green) 38%, transparent);
+}
+.mcmodal__title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #1f2318;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+[data-theme='dark'] .mcmodal__title { color: #ffffff; }
+
+/* One close control, on the corner opposite the title's reading edge. */
+.mcmodal__close {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
+  z-index: 2;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--mm-line);
+  color: #4b514b;
+  box-shadow: 0 3px 10px rgba(23, 26, 43, 0.14);
+}
+.mcmodal__close:hover { background: #ffffff; color: #23281f; }
+.mcmodal__close:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
+
+/* --------------------------------------------------------- form body */
+
+.mcmodal__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* Reserve the bar's gutter so validation messages or a language card
+     appearing never changes the body's width under a fixed header. */
+  scrollbar-gutter: stable;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px 22px 20px;
+  background: var(--mm-body);
+}
+
+.mcmodal__section { display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.mcmodal__section-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.mcmodal__bar {
+  flex: none;
+  width: 3px;
+  height: 15px;
+  border-radius: 2px;
+  background: var(--mm-green);
+}
+.mcmodal__label {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--mm-ink);
+}
+.mcmodal__req { color: var(--mm-red); font-weight: 700; }
+
+/* --------------------------------------------------- language inputs */
+
+/*
+ * Columns come from LanguageFieldsGrid, which is given the number of languages
+ * the owner actually enabled: one language fills the row, two sit side by side,
+ * three use two columns with the last card spanning the row, four make a clean
+ * 2×2 block. Nothing reserves an empty column for a switched-off language, and
+ * every visible input/textarea grows into the width it is given.
+ */
+.mcmodal__langs { width: 100%; }
+.mcmodal__langs .lang-grid { gap: 10px; }
+
+.mcmodal__lang {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  padding: 9px 10px 10px;
+  border-radius: 13px;
+  background: var(--mm-field);
+  border: 1px solid var(--mm-line);
+}
+.mcmodal__lang-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+.mcmodal__lang-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--mm-muted);
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.mcmodal__badge {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--mm-mint);
+  color: var(--mm-green-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.mcmodal__input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 13px;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  outline: none;
+}
+.mcmodal__input::placeholder { color: #a9b0a9; }
+.mcmodal__input:focus {
+  border-color: color-mix(in srgb, var(--mm-green) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mm-green) 14%, transparent);
+}
+/* One full-width field: taller than the language inputs, no spinner chrome. */
+.mcmodal__input--wide {
+  height: 44px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  text-align: start;
+}
+
+/* ------------------------------------------------------- status card */
+
+.mcmodal__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--mm-card);
+  border: 1px solid var(--mm-line);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.04);
+}
+.mcmodal__status-text {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.mcmodal__status-glyph {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--mm-mint);
+  color: var(--mm-green-ink);
+}
+.mcmodal__status-title { font-size: 13.5px; font-weight: 750; color: var(--mm-ink); }
+.mcmodal__status-hint {
+  margin-top: 2px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--mm-muted);
+}
+
+/* The status switch is always the green one, whatever the business theme is. */
+.mcmodal__status .switch { flex: none; }
+.mcmodal__status .switch__track { background: #d3d8d3; }
+.mcmodal__status .switch input:checked + .switch__track { background: var(--mm-green); }
+
+/* ------------------------------------------------------------ footer */
+
+.mcmodal__foot {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 13px 22px;
+  background: var(--mm-card);
+  border-top: 1px solid var(--mm-line);
+}
+
+/* The footer's Save / Cancel pair is the shared `ModalActions` row, so the
+   action order, disabled treatment and hover states match every other dialog. */
+
+/* -------------------------------------------------------- responsive */
+
+@media (max-width: 560px) {
+  .mcmodal__head { min-height: 86px; padding: 14px; padding-inline-end: 56px; }
+  .mcmodal__body { padding: 16px 16px 18px; }
+  .mcmodal__foot { padding: 12px 16px; }
+}
+
+/* The language cards stack on their own (languageGrid.css) once the form is
+   too narrow for two readable columns — no fixed breakpoint here. */
+
+@media (max-width: 420px) {
+  .mcmodal__foot { flex-wrap: wrap; }
+}
+
+/* ==========================================================================
+   Add / Edit Product — the same dialog shell with the product form's own
+   pieces: the large dashed picture drop zone, the four-language name and
+   description cards, the four price inputs, the category select, the
+   calories / preparation-time pair, the tags field and the two status toggles.
+
+   Everything is scoped to .mcmodal / .mform__* and reuses the same tokens, so
+   the dark theme only remaps the surfaces around the form.
+   ========================================================================== */
+
+/* Four price inputs need a little more room than the category dialog's 450px —
+   still the compact centred modal the reference shows. */
+.mcmodal--wide { max-width: 480px; }
+
+/* Multiline companion of .mcmodal__input, inside the language cards. */
+.mcmodal__textarea {
+  width: 100%;
+  min-width: 0;
+  min-height: 60px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.5;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  outline: none;
+  resize: none;
+}
+.mcmodal__textarea::placeholder { color: #a9b0a9; }
+.mcmodal__textarea:focus {
+  border-color: color-mix(in srgb, var(--mm-green) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mm-green) 14%, transparent);
+}
+
+/* ------------------------------------------------------ picture drop zone */
+
+.mform__drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 156px;
+  padding: 16px;
+  border-radius: 14px;
+  border: 1.5px dashed color-mix(in srgb, var(--mm-line) 60%, #b6c2ba);
+  background: var(--mm-field);
+  color: var(--mm-muted);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.mform__drop:hover,
+.mform__drop.is-dragging {
+  border-color: color-mix(in srgb, var(--mm-green) 60%, transparent);
+  background: color-mix(in srgb, var(--mm-green) 7%, var(--mm-field));
+  color: var(--mm-green-ink);
+}
+.mform__drop.is-busy { cursor: progress; }
+.mform__drop .spinner { width: 26px; height: 26px; }
+.mform__drop-label { font-size: 12.5px; font-weight: 650; }
+
+/*
+ * The photograph IS the frame: full-bleed at the 4:3 shape the product cards
+ * use, so there is no white margin and no smaller picture floating inside a
+ * bigger box. `object-fit: cover` fills the frame without ever stretching the
+ * picture (the same crop the product card shows).
+ */
+.mform__image { display: flex; flex-direction: column; gap: 8px; }
+.mform__image-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  border-radius: 18px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-field);
+  box-shadow:
+    0 1px 2px rgba(23, 26, 43, 0.04),
+    0 14px 30px -22px rgba(23, 26, 43, 0.35);
+}
+.mform__image-frame img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  transition: transform 420ms ease;
+}
+.mform__image-frame:hover img { transform: scale(1.02); }
+@media (prefers-reduced-motion: reduce) {
+  .mform__image-frame img { transition: none; }
+}
+.mform__image-actions { display: flex; gap: 8px; }
+.mform__mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: 9px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.mform__mini:hover:not(:disabled) { background: var(--mm-body); }
+.mform__mini:disabled,
+.mform__mini.is-busy { opacity: 0.6; cursor: not-allowed; }
+.mform__mini .spinner { width: 14px; height: 14px; }
+
+/* --------------------------------------------------------- price inputs */
+
+.mform__prices { width: 100%; }
+
+.mform__price,
+.mform__field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+.mform__price-label {
+  font-size: 10.5px;
+  font-weight: 650;
+  color: var(--mm-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Numbers read left-to-right in every language and stay compact. */
+.mform__num {
+  text-align: center;
+  padding: 0 6px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.mform__num::-webkit-outer-spin-button,
+.mform__num::-webkit-inner-spin-button { appearance: none; margin: 0; }
+
+/* ------------------------------------------------------ category select */
+
+/* ---------------------------------------------- calories / preparation */
+
+.mform__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+/* ---------------------------------------------------------------- tags */
+
+.mform__tags { position: relative; display: block; }
+.mform__tags-input { padding-inline-start: 38px; }
+.mform__tags-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  inset-inline-start: 13px;
+  display: grid;
+  place-items: center;
+  color: var(--mm-muted);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------- available / featured */
+
+.mform__toggles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.mform__toggle { display: inline-flex; align-items: center; gap: 9px; }
+.mform__toggle-label { font-size: 13px; font-weight: 700; color: var(--mm-ink); }
+/* Both switches keep the module's green, whatever the business theme is. */
+.mform__toggles .switch__track { background: #d3d8d3; }
+.mform__toggles .switch input:checked + .switch__track { background: var(--mm-green); }
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 430px) {
+  .mform__drop { min-height: 132px; }
+  /* The image keeps its 4:3 frame at the full modal width. */
+  .mform__image-frame { border-radius: 14px; }
+}
+
+/* ------------------------------------------- category appearance picker */
+
+/*
+ * Live preview of the identity the form is about to save: the category's glyph
+ * in its own accent, the resolved meaning, and the manual overrides. The
+ * swatches and glyphs are plain buttons so the choice can always be overridden.
+ */
+.mcappear {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--mm-line);
+  background: linear-gradient(180deg, var(--mm-card), var(--mm-body));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 6px 14px -12px rgba(18, 40, 24, 0.75);
+}
+.mcappear__text { min-width: 0; flex: 1 1 auto; }
+.mcappear__name {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--mm-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mcappear__hint {
+  font-size: 11px;
+  color: var(--mm-muted);
+  margin-top: 2px;
+  line-height: 1.5;
+}
+.mcappear__auto {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: 9px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.mcappear__auto:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--mm-green) 45%, var(--mm-line));
+  color: var(--mm-green);
+}
+.mcappear__auto:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Automatic mode is already applied: the action reads as the current state. */
+.mcappear__auto.is-active,
+.mcappear__auto.is-active:disabled {
+  opacity: 1;
+  border-color: color-mix(in srgb, var(--mm-green) 45%, var(--mm-line));
+  color: var(--mm-green);
+  cursor: default;
+}
+
+.mcappear__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: 6px;
+}
+.mcappear__glyph {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-muted);
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.mcappear__glyph:hover { color: var(--mm-ink); background: var(--mm-body); }
+.mcappear__glyph.is-active {
+  color: var(--mm-ink);
+  border-color: color-mix(in srgb, var(--mm-ink) 34%, transparent);
+  background: var(--mm-body);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mm-ink) 18%, transparent);
+}
+.mcappear__glyph:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
+
+.mcappear__colors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.mcappear__swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  cursor: pointer;
+  background: var(--swatch);
+  border: 2px solid transparent;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: transform 0.12s ease, box-shadow 0.15s ease;
+}
+.mcappear__swatch:hover { transform: scale(1.08); }
+.mcappear__swatch.is-active {
+  box-shadow:
+    0 0 0 2px var(--mm-card),
+    0 0 0 4px var(--swatch);
+}
+.mcappear__swatch:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 3px; }

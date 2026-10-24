@@ -1,0 +1,1169 @@
+/* ==========================================================================
+   Dashboard — premium soft-3D / glass restaurant overview.
+   Layout only: shell tokens live in styles.css. Everything here is scoped to
+   `.dash`, so other pages keep their existing surfaces.
+   ========================================================================== */
+
+.dash {
+  --dash-radius: 18px;
+  --dash-radius-sm: 14px;
+
+  /* Frosted surfaces, thin luminous borders and layered green-tinted shadows. */
+  --glass-surface: rgba(255, 255, 255, 0.88);
+  --glass-soft: rgba(255, 255, 255, 0.72);
+  --glass-line: rgba(214, 228, 217, 0.75);
+  --glass-blur: 12px;
+  --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  --shadow-soft: 0 3px 9px rgba(25, 55, 35, 0.035), 0 12px 28px rgba(25, 55, 35, 0.045);
+  --shadow-hover: 0 9px 24px rgba(25, 55, 35, 0.08), 0 20px 40px rgba(25, 55, 35, 0.045);
+  /* Inner gloss painted on the premium KPI surfaces; flipped for dark mode. */
+  --sheen: rgba(255, 255, 255, 0.92);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+/* One premium surface shared by every dashboard card. */
+.dash .card {
+  border-radius: var(--dash-radius);
+  border: 1px solid var(--glass-line);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(248, 253, 249, 0.87));
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-soft), var(--inset-top);
+  transition: box-shadow 200ms ease, border-color 200ms ease, transform 200ms ease;
+}
+
+.dash .card__head {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--glass-line);
+  border-start-start-radius: var(--dash-radius);
+  border-start-end-radius: var(--dash-radius);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mint) 9%, var(--surface)), rgba(255, 255, 255, 0));
+}
+.dash .card__body { padding: 14px 16px; }
+.dash .switch-row { padding: 9px 0; }
+
+/* Raised icon badges: pastel tint, inner highlight, very soft shadow. */
+.dash .card__icon {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: color-mix(in srgb, currentColor 13%, var(--surface));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 3px 8px rgba(25, 55, 35, 0.07);
+}
+
+.dash-row { display: grid; gap: 14px; align-items: stretch; }
+/* Date & working hours (60%) and notification settings (40%) share one row. */
+.dash-row--info { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+.dash-row--analytics { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+.dash-row--analytics > .card { display: flex; flex-direction: column; }
+.dash-row--analytics > .card > .card__body { flex: 1 1 auto; }
+
+/*
+ * A section hidden in Business Settings is not rendered at all, so a surviving
+ * card is the row's only child — it takes the whole row instead of leaving an
+ * empty column behind. Both cards stretch to the same outer height, which is
+ * what keeps the clock and the sound selector on one baseline.
+ */
+.dash-row > :only-child { grid-column: 1 / -1; }
+.dash-row--info > .card { display: flex; flex-direction: column; }
+.dash-row--info > .card > .card__body { flex: 1 1 auto; }
+/* The notification card stacks its settings and pushes the sound picker down;
+   the hours card keeps its own two-column body (see .hours-card__body). */
+.notif-card > .card__body { display: flex; flex-direction: column; }
+
+/* A lone card keeps its controls from stretching across the whole width. */
+.notif-card:only-child .switch-row,
+.notif-card:only-child .sound-picker { max-width: 660px; }
+
+/* ------------------------------------------------------- welcome banner */
+
+.welcome {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--dash-radius);
+  border: 1px solid var(--mint-line);
+  background:
+    radial-gradient(120% 150% at 100% 0%, color-mix(in srgb, var(--primary) 10%, var(--surface)) 0%, transparent 62%),
+    radial-gradient(110% 140% at 0% 100%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(90deg, var(--theme-primary-soft), var(--surface));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 16%, transparent), var(--shadow-soft);
+  min-height: 165px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 26px;
+}
+.welcome__text { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 5px; }
+.welcome__eyebrow {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 700; color: var(--mint-ink);
+}
+.welcome__title {
+  font-size: clamp(17px, 2.4vw, 22px);
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+.welcome__sub { font-size: 12.5px; color: var(--muted); }
+.welcome__art { flex: none; width: min(46%, 320px); height: auto; }
+
+[data-theme='dark'] .welcome {
+  background:
+    radial-gradient(120% 150% at 100% 0%, color-mix(in srgb, var(--primary) 14%, var(--surface)) 0%, transparent 62%),
+    radial-gradient(110% 140% at 0% 100%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(90deg, var(--surface), var(--surface-2));
+  border-color: var(--mint-line);
+}
+[data-theme='dark'] .welcome__title { color: var(--text); }
+[data-theme='dark'] .welcome__sub { color: var(--muted); }
+[data-theme='dark'] .welcome__art { opacity: 0.9; }
+
+/* -------------------------------------------------- dark glass surfaces */
+
+[data-theme='dark'] .dash {
+  --glass-surface: rgba(27, 32, 43, 0.9);
+  --glass-soft: rgba(27, 32, 43, 0.78);
+  --glass-line: rgba(54, 63, 80, 0.75);
+  --inset-top: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-soft: 0 3px 10px rgba(0, 0, 0, 0.35), 0 14px 34px rgba(0, 0, 0, 0.3);
+  --shadow-hover: 0 10px 26px rgba(0, 0, 0, 0.4), 0 20px 42px rgba(0, 0, 0, 0.32);
+  --sheen: rgba(255, 255, 255, 0.06);
+}
+[data-theme='dark'] .dash .card {
+  background: linear-gradient(145deg, rgba(30, 35, 46, 0.96), rgba(20, 23, 31, 0.9));
+}
+[data-theme='dark'] .dash .card__head {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0));
+}
+
+/* ------------------------------------------- date / working hours card */
+
+/* Status pill in the header: pale green with a dot, muted when closed. */
+.hours-card .card__head { gap: 10px; }
+.hours-card .badge { flex: none; padding: 4px 11px; background: var(--success-soft); color: #14713a; }
+.hours-card .badge--inactive { background: var(--surface-3); color: var(--muted); }
+
+.hours-card__body { display: flex; align-items: stretch; gap: 18px; }
+/* Both columns stack their top labels and push the large value to the bottom,
+   so the live clock and the working-hours range sit on one baseline. */
+.hours-card__col {
+  display: flex; flex-direction: column; gap: 6px;
+  min-width: 0; flex: 1 1 0;
+}
+/*
+ * The shared baseline: the clock and the hours range use the same size, weight
+ * and leading, and both are pushed down by `margin-top: auto`.
+ */
+.hours-card__clock,
+.hours-card__range {
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: clamp(30px, 3.2vw, 35px);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0;
+  color: var(--mint-deep);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  white-space: nowrap;
+}
+.hours-card__range--empty { font-size: 16px; font-weight: 700; color: var(--muted); }
+.hours-card__date {
+  display: flex; align-items: flex-start; gap: 7px;
+  font-size: clamp(14.5px, 1.15vw, 16px);
+  font-weight: 700; line-height: 1.45; color: var(--text);
+}
+.hours-card__date-icon { flex: none; margin-top: 3px; color: var(--muted); }
+.hours-card__date-text { min-width: 0; }
+.hours-card__hours-label {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: clamp(13.5px, 1.05vw, 15px);
+  font-weight: 700; line-height: 1.4; color: var(--mint-deep);
+}
+.hours-card__divider {
+  width: 1px; flex: none;
+  background: linear-gradient(180deg, transparent, var(--glass-line) 18%, var(--glass-line) 82%, transparent);
+}
+/* Times stay start-first even inside the RTL layout. */
+.hours-card__times { direction: ltr; unicode-bidi: isolate; display: inline-block; }
+.hours-card__overnight { font-size: 12px; font-weight: 700; color: var(--muted); margin-inline-start: 6px; }
+
+[data-theme='dark'] .hours-card__clock,
+[data-theme='dark'] .hours-card__range,
+[data-theme='dark'] .hours-card__hours-label { color: #6fd79a; }
+
+/* --------------------------------------------------- notification card */
+
+.notif-card__warning { margin-top: 10px; }
+
+/*
+ * Context notice under the system-notification switch. It states a browser-side
+ * restriction plainly instead of leaving a switch that silently snaps back, and
+ * it is the only place the preview frame is named — never the whole card.
+ */
+.notif-note {
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-top: 10px; padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-line);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 10px 20px -16px rgba(16, 22, 38, 0.55);
+}
+[data-theme='dark'] .notif-note {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 10px 20px -16px rgba(0, 0, 0, 0.85);
+}
+.notif-note__badge {
+  display: grid; place-items: center; flex: none;
+  width: 30px; height: 30px; border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 2px 6px rgba(16, 22, 38, 0.08);
+}
+.notif-note--warn .notif-note__badge { background: var(--warning-soft); color: var(--warning); }
+.notif-note--danger .notif-note__badge { background: var(--danger-soft); color: var(--danger); }
+.notif-note__main { min-width: 0; }
+.notif-note__title { font-size: 12.5px; font-weight: 700; line-height: 1.5; color: var(--text); }
+.notif-note__body { font-size: 11.5px; line-height: 1.65; margin-top: 2px; color: var(--muted); }
+.notif-note__action { margin-top: 9px; }
+/* Small raised badge that sits beside a setting's description. */
+.switch-row__icon {
+  display: inline-grid; place-items: center;
+  width: 28px; height: 28px; border-radius: 9px; flex: none;
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.switch-row__icon--muted {
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  color: var(--muted);
+}
+
+/* The sound controls sit at the bottom of the card, level with the clock next
+   door: `margin-top: auto` absorbs whatever height the switches leave. */
+.sound-picker {
+  margin-top: auto; padding-top: 14px; border-top: 1px solid var(--glass-line);
+  display: flex; flex-direction: column; gap: 7px;
+}
+
+/* The new-order sound switch keeps the warm golden reference accent, so it
+   reads apart from the browser-push switch right below it. */
+.notif-card .card__body > .switch-row:first-child .switch input:checked + .switch__track {
+  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-hover));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+/* Setting descriptions are real information, so they stay readable — never
+   the faintest grey, and never clamped to one clipped line. */
+.notif-card .switch-row { align-items: flex-start; }
+.notif-card .switch-row__title { font-size: 13px; font-weight: 650; line-height: 1.55; color: var(--text-soft); }
+.notif-card .switch-row__hint { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.notif-card .switch-row__icon { margin-top: 1px; }
+.notif-card .switch { flex: none; }
+
+.sound-picker__label {
+  font-size: 11.5px; font-weight: 650; color: var(--muted);
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.sound-picker__row { display: flex; align-items: center; gap: 10px; }
+/* The shared dropdown stretches to the row; its skin lives in select.css. */
+.sound-picker__select { flex: 1 1 auto; min-width: 0; }
+.sound-picker__select .lysel__trigger { min-height: 46px; font-size: 13.5px; }
+.sound-play {
+  width: 46px; height: 46px; border-radius: 50%; flex: none;
+  display: grid; place-items: center; cursor: pointer; border: none;
+  background: var(--mint); color: var(--primary-ink);
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--mint) 35%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+}
+.sound-play:hover { background: var(--mint-deep); transform: translateY(-1px); }
+.sound-play:active { transform: translateY(0) scale(0.97); }
+
+/* ----------------------------------------------------------- kpi cards */
+
+.kpi-row { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/*
+ * The premium metric surface shared by the order counters: a pastel gradient
+ * with a faint top gloss, a hairline tone border and a layered green-tinted
+ * shadow so the card sits slightly above the dashboard.
+ */
+.kpi {
+  --tone: var(--pastel-blue);
+  --tone-ink: var(--pastel-blue-ink);
+  --tone-line: var(--pastel-blue-line);
+  position: relative;
+  overflow: hidden;
+  min-height: 162px;
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tone) 86%, var(--surface)), var(--tone));
+  border: 1px solid var(--tone-line);
+  border-radius: 20px;
+  padding: 20px 16px 18px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; text-align: center; min-width: 0;
+  box-shadow:
+    0 3px 6px rgba(20, 45, 30, 0.035),
+    0 12px 26px rgba(20, 45, 30, 0.055),
+    var(--inset-top);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.kpi:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 16px rgba(20, 45, 30, 0.07),
+    0 18px 35px rgba(20, 45, 30, 0.075),
+    var(--inset-top);
+}
+.kpi--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
+.kpi--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
+.kpi--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
+.kpi--pink { --tone: var(--pastel-pink); --tone-ink: var(--pastel-pink-ink); --tone-line: var(--pastel-pink-line); }
+
+/* Raised circular icon: pastel tone, inner highlight, soft matching halo. */
+.kpi__icon {
+  width: 52px; height: 52px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
+    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
+  color: var(--tone-ink);
+  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.kpi:hover .kpi__icon {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
+}
+.kpi__label { font-size: 13px; font-weight: 700; color: var(--text-soft); min-width: 0; }
+.kpi__value {
+  font-size: clamp(28px, 3.3vw, 34px); font-weight: 800; line-height: 1.04;
+  letter-spacing: -0.02em;
+  color: var(--tone-ink); min-width: 0;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+.kpi__hint {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 11.5px; color: var(--muted); min-width: 0; max-width: 100%;
+  padding: 2px 9px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--tone-ink) 8%, transparent);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kpi__hint strong { font-weight: 750; }
+.kpi__hint--up, .kpi__hint--up strong { color: var(--success); }
+.kpi__hint--down, .kpi__hint--down strong { color: var(--danger); }
+.kpi__trend { flex: none; }
+.kpi__trend.is-down { transform: rotate(180deg); }
+
+/* ------------------------------------------------------ finance section */
+
+/*
+ * Period filter. The DOM order is the RTL reading order, so in Persian the
+ * pills run today → … → custom from the right edge, and the custom pill stays
+ * the neutral one until a range is applied.
+ */
+.finance__filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.range-pill {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text-soft);
+  border-radius: var(--radius-pill);
+  padding: 6px 15px; font-size: 12.5px; font-weight: 650;
+  cursor: pointer; white-space: nowrap; min-height: 34px;
+  display: inline-flex; align-items: center; gap: 6px;
+  box-shadow: 0 1px 2px rgba(25, 55, 35, 0.04);
+  transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.range-pill:hover:not(:disabled):not(.is-active) { background: var(--surface-3); transform: translateY(-1px); }
+.range-pill:disabled { opacity: 0.6; cursor: progress; }
+.range-pill:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 24%, transparent);
+}
+.range-pill.is-active {
+  background: var(--theme-primary); border-color: var(--theme-primary); color: var(--primary-ink);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--theme-primary) 32%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+/* A new period is loading: the figures fade instead of jumping to zero. */
+.finance.is-busy .fstat-row,
+.finance.is-busy .insights { opacity: 0.55; transition: opacity 160ms ease; }
+
+/*
+ * Business Insights tiles — same premium surface as the order counters, one
+ * pastel family per metric: revenue / orders / visits / average order value.
+ * Every child is centred, the figure is the focal point, and the comparison
+ * sits in a compact pill directly beneath it.
+ */
+.fstat-row { display: grid; gap: 12px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.fstat {
+  --tone: var(--pastel-green);
+  --tone-ink: var(--pastel-green-ink);
+  --tone-line: var(--pastel-green-line);
+  position: relative;
+  overflow: hidden;
+  min-height: 155px;
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tone) 88%, var(--surface)), var(--tone));
+  border: 1px solid var(--tone-line);
+  border-radius: 18px;
+  padding: 18px 14px 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; text-align: center; min-width: 0;
+  box-shadow:
+    0 3px 6px rgba(20, 45, 30, 0.035),
+    0 12px 26px rgba(20, 45, 30, 0.055),
+    var(--inset-top);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.fstat:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 16px rgba(20, 45, 30, 0.07),
+    0 18px 35px rgba(20, 45, 30, 0.075),
+    var(--inset-top);
+}
+.fstat--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
+.fstat--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
+.fstat--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
+.fstat--lavender { --tone: var(--pastel-lavender); --tone-ink: var(--pastel-lavender-ink); --tone-line: var(--pastel-lavender-line); }
+
+.fstat__icon {
+  width: 50px; height: 50px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
+    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
+  color: var(--tone-ink);
+  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.fstat:hover .fstat__icon {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
+}
+.fstat__label { font-size: 12.5px; color: var(--text-soft); font-weight: 650; min-width: 0; }
+.fstat__value {
+  font-size: clamp(19px, 2vw, 23px); font-weight: 800; min-width: 0;
+  color: var(--tone-ink); letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.fstat__delta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-height: 22px; padding: 2px 9px; border-radius: var(--radius-pill);
+  font-size: 11px; font-weight: 650; color: var(--muted);
+  background: color-mix(in srgb, var(--tone-ink) 8%, transparent);
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.fstat__delta--empty { background: transparent; }
+.fstat__delta.is-down { color: var(--danger); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.fstat__delta.is-up { color: var(--success); background: color-mix(in srgb, var(--success) 12%, transparent); }
+.fstat__trend { flex: none; }
+.fstat__trend.is-down { transform: rotate(180deg); }
+
+/* --------------------------------------------------- business insights */
+
+.insights {
+  margin-top: 14px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--mint) 26%, transparent);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.72), color-mix(in srgb, var(--mint) 9%, transparent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 2px 10px rgba(25, 55, 35, 0.04);
+  padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+[data-theme='dark'] .insights {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.03), color-mix(in srgb, var(--mint) 10%, transparent));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+.insights__head {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 800; color: var(--mint-ink);
+}
+.insights__badge {
+  display: inline-grid; place-items: center; flex: none;
+  width: 26px; height: 26px; border-radius: 9px;
+  background: color-mix(in srgb, var(--mint) 18%, transparent);
+  color: var(--mint-deep);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.insights__row {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 12.5px; color: var(--text-soft); line-height: 1.55; min-width: 0;
+}
+.insights__dot {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  margin-top: 7px;
+  background: var(--mint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 15%, transparent);
+}
+.insights__empty { font-size: 12.5px; color: var(--muted); }
+
+/* ----------------------------------------------------------- line chart */
+
+.chart-wrap { position: relative; }
+.chart { width: 100%; display: block; overflow: visible; }
+.chart__grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 5; }
+.chart__axis { stroke: color-mix(in srgb, var(--border-strong) 80%, transparent); stroke-width: 1; }
+.chart__area { fill: color-mix(in srgb, var(--mint) 12%, transparent); }
+.chart__line { fill: none; stroke: var(--mint); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.chart__dot { fill: var(--surface); stroke: var(--mint); stroke-width: 1.8; transition: r 140ms ease; }
+.chart__dot.is-active { fill: var(--mint); stroke: var(--surface); }
+.chart__hit { fill: transparent; cursor: pointer; }
+/* Keyboard focus stays visible on the point itself. */
+.chart__hit:focus-visible {
+  outline: none;
+  stroke: var(--mint);
+  stroke-width: 2;
+  fill: color-mix(in srgb, var(--mint) 14%, transparent);
+}
+.chart__x, .chart__y { font-size: 10.5px; fill: var(--muted); }
+.chart__x { text-anchor: middle; }
+.chart__y { text-anchor: end; }
+.chart__tip {
+  position: absolute; z-index: 2; pointer-events: none;
+  transform: translate(-50%, -118%);
+  background: var(--surface);
+  border: 1px solid var(--glass-line);
+  border-radius: 10px;
+  padding: 4px 9px;
+  font-size: 11.5px; font-weight: 700; color: var(--text);
+  box-shadow: var(--shadow-soft);
+  white-space: nowrap;
+}
+.chart__tip span { color: var(--muted); font-weight: 650; }
+
+/* --------------------------------------------------------- best selling */
+
+.best-list { display: flex; flex-direction: column; gap: 12px; }
+.best-row { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.best-row__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.best-row__rank {
+  width: 22px; height: 22px; border-radius: 7px; flex: none;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--mint) 16%, transparent);
+  color: var(--mint-ink); font-size: 11px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+/* A long name wraps to a second line instead of being cut off — the product
+   name is the row's identity, and Kurdish / Persian / Arabic names are often
+   longer than one line. Never more than two, so every row keeps its height. */
+.best-row__name {
+  flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 650; color: var(--text);
+  line-height: 1.35; overflow-wrap: anywhere;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+/* Bar plus a fixed value column: the column is what keeps every circle on the
+   same vertical line, whatever the quantity's digit count. The line is indented
+   by the rank marker so the bar starts under the name, not under the number. */
+.best-row__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 34px;
+  align-items: center; gap: 9px;
+  padding-inline-start: 30px;
+  min-width: 0;
+}
+.best-row__track {
+  height: 9px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border-strong) 45%, transparent);
+  box-shadow: inset 0 1px 2px rgba(20, 45, 30, 0.09);
+  overflow: hidden;
+  min-width: 0;
+}
+.best-row__fill {
+  display: block; height: 100%; border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--mint) 70%, #ffffff), var(--mint));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition: width 240ms ease;
+}
+/* The bar grows from the start of the line, which is the right edge in RTL. */
+[dir='rtl'] .best-row__fill {
+  background: linear-gradient(270deg, color-mix(in srgb, var(--mint) 70%, #ffffff), var(--mint));
+}
+
+/* The quantity: one colour-matched pastel circle at the end of its own bar. */
+.best-row__badge {
+  width: 30px; height: 30px; border-radius: 50%; justify-self: center;
+  display: grid; place-items: center;
+  font-size: 12px; font-weight: 800; line-height: 1;
+  color: var(--mint-ink);
+  font-variant-numeric: tabular-nums;
+  background:
+    radial-gradient(circle at 50% 28%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
+    color-mix(in srgb, var(--mint) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--mint) 40%, transparent);
+  box-shadow:
+    0 2px 5px color-mix(in srgb, var(--mint) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -1px 2px color-mix(in srgb, var(--mint) 14%, transparent);
+  white-space: nowrap;
+}
+/* Three digits and up (a locale may also group them) shrink instead of
+   spilling out of the circle or pushing the bar sideways. */
+.best-row__badge.is-tight { font-size: 10.5px; letter-spacing: -0.02em; }
+
+/* --------------------------------------------------------- status tiles */
+
+.status-row { display: grid; gap: 12px; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+
+.status-tile {
+  --tone: var(--pastel-blue);
+  --tone-ink: var(--pastel-blue-ink);
+  --tone-line: var(--pastel-blue-line);
+  position: relative;
+  overflow: hidden;
+  min-height: 140px;
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(160deg, color-mix(in srgb, var(--tone) 88%, var(--surface)), var(--tone));
+  border: 1px solid var(--tone-line);
+  border-radius: 18px;
+  padding: 16px 10px 14px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 7px; text-align: center; min-width: 0;
+  box-shadow:
+    0 3px 6px rgba(20, 45, 30, 0.035),
+    0 12px 26px rgba(20, 45, 30, 0.05),
+    var(--inset-top);
+  transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
+}
+.status-tile:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    0 8px 16px rgba(20, 45, 30, 0.065),
+    0 18px 35px rgba(20, 45, 30, 0.07),
+    var(--inset-top);
+}
+.status-tile--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
+.status-tile--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
+.status-tile--lavender { --tone: var(--pastel-lavender); --tone-ink: var(--pastel-lavender-ink); --tone-line: var(--pastel-lavender-line); }
+.status-tile--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
+.status-tile--pink { --tone: var(--pastel-pink); --tone-ink: var(--pastel-pink-ink); --tone-line: var(--pastel-pink-line); }
+
+.status-tile__icon {
+  width: 50px; height: 50px; border-radius: 50%; flex: none;
+  display: grid; place-items: center;
+  background:
+    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
+    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
+  color: var(--tone-ink);
+  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
+    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+.status-tile:hover .status-tile__icon {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
+    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
+}
+.status-tile__label {
+  font-size: 12.5px; font-weight: 700; color: var(--text-soft);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+}
+.status-tile__value {
+  font-size: clamp(28px, 2.6vw, 34px); font-weight: 800; line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--tone-ink); font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ---------------------------------------------------- dashboard order table */
+
+/* A compact, light six-column order table: pale header, hairline dividers and
+   no vertical rules. The wrapper owns the rounding and scrolls internally, so
+   a narrow screen never scrolls the whole dashboard sideways. */
+.orders-table__wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  -webkit-overflow-scrolling: touch;
+}
+
+.orders-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.orders-table th {
+  height: 40px;
+  padding: 0 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+.orders-table th:first-child { border-start-start-radius: var(--radius-lg); }
+.orders-table th:last-child { border-start-end-radius: var(--radius-lg); }
+
+.orders-table td {
+  height: 62px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  text-align: center;
+}
+.orders-table tbody tr:last-child td { border-bottom: none; }
+
+.orders-table__row { cursor: pointer; transition: background 0.14s ease; }
+.orders-table__row:hover,
+.orders-table__row:focus-within { background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+
+/* The order number is the row's real, keyboard-reachable destination. */
+.orders-table__col-no,
+.orders-table__no { text-align: start; }
+.orders-table__link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 6px;
+}
+.orders-table__link:hover { color: var(--mint-ink); }
+.orders-table__link:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+
+.orders-table__when { color: var(--muted); font-size: 11.5px; line-height: 1.35; white-space: nowrap; }
+.orders-table__when > span { display: block; }
+
+.orders-table__ellipsis {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orders-table__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 11px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+/* Order statuses are meaning, not theme decoration: the five status tokens
+   keep their hue in every theme and every mode, tinted against the surface so
+   they stay legible on a dark card too. */
+.orders-table__status--pending { background: color-mix(in srgb, var(--status-pending) 14%, var(--surface)); color: var(--status-pending); }
+.orders-table__status--preparing { background: color-mix(in srgb, var(--status-preparing) 16%, var(--surface)); color: var(--status-preparing); }
+.orders-table__status--ready { background: color-mix(in srgb, var(--status-ready) 14%, var(--surface)); color: var(--status-ready); }
+.orders-table__status--completed { background: color-mix(in srgb, var(--status-completed) 14%, var(--surface)); color: var(--status-completed); }
+.orders-table__status--cancelled { background: color-mix(in srgb, var(--status-cancelled) 14%, var(--surface)); color: var(--status-cancelled); }
+[data-theme='dark'] .orders-table__status--pending { background: color-mix(in srgb, var(--status-pending) 26%, var(--surface)); color: color-mix(in srgb, var(--status-pending) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--preparing { background: color-mix(in srgb, var(--status-preparing) 26%, var(--surface)); color: color-mix(in srgb, var(--status-preparing) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--ready { background: color-mix(in srgb, var(--status-ready) 26%, var(--surface)); color: color-mix(in srgb, var(--status-ready) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--completed { background: color-mix(in srgb, var(--status-completed) 26%, var(--surface)); color: color-mix(in srgb, var(--status-completed) 45%, #ffffff); }
+[data-theme='dark'] .orders-table__status--cancelled { background: color-mix(in srgb, var(--status-cancelled) 26%, var(--surface)); color: color-mix(in srgb, var(--status-cancelled) 45%, #ffffff); }
+
+.orders-table__total { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; }
+
+.orders-table__state {
+  height: 96px;
+  color: var(--muted);
+  vertical-align: middle;
+}
+.orders-table__state-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
+.orders-table__foot {
+  font-size: 12px;
+  color: var(--muted);
+  text-align: start;
+}
+
+/* --------------------------------------------------------- scroll to top */
+
+.scroll-top {
+  position: fixed;
+  inset-block-end: calc(20px + env(safe-area-inset-bottom));
+  inset-inline-end: 20px;
+  width: 44px; height: 44px; border-radius: 50%;
+  z-index: 45; display: grid; place-items: center; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border);
+  color: var(--mint-deep);
+  box-shadow: var(--shadow);
+}
+.scroll-top:hover { background: var(--mint-soft); }
+
+/* ----------------------------------------------------------- responsive */
+
+@media (max-width: 1180px) {
+  .kpi-row, .fstat-row { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .status-row { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1020px) {
+  .dash-row--analytics { grid-template-columns: minmax(0, 1fr); }
+  .status-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .fstat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .dash-row--info { grid-template-columns: minmax(0, 1fr); }
+  .fstat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .dash { gap: 12px; }
+  .dash-row { gap: 12px; }
+  .kpi-row, .status-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .welcome { padding: 16px; min-height: 132px; gap: 10px; }
+  .welcome__art { width: min(40%, 170px); }
+  .hours-card__body { gap: 12px; }
+
+  /* Lighten the frosting on phones so scrolling stays smooth. */
+  .dash .card, .kpi, .status-tile, .fstat {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: 0 2px 8px rgba(25, 55, 35, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  }
+  .kpi, .fstat, .status-tile { min-height: 0; padding: 16px 12px 14px; }
+  .kpi:hover, .fstat:hover, .status-tile:hover { transform: none; }
+  .kpi:hover .kpi__icon, .fstat:hover .fstat__icon, .status-tile:hover .status-tile__icon {
+    transform: none;
+  }
+
+  /* Below this width the six columns become one compact card per order, so the
+     order number and the grand total stay on screen without sideways scrolling. */
+  .orders-table { min-width: 0; }
+  .orders-table thead { display: none; }
+  .orders-table tbody,
+  .orders-table tbody tr:not(.orders-table__row) { display: block; }
+  .orders-table__row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'no status'
+      'when total'
+      'who table';
+    align-items: center;
+    gap: 2px 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e8eeea;
+  }
+  .orders-table__row:last-child { border-bottom: none; }
+  .orders-table td,
+  .orders-table td:first-child,
+  .orders-table td:last-child {
+    display: block;
+    height: auto;
+    padding: 0;
+    border: 0;
+    text-align: start;
+  }
+  .orders-table__no { grid-area: no; }
+  .orders-table__when { grid-area: when; }
+  .orders-table__row td:nth-child(3) { grid-area: who; }
+  .orders-table__table { grid-area: table; text-align: end; }
+  .orders-table__row td:nth-child(5) { grid-area: status; text-align: end; }
+  .orders-table__total { grid-area: total; text-align: end; }
+  .orders-table__ellipsis { max-width: 100%; }
+  .orders-table__ellipsis::before {
+    content: attr(data-label) ': ';
+    color: #8a8d89;
+    font-size: 11.5px;
+  }
+  .orders-table__state { padding: 24px 12px; }
+  .scroll-top { width: 40px; height: 40px; inset-block-end: calc(14px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 420px) {
+  .kpi-row, .status-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .fstat-row { grid-template-columns: minmax(0, 1fr); }
+  .welcome__art { display: none; }
+  .kpi { padding: 13px 10px; }
+  .kpi__value { font-size: 26px; }
+  .kpi__icon, .fstat__icon, .status-tile__icon { width: 44px; height: 44px; }
+  .fstat__value { font-size: 19px; }
+  .status-tile__value { font-size: 28px; }
+  .best-row__line { grid-template-columns: minmax(0, 1fr) 32px; gap: 8px; }
+  .best-row__badge { width: 28px; height: 28px; font-size: 11.5px; }
+  .hours-card__body { flex-direction: column; gap: 12px; }
+  .hours-card__divider { width: auto; height: 1px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash .card, .kpi, .fstat, .status-tile, .kpi__icon, .fstat__icon, .status-tile__icon,
+  .sound-play, .range-pill, .chart__dot, .best-row__fill {
+    transition: none;
+  }
+  .kpi:hover, .fstat:hover, .status-tile:hover, .sound-play:hover { transform: none; }
+  .kpi:hover .kpi__icon, .fstat:hover .fstat__icon, .status-tile:hover .status-tile__icon {
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------ custom date range modal */
+
+/*
+ * One card with two internal layers: a tinted header closed off by a hairline,
+ * then the body with the two day fields and the actions. Everything is scoped
+ * to `.dash-modal`, so no other modal in the app changes.
+ */
+.dash-modal {
+  position: fixed; inset: 0; z-index: 90;
+  display: grid; place-items: center;
+  padding: 20px;
+  background: rgba(20, 30, 26, 0.34);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: dash-modal-fade 150ms ease-out;
+}
+.dash-modal__card {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: 92dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  background: linear-gradient(165deg, var(--surface), var(--surface-2));
+  box-shadow:
+    0 2px 6px rgba(20, 45, 30, 0.06),
+    0 24px 60px rgba(20, 45, 30, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  animation: dash-modal-rise 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+/* The header reads as its own layer: soft tint, its own padding, a hairline. */
+.dash-modal__head {
+  position: relative;
+  padding: 22px 24px 18px;
+  padding-inline-end: 64px;
+  background:
+    radial-gradient(120% 150% at 50% 0%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 64%),
+    linear-gradient(180deg, color-mix(in srgb, var(--primary) 5%, var(--surface)), var(--surface));
+  border-bottom: 1px solid var(--border);
+}
+.dash-modal__title {
+  font-size: 19px; font-weight: 800; color: var(--text);
+  line-height: 1.35; letter-spacing: -0.01em;
+}
+.dash-modal__subtitle {
+  margin-top: 5px;
+  font-size: 12.5px; font-weight: 550; line-height: 1.65; color: var(--muted);
+}
+/* Same rule as the rest of the app: close control on the physical left in RTL. */
+.dash-modal__close {
+  position: absolute; top: 16px; inset-inline-end: 16px;
+  width: 34px; height: 34px; border-radius: 11px;
+  display: grid; place-items: center; cursor: pointer;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  box-shadow: 0 1px 3px rgba(20, 45, 30, 0.07);
+  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+.dash-modal__close:hover { background: var(--surface); color: var(--text); }
+.dash-modal__close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+.dash-modal__form { display: flex; flex-direction: column; min-height: 0; }
+.dash-modal__body { padding: 22px 24px 6px; overflow-y: auto; min-height: 0; }
+.dash-modal__fields {
+  display: grid; gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* A day field is a button that opens the app's calendar, so the value shown is
+   the day in the reader's own calendar (Jalali for Persian). */
+.dash-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dash-field__label { font-size: 13px; font-weight: 750; color: var(--text-soft); }
+.dash-field__control { position: relative; display: block; }
+.dash-field__input {
+  width: 100%; min-height: 52px;
+  display: flex; align-items: center;
+  border-radius: 14px;
+  border: 1px solid var(--border-strong);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, #ffffff), var(--surface));
+  padding-inline: 44px 14px;
+  font: inherit; font-size: 14.5px; font-weight: 700; color: var(--text);
+  text-align: start; cursor: pointer;
+  box-shadow:
+    inset 0 1px 2px rgba(25, 55, 35, 0.06),
+    0 1px 2px rgba(20, 45, 30, 0.04);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+.dash-field__input:hover {
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--border-strong));
+}
+.dash-field__input:focus-visible,
+.dash-field__input.is-open {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent),
+    inset 0 1px 2px rgba(25, 55, 35, 0.05);
+}
+.dash-field__input.is-invalid { border-color: var(--danger); }
+.dash-field__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dash-field__value.is-empty { color: var(--muted); font-weight: 600; }
+.dash-field__icon {
+  position: absolute; inset-inline-start: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+  transition: color 160ms ease;
+}
+.dash-field__input:hover + .dash-field__icon,
+.dash-field__input.is-open + .dash-field__icon { color: var(--primary); }
+
+.dash-modal__error {
+  margin-top: 14px;
+  display: flex; align-items: center; gap: 7px;
+  padding: 9px 12px; border-radius: 11px;
+  background: var(--danger-soft); color: #a12020;
+  font-size: 12.5px; font-weight: 650;
+}
+
+.dash-modal__foot {
+  padding: 16px 24px 18px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+}
+.dash-modal__btn {
+  min-height: 44px; padding: 0 24px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface); color: var(--text);
+  font-size: 13.5px; font-weight: 700; cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 45, 30, 0.06);
+  transition: transform 150ms ease, box-shadow 150ms ease, background 150ms ease;
+}
+.dash-modal__btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 14px rgba(20, 45, 30, 0.09); }
+.dash-modal__btn:active:not(:disabled) { transform: translateY(0); }
+.dash-modal__btn:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--muted);
+}
+.dash-modal__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.dash-modal__btn--apply {
+  border-color: var(--theme-primary); color: var(--primary-ink);
+  background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-active));
+  box-shadow:
+    0 6px 16px color-mix(in srgb, var(--theme-primary) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+.dash-modal__btn--apply:hover:not(:disabled) {
+  box-shadow:
+    0 9px 22px color-mix(in srgb, var(--theme-primary) 40%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+}
+
+[data-theme='dark'] .dash-modal { background: rgba(6, 10, 12, 0.6); }
+[data-theme='dark'] .dash-modal__card {
+  background: linear-gradient(160deg, #1e232d, #191d25);
+  border-color: rgba(60, 70, 88, 0.9);
+}
+[data-theme='dark'] .dash-modal__head {
+  background:
+    radial-gradient(120% 150% at 50% 0%, color-mix(in srgb, var(--primary) 16%, transparent), transparent 64%),
+    linear-gradient(180deg, #232a36, #1e232d);
+  border-bottom-color: rgba(60, 70, 88, 0.9);
+}
+[data-theme='dark'] .dash-modal__close {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(60, 70, 88, 0.9);
+}
+[data-theme='dark'] .dash-field__input {
+  background: linear-gradient(180deg, #232935, #1c212a);
+  color: var(--text);
+}
+[data-theme='dark'] .dash-modal__foot {
+  background: rgba(255, 255, 255, 0.02);
+  border-top-color: rgba(60, 70, 88, 0.9);
+}
+[data-theme='dark'] .dash-modal__btn { background: #232935; color: var(--text); }
+[data-theme='dark'] .dash-modal__btn:disabled {
+  background: color-mix(in srgb, var(--theme-primary) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--theme-primary) 24%, var(--border));
+  color: color-mix(in srgb, var(--theme-primary) 60%, var(--text));
+}
+[data-theme='dark'] .dash-modal__btn--apply { background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-strong)); color: #fff; }
+
+@keyframes dash-modal-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dash-modal-rise {
+  from { opacity: 0; transform: translateY(10px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-width: 620px) {
+  .dash-modal { padding: 12px; }
+  .dash-modal__card { border-radius: 18px; }
+  .dash-modal__head { padding: 18px 16px 14px; padding-inline-end: 58px; }
+  .dash-modal__body { padding: 18px 16px 4px; }
+  .dash-modal__fields { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .dash-modal__foot { padding: 14px 16px 16px; gap: 8px; }
+  .dash-modal__btn { flex: 1 1 0; min-height: 46px; padding: 0 16px; }
+}
+
+@media (max-width: 720px) {
+  /* The period pills stay on one line and scroll instead of stacking. */
+  .finance__filters { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none; }
+  .finance__filters::-webkit-scrollbar { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-modal, .dash-modal__card { animation: none; }
+  .dash-modal__btn, .dash-modal__close { transition: none; }
+  .dash-modal__btn:hover { transform: none; }
+}

@@ -1,0 +1,691 @@
+import express from 'express';
+import { q, tx } from '../db.js';
+import { requireAuth, withBusiness, perm } from '../auth.js';
+import { ah, bad, conflict, isUuid, notFound, num } from '../lib/http.js';
+import { safeZone } from '../lib/ranges.js';
+import {
+  currencyForLanguage,
+  languagePrice,
+  localizedName,
+  normalizeLanguageSettings,
+  resolveLanguage,
+} from '../lib/languages.js';
+
+const router = express.Router();
+router.use(requireAuth);
+
+const TRANSITIONS = {
+  pending: ['preparing', 'cancelled'],
+  preparing: ['ready', 'cancelled'],
+  ready: ['completed', 'cancelled'],
+  completed: [],
+  cancelled: [],
+};
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+/**
+ * Persian and Arabic-Indic digits folded to Western ones, so «۱۰۱۵», «١٠١٥»
+ * and «1015» are the same search. Receipt numbers are never parsed as numbers
+ * here: only their digits matter, which keeps the comparison partial.
+ */
+const foldDigits = (value) =>
+  String(value)
+    .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 0x06f0))
+    .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 0x0660));
+
+async function loadOrder(businessId, id) {
+  const { rows } = await q('SELECT * FROM orders WHERE id = $1 AND business_id = $2', [id, businessId]);
+  if (!rows[0]) throw notFound('ORDER_NOT_FOUND');
+  return rows[0];
+}
+
+function assertEditable(order) {
+  if (order.status === 'completed') throw conflict('ORDER_COMPLETED_LOCKED');
+  if (order.status === 'cancelled') throw conflict('ORDER_CANCELLED_LOCKED');
+}
+
+const MANUAL_DISCOUNT_TYPES = new Set(['fixed', 'percent']);
+
+/**
+ * The amount a manual discount really takes off, always derived from the
+ * order's own saved subtotal and its saved currency — never from a client-sent
+ * amount. A fixed discount can never exceed the subtotal, and a percentage is
+ * clamped to 0–100.
+ */
+function manualDiscountAmount(type, value, subtotal) {
+  const base = Math.max(0, Number(subtotal) || 0);
+  const entered = Number(value);
+  if (!Number.isFinite(entered) || entered <= 0) return 0;
+  if (type === 'percent') return round2((base * Math.min(100, entered)) / 100);
+  return round2(Math.min(base, entered));
+}
+
+/** Tax, service fee and total for a given subtotal and total discount. */
+function totalsAfterDiscount(subtotal, discount, business) {
+  const taxable = round2(Math.max(0, Number(subtotal) - Number(discount)));
+  const tax = round2((taxable * Number(business.tax_rate || 0)) / 100);
+  const service = round2((taxable * Number(business.service_charge_rate || 0)) / 100);
+  return { tax, service, total: round2(taxable + tax + service) };
+}
+
+/** List with date / status / receipt-number filters (all tenant-scoped). */
+router.get(
+  '/',
+  withBusiness('staff'),
+  perm('orders.view'),
+  ah(async (req, res) => {
+    const params = [req.businessId];
+    const where = ['o.business_id = $1'];
+
+    /*
+     * A day filter means a *business* day: the boundary is resolved in the
+     * business timezone, the same way the dashboard buckets its reports.
+     */
+    const timezone = safeZone(
+      (await q('SELECT timezone FROM businesses WHERE id = $1', [req.businessId])).rows[0]?.timezone,
+    );
+    let tzSlot = null;
+    const dayExpr = () => {
+      if (!tzSlot) {
+        params.push(timezone);
+        tzSlot = params.length;
+      }
+      return `(o.created_at AT TIME ZONE $${tzSlot}::text)::date`;
+    };
+
+    /*
+     * Receipt search spans every date (as the list notes) and is *partial*:
+     * the typed digits are matched anywhere in the receipt number, so «10»
+     * returns #1015, #2105 and #1007 alike. Only the displayed receipt number
+     * is searched — never a customer, product, table or internal id — and the
+     * `#` the list prints is optional.
+     */
+    const typedReceipt = String(req.query.receipt || '').trim();
+    const receipt = foldDigits(typedReceipt).replace(/[^0-9]/g, '');
+    if (receipt) {
+      params.push(`%${receipt}%`);
+      where.push(`o.order_number::text LIKE $${params.length}`);
+    } else if (typedReceipt) {
+      // Something was typed but it holds no digits: no receipt can match it.
+      where.push('false');
+    } else {
+      if (req.query.date) {
+        const expr = dayExpr();
+        params.push(String(req.query.date).slice(0, 10));
+        where.push(`${expr} = $${params.length}::date`);
+      }
+      if (req.query.from) {
+        const expr = dayExpr();
+        params.push(String(req.query.from).slice(0, 10));
+        where.push(`${expr} >= $${params.length}::date`);
+      }
+      if (req.query.to) {
+        const expr = dayExpr();
+        params.push(String(req.query.to).slice(0, 10));
+        where.push(`${expr} <= $${params.length}::date`);
+      }
+    }
+
+    if (req.query.status && req.query.status !== 'all') {
+      params.push(String(req.query.status).slice(0, 20));
+      where.push(`o.status = $${params.length}`);
+    }
+    if (req.query.table_id && isUuid(req.query.table_id)) {
+      params.push(req.query.table_id);
+      where.push(`o.table_id = $${params.length}`);
+    }
+
+    const limit = Math.min(200, Math.max(1, num(req.query.limit, 50)));
+    const offset = Math.max(0, num(req.query.offset, 0));
+
+    const [list, count, flow] = await Promise.all([
+      q(
+        `SELECT o.*, COALESCE(t.name, o.table_name) AS table_name,
+                (SELECT full_name FROM users u WHERE u.id = o.created_by) AS created_by_name,
+                (SELECT count(*)::int FROM order_items i WHERE i.order_id = o.id) AS item_count,
+                (SELECT coalesce(sum(i.quantity),0)::int FROM order_items i WHERE i.order_id = o.id) AS units
+           FROM orders o LEFT JOIN tables t ON t.id = o.table_id
+          WHERE ${where.join(' AND ')}
+          ORDER BY o.created_at DESC
+          LIMIT ${limit} OFFSET ${offset}`,
+        params,
+      ),
+      q(
+        `SELECT count(*)::int AS total FROM orders o WHERE ${where.join(' AND ')}`,
+        params,
+      ),
+      q(
+        `SELECT status, count(*)::int AS c FROM orders WHERE business_id = $1 GROUP BY status`,
+        [req.businessId],
+      ),
+    ]);
+
+    res.json({
+      // Each row carries the transitions the server would accept for it, so
+      // the table can offer exactly the valid next statuses (none once an
+      // order is completed or cancelled).
+      orders: list.rows.map((row) => ({
+        ...row,
+        allowed_transitions: TRANSITIONS[row.status] || [],
+      })),
+      total: count.rows[0].total,
+      limit,
+      offset,
+      flow: Object.fromEntries(flow.rows.map((r) => [r.status, r.c])),
+    });
+  }),
+);
+
+router.get(
+  '/:id',
+  withBusiness('staff'),
+  perm('orders.view'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    const creator = await q('SELECT full_name, email FROM users WHERE id = $1', [order.created_by]);
+    order.created_by_name = creator.rows[0]?.full_name || creator.rows[0]?.email || null;
+    const [items, history, prints, discountHistory, table] = await Promise.all([
+      // The saved line is the history: its name and prices are never re-read
+      // from the product. Only the thumbnail is joined, purely for display.
+      q(
+        `SELECT i.*, p.image_url AS product_image
+           FROM order_items i LEFT JOIN products p ON p.id = i.product_id
+          WHERE i.order_id = $1 ORDER BY i.id`,
+        [order.id],
+      ),
+      q(
+        `SELECT h.*, u.email AS changed_by_email FROM order_status_history h
+           LEFT JOIN users u ON u.id = h.changed_by
+          WHERE h.order_id = $1 ORDER BY h.changed_at`,
+        [order.id],
+      ),
+      q('SELECT * FROM receipt_prints WHERE order_id = $1 ORDER BY printed_at', [order.id]),
+      q('SELECT * FROM order_discount_history WHERE order_id = $1 ORDER BY created_at', [order.id]),
+      order.table_id
+        ? q('SELECT id, name, name_ku, name_fa, name_ar, name_en, zone FROM tables WHERE id = $1', [order.table_id])
+        : { rows: [] },
+    ]);
+    const business = await q('SELECT * FROM businesses WHERE id = $1', [req.businessId]);
+    res.json({
+      order,
+      items: items.rows,
+      history: history.rows,
+      prints: prints.rows,
+      discount_history: discountHistory.rows,
+      // A deleted table falls back to the snapshot stored on the order.
+      table: table.rows[0] || (order.table_name ? { id: null, name: order.table_name, zone: null } : null),
+      business: business.rows[0],
+      allowed_transitions: TRANSITIONS[order.status] || [],
+    });
+  }),
+);
+
+/** The authoritative receipt payload — used by preview, print and the screen. */
+router.get(
+  '/:id/receipt',
+  withBusiness('staff'),
+  perm('orders.print'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    const [items, table, business, prints] = await Promise.all([
+      q('SELECT name, quantity, unit_price, line_total, notes FROM order_items WHERE order_id = $1 ORDER BY id', [order.id]),
+      order.table_id ? q('SELECT name, zone FROM tables WHERE id = $1', [order.table_id]) : { rows: [] },
+      // `editable_text` carries the business's edited receipt messages, so the
+      // printed receipt uses them instead of the built-in defaults.
+      q('SELECT name, name_en, logo_url, address, city, phone, currency, receipt_settings, editable_text, timezone FROM businesses WHERE id = $1', [req.businessId]),
+      q(
+        `SELECT p.printed_at, p.printed_by_name FROM receipt_prints p
+          WHERE p.order_id = $1 ORDER BY p.printed_at DESC LIMIT 5`,
+        [order.id],
+      ),
+    ]);
+    res.json({
+      order,
+      items: items.rows,
+      table: table.rows[0] || (order.table_name ? { name: order.table_name, zone: null } : null),
+      business: business.rows[0],
+      prints: prints.rows,
+      currency: business.rows[0]?.currency,
+    });
+  }),
+);
+
+/** Records that a user actually pressed Print. Idempotent per explicit press. */
+router.post(
+  '/:id/print',
+  withBusiness('staff'),
+  perm('orders.print'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    if (req.body?.preview === true) {
+      // Previewing a receipt never creates an audit record.
+      return res.json({ ok: true, recorded: false });
+    }
+    // A receipt is only issued for a finished order — the button is disabled
+    // before that, and this is the rule a direct request cannot bypass.
+    if (order.status !== 'completed') throw conflict('ORDER_NOT_COMPLETED');
+    const { rows } = await q(
+      `INSERT INTO receipt_prints (business_id, order_id, printed_by, printed_by_name)
+       VALUES ($1,$2,$3,$4) RETURNING id, printed_at`,
+      [req.businessId, order.id, req.user.id, req.user.full_name || req.user.email],
+    );
+    res.status(201).json({ ok: true, recorded: true, print: rows[0] });
+  }),
+);
+
+/** Staff-created order (counter / phone orders). */
+router.post(
+  '/',
+  withBusiness('staff'),
+  perm('orders.edit'),
+  ah(async (req, res) => {
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length) throw bad('EMPTY_ORDER');
+
+    const business = (
+      await q('SELECT * FROM businesses WHERE id = $1', [req.businessId])
+    ).rows[0];
+    const languageSettings = normalizeLanguageSettings(business.menu_settings?.language_settings);
+
+    const result = await tx(async (c) => {
+      let table = null;
+      if (req.body?.table_id) {
+        // Only this business's own active table may be attached — a deleted or
+        // deactivated table is rejected instead of being guessed at.
+        const t = await c.query(
+          'SELECT id, name FROM tables WHERE id = $1 AND business_id = $2 AND active = true',
+          [req.body.table_id, req.businessId],
+        );
+        if (!t.rows[0]) throw bad('INVALID_TABLE');
+        table = t.rows[0];
+      }
+      const ids = [...new Set(items.map((i) => String(i.product_id)))].filter(isUuid);
+      const found = await c.query(
+        `SELECT id, price, price_ar, price_fa, price_en, price_fa_review,
+                name_en, name_ku, name_fa, name_ar
+           FROM products WHERE business_id = $1 AND id = ANY($2::uuid[])`,
+        [req.businessId, ids],
+      );
+      const byId = new Map(found.rows.map((r) => [r.id, r]));
+
+      /*
+       * The order is priced in the language it is placed in — the main ordering
+       * menu's current language, or the business's default one. Its currency
+       * (IQD, TOMAN, USD) is frozen with the order, and a product without a
+       * valid price in that language is refused rather than priced from another.
+       */
+      const language = resolveLanguage(languageSettings, req.body?.language);
+      if (req.body?.language && language !== req.body.language) throw bad('LANGUAGE_UNAVAILABLE');
+      const currency = currencyForLanguage(language, business.currency);
+
+      let subtotal = 0;
+      const lines = [];
+      for (const raw of items) {
+        const product = byId.get(String(raw.product_id));
+        if (!product) throw bad('PRODUCT_NOT_FOUND');
+        const price = languagePrice(product, language, business.currency || 'IQD');
+        if (!price.valid) throw bad('PRODUCT_PRICE_UNAVAILABLE', localizedName(product, language) || product.id);
+        const quantity = Math.max(1, Math.min(99, Math.floor(Number(raw.quantity) || 1)));
+        const unitPrice = price.amount;
+        const lineTotal = round2(unitPrice * quantity);
+        subtotal = round2(subtotal + lineTotal);
+        lines.push({
+          product_id: product.id,
+          name: localizedName(product, language),
+          unit_price: unitPrice,
+          quantity,
+          line_total: lineTotal,
+          notes: raw.notes ? String(raw.notes).slice(0, 300) : null,
+        });
+      }
+
+      let discount = round2(
+        Math.max(0, Number(req.body?.discount) || 0),
+      );
+      if (req.body?.discount_type === 'percent') {
+        discount = round2((subtotal * Math.min(100, Number(req.body?.discount) || 0)) / 100);
+      }
+      if (discount > subtotal) discount = subtotal;
+
+      const taxed = round2(subtotal - discount);
+      const tax = round2((taxed * Number(business.tax_rate || 0)) / 100);
+      const service = round2((taxed * Number(business.service_charge_rate || 0)) / 100);
+      const total = round2(taxed + tax + service);
+
+      const seq = await c.query(
+        'UPDATE businesses SET order_seq = order_seq + 1 WHERE id = $1 RETURNING order_seq',
+        [req.businessId],
+      );
+
+      const order = await c.query(
+        `INSERT INTO orders (business_id, table_id, table_name, table_source, order_number, status, channel,
+                             customer_name, customer_phone, notes, subtotal, discount, tax, service_charge, total,
+                             created_by, language, currency)
+         VALUES ($1,$2,$3,$4,$5,'pending','staff',$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) RETURNING *`,
+        [
+          req.businessId,
+          table?.id || null,
+          table?.name || null,
+          table ? 'manual' : null,
+          seq.rows[0].order_seq,
+          req.body?.customer_name ? String(req.body.customer_name).slice(0, 120) : null,
+          req.body?.customer_phone ? String(req.body.customer_phone).slice(0, 40) : null,
+          req.body?.notes ? String(req.body.notes).slice(0, 500) : null,
+          subtotal,
+          discount,
+          tax,
+          service,
+          total,
+          req.user.id,
+          language,
+          currency,
+        ],
+      );
+
+      for (const line of lines) {
+        await c.query(
+          `INSERT INTO order_items (order_id, business_id, product_id, name, unit_price, quantity, line_total, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [order.rows[0].id, req.businessId, line.product_id, line.name, line.unit_price, line.quantity, line.line_total, line.notes],
+        );
+      }
+      await c.query(
+        `INSERT INTO order_status_history (business_id, order_id, from_status, to_status, changed_by, changed_by_name)
+         VALUES ($1,$2,NULL,'pending',$3,$4)`,
+        [req.businessId, order.rows[0].id, req.user.id, req.user.full_name || req.user.email],
+      );
+      return order.rows[0];
+    });
+
+    res.status(201).json({ order: result });
+  }),
+);
+
+/** Status change — append-only audit, no duplicate rows when nothing changes. */
+router.patch(
+  '/:id/status',
+  withBusiness('staff'),
+  perm('orders.status'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    const next = String(req.body?.status || '');
+    if (!Object.keys(TRANSITIONS).includes(next)) throw bad('INVALID_STATUS');
+    if (order.status === next) {
+      return res.json({
+        order,
+        unchanged: true,
+        audited: false,
+        allowed_transitions: TRANSITIONS[order.status] || [],
+      });
+    }
+    const allowed = TRANSITIONS[order.status] || [];
+    if (!allowed.includes(next)) throw conflict('INVALID_STATUS_TRANSITION');
+
+    const updated = await tx(async (c) => {
+      const { rows } = await c.query(
+        `UPDATE orders SET status = $3,
+                           completed_at = CASE WHEN $3 = 'completed' THEN now() ELSE completed_at END,
+                           updated_at = now()
+          WHERE id = $1 AND business_id = $2 RETURNING *`,
+        [order.id, req.businessId, next],
+      );
+      await c.query(
+        `INSERT INTO order_status_history (business_id, order_id, from_status, to_status, changed_by, changed_by_name)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [req.businessId, order.id, order.status, next, req.user.id, req.user.full_name || req.user.email],
+      );
+      /*
+       * Every real status transition is an activity, never a new order: the
+       * body carries `from>to` so the panel can name both statuses and the
+       * actor in the reader's language. The NOT EXISTS guard keeps a repeated
+       * request from writing the same transition twice.
+       */
+      await c.query(
+        `INSERT INTO notifications (business_id, type, title, body, order_id, actor_name)
+         SELECT $1,'status_change',$2,$3,$4,$5
+          WHERE NOT EXISTS (
+            SELECT 1 FROM notifications
+             WHERE business_id = $1 AND type = 'status_change'
+               AND order_id = $4 AND body = $3
+          )`,
+        [
+          req.businessId,
+          `#${order.order_number}`,
+          `${order.status}>${next}`,
+          order.id,
+          req.user.full_name || req.user.email,
+        ],
+      );
+      return rows[0];
+    });
+
+    res.json({
+      order: updated,
+      audited: true,
+      allowed_transitions: TRANSITIONS[updated.status] || [],
+    });
+  }),
+);
+
+/** Editing an order's notes / customer details. Completed orders are locked. */
+router.patch(
+  '/:id',
+  withBusiness('staff'),
+  perm('orders.edit'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    assertEditable(order);
+    const b = req.body || {};
+    const { rows } = await q(
+      `UPDATE orders SET customer_name = COALESCE($3, customer_name),
+                         customer_phone = COALESCE($4, customer_phone),
+                         notes = COALESCE($5, notes),
+                         updated_at = now()
+        WHERE id = $1 AND business_id = $2 RETURNING *`,
+      [
+        order.id,
+        req.businessId,
+        b.customer_name === undefined ? null : String(b.customer_name).slice(0, 120),
+        b.customer_phone === undefined ? null : String(b.customer_phone).slice(0, 40),
+        b.notes === undefined ? null : String(b.notes).slice(0, 500),
+      ],
+    );
+    res.json({ order: rows[0] });
+  }),
+);
+
+/**
+ * Manual discount — the administrator's own discount on an order.
+ *
+ * A coupon that the guest really redeemed is authoritative and blocks this
+ * entirely, so a coupon and a manual discount can never stack. The amount is
+ * calculated here from the order's saved subtotal and currency; the client only
+ * names the type and the number the administrator typed.
+ */
+router.patch(
+  '/:id/discount',
+  withBusiness('staff'),
+  perm('orders.edit'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    assertEditable(order);
+    // `promotion_code` is only ever saved for a code that passed the pricing
+    // engine's full validation at checkout — a typed-in invalid code never
+    // reaches the order, so this detects a genuine coupon redemption.
+    if (order.promotion_code) throw conflict('MANUAL_DISCOUNT_COUPON');
+
+    const business = (
+      await q('SELECT tax_rate, service_charge_rate FROM businesses WHERE id = $1', [req.businessId])
+    ).rows[0];
+    const subtotal = Number(order.subtotal) || 0;
+    const remove = req.body?.remove === true;
+    const type = remove ? null : String(req.body?.type || '');
+    const rawValue = Number(req.body?.value);
+
+    if (!remove) {
+      if (!MANUAL_DISCOUNT_TYPES.has(type)) throw bad('INVALID_DISCOUNT_TYPE');
+      if (!Number.isFinite(rawValue) || rawValue <= 0) throw bad('INVALID_DISCOUNT');
+      if (type === 'percent' && rawValue > 100) throw bad('INVALID_DISCOUNT');
+      if (type === 'fixed' && rawValue > subtotal) throw bad('DISCOUNT_TOO_LARGE');
+    }
+
+    const amount = remove ? 0 : manualDiscountAmount(type, rawValue, subtotal);
+    if (!remove && amount <= 0) throw bad('INVALID_DISCOUNT');
+
+    // Pressing Apply twice with the same terms changes nothing and writes no
+    // second audit row.
+    const unchanged = remove
+      ? !order.manual_discount_type && Number(order.manual_discount_amount) === 0
+      : order.manual_discount_type === type && Number(order.manual_discount_value) === rawValue;
+    if (unchanged) return res.json({ order, unchanged: true });
+
+    const totals = totalsAfterDiscount(subtotal, amount, business);
+    const action = remove ? 'removed' : order.manual_discount_type ? 'changed' : 'applied';
+
+    const updated = await tx(async (c) => {
+      const { rows } = await c.query(
+        `UPDATE orders SET discount = $3, tax = $4, service_charge = $5, total = $6,
+                           manual_discount_type = $7, manual_discount_value = $8,
+                           manual_discount_amount = $9, manual_discount_currency = $10,
+                           manual_discount_by = $11, manual_discount_at = $12,
+                           updated_at = now()
+          WHERE id = $1 AND business_id = $2 RETURNING *`,
+        [
+          order.id,
+          req.businessId,
+          round2(amount),
+          totals.tax,
+          totals.service,
+          totals.total,
+          type,
+          remove ? null : round2(rawValue),
+          round2(amount),
+          order.currency || null,
+          remove ? null : req.user.id,
+          remove ? null : new Date(),
+        ],
+      );
+      await c.query(
+        `INSERT INTO order_discount_history
+           (business_id, order_id, action, discount_type, discount_value, discount_amount,
+            total_before, total_after, currency, actor_id, actor_name)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [
+          req.businessId,
+          order.id,
+          action,
+          type,
+          remove ? null : round2(rawValue),
+          round2(amount),
+          Number(order.total) || 0,
+          totals.total,
+          order.currency || null,
+          req.user.id,
+          req.user.full_name || req.user.email,
+        ],
+      );
+      return rows[0];
+    });
+
+    res.json({ order: updated, action, unchanged: false });
+  }),
+);
+
+/** Replaces the item list, recomputing every money value on the server. */
+router.put(
+  '/:id/items',
+  withBusiness('staff'),
+  perm('orders.edit'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    assertEditable(order);
+    const items = Array.isArray(req.body?.items) ? req.body.items : [];
+    if (!items.length) throw bad('EMPTY_ORDER');
+
+    const business = (
+      await q('SELECT tax_rate, service_charge_rate FROM businesses WHERE id = $1', [req.businessId])
+    ).rows[0];
+
+    const updated = await tx(async (c) => {
+      const ids = [...new Set(items.map((i) => String(i.product_id)))].filter(isUuid);
+      const found = await c.query(
+        'SELECT id, price, name_en, name_ku, name_fa, name_ar FROM products WHERE business_id = $1 AND id = ANY($2::uuid[])',
+        [req.businessId, ids],
+      );
+      const byId = new Map(found.rows.map((r) => [r.id, r]));
+
+      await c.query('DELETE FROM order_items WHERE order_id = $1', [order.id]);
+
+      let subtotal = 0;
+      for (const raw of items) {
+        const product = byId.get(String(raw.product_id));
+        if (!product) throw bad('PRODUCT_NOT_FOUND');
+        const quantity = Math.max(1, Math.min(99, Math.floor(Number(raw.quantity) || 1)));
+        const unitPrice = Number(product.price);
+        const lineTotal = round2(unitPrice * quantity);
+        subtotal = round2(subtotal + lineTotal);
+        await c.query(
+          `INSERT INTO order_items (order_id, business_id, product_id, name, unit_price, quantity, line_total, notes)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+          [
+            order.id,
+            req.businessId,
+            product.id,
+            product.name_en || product.name_ku || product.name_fa || product.name_ar,
+            unitPrice,
+            quantity,
+            lineTotal,
+            raw.notes ? String(raw.notes).slice(0, 300) : null,
+          ],
+        );
+      }
+
+      /*
+       * Discounts survive an item edit: a redeemed coupon keeps its saved
+       * amount (never rewritten from the form), a manual discount is
+       * recalculated from its own saved terms against the new subtotal, and
+       * only an order with neither takes the form's own discount.
+       */
+      let discount;
+      let manualAmount = Number(order.manual_discount_amount) || 0;
+      if (order.promotion_code) {
+        discount = round2(Math.min(Number(order.discount) || 0, subtotal));
+      } else if (order.manual_discount_type) {
+        manualAmount = manualDiscountAmount(order.manual_discount_type, order.manual_discount_value, subtotal);
+        discount = manualAmount;
+      } else {
+        discount = round2(Math.max(0, Number(req.body?.discount ?? order.discount) || 0));
+        if (req.body?.discount_type === 'percent') {
+          discount = round2((subtotal * Math.min(100, Number(req.body?.discount) || 0)) / 100);
+        }
+        if (discount > subtotal) discount = subtotal;
+      }
+      const totals = totalsAfterDiscount(subtotal, discount, business);
+
+      const { rows } = await c.query(
+        `UPDATE orders SET subtotal=$3, discount=$4, tax=$5, service_charge=$6, total=$7,
+                           manual_discount_amount=$8, updated_at=now()
+          WHERE id=$1 AND business_id=$2 RETURNING *`,
+        [order.id, req.businessId, subtotal, discount, totals.tax, totals.service, totals.total, manualAmount],
+      );
+      return rows[0];
+    });
+
+    res.json({ order: updated });
+  }),
+);
+
+router.delete(
+  '/:id',
+  withBusiness('manager'),
+  perm('orders.edit'),
+  ah(async (req, res) => {
+    const order = await loadOrder(req.businessId, req.params.id);
+    if (order.status === 'completed') throw conflict('ORDER_COMPLETED_LOCKED');
+    await q('DELETE FROM orders WHERE id = $1 AND business_id = $2', [order.id, req.businessId]);
+    res.json({ ok: true });
+  }),
+);
+
+export default router;

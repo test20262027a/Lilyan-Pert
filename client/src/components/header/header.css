@@ -1,0 +1,530 @@
+/* ==========================================================================
+   Shared application header — soft mint-white card.
+   Owned by components/header/AppHeader.jsx and rendered only inside the
+   authenticated shell, so page content is never duplicated or pushed around.
+   ========================================================================== */
+
+.hdr-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  /* Same small inline margin as the page canvas, so the header card and the
+     page content share one edge at every width. */
+  padding-block: 12px 8px;
+  padding-inline: clamp(10px, 1.15vw, 20px);
+  background: var(--bg);
+}
+
+.hdr {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 16px;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--mint) 16%, var(--border));
+  background: linear-gradient(180deg, var(--surface) 0%, var(--mint-soft) 100%);
+  box-shadow: 0 12px 28px rgba(23, 26, 43, 0.06), 0 1px 2px rgba(23, 26, 43, 0.04);
+}
+
+.hdr__brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.hdr__logo {
+  width: 44px; height: 44px; flex: none; border-radius: 50%;
+  display: grid; place-items: center; overflow: hidden;
+  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 55%, #ffffff));
+  color: #ffffff; font-weight: 800; font-size: 14px;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 12%, transparent);
+}
+/* A stored logo keeps its own proportions — contained, never cropped. */
+.hdr__logo.has-image { background: var(--surface); }
+.hdr__logo img { width: 100%; height: 100%; object-fit: contain; }
+.hdr__name {
+  font-size: 17px; font-weight: 800; letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hdr__spacer { flex: 1 1 auto; min-width: 0; }
+
+/* --------------------------------------------------------------- controls */
+
+.hdr__tools { display: flex; align-items: center; gap: 8px; }
+
+.hdr-btn {
+  width: 42px; height: 42px; flex: none; padding: 0;
+  display: grid; place-items: center;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--mint) 14%, var(--border-strong));
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.12s ease;
+}
+.hdr-btn:hover:not(:disabled) {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+  color: var(--mint-ink);
+}
+.hdr-btn:active:not(:disabled) { transform: translateY(1px); }
+.hdr-btn:disabled { opacity: 0.5; cursor: default; }
+/* Muted state (sound off) and active state (dark mode) stay visible without shouting. */
+.hdr-btn.is-off { color: var(--muted); }
+.hdr-btn.is-on {
+  color: var(--mint-ink);
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+}
+
+/* Language selector: flag + current label + chevron, and its own flag menu. */
+.hdr-lang { position: relative; flex: none; display: inline-flex; }
+.hdr-lang__btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 42px; padding-inline: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--mint) 14%, var(--border-strong));
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+.hdr-lang__btn:hover {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+  box-shadow: 0 2px 6px rgba(23, 26, 43, 0.07);
+}
+.hdr-lang__btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+/* Only one language enabled: the control is the current language, not a menu. */
+.hdr-lang__btn.is-single { cursor: default; }
+.hdr-lang__btn.is-single:hover {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--mint) 14%, var(--border-strong));
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+}
+.hdr-lang__label { font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+.hdr-lang__caret { color: var(--muted); transition: transform 0.18s ease; }
+.hdr-lang__caret.is-open { transform: rotate(180deg); }
+
+/* Drawn flags: one artwork per language, never an emoji approximation. */
+.lang-flag {
+  width: 22px; height: 14px; flex: none; display: block;
+  border-radius: 3px;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.14);
+}
+
+.hdr-lang__menu {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 8px);
+  z-index: 62;
+  min-width: 172px;
+  padding: 6px;
+  display: flex; flex-direction: column; gap: 2px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--mint) 16%, var(--border));
+  border-radius: 16px;
+  box-shadow: 0 20px 40px rgba(23, 26, 43, 0.16), 0 2px 6px rgba(23, 26, 43, 0.06);
+  animation: hdr-menu-in 0.16s ease;
+}
+.hdr-lang__option {
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; padding: 9px 10px;
+  border: 0; border-radius: 11px;
+  background: none; font: inherit; font-size: 13.5px; font-weight: 650;
+  color: var(--text); text-align: start; cursor: pointer;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.hdr-lang__option:hover { background: var(--mint-soft); }
+.hdr-lang__option.is-active {
+  background: color-mix(in srgb, var(--mint) 13%, transparent);
+  color: var(--mint-ink);
+}
+.hdr-lang__option-label { flex: 1 1 auto; white-space: nowrap; }
+.hdr-lang__check { color: var(--mint-deep); }
+
+/*
+ * The list is rendered in a portal on <body> and placed from the trigger's own
+ * rectangle (see LanguageSelect), so no card, scrolling strip or sticky header
+ * can clip it and it never widens the page. The left/top/bottom offsets and the
+ * width arrive inline from the collision-aware measurement.
+ */
+.hdr-lang__menu--float {
+  position: fixed;
+  inset: auto;
+  z-index: 620;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: color-mix(in srgb, var(--surface) 93%, transparent);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-color: color-mix(in srgb, var(--primary) 18%, var(--border));
+  box-shadow:
+    0 24px 48px rgba(23, 26, 43, 0.18),
+    0 2px 6px rgba(23, 26, 43, 0.06),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+}
+.hdr-lang__menu--float .hdr-lang__option { flex: none; }
+
+/* Profile trigger: avatar with a chevron on the opposite side. */
+.hdr-user { position: relative; flex: none; display: inline-flex; }
+.hdr-user__btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  height: 42px; padding-inline: 12px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--mint) 18%, var(--border-strong));
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+.hdr-user__btn:hover {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 45%, var(--border-strong));
+}
+/* The trigger avatar is the shared <UserAvatar>, sized by its own prop. */
+.hdr-user__caret { color: var(--muted); transition: transform 0.18s ease; }
+.hdr-user__caret.is-open { transform: rotate(180deg); }
+
+/* ------------------------------------------------------------- overlays */
+
+/* Anchored to the trigger, aligned to its inline end so it always opens inwards. */
+.hdr-menu {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 10px);
+  z-index: 60;
+  width: min(320px, calc(100vw - 24px));
+  padding: 10px;
+  display: flex; flex-direction: column; gap: 4px;
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--mint) 15%, var(--border));
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(23, 26, 43, 0.18), 0 2px 6px rgba(23, 26, 43, 0.06);
+  animation: hdr-menu-in 0.16s ease;
+}
+@keyframes hdr-menu-in { from { opacity: 0; transform: translateY(-4px); } }
+
+.hdr-menu__user {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--mint) 16%, transparent);
+  background: linear-gradient(
+    140deg,
+    color-mix(in srgb, var(--mint) 10%, var(--surface)) 0%,
+    color-mix(in srgb, var(--mint) 24%, var(--surface)) 100%
+  );
+}
+/* The menu avatar is the same shared <UserAvatar>, at 50px. */
+.hdr-menu__who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hdr-menu__name {
+  font-size: 15px; font-weight: 800; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hdr-menu__mail {
+  font-size: 12px; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.hdr-menu__role {
+  align-self: flex-start; margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--mint) 45%, transparent);
+  background: color-mix(in srgb, var(--mint) 10%, transparent);
+  color: var(--mint-ink);
+  font-size: 11px; font-weight: 700;
+}
+
+.hdr-menu__nav {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.hdr-menu__row {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; padding: 12px;
+  border: 0; background: none;
+  font: inherit; font-size: 13.5px; font-weight: 600; color: var(--text);
+  text-align: start; cursor: pointer;
+}
+.hdr-menu__row + .hdr-menu__row { border-top: 1px solid var(--border); }
+.hdr-menu__row:hover { background: var(--surface-2); }
+.hdr-menu__caret { margin-inline-start: auto; color: var(--muted); }
+.hdr-menu__row:hover .hdr-menu__caret { color: var(--mint-ink); }
+
+.hdr-menu__logout {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; margin-top: 4px; padding: 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--danger) 18%, transparent);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--danger) 7%, var(--surface));
+  color: var(--danger);
+  font: inherit; font-size: 13.5px; font-weight: 700;
+  text-align: start; cursor: pointer;
+  transition: background 0.18s ease;
+}
+.hdr-menu__logout:hover { background: color-mix(in srgb, var(--danger) 14%, var(--surface)); }
+.hdr-menu__logout-icon {
+  width: 30px; height: 30px; flex: none; border-radius: 10px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+}
+
+/* Notifications panel reuses the same shell with its own list layout. */
+.hdr-menu--bell { width: min(340px, calc(100vw - 24px)); padding: 0; gap: 0; }
+.hdr-menu__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px; font-weight: 700;
+}
+.hdr-menu__list { max-height: 320px; overflow-y: auto; }
+.hdr-menu__event {
+  display: block; width: 100%; padding: 10px 14px;
+  background: none; border: 0; border-bottom: 1px solid var(--border);
+  font: inherit; font-size: 13px; text-align: start; cursor: pointer;
+}
+.hdr-menu__event:last-child { border-bottom: 0; }
+.hdr-menu__event:hover { background: var(--surface-2); }
+.hdr-menu__event.is-unread { background: color-mix(in srgb, var(--mint) 8%, transparent); }
+.hdr-menu__event-title { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.hdr-menu__event-body { color: var(--muted); font-size: 12px; }
+
+.hdr-bell { position: relative; flex: none; display: inline-flex; }
+
+/* Bell emphasis follows the badge priority; the badge itself is the loud part. */
+.hdr-bell__btn.is-alert { color: var(--text-soft); }
+.hdr-bell__btn.is-purple { color: #6f45d6; border-color: color-mix(in srgb, #8054e8 32%, var(--border-strong)); }
+.hdr-bell__btn.is-gold { color: #a9721a; border-color: color-mix(in srgb, #f5bc37 45%, var(--border-strong)); }
+.hdr-bell__btn.is-red { color: #c93b41; border-color: color-mix(in srgb, #e94e55 32%, var(--border-strong)); }
+
+/*
+ * Priority badge. The colour is set by the priority logic in NotificationBell,
+ * never hardcoded per render; the inner highlight and small shadow keep it
+ * raised without a continuous pulse.
+ */
+.hdr-bell__badge {
+  position: absolute; top: -4px; inset-inline-end: -4px;
+  min-width: 19px; height: 19px; padding: 0 5px;
+  display: grid; place-items: center;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--surface);
+  font-size: 10.5px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  transition: background-color 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+  animation: bell-badge-in 0.22s ease;
+}
+.hdr-bell__badge--purple {
+  background: linear-gradient(180deg, #9166f0, #8054e8);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 3px 8px rgba(128, 84, 232, 0.45);
+}
+.hdr-bell__badge--gold {
+  background: linear-gradient(180deg, #ffd066, #f5bc37);
+  color: #5a3c05;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 3px 8px rgba(245, 188, 55, 0.45);
+}
+.hdr-bell__badge--red {
+  background: linear-gradient(180deg, #f4696f, #e94e55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 8px rgba(233, 78, 85, 0.42);
+}
+@keyframes bell-badge-in { from { transform: scale(0.72); opacity: 0; } }
+
+/* ----------------------------------------------------- notification panel */
+
+.notif-panel {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 10px);
+  z-index: 62;
+  width: min(510px, calc(100vw - 20px));
+  display: flex; flex-direction: column;
+  background: color-mix(in srgb, var(--surface) 96%, var(--mint-soft));
+  border: 1px solid color-mix(in srgb, var(--mint) 16%, var(--border));
+  border-radius: 20px;
+  box-shadow: 0 26px 52px rgba(23, 26, 43, 0.17), 0 2px 6px rgba(23, 26, 43, 0.05);
+  overflow: hidden;
+  animation: hdr-menu-in 0.18s ease;
+}
+
+.notif-panel__head {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 13px 16px 11px;
+  border-bottom: 1px solid color-mix(in srgb, var(--mint) 14%, var(--border));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--mint) 7%, var(--surface)), transparent);
+}
+.notif-panel__title {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 14.5px; font-weight: 800; color: var(--text);
+}
+.notif-panel__title-icon {
+  width: 26px; height: 26px; flex: none; border-radius: 9px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--mint) 14%, var(--surface));
+  color: var(--mint-ink);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 2px 5px rgba(25, 55, 35, 0.08);
+}
+.notif-panel__markall {
+  border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 11.5px; font-weight: 700;
+  color: var(--muted); padding: 4px 6px; border-radius: 8px;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.notif-panel__markall:hover:not(:disabled) { color: var(--mint-ink); background: var(--mint-soft); }
+.notif-panel__markall:disabled { opacity: 0.45; cursor: default; }
+
+/* Compact category tabs — the active one is a filled green pill. */
+.notif-panel__tabs {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 14px;
+  border-bottom: 1px solid color-mix(in srgb, var(--mint) 12%, var(--border));
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  scroll-padding-inline: 14px;
+}
+.notif-panel__tabs::-webkit-scrollbar { display: none; }
+/* Every tab is one flex row: label and count always share a baseline, the tab
+   never grows past its content, and the count pill keeps a fixed foot print so
+   a number going from 9 to 12 to 99+ cannot push the row around. */
+.notif-tab {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  flex: none;
+  /* One fixed height for every tab, with or without a count pill inside, so the
+     row never steps up or down as counts appear and disappear. */
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid transparent; border-radius: var(--radius-pill);
+  background: transparent;
+  font: inherit; font-size: 12px; font-weight: 700; line-height: 1.2;
+  color: var(--muted); cursor: pointer; white-space: nowrap;
+  transition: background 0.16s ease, color 0.16s ease;
+}
+.notif-tab__label { display: inline-block; min-width: 0; }
+.notif-tab:hover { background: var(--mint-soft); color: var(--mint-ink); }
+.notif-tab.is-active {
+  background: var(--mint-deep); color: #ffffff;
+  box-shadow: 0 3px 8px color-mix(in srgb, var(--mint-deep) 30%, transparent);
+}
+.notif-tab__count {
+  flex: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 17px;
+  padding: 0 5px; border-radius: var(--radius-pill);
+  font-size: 10.5px; font-weight: 800; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  background: color-mix(in srgb, currentColor 16%, transparent);
+}
+@media (max-width: 560px) {
+  .notif-panel__tabs { gap: 5px; padding: 9px 12px; }
+  .notif-tab { font-size: 11.5px; padding: 0 8px; gap: 5px; }
+  .notif-tab__count { min-width: 18px; padding: 0 4px; }
+}
+
+.notif-panel__list {
+  max-height: min(400px, 62vh);
+  overflow-y: auto;
+  padding: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+
+.notif-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  width: 100%; padding: 10px;
+  border: 1px solid transparent; border-radius: 13px;
+  background: transparent; font: inherit; text-align: start;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
+}
+.notif-item:hover { background: var(--surface-2); border-color: var(--border); }
+.notif-item.is-unread { background: color-mix(in srgb, var(--mint) 6%, transparent); }
+.notif-item__icon {
+  width: 32px; height: 32px; flex: none; border-radius: 10px;
+  display: grid; place-items: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 2px 5px rgba(23, 26, 43, 0.07);
+}
+.notif-item--purple .notif-item__icon { background: #f2ecfe; color: #8054e8; }
+.notif-item--gold .notif-item__icon { background: #fff6e0; color: #c08a12; }
+.notif-item--red .notif-item__icon { background: #fdeced; color: #e94e55; }
+
+.notif-item__body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; }
+.notif-item__title {
+  font-size: 12.5px; font-weight: 700; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.notif-item__desc {
+  font-size: 11.5px; color: var(--text-soft); line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.notif-item__time { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.notif-item__dot {
+  width: 7px; height: 7px; flex: none; margin-top: 6px;
+  border-radius: 50%; background: var(--mint-deep);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 16%, transparent);
+}
+
+/* Empty / loading / failed state: centred grey bell, no invented rows. */
+.notif-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px;
+  padding: 34px 16px 38px;
+  text-align: center;
+}
+.notif-empty__icon {
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface-2);
+  color: color-mix(in srgb, var(--muted) 62%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.notif-empty__icon--error { color: var(--danger); background: var(--danger-soft); }
+.notif-empty__text { font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 0; }
+
+[data-theme='dark'] .notif-panel { background: #1c222d; }
+[data-theme='dark'] .notif-panel__head { background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent); }
+[data-theme='dark'] .notif-item--purple .notif-item__icon { background: rgba(128, 84, 232, 0.18); }
+[data-theme='dark'] .notif-item--gold .notif-item__icon { background: rgba(245, 188, 55, 0.16); }
+[data-theme='dark'] .notif-item--red .notif-item__icon { background: rgba(233, 78, 85, 0.16); }
+[data-theme='dark'] .notif-empty__icon { background: rgba(255, 255, 255, 0.05); }
+
+/* ----------------------------------------------------------- responsive */
+
+@media (max-width: 1000px) {
+  .hdr { min-height: 64px; border-radius: 22px; }
+}
+
+@media (max-width: 768px) {
+  .hdr-wrap { padding: 10px 13px 6px; }
+  .hdr { gap: 10px; min-height: 62px; padding: 9px 12px; border-radius: 20px; }
+  .hdr-btn, .hdr-lang__btn, .hdr-user__btn { height: 40px; }
+  .hdr-btn { width: 40px; border-radius: 13px; }
+}
+
+@media (max-width: 560px) {
+  .hdr__name { display: none; }
+  .hdr__logo { width: 34px; height: 34px; }
+  .hdr { gap: 8px; padding: 8px 10px; }
+  .hdr__tools { gap: 6px; }
+  .hdr-btn { width: 36px; height: 36px; border-radius: 12px; }
+  .hdr-lang__btn { height: 36px; padding-inline: 8px; gap: 6px; border-radius: 12px; }
+  .hdr-lang__label { display: none; }
+  .hdr-user__btn { height: 36px; padding-inline: 7px 6px; gap: 6px; }
+  .hdr-user__avatar { width: 26px; height: 26px; font-size: 12px; }
+}
+
+@media (max-width: 400px) {
+  .hdr-wrap { padding: 8px 8px 5px; }
+  .hdr { gap: 4px; min-height: 54px; padding: 7px; border-radius: 18px; }
+  .hdr__logo { width: 26px; height: 26px; font-size: 12px; }
+  .hdr__tools { gap: 4px; }
+  .hdr-btn { width: 34px; height: 34px; border-radius: 11px; }
+  .hdr-lang__btn { height: 34px; padding-inline: 7px; }
+  .notif-panel { width: calc(100vw - 16px); }
+  /* Narrowest phones: the avatar alone identifies the trigger, so its chevron
+     gives the space back and the header can never scroll sideways. The doubled
+     class outranks the global `.icon { display: block }`. */
+  .hdr-user .hdr-user__caret { display: none; }
+  .hdr-user__btn { height: 34px; padding-inline: 5px; }
+  .hdr-user__avatar { width: 26px; height: 26px; font-size: 11px; }
+  .hdr-menu { padding: 8px; }
+}

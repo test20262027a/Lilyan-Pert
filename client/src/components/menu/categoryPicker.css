@@ -1,0 +1,365 @@
+/* ==========================================================================
+   Category icon + colour dropdown selectors (CategoryIconPicker /
+   CategoryColorPicker).
+
+   Control chrome (borders, focus ring, hover, selected state, shadows) is built
+   from the global theme tokens (`--primary`, `--lysel-*`), so all themes repaint
+   it live. The glyph colour and the swatches are the category's IDENTITY colour
+   and are deliberately fixed hex values — they never follow the theme.
+
+   The floating panel is portalled to <body>, so it cannot rely on the modal's
+   `--mm-*` tokens. Its scrollbar is the global thin theme-aware one
+   (scrollbars.css); nothing is overridden here.
+   ========================================================================== */
+
+.ccpick__trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-2) 82%, var(--surface)),
+    var(--surface-2)
+  );
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  text-align: start;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    var(--shadow-sm);
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+[data-theme='dark'] .ccpick__trigger {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), var(--shadow-sm);
+}
+.ccpick__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 32%, var(--border-strong));
+}
+.ccpick__trigger:focus-visible,
+.ccpick__trigger.is-open {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.ccpick__trigger:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.ccpick__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ccpick__hex {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  direction: ltr;
+}
+.ccpick__chev { flex: none; color: var(--muted); transition: transform 160ms ease; }
+.ccpick__trigger.is-open .ccpick__chev { transform: rotate(180deg); color: var(--primary); }
+
+/* Colour dot used in the trigger and the custom-HEX row. */
+.ccpick__dot {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--swatch);
+  border: 2px solid var(--surface);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--swatch) 55%, transparent),
+    0 4px 10px -4px color-mix(in srgb, var(--swatch) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.ccpick__dot--sm { width: 22px; height: 22px; border-width: 1.5px; }
+
+/* ------------------------------------------------------------- panel */
+
+.ccpick__panel {
+  position: fixed;
+  z-index: 200; /* above .mcmodal-backdrop (80) and its sticky footer */
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--lysel-radius, 18px);
+  border: 1px solid var(--lysel-border);
+  background: var(--lysel-bg);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: var(--lysel-shadow);
+  color: var(--text);
+  transform-origin: top center;
+  animation: ccpick-in 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.ccpick__panel.is-up { transform-origin: bottom center; }
+@keyframes ccpick-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+.ccpick__panel.is-up { animation-name: ccpick-in-up; }
+@keyframes ccpick-in-up {
+  from { opacity: 0; transform: translateY(4px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ccpick__panel,
+  .ccpick__panel.is-up { animation: none; }
+  .ccpick__chev { transition: none; }
+}
+
+.ccpick__search {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 10px 4px;
+  padding: 0 10px;
+  min-height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.ccpick__search:focus-within {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.ccpick__search input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+}
+.ccpick__search input::-webkit-search-cancel-button { display: none; }
+.ccpick__clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.ccpick__clear:hover { background: color-mix(in srgb, var(--primary) 20%, transparent); color: var(--primary); }
+
+.ccpick__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 10px 12px;
+}
+
+.ccpick__group-title {
+  margin: 10px 2px 7px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+.ccpick__group:first-child .ccpick__group-title { margin-top: 4px; }
+
+.ccpick__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.ccpick__glyph {
+  position: relative;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-soft);
+  cursor: pointer;
+  transition:
+    transform 140ms ease,
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+}
+.ccpick__glyph:hover {
+  transform: translateY(-1px);
+  color: var(--primary);
+  background: var(--lysel-row-hover);
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--border));
+  box-shadow: 0 6px 12px -8px color-mix(in srgb, var(--primary) 55%, transparent);
+}
+.ccpick__glyph:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+.ccpick__glyph.is-selected {
+  color: var(--primary);
+  background: var(--lysel-row-selected);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.ccpick__tick {
+  position: absolute;
+  inset-block-start: -4px;
+  inset-inline-end: -4px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: var(--primary-ink, #fff);
+  box-shadow: 0 0 0 2px var(--surface);
+}
+
+.ccpick__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 12px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------- colour panel */
+
+.ccpick__swatches {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 9px;
+  padding: 6px 2px 2px;
+}
+.ccpick__swatch {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  background: var(--swatch);
+  color: #fff;
+  cursor: pointer;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--swatch) 50%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 8px -5px color-mix(in srgb, var(--swatch) 80%, transparent);
+  transition: transform 130ms ease, box-shadow 130ms ease;
+}
+.ccpick__swatch:hover { transform: scale(1.12); }
+.ccpick__swatch:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.ccpick__swatch.is-selected {
+  box-shadow:
+    0 0 0 2px var(--surface),
+    0 0 0 4px var(--swatch),
+    0 6px 12px -6px var(--swatch);
+}
+
+.ccpick__custom {
+  flex: none;
+  padding: 10px 12px 12px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+.ccpick__custom-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.ccpick__hexrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+.ccpick__hexrow:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+.ccpick__hexrow.is-invalid { border-color: #ef4444; }
+.ccpick__hexrow input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+.ccpick__apply {
+  flex: none;
+  min-height: 32px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--primary);
+  color: var(--primary-ink, #fff);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ccpick__apply:disabled { opacity: 0.4; cursor: not-allowed; }
+.ccpick__err { margin: 6px 2px 0; font-size: 11.5px; font-weight: 600; color: #ef4444; }
+
+/* ------------------------------------------- form layout (fields in modal) */
+
+.mcfield-pair {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+.mcfield__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--mm-muted, var(--muted));
+}
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 560px) {
+  .ccpick__grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .ccpick__swatches { grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+  .ccpick__trigger { min-height: 56px; }
+}
+@media (min-width: 900px) {
+  .ccpick__grid { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+}

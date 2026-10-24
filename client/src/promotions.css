@@ -1,0 +1,557 @@
+/* ==========================================================================
+   Promotions — illustrated banner, responsive grid of promotion cards and the
+   compact Add / Edit Promotion modal.
+   Layout only: the palette lives in local tokens on .promos-page, so the
+   app-wide light/dark theme and the business primary colour keep working.
+   ========================================================================== */
+
+.promos-page {
+  /* Accent actions (add, save, progress, focus, enabled switches) follow the
+     saved business theme; only the "active" status pill keeps a success hue. */
+  --pr-green: var(--theme-primary);
+  --pr-green-ink: var(--theme-primary-strong);
+  --pr-green-soft: var(--theme-primary-soft);
+  --pr-green-line: var(--theme-primary-line);
+  --pr-ok: var(--success);
+  --pr-ok-soft: var(--success-soft);
+  --pr-ok-ink: var(--success);
+  --pr-pink-soft: #fdeef2;
+  --pr-pink-line: #f7d3dd;
+  --pr-pink-ink: #dd5468;
+  --pr-cream: var(--theme-primary-soft);
+  --pr-cream-line: var(--theme-primary-line);
+  --pr-line: var(--border);
+  --pr-ink: var(--text);
+  --pr-muted: var(--muted);
+  --pr-red: #e0484d;
+  --pr-red-soft: #fdecec;
+  --pr-red-line: #f7cfcf;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+[data-theme='dark'] .promos-page {
+  --pr-ok-ink: color-mix(in srgb, var(--success) 52%, #ffffff);
+  --pr-pink-soft: rgba(221, 84, 104, 0.14);
+  --pr-pink-line: rgba(221, 84, 104, 0.3);
+  --pr-pink-ink: #f08b9c;
+  --pr-cream: rgba(233, 179, 75, 0.12);
+  --pr-cream-line: rgba(233, 179, 75, 0.26);
+  --pr-red: #f27b7b;
+  --pr-red-soft: rgba(239, 68, 68, 0.14);
+  --pr-red-line: rgba(239, 68, 68, 0.3);
+}
+
+/* -------------------------------------------------------- page banner */
+
+.promos-page .mhero__icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--pr-pink-soft);
+  border: 1px solid var(--pr-pink-line);
+  color: var(--pr-pink-ink);
+}
+.promos-page .mhero__title { color: var(--pr-ink); }
+.promos-page .mhero__sub { color: var(--pr-muted); }
+
+.promo-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--pr-green);
+  color: var(--primary-ink);
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--pr-green) 32%, transparent);
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.promo-add:hover:not(:disabled) {
+  filter: brightness(1.04);
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--pr-green) 38%, transparent);
+}
+.promo-add:active:not(:disabled) { transform: translateY(1px); }
+.promo-add:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.promo-add__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--primary-ink);
+  color: var(--theme-primary);
+}
+.promo-add__label { white-space: nowrap; }
+
+.promo-loading { display: grid; place-items: center; padding: 26px 0; }
+
+/* ------------------------------------------------------------- the grid */
+
+/* Three equal cards per row; the grid follows the document direction, so in
+   RTL the cards start at the right and two cards keep the right and middle
+   columns while the left one stays empty. Nothing is stretched or centred. */
+.promo-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  min-width: 0;
+  align-items: stretch;
+}
+
+/* ------------------------------------------------------------- one card */
+
+.promo-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  min-height: 322px;
+  padding: 20px;
+  border: 1px solid var(--pr-line);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.04), 0 12px 26px -22px rgba(23, 26, 43, 0.45);
+}
+
+.promo-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+}
+
+.promo-card__mark {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--pr-green-soft);
+  border: 1px solid var(--pr-green-line);
+  color: var(--pr-green-ink);
+}
+.promo-card__mark.is-fixed {
+  background: var(--pr-cream);
+  border-color: var(--pr-cream-line);
+  color: var(--theme-primary-strong);
+}
+
+.promo-card__ident {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.promo-card__code {
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--pr-ink);
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.promo-card__value {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--pr-green-ink);
+}
+
+.promo-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
+}
+.promo-pill__dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.promo-pill--active { background: var(--pr-ok-soft); color: var(--pr-ok-ink); }
+.promo-pill--inactive { background: var(--surface-2); color: var(--pr-muted); }
+.promo-pill--expired,
+.promo-pill--exhausted { background: var(--pr-red-soft); color: var(--pr-red); }
+.promo-pill--scheduled { background: var(--theme-primary-soft); color: var(--theme-primary-strong); }
+[data-theme='dark'] .promo-pill--scheduled { background: rgba(233, 179, 75, 0.16); color: var(--theme-primary); }
+
+.promo-card__usage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.promo-card__line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+}
+.promo-card__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--pr-muted);
+  font-weight: 600;
+}
+.promo-card__line strong {
+  color: var(--pr-ink);
+  font-size: 13.5px;
+  font-weight: 800;
+}
+
+.promo-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--pr-muted) 20%, transparent);
+  overflow: hidden;
+}
+.promo-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--pr-green);
+  transition: width 0.3s ease;
+}
+
+.promo-card__dates {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.promo-card__date {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--pr-muted);
+}
+.promo-card__date strong {
+  margin-inline-start: auto;
+  color: var(--pr-ink);
+  font-weight: 700;
+}
+
+.promo-card__foot {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--pr-line);
+}
+
+.promo-edit {
+  flex: 1 1 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 42px;
+  border-radius: 12px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--pr-ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.promo-edit:hover { background: var(--surface-2); }
+
+.promo-delete {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--pr-red-line);
+  background: var(--pr-red-soft);
+  color: var(--pr-red);
+  cursor: pointer;
+  transition: filter 0.15s ease;
+}
+.promo-delete:hover { filter: brightness(0.97); }
+
+/* -------------------------------------------------------------- the modal */
+
+.promo-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  overflow-y: auto;
+  background: rgba(18, 21, 16, 0.52);
+}
+
+.promo-modal {
+  width: min(486px, 100%);
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: 0 34px 80px -34px rgba(18, 21, 16, 0.6);
+}
+
+.promo-modal__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 108px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--pr-cream-line);
+  background:
+    radial-gradient(90% 150% at 20% 0%, var(--theme-primary-soft) 0%, transparent 60%),
+    radial-gradient(80% 140% at 90% 100%, var(--theme-primary-soft) 0%, transparent 62%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+}
+[data-theme='dark'] .promo-modal__head {
+  background:
+    radial-gradient(90% 150% at 20% 0%, rgba(243, 214, 150, 0.14) 0%, transparent 60%),
+    radial-gradient(80% 140% at 90% 100%, color-mix(in srgb, var(--theme-primary) 12%, transparent) 0%, transparent 62%),
+    linear-gradient(180deg, #1d1f1a, #191c18);
+}
+
+.promo-modal__titlewrap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.promo-modal__icon {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--pr-green-soft);
+  border: 1px solid var(--pr-green-line);
+  color: var(--pr-green-ink);
+}
+.promo-modal__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--pr-ink);
+  white-space: nowrap;
+}
+.promo-modal__art-wrap {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+}
+.promo-modal__art {
+  display: block;
+  width: 100%;
+  max-width: 250px;
+  height: auto;
+}
+.promo-modal__close {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--pr-cream-line);
+  background: #ffffff;
+  color: #6f6757;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(60, 50, 30, 0.12);
+}
+
+.promo-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  overflow-y: auto;
+  background: var(--surface-2);
+}
+
+.promo-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+.promo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+.promo-label--marked {
+  position: relative;
+  padding-inline-start: 10px;
+}
+.promo-label--marked::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--pr-green);
+}
+.promo-req {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--pr-red);
+}
+
+.promo-input {
+  width: 100%;
+  height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--pr-ink);
+  font: inherit;
+  font-size: 14px;
+}
+.promo-input:focus {
+  outline: none;
+  border-color: var(--pr-green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pr-green) 20%, transparent);
+}
+.promo-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.promo-date { position: relative; display: block; }
+.promo-date .promo-input { padding-inline-end: 38px; }
+.promo-date > svg {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--pr-muted);
+  pointer-events: none;
+}
+/* The native picker glyph is replaced by the calendar icon above; the whole
+   field stays clickable and still opens the browser's date picker. */
+.promo-date .promo-input::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.promo-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.promo-switch-row__label { font-size: 13.5px; font-weight: 700; color: var(--pr-ink); }
+.promo-switch-row .switch input:checked + .switch__track { background: var(--pr-green); }
+
+.promo-modal__foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--pr-line);
+  background: var(--surface);
+}
+.promo-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 42px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--pr-green);
+  color: var(--primary-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--pr-green) 30%, transparent);
+}
+.promo-save:hover:not(:disabled) { filter: brightness(1.04); }
+.promo-save:disabled { opacity: 0.62; cursor: not-allowed; box-shadow: none; }
+.promo-cancel {
+  height: 42px;
+  padding: 0 20px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--pr-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.promo-cancel:hover:not(:disabled) { background: var(--surface-2); }
+.promo-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1100px) {
+  .promo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 720px) {
+  .promo-grid { grid-template-columns: minmax(0, 1fr); }
+  .promo-card { min-height: 0; padding: 16px; }
+  .promo-modal { width: 100%; max-height: calc(100dvh - 24px); border-radius: 18px; }
+  .promo-modal__head { min-height: 92px; padding: 14px; }
+  .promo-modal__art-wrap { display: none; }
+  .promo-modal__body { padding: 14px; }
+  .promo-modal__foot { padding: 12px 14px; }
+  .promo-save { flex: 1 1 auto; }
+  .promo-cancel { flex: 1 1 auto; }
+}
+
+@media (max-width: 420px) {
+  .promo-row { grid-template-columns: minmax(0, 1fr); }
+  .promo-modal__title { font-size: 15.5px; }
+}

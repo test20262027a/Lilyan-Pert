@@ -1,0 +1,284 @@
+/*
+ * Premium selection dropdown (see Select.jsx).
+ *
+ * One shared surface for every Select / combobox in the admin panel. Radius,
+ * glass background, floating shadow and the row tints come from the
+ * `--lysel-*` tokens in styles.css, so all five themes repaint every dropdown
+ * without a page-level override.
+ */
+
+.lysel {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------- trigger */
+
+.lysel__trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-2) 82%, var(--surface)),
+    var(--surface-2)
+  );
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: start;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    var(--shadow-sm);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+[data-theme='dark'] .lysel__trigger {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    var(--shadow-sm);
+}
+
+.lysel__trigger:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border-strong));
+}
+
+/* Focus and open share one ring on the whole field — never a second outline. */
+.lysel__trigger:focus-visible,
+.lysel.is-open .lysel__trigger {
+  outline: none;
+  border-color: var(--primary);
+  background: var(--surface);
+  box-shadow:
+    0 0 0 3px var(--theme-focus-ring),
+    var(--shadow-sm);
+}
+
+.lysel__trigger:disabled {
+  cursor: not-allowed;
+}
+
+.lysel.is-disabled {
+  opacity: 0.6;
+}
+
+.lysel__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* Optional leading marker (an avatar glyph, a colour dot…) inside the trigger. */
+.lysel__lead {
+  display: inline-flex;
+  flex: none;
+  color: var(--theme-primary-strong);
+}
+
+.lysel__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lysel__value.is-placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.lysel__chevron {
+  flex: none;
+  color: var(--muted);
+  transition:
+    transform 170ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    color 160ms ease;
+}
+
+.lysel.is-open .lysel__chevron {
+  color: var(--primary);
+  transform: rotate(180deg);
+}
+
+/* ----------------------------------------------------------------- panel */
+
+.lysel-pop {
+  position: fixed;
+  /* Above every dialog/backdrop (80–95), below the delete dialog and toasts. */
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 7px;
+  border: 1px solid var(--lysel-border);
+  border-radius: var(--lysel-radius);
+  background: var(--lysel-bg);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  box-shadow: var(--lysel-shadow);
+  transform-origin: top center;
+  animation: lysel-open 170ms cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+
+.lysel-pop.is-up {
+  transform-origin: bottom center;
+}
+
+.lysel-pop.is-closing {
+  animation: lysel-close 130ms ease forwards;
+  pointer-events: none;
+}
+
+@keyframes lysel-open {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+}
+
+@keyframes lysel-close {
+  to {
+    opacity: 0;
+    transform: translateY(-3px) scale(0.99);
+  }
+}
+
+.lysel-pop__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* ------------------------------------------------------------------ rows */
+
+.lysel-opt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--lysel-row-height);
+  padding: 0 12px;
+  border-radius: var(--lysel-row-radius);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 550;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease;
+}
+
+.lysel-opt + .lysel-opt {
+  margin-top: 2px;
+}
+
+/* The same leading marker inside each option row. */
+.lysel-opt__lead {
+  display: inline-flex;
+  flex: none;
+  color: var(--theme-primary-strong);
+}
+
+.lysel-opt__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: start;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The check keeps its slot in every row, so selection never shifts the text. */
+.lysel-opt__check {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: var(--primary);
+  opacity: 0;
+  transform: scale(0.7);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
+}
+
+.lysel-opt.is-selected .lysel-opt__check {
+  opacity: 1;
+  transform: none;
+}
+
+/* Hover / keyboard highlight — transient, never confused with the saved value. */
+.lysel-opt.is-active {
+  background: var(--lysel-row-hover);
+}
+
+.lysel-opt.is-selected {
+  background: var(--lysel-row-selected);
+  color: var(--theme-primary-strong);
+  font-weight: 650;
+}
+
+.lysel-opt.is-selected.is-active {
+  background: var(--lysel-row-selected-hover);
+}
+
+.lysel-opt.is-placeholder {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.lysel-opt.is-disabled {
+  color: var(--muted);
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lysel-opt.is-disabled.is-active {
+  background: transparent;
+}
+
+/* ----------------------------------------------------------- responsive */
+
+@media (max-width: 480px) {
+  .lysel__trigger {
+    min-height: 46px;
+    padding: 0 12px;
+  }
+
+  .lysel-opt {
+    min-height: 46px;
+    padding: 0 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lysel-pop,
+  .lysel-pop.is-closing {
+    animation: none;
+  }
+
+  .lysel__chevron,
+  .lysel__trigger,
+  .lysel-opt,
+  .lysel-opt__check {
+    transition: none;
+  }
+}
