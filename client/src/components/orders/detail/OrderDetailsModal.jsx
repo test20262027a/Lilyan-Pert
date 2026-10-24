@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HeaderBackdrop from '../../../headers/HeaderBackdrop';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../../Icon';
-import { ConfirmDialog, Loading, Money, StatusBadge, useToast } from '../../ui';
+import { Loading, Money, StatusBadge, useToast } from '../../ui';
 import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../../Receipt';
 import OrdersArtwork from '../OrdersArtwork';
 import ManualDiscountCard from './ManualDiscountCard';
+import DiscardChangesDialog from '../../confirm/DiscardChangesDialog';
 import OrderStatusControl from './OrderStatusControl';
 import OrderActivityTimeline from './OrderActivityTimeline';
 import { localized, useI18n } from '../../../i18n';
@@ -459,19 +460,17 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
         </footer>
       </section>
 
-      {confirmDiscard ? (
-        <ConfirmDialog
-          title={t('od_unsaved_title')}
-          message={t('od_unsaved_message')}
-          confirmLabel={t('od_discard')}
-          danger
-          onCancel={() => setConfirmDiscard(false)}
-          onConfirm={() => {
-            setConfirmDiscard(false);
-            onClose?.();
-          }}
-        />
-      ) : null}
+      <DiscardChangesDialog
+        open={confirmDiscard}
+        title={t('od_unsaved_title')}
+        description={t('od_unsaved_message')}
+        confirmLabel={t('od_discard')}
+        onContinue={() => setConfirmDiscard(false)}
+        onDiscard={() => {
+          setConfirmDiscard(false);
+          onClose?.();
+        }}
+      />
 
       {printing && data ? (
         <PrintPortal>

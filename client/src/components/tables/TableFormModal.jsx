@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import Icon from '../Icon';
-import { Alert, ConfirmDialog, Switch } from '../ui';
+import { Alert, Switch } from '../ui';
 import { LOCALES, useI18n } from '../../i18n';
 import MenuModalFrame from '../menu/MenuModalFrame';
 import ModalActions from '../ModalActions';
+import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import TablesArtwork from './TablesArtwork';
 import { tablesErrorText } from './errorText';
 
@@ -300,18 +301,14 @@ export default function TableFormModal({ modal, tables = [], busy, error, onClos
         <Switch checked={values.vip} onChange={(v) => set('vip', v)} ariaLabel="VIP" />
       </div>
 
-      {confirmDiscard ? (
-        <ConfirmDialog
-          title={t('confirm_title')}
-          message={t('menu_discard_changes')}
-          danger
-          onCancel={() => setConfirmDiscard(false)}
-          onConfirm={() => {
-            setConfirmDiscard(false);
-            onClose();
-          }}
-        />
-      ) : null}
+      <DiscardChangesDialog
+        open={confirmDiscard}
+        onContinue={() => setConfirmDiscard(false)}
+        onDiscard={() => {
+          setConfirmDiscard(false);
+          onClose();
+        }}
+      />
     </MenuModalFrame>
   );
 }

@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon';
-import { Alert, ConfirmDialog, Switch } from '../ui';
+import { Alert, Switch } from '../ui';
 import { LOCALES, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
 import ModalActions from '../ModalActions';
+import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import CategoryIdentityIcon from './CategoryIdentityIcon';
 import CategoryIconPicker from './CategoryIconPicker';
 import CategoryColorPicker from './CategoryColorPicker';
@@ -313,18 +314,14 @@ export default function CategoryFormModal({ modal, categories = [], busy, error,
         </div>
       </section>
 
-      {confirmDiscard ? (
-        <ConfirmDialog
-          title={t('confirm_title')}
-          message={t('menu_discard_changes')}
-          danger
-          onCancel={() => setConfirmDiscard(false)}
-          onConfirm={() => {
-            setConfirmDiscard(false);
-            onClose();
-          }}
-        />
-      ) : null}
+      <DiscardChangesDialog
+        open={confirmDiscard}
+        onContinue={() => setConfirmDiscard(false)}
+        onDiscard={() => {
+          setConfirmDiscard(false);
+          onClose();
+        }}
+      />
     </MenuModalFrame>
   );
 }

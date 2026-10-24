@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import UsersArtwork from './UsersArtwork';
 import UserPhotoField from './UserPhotoField';
 import ModalActions from '../ModalActions';
+import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import {
   PERMISSION_CARDS,
   actionLabelKey,
@@ -155,19 +156,9 @@ export default function UserFormModal({
   );
   const [roleNotice, setRoleNotice] = useState(false);
   const [error, setError] = useState(null);
-
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === 'Escape') onClose?.();
-    };
-    window.addEventListener('keydown', onKey);
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      window.removeEventListener('keydown', onKey);
-      document.body.style.overflow = previous;
-    };
-  }, [onClose]);
+  // One discard confirmation at a time: the flag is the single owner, so a
+  // double click on Cancel can never stack two dialogs.
+  const [askDiscard, setAskDiscard] = useState(false);
 
   const roleOptions = useMemo(
     () => ['owner', 'manager', 'staff', 'customer'].filter((key) => (grantable[key] || []).length > 0),
@@ -192,9 +183,30 @@ export default function UserFormModal({
     || JSON.stringify(permissions)
       !== JSON.stringify(Object.fromEntries((user?.permissions || []).map((key) => [key, true])));
 
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== 'Escape') return;
+      // The confirmation owns Escape while it is up; closing it keeps the data.
+      if (askDiscard) return setAskDiscard(false);
+      if (dirty) return setAskDiscard(true);
+      onClose?.();
+    };
+    window.addEventListener('keydown', onKey);
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previous;
+    };
+  }, [onClose, askDiscard, dirty]);
+
+  // A form with meaningful unsaved input asks before closing. The custom
+  // dialog owns the decision, so the data survives "Continue editing".
   const close = () => {
-    // Meaningful unsaved input is never discarded behind a stray click.
-    if (dirty && !window.confirm(t('user_discard_confirm'))) return;
+    if (dirty) {
+      setAskDiscard(true);
+      return;
+    }
     onClose?.();
   };
 
@@ -443,6 +455,15 @@ export default function UserFormModal({
           />
         </footer>
       </div>
+
+      <DiscardChangesDialog
+        open={askDiscard}
+        onContinue={() => setAskDiscard(false)}
+        onDiscard={() => {
+          setAskDiscard(false);
+          onClose?.();
+        }}
+      />
     </div>
   );
 }

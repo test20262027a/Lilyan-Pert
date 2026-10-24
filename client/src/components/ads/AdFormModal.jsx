@@ -5,6 +5,7 @@ import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import { toZonedInput } from '../../format';
 import ModalActions from '../ModalActions';
+import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import AdImageField from './AdImageField';
 import { adErrorText } from './errorText';
 import { AdModalArtwork } from './AdsArtwork';
@@ -361,22 +362,18 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
           />
         </footer>
 
-        {askDiscard ? (
-          <div className="ad-discard">
-            <div className="ad-discard__card" role="alertdialog" aria-modal="true" aria-label={t('ads_discard_title')}>
-              <h3 className="ad-discard__title">{t('ads_discard_title')}</h3>
-              <p className="ad-discard__text">{t('ads_discard_text')}</p>
-              <ModalActions
-                className="ad-discard__actions"
-                primaryLabel={t('ads_discard_confirm')}
-                primaryVariant="danger"
-                onPrimary={onClose}
-                secondaryLabel={t('ads_discard_keep')}
-                onSecondary={() => setAskDiscard(false)}
-              />
-            </div>
-          </div>
-        ) : null}
+        <DiscardChangesDialog
+          open={askDiscard}
+          title={t('ads_discard_title')}
+          description={t('ads_discard_text')}
+          confirmLabel={t('ads_discard_confirm')}
+          cancelLabel={t('ads_discard_keep')}
+          onContinue={() => setAskDiscard(false)}
+          onDiscard={() => {
+            setAskDiscard(false);
+            onClose?.();
+          }}
+        />
       </div>
     </div>
   );

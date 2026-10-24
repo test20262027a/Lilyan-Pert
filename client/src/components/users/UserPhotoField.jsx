@@ -1,7 +1,6 @@
 import { useRef, useState } from 'react';
 import Icon from '../Icon';
 import UserAvatar from '../UserAvatar';
-import { Select } from '../ui';
 import { useToast } from '../ui';
 import { useI18n } from '../../i18n';
 import { uploadImageDataUrl } from '../../api';
@@ -68,10 +67,11 @@ export default function UserPhotoField({
   const [busy, setBusy] = useState(false);
   const fileRef = useRef(null);
 
+  // Neutral first: the default choice is never inferred from the name.
   const avatarOptions = [
-    { value: 'default', label: t('user_avatar_default'), leading: AvatarLead('default') },
-    { value: 'male', label: t('user_avatar_male'), leading: AvatarLead('male') },
-    { value: 'female', label: t('user_avatar_female'), leading: AvatarLead('female') },
+    { value: 'default', label: t('user_avatar_default') },
+    { value: 'male', label: t('user_avatar_male') },
+    { value: 'female', label: t('user_avatar_female') },
   ];
 
   const pick = async (file) => {
@@ -137,24 +137,43 @@ export default function UserPhotoField({
           ) : null}
         </div>
 
-        <label className="uphoto__field">
-          <span className="uphoto__label">{t('user_avatar_label')}</span>
-          <Select
-            value={avatarType}
-            onChange={(next) => onAvatarChange?.(next)}
-            options={avatarOptions}
-            disabled={disabled}
+        <div className="uphoto__field">
+          <span className="uphoto__label">{t('user_avatar_choose')}</span>
+          {/* Three premium portraits side by side: the chosen one lifts, gains a
+              themed ring and a check mark, so the selection is unmistakable. */}
+          <div
+            className="uavatar-picker"
+            role="radiogroup"
             aria-label={t('user_avatar_label')}
-          />
-        </label>
+          >
+            {avatarOptions.map((option) => {
+              const selected = avatarType === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  aria-label={option.label}
+                  className={`uavatar-option ${selected ? 'is-selected' : ''}`}
+                  onClick={() => onAvatarChange?.(option.value)}
+                  disabled={disabled}
+                >
+                  <span className="uavatar-option__disc">
+                    <UserAvatar avatarType={option.value} size={48} />
+                  </span>
+                  <span className="uavatar-option__label">{option.label}</span>
+                  <span className="uavatar-option__check" aria-hidden="true">
+                    <Icon name="check" size={11} />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <p className="um-note uphoto__hint">{t('user_photo_hint')}</p>
       </div>
     </div>
   );
-}
-
-/** The small glyph shown beside each avatar option and on the trigger. */
-function AvatarLead(kind) {
-  return <UserAvatar avatarType={kind} size={24} />;
 }

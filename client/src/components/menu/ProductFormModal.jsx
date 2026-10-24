@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import Icon from '../Icon';
-import { Alert, ConfirmDialog, Select, Switch } from '../ui';
+import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import MenuModalFrame from './MenuModalFrame';
 import ModalActions from '../ModalActions';
+import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import ProductImageField from './ProductImageField';
 import { catalogErrorText } from './errorText';
 
@@ -396,18 +397,14 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
         </span>
       </div>
 
-      {confirmDiscard ? (
-        <ConfirmDialog
-          title={t('confirm_title')}
-          message={t('menu_discard_changes')}
-          danger
-          onCancel={() => setConfirmDiscard(false)}
-          onConfirm={() => {
-            setConfirmDiscard(false);
-            onClose();
-          }}
-        />
-      ) : null}
+      <DiscardChangesDialog
+        open={confirmDiscard}
+        onContinue={() => setConfirmDiscard(false)}
+        onDiscard={() => {
+          setConfirmDiscard(false);
+          onClose();
+        }}
+      />
     </MenuModalFrame>
   );
 }

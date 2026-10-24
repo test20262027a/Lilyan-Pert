@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from './Icon';
+import AvatarFigure from './AvatarFigure';
 import './userAvatar.css';
 
 /*
@@ -61,8 +62,11 @@ export default function UserAvatar({
           onLoad={() => setLoaded(true)}
           onError={() => setBroken(true)}
         />
+      ) : kind === 'default' ? (
+        <Icon name={ICONS.default} size={Math.round(size * 0.56)} className="uavatar__glyph" />
       ) : (
-        <Icon name={ICONS[kind]} size={Math.round(size * 0.56)} className="uavatar__glyph" />
+        // The chosen illustrated portrait fills the circle edge to edge.
+        <AvatarFigure kind={kind} />
       )}
     </span>
   );

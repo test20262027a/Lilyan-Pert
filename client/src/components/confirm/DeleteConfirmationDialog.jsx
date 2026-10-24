@@ -22,6 +22,8 @@ import './deleteConfirm.css';
 export function ConfirmSurface({
   tone = 'pink',
   icon = 'trash',
+  // The small red badge on the mark; `null` renders a bare mark (a warning).
+  badge = 'trash',
   title,
   description,
   onCancel,
@@ -32,6 +34,7 @@ export function ConfirmSurface({
   initialFocusRef,
   maxWidth,
   accent,
+  className = '',
 }) {
   const { t } = useI18n();
   const dialogRef = useRef(null);
@@ -103,7 +106,7 @@ export function ConfirmSurface({
     >
       <div
         ref={dialogRef}
-        className={`dcd ${accent ? '' : `dcd--tone-${tone}`}`}
+        className={`dcd ${accent ? '' : `dcd--tone-${tone}`} ${className}`.trim()}
         style={
           // A record's own saved colour (a category's identity accent) is used
           // verbatim; the tone class stays for entities that have no colour.
@@ -129,9 +132,11 @@ export function ConfirmSurface({
 
         <span className="dcd__mark" aria-hidden="true">
           <Icon name={icon} size={32} />
-          <span className="dcd__badge">
-            <Icon name="trash" size={13} />
-          </span>
+          {badge ? (
+            <span className="dcd__badge">
+              <Icon name={badge} size={13} />
+            </span>
+          ) : null}
         </span>
 
         <h2 className="dcd__title" id={titleId}>
