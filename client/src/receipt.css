@@ -7,13 +7,14 @@
    hierarchy through weight, size, spacing and rules instead.
 
    Each section is its own block with its own divider, so the paper reads as
-   six independent parts: business identity · order · products · summary ·
-   grand total · one closing message.
+   eight independent parts: identity · contact · order · guest · products ·
+   notes · totals · one closing message.
 
    Layout rules that keep the paper intact:
    · no fixed heights — the paper grows with its content, never clips it;
-   · the product list is a table, so its header and every row share the same
-     column tracks and a long name wraps without pushing a price off the paper;
+   · the product list is one grid, so its header and every row share the same
+     column tracks: quantity, unit price and line total each own a position and
+     a long name wraps without pushing a price off the paper;
    · amounts are tabular and nowrap, so columns line up and digits never
      reflow; they are bidi-isolated so an RTL receipt cannot reverse them;
    · the sheet is exactly the printable width of the paper (the print style
@@ -86,6 +87,16 @@
   overflow-wrap: anywhere;
 }
 
+/* The contact details are a section of their own, centred under the identity
+   and separated from it by the section rule, so the header never turns into
+   one long run of lines. */
+.rc-contact-block {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  text-align: center;
+}
+
 .rc-contact {
   font-size: 0.92em;
   line-height: 1.35;
@@ -93,7 +104,8 @@
 }
 
 /* The owner can left/start-align the header; centered is the default. */
-.receipt-paper[data-align='start'] .rc-head {
+.receipt-paper[data-align='start'] .rc-head,
+.receipt-paper[data-align='start'] .rc-contact-block {
   justify-items: start;
   text-align: start;
 }
@@ -122,7 +134,7 @@
 /* Section separators can be switched off entirely; the spacing that separates
    the sections stays, so the paper never runs together. */
 .receipt-paper[data-dividers='off'] .rc-block { border-block-start-style: none; }
-.receipt-paper[data-dividers='off'] .rc-items th { border-bottom-style: none; }
+.receipt-paper[data-dividers='off'] .rc-items__head > * { border-bottom-style: none; }
 
 /* ------------------------------------------------------------ order header */
 
@@ -179,53 +191,60 @@
 /* ------------------------------------------------------------------- items */
 
 /*
- * A table, not a set of independent grids: the header and every product row
- * share one set of column tracks, so quantity, unit price and line total line
- * up exactly down the paper. Widths are content-driven — the name column takes
- * what is left and wraps, the money columns never break — so the same markup
- * fits 58 mm and 80 mm.
+ * The product list is ONE grid. Its header and every product row sit on the
+ * same set of column tracks, so the quantity, the unit price and the line total
+ * each own a fixed position down the whole paper and a value can never drift
+ * into its neighbour. The name column takes whatever room is left and wraps
+ * inside it; the three money columns are sized by their own widest content and
+ * never shrink, so a long name can never push a price off the paper.
  */
 .rc-items {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  align-items: baseline;
 }
 
-.rc-items th {
-  padding: 0 0 3px;
+/* A product is a group of four cells on that same grid — `display: contents`
+   leaves no box of its own, so every row is aligned by identical tracks. */
+.rc-item { display: contents; }
+
+/* The caption row is part of that same grid for the same reason. */
+.rc-items__head { display: contents; }
+
+/* Every cell keeps its padding inside its own column track, so the widths the
+   grid assigns are the widths the paper gets and nothing spills sideways. */
+.rc-items__head > *,
+.rc-item > * { box-sizing: border-box; }
+
+.rc-items__head > * {
+  padding-block-end: 4px;
   border-bottom: 1px solid #000000;
-  font-size: 0.86em;
+  font-size: 0.84em;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  text-align: start;
   white-space: nowrap;
 }
 
-.rc-items th:not(:first-child) { text-align: end; }
-
-/* The money columns take only the room their own digits need. */
-.rc-col { width: 1%; }
-
-.rc-item { break-inside: avoid; }
-
-.rc-item > td {
-  padding: 3px 0;
-  vertical-align: baseline;
+/* The column captions sit exactly above the values they name. */
+.rc-items__head > :first-child { text-align: start; }
+.rc-items__head > :not(:first-child) {
+  padding-inline-start: 7px;
+  text-align: end;
 }
 
+.rc-item > * { padding-block: 4px 2px; }
+
 /* A hairline between products: readable on a thermal print, never a block. */
-.rc-item + .rc-item > td { border-top: 1px dotted #9a9a9a; }
+.rc-item + .rc-item > * { border-top: 1px dotted #9a9a9a; }
 
 .rc-item__name {
   padding-inline-end: 7px;
   font-weight: 600;
-}
-
-.rc-item__label {
-  display: block;
   overflow-wrap: anywhere;
 }
+
+.rc-item__label { display: block; }
 
 .rc-item__qty,
 .rc-item__unit,
@@ -240,13 +259,6 @@
 
 .rc-item__amount { font-weight: 700; }
 
-/* The compact form of quantity × unit price, printed only on 58 mm paper. */
-.rc-item__meta {
-  display: none;
-  font-size: 0.9em;
-  color: #333333;
-}
-
 .rc-item__note {
   display: block;
   font-size: 0.88em;
@@ -254,40 +266,84 @@
   overflow-wrap: anywhere;
 }
 
-/* 58 mm carries roughly half the characters: the quantity and unit price are
-   printed on the meta line under the name instead of in their own columns. The
-   owner can pin either layout on any paper width from the print settings. */
-.receipt-paper[data-columns='compact'] .rc-col--qty,
-.receipt-paper[data-columns='compact'] .rc-col--unit,
-.receipt-paper[data-columns='compact'] .rc-item__qty,
-.receipt-paper[data-columns='compact'] .rc-item__unit {
-  display: none;
+/*
+ * 58 mm carries roughly half the characters of 80 mm. There the name keeps the
+ * full width on its own line and the three money values print on the line
+ * beneath it — still in three separate, captioned columns, never merged into
+ * one "2 × 12,000" string. The owner can pin either layout on either width.
+ */
+.receipt-paper[data-columns='compact'] .rc-items {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
-.receipt-paper[data-columns='compact'] .rc-item__meta { display: block; }
+.receipt-paper[data-columns='compact'] .rc-items__head > :first-child { display: none; }
 
-.rc-notes { margin-top: 4px; }
+/* On three equal thirds a caption has less room than on 80 mm: it drops its
+   inset and wraps inside its own column instead of pushing past the paper. */
+.receipt-paper[data-columns='compact'] .rc-items__head > * {
+  padding-inline-start: 0;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
 
+.receipt-paper[data-columns='compact'] .rc-items__head > :nth-child(2),
+.receipt-paper[data-columns='compact'] .rc-items__head > :nth-child(3) { text-align: start; }
+
+.receipt-paper[data-columns='compact'] .rc-item__name {
+  grid-column: 1 / -1;
+  padding-inline-end: 0;
+  padding-block-end: 0;
+}
+
+.receipt-paper[data-columns='compact'] .rc-item__qty {
+  padding-inline-start: 0;
+  text-align: start;
+}
+
+.receipt-paper[data-columns='compact'] .rc-item__unit { text-align: start; }
+
+/* The notes are a section like any other, so they keep the shared rhythm
+   instead of a spacing of their own. */
 .rc-notes__label { font-weight: 700; font-size: 0.92em; }
 
 .rc-notes__text { overflow-wrap: anywhere; }
 
 /* ------------------------------------------------------------------ totals */
 
-.rc-totals { display: grid; gap: 1px; }
+/*
+ * The summary opens with a strong rule of its own (never the hairline that
+ * separates two products), so the price block is unmistakable, and each line
+ * puts its label and its amount on the same baseline at the two paper edges.
+ */
+.rc-totals {
+  display: grid;
+  gap: 2px;
+  margin-block-start: calc(var(--rc-space, 7px) + 3px);
+  padding-block-start: calc(var(--rc-space, 7px) + 1px);
+  border-block-start: 2px solid #000000;
+}
+
+.receipt-paper[data-dividers='off'] .rc-totals {
+  margin-block-start: var(--rc-space, 7px);
+  padding-block-start: var(--rc-space, 7px);
+  border-block-start-style: none;
+}
 
 .rc-totals__row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
+  gap: 10px;
 }
 
-.rc-totals__row dt { font-size: 0.94em; }
+.rc-totals__row dt {
+  font-size: 0.94em;
+  letter-spacing: 0.01em;
+}
 
 .rc-totals__row dd {
   margin: 0;
-  font-weight: 600;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -300,12 +356,12 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 8px;
-  margin-block-start: 6px;
+  gap: 10px;
+  margin-block-start: 7px;
   padding-block: 6px;
   border-block-start: 2px solid #000000;
   border-block-end: 2px solid #000000;
-  font-size: 1.38em;
+  font-size: 1.44em;
   font-weight: 800;
   line-height: 1.15;
   break-inside: avoid;
@@ -339,6 +395,20 @@
   text-align: center;
   overflow-wrap: anywhere;
   break-inside: avoid;
+}
+
+/* A total that is not boxed does not close with a rule of its own, so there the
+   closing message opens its own section with a dashed divider instead. */
+.receipt-paper[data-grand='rule'] .rc-foot,
+.receipt-paper[data-grand='plain'] .rc-foot {
+  margin-block-start: calc(var(--rc-space, 7px) + 2px);
+  padding-block-start: var(--rc-space, 7px);
+  border-block-start: 1px dashed #000000;
+}
+
+.receipt-paper[data-dividers='off'][data-grand='rule'] .rc-foot,
+.receipt-paper[data-dividers='off'][data-grand='plain'] .rc-foot {
+  border-block-start-style: none;
 }
 
 /* The closing message keeps its own alignment, independent of the header. */
@@ -378,8 +448,7 @@
 
   /* Nothing important may straddle a cut: no product row, no summary block,
      no total and no closing message is ever split by a page break. */
-  #print-root .rc-item,
-  #print-root .rc-items thead,
+  #print-root .rc-items__head,
   #print-root .rc-kv__row,
   #print-root .rc-totals__row,
   #print-root .rc-grand,

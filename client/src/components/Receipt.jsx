@@ -172,6 +172,31 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
     </div>
   );
 
+  /*
+   * The paper is a stack of independent sections — identity, contact, order,
+   * guest, products, notes, totals, closing message. Each one is computed here
+   * so a section whose settings are all off is not rendered at all: the paper
+   * never carries an empty block or a divider with nothing under it.
+   */
+  const contactLines = [];
+  if (moreInfo && settings.show_address && (addressText || business?.city)) {
+    contactLines.push({ key: 'address', text: [addressText, business?.city].filter(Boolean).join(', ') });
+  }
+  if (moreInfo && settings.show_phone && business?.phone) {
+    contactLines.push({ key: 'phone', text: business.phone, numeric: true });
+  }
+  const webLine = [business?.email, business?.website].filter(Boolean).join(' · ');
+  if (moreInfo && webLine) contactLines.push({ key: 'web', text: webLine, numeric: true });
+
+  const showOrderInfo = settings.show_order_info !== false;
+  const hasOrderNumber = showOrderInfo && settings.show_order_number !== false;
+  const hasDateTime = showOrderInfo && settings.show_datetime !== false;
+  const hasCashier = showOrderInfo && moreInfo && settings.show_cashier;
+  const hasTable = showOrderInfo && settings.show_table_number !== false && !!tableName;
+  const hasCustomer = showOrderInfo && settings.show_customer_name !== false && !!order?.customer_name;
+  const hasOrderSection = hasOrderNumber || hasDateTime || hasCashier;
+  const hasGuestSection = hasTable || hasCustomer;
+
   /* The paper follows the receipt's own language, so Kurdish, Persian and
      Arabic print right-to-left even when the panel around them does not. */
   return (
@@ -187,91 +212,91 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       style={paperVars}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
     >
+      {/* 1 · identity: the logo and the business name on their own. */}
       <header className="rc-head">
         {settings.show_logo && business?.logo_url ? (
           <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: `${logoWidth}px` }} />
         ) : null}
         <div className="rc-name">{businessName}</div>
-        {moreInfo && settings.show_address && (addressText || business?.city) ? (
-          <div className="rc-contact">{[addressText, business?.city].filter(Boolean).join(', ')}</div>
-        ) : null}
-        {moreInfo && settings.show_phone && business?.phone ? (
-          <div className="rc-contact rc-num">{business.phone}</div>
-        ) : null}
-        {moreInfo && (business?.email || business?.website) ? (
-          <div className="rc-contact rc-num">
-            {[business?.email, business?.website].filter(Boolean).join(' · ')}
-          </div>
-        ) : null}
       </header>
 
-      {settings.show_order_info !== false ? (
+      {/* 2 · contact: address, phone, email and site, a section of their own. */}
+      {contactLines.length ? (
+        <section className="rc-contact-block rc-block">
+          {contactLines.map((line) => (
+            <div className={`rc-contact${line.numeric ? ' rc-num' : ''}`} key={line.key}>
+              {line.text}
+            </div>
+          ))}
+        </section>
+      ) : null}
+
+      {/* 3 · order: the number first, then when and by whom it was taken. */}
+      {hasOrderSection ? (
         <section className="rc-order rc-block">
-          {settings.show_order_number !== false ? (
+          {hasOrderNumber ? (
             <div className="rc-orderno">
               <span className="rc-orderno__label">{msg('order_no')}</span>
               <span className="rc-orderno__value rc-num">#{order?.order_number}</span>
             </div>
           ) : null}
+          {hasDateTime || hasCashier ? (
+            <dl className="rc-kv">
+              {hasDateTime
+                ? kvRow(
+                    msg('datetime'),
+                    <span className="rc-num">{fmtDateTime(order?.created_at, locale, timeZone)}</span>,
+                    'date',
+                  )
+                : null}
+              {hasCashier ? kvRow(msg('cashier'), order?.created_by_name || '—', 'cashier') : null}
+            </dl>
+          ) : null}
+        </section>
+      ) : null}
+
+      {/* 4 · guest: which table the order belongs to and who it is for. */}
+      {hasGuestSection ? (
+        <section className="rc-guest rc-block">
           <dl className="rc-kv">
-            {tableName && settings.show_table_number !== false
-              ? kvRow(msg('table'), tableName, 'table')
-              : null}
-            {settings.show_datetime !== false
-              ? kvRow(msg('datetime'), <span className="rc-num">{fmtDateTime(order?.created_at, locale, timeZone)}</span>, 'date')
-              : null}
-            {settings.show_customer_name !== false && order?.customer_name
-              ? kvRow(msg('customer'), order.customer_name, 'customer')
-              : null}
-            {moreInfo && settings.show_cashier
-              ? kvRow(msg('cashier'), order?.created_by_name || '—', 'cashier')
-              : null}
+            {hasTable ? kvRow(msg('table'), tableName, 'table') : null}
+            {hasCustomer ? kvRow(msg('customer'), order.customer_name, 'customer') : null}
           </dl>
         </section>
       ) : null}
 
+      {/* 5 · products: name, quantity, unit price and line total, each in its
+          own column so the three values can never read as one figure. */}
       {(items || []).length ? (
-        /*
-         * A real table, so the header and every product row share one set of
-         * column tracks: quantity, unit price and line total line up down the
-         * paper whatever the names are. Column widths are content-driven, so
-         * the same markup adapts to 58 mm and 80 mm.
-         */
-        <table className="rc-items rc-block">
-          <thead>
-            <tr>
-              <th scope="col">{msg('items')}</th>
-              <th scope="col" className="rc-col rc-col--qty">{msg('qty')}</th>
-              <th scope="col" className="rc-col rc-col--unit">{msg('unit_price')}</th>
-              <th scope="col" className="rc-col">{msg('total_column')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {(items || []).map((line, idx) => (
-              <tr className="rc-item" key={`${line.name}-${idx}`}>
-                <td className="rc-item__name">
-                  <span className="rc-item__label">{line.name}</span>
-                  {/* 80 mm prints quantity and unit price in their own columns;
-                      58 mm has no room for four, so the same two values print
-                      on this meta line under the name instead. */}
-                  <span className="rc-item__meta rc-num">
-                    {line.unit_price == null
-                      ? amount(line.quantity)
-                      : `${amount(line.quantity)} × ${amount(line.unit_price)}`}
-                  </span>
-                  {settings.show_notes !== false && line.notes ? (
-                    <span className="rc-item__note">{line.notes}</span>
-                  ) : null}
-                </td>
-                <td className="rc-item__qty rc-num">{amount(line.quantity)}</td>
-                <td className="rc-item__unit rc-num">
-                  {line.unit_price == null ? '—' : amount(line.unit_price)}
-                </td>
-                <td className="rc-item__amount rc-num">{amount(line.line_total)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <section className="rc-items rc-block">
+          <div className="rc-items__head">
+            <span>{msg('items')}</span>
+            <span>{msg('qty')}</span>
+            <span>{msg('unit_price')}</span>
+            <span>{msg('total_column')}</span>
+          </div>
+          {(items || []).map((line, idx) => (
+            /*
+             * One grid, not one block per product: the header and every row are
+             * laid out by the same column tracks (see receipt.css), so the
+             * quantity, the unit price and the line total each keep the same
+             * position down the whole paper whatever the product names are.
+             */
+            <div className="rc-item" key={`${line.name}-${idx}`}>
+              <span className="rc-item__name">
+                <span className="rc-item__label">{line.name}</span>
+                {settings.show_notes !== false && line.notes ? (
+                  <span className="rc-item__note">{line.notes}</span>
+                ) : null}
+              </span>
+              <span className="rc-item__qty rc-num">{amount(line.quantity)}</span>
+              <span className="rc-item__unit rc-num">
+                {line.unit_price == null ? '—' : amount(line.unit_price)}
+              </span>
+              <span className="rc-item__amount rc-num">{amount(line.line_total)}</span>
+            </div>
+          ))}
+        </section>
       ) : null}
 
       {settings.show_notes !== false && order?.notes ? (

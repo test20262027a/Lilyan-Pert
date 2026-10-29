@@ -83,15 +83,20 @@ function sampleReceipt(draft, t) {
       order_number: 1024,
       created_at: new Date().toISOString(),
       customer_name: t('settings_receipt_sample_customer'),
-      subtotal: 12000,
-      discount: 0,
+      subtotal: 36000,
+      discount: 3000,
       tax: 0,
       service_charge: 0,
-      total: 12000,
-      notes: null,
+      total: 33000,
+      notes: t('settings_receipt_sample_notes'),
     },
+    /* Three lines with different quantities and prices, so the preview really
+       shows the product columns lining up — never a single row that hides
+       whether quantity, unit price and line total stay in their own columns. */
     items: [
-      { name: t('settings_receipt_sample_item'), quantity: 1, unit_price: 12000, line_total: 12000, notes: null },
+      { name: t('settings_receipt_sample_item'), quantity: 2, unit_price: 12000, line_total: 24000, notes: null },
+      { name: t('settings_receipt_sample_item_2'), quantity: 1, unit_price: 4500, line_total: 4500, notes: null },
+      { name: t('settings_receipt_sample_item_3'), quantity: 3, unit_price: 2500, line_total: 7500, notes: null },
     ],
     table: { name: 'A1' },
     business: {
