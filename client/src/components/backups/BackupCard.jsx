@@ -1,6 +1,7 @@
 import Icon from '../Icon';
 import {
   archiveSize,
+  backupName,
   initialsOf,
   isReferenceOnly,
   manifestSections,
@@ -43,11 +44,9 @@ export default function BackupCard({
   const type = TYPE_BADGE[backup.backup_type] || TYPE_BADGE.uploaded;
   const status = STATUS_BADGE[backup.status] || STATUS_BADGE.ready;
   const sections = manifestSections(manifest, registryModules);
-  const displayName =
-    backup.name ||
-    (backup.backup_type === 'full' ? t('backup_type_full') : t('backup_type_selective'));
+  const displayName = backupName(backup, t);
   const creator = backup.created_by_name || manifest.uploaded_by_name || manifest.created_by_name;
-  const creatorRole = backup.creator_role ? t(`role_${backup.creator_role}`) : t('backup_owner');
+  const creatorRole = backup.creator_role ? t(`role_${backup.creator_role}`) : t('role_owner');
   const checksumOk = manifest.checksum ? manifest.checksum_verified !== false : null;
 
   return (

@@ -96,10 +96,10 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
             <input className="input" value={draft.city || ''} onChange={setField('city')} disabled={!canManage} />
           </SetField>
           <div className="set-grid">
-            <SetField label="Latitude">
+            <SetField label={t('label_latitude')}>
               <input className="input" dir="ltr" value={draft.latitude ?? ''} onChange={setField('latitude')} disabled={!canManage} />
             </SetField>
-            <SetField label="Longitude">
+            <SetField label={t('label_longitude')}>
               <input className="input" dir="ltr" value={draft.longitude ?? ''} onChange={setField('longitude')} disabled={!canManage} />
             </SetField>
           </div>

@@ -22,6 +22,38 @@ export const ENTITY_KEYS = {
   print: 'module_receipt_prints',
 };
 
+/** The sample-data modules a reset can clear, in the reset page's own keys. */
+const RESET_MODULES = new Set([
+  'orders',
+  'visits',
+  'reviews',
+  'advertisements',
+  'tables',
+  'promotions',
+  'products',
+  'categories',
+  'staff',
+  'suggestions',
+]);
+
+/**
+ * A record's own label, in the reader's language.
+ *
+ * A reset row stores the module keys it cleared ("orders, reviews"), so those
+ * are rendered as the module names instead of leaking the internal keys. Every
+ * other label is text the actor typed or the API stored, shown unchanged.
+ */
+export function entityLabelText(t, row) {
+  const raw = String(row?.entity_label || '').trim();
+  if (row?.entity !== 'reset' || !raw) return raw;
+  return raw
+    .split(',')
+    .map((key) => key.trim())
+    .filter(Boolean)
+    .map((key) => (RESET_MODULES.has(key) ? t(`reset_mod_${key}`) : t('act_title')))
+    .join(' · ');
+}
+
 /** Contextual icon and pastel tone for the recorded action. */
 export function activityVisual(row) {
   if (row.kind === 'order_status') return { icon: 'refresh', tone: 'purple' };

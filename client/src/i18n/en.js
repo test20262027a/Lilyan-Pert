@@ -1485,4 +1485,15 @@ export default {
   notif_no_access: 'You do not have access to this section',
   settings_dash_show_date_hours: 'Date and working hours',
 
+  label_latitude: 'Latitude',
+  label_longitude: 'Longitude',
+
+  error_profile_image_too_large: 'The photo must be smaller than 5 MB',
+  user_photo_wait: 'Wait for the photo to finish uploading',
+
+  rel_seconds_ago: '{count} sec ago',
+  rel_minutes_ago: '{count} min ago',
+  rel_hours_ago: '{count} h ago',
+  rel_days_ago: '{count} d ago',
+
 };

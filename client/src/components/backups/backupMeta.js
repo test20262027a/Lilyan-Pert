@@ -69,6 +69,25 @@ export const sectionVisual = (key) => SECTION_VISUALS[key] || { icon: 'database'
 
 export const categoryVisual = (key) => CATEGORY_VISUALS[key] || { icon: 'database', tone: 'slate' };
 
+/*
+ * The archive's own name, in the reader's language.
+ *
+ * The server names generated archives in English ("Full Backup",
+ * "Selective Backup (3)"), and rows saved before the archive type was shown as a
+ * badge carry that prose in `name`. Those are recognised here and re-rendered
+ * from the backup type, so an old archive reads in the current language too.
+ * A real file name — an uploaded archive — is always shown exactly as stored.
+ */
+const GENERATED_NAME = /^(Full|Selective) Backup( \(\d+\)| \(uploaded\))?$/;
+
+export const backupName = (backup, t) => {
+  const stored = String(backup?.name || '').trim();
+  if (stored && !GENERATED_NAME.test(stored)) return stored;
+  if (backup?.backup_type === 'uploaded') return t('backup_type_uploaded');
+  if (backup?.backup_type === 'custom' || /^Selective/.test(stored)) return t('backup_type_selective');
+  return t('backup_type_full');
+};
+
 export const categoryLabel = (t, key) => t(`backup_cat_${key}`);
 export const categoryDesc = (t, key) => t(`backup_cat_${key}_desc`);
 export const sectionLabel = (t, key) => t(`backup_sec_${key}`);

@@ -1481,4 +1481,15 @@ export default {
   notif_no_access: 'ليس لديك صلاحية الوصول إلى هذا القسم',
   settings_dash_show_date_hours: 'التاريخ وساعات العمل',
 
+  label_latitude: 'خط العرض',
+  label_longitude: 'خط الطول',
+
+  error_profile_image_too_large: 'يجب أن تكون الصورة أصغر من ٥ ميغابايت',
+  user_photo_wait: 'انتظر حتى يكتمل تحميل الصورة',
+
+  rel_seconds_ago: 'قبل {count} ثانية',
+  rel_minutes_ago: 'قبل {count} دقيقة',
+  rel_hours_ago: 'قبل {count} ساعة',
+  rel_days_ago: 'قبل {count} يوم',
+
 };

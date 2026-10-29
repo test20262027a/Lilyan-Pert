@@ -1484,4 +1484,35 @@ export default {
   notif_no_access: 'دەستگەیشتن بۆ ئەم بەشە نییە',
   settings_dash_show_date_hours: 'بەروار و کاتژمێری کار',
 
+  label_latitude: 'پانی جوگرافی',
+  label_longitude: 'درێژی جوگرافی',
+
+  error_profile_image_too_large: 'وێنە دەبێت لە ٥ مێگابایت کەمتر بێت',
+  user_photo_wait: 'چاوەڕوان بە تا وێنەکە بارکردن تەواو دەبێت',
+
+  date_month_1: 'کانوونی دووەم',
+  date_month_2: 'شوبات',
+  date_month_3: 'ئازار',
+  date_month_4: 'نیسان',
+  date_month_5: 'ئایار',
+  date_month_6: 'حوزەیران',
+  date_month_7: 'تەمووز',
+  date_month_8: 'ئاب',
+  date_month_9: 'ئەیلوول',
+  date_month_10: 'تشرینی یەکەم',
+  date_month_11: 'تشرینی دووەم',
+  date_month_12: 'کانونی یەکەم',
+  date_weekday_0: 'یەکشەممە',
+  date_weekday_1: 'دووشەممە',
+  date_weekday_2: 'سێشەممە',
+  date_weekday_3: 'چوارشەممە',
+  date_weekday_4: 'پێنجشەممە',
+  date_weekday_5: 'ھەینی',
+  date_weekday_6: 'شەممە',
+
+  rel_seconds_ago: 'پێش {count} چرکە',
+  rel_minutes_ago: 'پێش {count} خولەک',
+  rel_hours_ago: 'پێش {count} کاتژمێر',
+  rel_days_ago: 'پێش {count} ڕۆژ',
+
 };

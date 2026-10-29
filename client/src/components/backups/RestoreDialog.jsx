@@ -5,7 +5,7 @@ import ModalActions from '../ModalActions';
 import { useI18n } from '../../i18n';
 import { get } from '../../api';
 import { fmtDateTime, fmtNumber, zoneFor } from '../../format';
-import { archiveSize, categoryLabel, sectionLabel, sectionVisual } from './backupMeta';
+import { archiveSize, backupName, categoryLabel, sectionLabel, sectionVisual } from './backupMeta';
 
 /*
  * Restore confirmation. Nothing here decides whether a restore may run: the
@@ -58,7 +58,7 @@ export default function RestoreDialog({ backup, business, busy, onCancel, onConf
   return (
     <Modal
       title={t('backup_restore_preview')}
-      subtitle={preview?.name || backup.name}
+      subtitle={backupName({ ...backup, name: preview?.name || backup.name }, t)}
       onClose={onCancel}
       wide
       footer={

@@ -2,7 +2,7 @@ import Icon from '../Icon';
 import { StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDate, fmtTime } from '../../format';
-import { ENTITY_KEYS, activityVisual, badgeTone } from './activityMeta';
+import { ENTITY_KEYS, activityVisual, badgeTone, entityLabelText } from './activityMeta';
 
 /*
  * One activity record: contextual icon and title on the physical right, the
@@ -16,7 +16,7 @@ import { ENTITY_KEYS, activityVisual, badgeTone } from './activityMeta';
 export default function ActivityCard({ row, locale, timeZone, canManage, busy, onDelete }) {
   const { t } = useI18n();
   const visual = activityVisual(row);
-  const moduleLabel = ENTITY_KEYS[row.entity] ? t(ENTITY_KEYS[row.entity]) : row.entity;
+  const moduleLabel = ENTITY_KEYS[row.entity] ? t(ENTITY_KEYS[row.entity]) : t('act_title');
   const actionLabel = t(`act_action_${row.action}`);
 
   const title =
@@ -52,7 +52,7 @@ export default function ActivityCard({ row, locale, timeZone, canManage, busy, o
             <span className="av-ref">{t('act_order_ref', { number: row.order_number })}</span>
           ) : null
         ) : row.entity_label ? (
-          <p className="av-card__desc">{row.entity_label}</p>
+          <p className="av-card__desc">{entityLabelText(t, row)}</p>
         ) : null}
 
         <div className="av-card__meta">

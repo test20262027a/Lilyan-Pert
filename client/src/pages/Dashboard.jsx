@@ -100,7 +100,7 @@ export default function Dashboard() {
       const merged = res.notification_settings;
       setData((d) => ({ ...d, notification_settings: merged, business: { ...d.business, notification_settings: merged } }));
       if (business) setBusiness({ ...business, notification_settings: merged });
-      toast.success(t('action_saved'));
+      toast.success(t('state_saved'));
     } catch {
       setData((d) => ({ ...d, notification_settings: previous, business: { ...d.business, notification_settings: previous } }));
       if (business) setBusiness({ ...business, notification_settings: previous });
@@ -113,7 +113,7 @@ export default function Dashboard() {
     setPushError('');
     const res = push.subscribed ? await push.disable() : await push.enable();
     if (res.ok) {
-      toast.success(push.subscribed ? t('action_saved') : t('dash_push_enabled'));
+      toast.success(push.subscribed ? t('state_saved') : t('dash_push_enabled'));
       return;
     }
     // A browser-side context restriction is explained by the card itself

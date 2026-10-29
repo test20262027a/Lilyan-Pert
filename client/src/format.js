@@ -1,11 +1,77 @@
 /* Date/time/number formatting. Persian uses the Solar Hijri calendar + Iran time. */
 
+import ku from './i18n/ku';
+
 const INTL_LOCALE = {
   en: 'en-GB',
   ku: 'ckb-IQ',
   fa: 'fa-IR-u-ca-persian',
   ar: 'ar-IQ',
 };
+
+/*
+ * Kurdish (Sorani) calendar and digit data.
+ *
+ * Most browsers ship no `ckb` data at all: `new Intl.DateTimeFormat('ckb')`
+ * does not throw, it silently answers in the browser's own language, so the
+ * Kurdish interface would print "Thursday, 29 October 2026" and Latin digits.
+ * The names therefore live in the translation dictionary, and the helpers below
+ * format them directly whenever the browser cannot.
+ */
+const KU_MONTHS = Array.from({ length: 12 }, (_, i) => ku[`date_month_${i + 1}`]);
+const KU_WEEKDAYS = Array.from({ length: 7 }, (_, i) => ku[`date_weekday_${i}`]);
+const KU_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+
+const inKurdishDigits = (value) =>
+  String(value)
+    .replace(/\d/g, (d) => KU_DIGITS[Number(d)])
+    .replace(/,/g, '٬')
+    .replace(/\./g, '٫');
+
+/** Whether the browser really holds data for a tag, or only falls back to English. */
+const PROBE = new Date(Date.UTC(2026, 9, 29, 12));
+const EN_PROBE = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(PROBE);
+const SUPPORT = new Map();
+function hasIntlData(tag) {
+  if (tag.startsWith('en')) return true;
+  if (SUPPORT.has(tag)) return SUPPORT.get(tag);
+  let ok = false;
+  try {
+    ok = new Intl.DateTimeFormat(tag, { month: 'long', timeZone: 'UTC' }).format(PROBE) !== EN_PROBE;
+  } catch {
+    ok = false;
+  }
+  SUPPORT.set(tag, ok);
+  return ok;
+}
+
+/** True when a locale must be formatted from the app's own Kurdish data. */
+const isKurdishOnly = (locale) => locale === 'ku' && !hasIntlData(INTL_LOCALE.ku);
+
+/** The zoned calendar fields of one instant, in Latin digits, for manual formatting. */
+function zonedFields(d, timeZone) {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: timeZone || undefined,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    weekday: 'short',
+    hour12: false,
+  }).formatToParts(d);
+  const at = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  const hour = at.hour === '24' ? '00' : at.hour;
+  return {
+    year: at.year,
+    month: Number(at.month),
+    day: Number(at.day),
+    hour,
+    minute: at.minute,
+    // Sunday-first index, read from the same zoned calendar day.
+    weekday: new Date(Date.UTC(Number(at.year), Number(at.month) - 1, Number(at.day))).getUTCDay(),
+  };
+}
 
 function safeLocale(locale) {
   const candidate = INTL_LOCALE[locale] || 'en-GB';
@@ -31,6 +97,12 @@ function toDate(value) {
 export function fmtDate(value, locale, timeZone, { weekday = false, short = false } = {}) {
   const d = toDate(value);
   if (!d) return '—';
+  if (isKurdishOnly(locale)) {
+    const f = zonedFields(d, timeZone);
+    // Kurdish has no abbreviated month names, so `short` uses the same names.
+    const day = `${inKurdishDigits(f.day)}ی ${KU_MONTHS[f.month - 1]}ی ${inKurdishDigits(f.year)}`;
+    return weekday ? `${KU_WEEKDAYS[f.weekday]}، ${day}` : day;
+  }
   const options = short
     ? { year: 'numeric', month: 'short', day: 'numeric' }
     : { year: 'numeric', month: 'long', day: 'numeric' };
@@ -53,6 +125,10 @@ export function fmtWeekdayDate(value, locale, timeZone) {
 export function fmtTime(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '—';
+  if (isKurdishOnly(locale)) {
+    const f = zonedFields(d, timeZone);
+    return inKurdishDigits(`${f.hour}:${f.minute}`);
+  }
   return new Intl.DateTimeFormat(safeLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
@@ -67,6 +143,10 @@ export function fmtTime(value, locale, timeZone) {
  */
 export function fmtClock(value, locale, timeZone) {
   const d = toDate(value) || new Date();
+  if (isKurdishOnly(locale)) {
+    const f = zonedFields(d, timeZone);
+    return inKurdishDigits(`${f.hour}:${f.minute}`);
+  }
   return new Intl.DateTimeFormat(safeLocale(locale), {
     hour: '2-digit',
     minute: '2-digit',
@@ -88,6 +168,7 @@ export function fmtDateTime(value, locale, timeZone) {
 export function fmtWeekday(value, locale, timeZone, { long = false } = {}) {
   const d = toDate(value);
   if (!d) return '';
+  if (isKurdishOnly(locale)) return KU_WEEKDAYS[zonedFields(d, timeZone).weekday];
   return new Intl.DateTimeFormat(safeLocale(locale), {
     weekday: long ? 'long' : 'short',
     timeZone,
@@ -98,12 +179,14 @@ export function fmtWeekday(value, locale, timeZone, { long = false } = {}) {
 export function fmtMonth(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '';
+  if (isKurdishOnly(locale)) return KU_MONTHS[zonedFields(d, timeZone).month - 1];
   return new Intl.DateTimeFormat(safeLocale(locale), { month: 'short', timeZone }).format(d);
 }
 
 export function fmtNumber(value, locale) {
   const n = Number(value);
   if (!Number.isFinite(n)) return '0';
+  if (isKurdishOnly(locale)) return inKurdishDigits(new Intl.NumberFormat('en-US').format(n));
   return new Intl.NumberFormat(safeLocale(locale)).format(n);
 }
 
@@ -125,6 +208,7 @@ export function fmtMoney(value, currency, locale) {
     return `${fmtNumber(n, locale)} ${localizedCurrencyLabel(currency, locale)}`;
   }
   const zeroDecimal = ['IQD', 'IRR'].includes(currency);
+  if (isKurdishOnly(locale)) return `${fmtNumber(n, locale)} ${currency || ''}`.trim();
   try {
     return new Intl.NumberFormat(safeLocale(locale), {
       style: 'currency',
@@ -148,6 +232,7 @@ export function fmtMoneyParts(value, currency, locale) {
     return { number: fmtNumber(n, locale), symbol: localizedCurrencyLabel(currency, locale) };
   }
   const zeroDecimal = ['IQD', 'IRR'].includes(currency);
+  if (isKurdishOnly(locale)) return { number: fmtNumber(n, locale), symbol: currency || '' };
   try {
     const parts = new Intl.NumberFormat(safeLocale(locale), {
       style: 'currency',
@@ -199,6 +284,13 @@ function dayToDate(ymd) {
 export function fmtDay(ymd, locale, timeZone, { weekday = false, numeric = false } = {}) {
   const d = dayToDate(ymd);
   if (!d) return '—';
+  if (isKurdishOnly(locale)) {
+    const f = zonedFields(d, timeZone);
+    const body = numeric
+      ? `${inKurdishDigits(f.day)}/${inKurdishDigits(String(f.month).padStart(2, '0'))}/${inKurdishDigits(f.year)}`
+      : `${inKurdishDigits(f.day)}ی ${KU_MONTHS[f.month - 1]}ی ${inKurdishDigits(f.year)}`;
+    return weekday ? `${KU_WEEKDAYS[f.weekday]}، ${body}` : body;
+  }
   const options = numeric
     ? { year: 'numeric', month: '2-digit', day: '2-digit' }
     : { year: 'numeric', month: 'long', day: 'numeric' };

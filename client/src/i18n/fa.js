@@ -1483,4 +1483,15 @@ export default {
   notif_no_access: 'دسترسی به این بخش ندارید',
   settings_dash_show_date_hours: 'تاریخ و ساعات کاری',
 
+  label_latitude: 'عرض جغرافیایی',
+  label_longitude: 'طول جغرافیایی',
+
+  error_profile_image_too_large: 'عکس باید کمتر از ۵ مگابایت باشد',
+  user_photo_wait: 'تا پایان بارگذاری عکس صبر کنید',
+
+  rel_seconds_ago: '{count} ثانیه پیش',
+  rel_minutes_ago: '{count} دقیقه پیش',
+  rel_hours_ago: '{count} ساعت پیش',
+  rel_days_ago: '{count} روز پیش',
+
 };

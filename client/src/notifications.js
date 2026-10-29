@@ -44,11 +44,23 @@ export function compactCount(total) {
 
 const INTL_LOCALE = { en: 'en-GB', ku: 'ckb', fa: 'fa', ar: 'ar' };
 
+/** The translation key for one relative-time unit. */
+const RELATIVE_KEYS = {
+  second: 'rel_seconds_ago',
+  minute: 'rel_minutes_ago',
+  hour: 'rel_hours_ago',
+  day: 'rel_days_ago',
+};
+
 /**
  * Localized relative time ("5 minutes ago"). Falls back to an absolute date if
  * the browser has no relative formatting for the language.
+ *
+ * Some browsers ship no Kurdish relative-time data and answer with a Latin unit
+ * ("‑٥ d"), so a Latin unit in a non-English locale is treated as missing data
+ * and rendered from the app's own translation keys instead.
  */
-export function relativeTime(value, locale, formatter) {
+export function relativeTime(value, locale, formatter, t) {
   const date = value ? new Date(value) : null;
   if (!date || Number.isNaN(date.getTime())) return '';
   const seconds = Math.round((date.getTime() - Date.now()) / 1000);
@@ -64,12 +76,19 @@ export function relativeTime(value, locale, formatter) {
             ? [Math.round(seconds / 86400), 'day']
             : null;
   if (!pick) return formatter ? formatter(date) : date.toLocaleDateString();
+  let text = '';
   try {
-    return new Intl.RelativeTimeFormat(INTL_LOCALE[locale] || 'en-GB', { numeric: 'auto' }).format(
+    text = new Intl.RelativeTimeFormat(INTL_LOCALE[locale] || 'en-GB', { numeric: 'auto' }).format(
       pick[0],
       pick[1],
     );
   } catch {
+    text = '';
+  }
+  const missingData = !text || (locale !== 'en' && /[A-Za-z]/.test(text));
+  if (missingData) {
+    if (t) return t(RELATIVE_KEYS[pick[1]], { count: Math.abs(pick[0]) });
     return formatter ? formatter(date) : date.toLocaleString();
   }
+  return text;
 }

@@ -6,6 +6,8 @@
  * rewrites a value — the checks only decide whether saving may continue.
  */
 
+import { getDefaultEnabledLanguage } from '../../languages';
+
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 /* Digits plus the separators real phone numbers use; leading zeros are kept. */
 const PHONE = /^[+()\d\s.-]{6,}$/;
@@ -20,9 +22,15 @@ export function validateDraft(draft, t) {
   const fail = (tab, message) => ({ tab, message });
 
   // ---- Business information -------------------------------------------------
-  const primaryName = String(draft.name_en || draft.name || '').trim();
+  // The name is required in the business's own default language, so an owner who
+  // switched a language off is never asked for a field they cannot see.
+  const primaryCode = getDefaultEnabledLanguage();
+  const primaryName = String(draft[`name_${primaryCode}`] || draft.name_en || draft.name || '').trim();
   if (!primaryName) {
-    return fail('business', `${t('settings_required')}: ${t('settings_business_card')} (English)`);
+    return fail(
+      'business',
+      `${t('settings_required')}: ${t('settings_business_card')} (${t(`menu_lang_name_${primaryCode}`)})`,
+    );
   }
 
   // ---- Contact --------------------------------------------------------------

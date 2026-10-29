@@ -77,7 +77,10 @@ export async function pushNewOrder(businessId, order) {
       body,
       orderId: order.id,
       orderNumber: order.order_number,
-      url: `/orders/${order.id}`,
+      // The order list opens the details modal from `?order=…`; there is no
+      // standalone order page any more, so a `/orders/:id` link would only
+      // redirect and lose the order the notification was about.
+      url: `/orders?order=${order.id}`,
     });
     try {
       await webpush.sendNotification(

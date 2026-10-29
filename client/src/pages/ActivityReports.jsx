@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
 import { Alert, EmptyState, useToast } from '../components/ui';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
-import { ENTITY_KEYS } from '../components/activity/activityMeta';
+import { ENTITY_KEYS, entityLabelText } from '../components/activity/activityMeta';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import ActivityArtwork from '../components/activity/ActivityArtwork';
 import ActivityFilters from '../components/activity/ActivityFilters';
@@ -236,12 +236,12 @@ export default function ActivityReports() {
         <DeleteConfirmationDialog
           entityType="activity"
           entityName={
-            pending.entity_label ||
+            entityLabelText(t, pending) ||
             (pending.order_number
               ? t('act_order_ref', { number: pending.order_number })
               : `#${String(pending.id).slice(0, 8)}`)
           }
-          entitySubtitle={`${ENTITY_KEYS[pending.entity] ? t(ENTITY_KEYS[pending.entity]) : pending.entity} · ${
+          entitySubtitle={`${ENTITY_KEYS[pending.entity] ? t(ENTITY_KEYS[pending.entity]) : t('act_title')} · ${
             pending.actor_name || t('act_actor_system')
           }`}
           busy={busy}

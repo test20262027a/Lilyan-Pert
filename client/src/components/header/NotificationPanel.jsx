@@ -4,7 +4,7 @@ import { Spinner } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDateTime } from '../../format';
 import { CATEGORY_TABS, categoryOf, compactCount, relativeTime } from '../../notifications';
-import { ENTITY_KEYS } from '../activity/activityMeta';
+import { ENTITY_KEYS, entityLabelText } from '../activity/activityMeta';
 
 /*
  * Notification panel anchored to the header bell.
@@ -81,12 +81,13 @@ function describe(item, t) {
   }
 
   const [entity = '', action = ''] = String(item.body || '').split(':');
-  const entityLabel = ENTITY_KEYS[entity] ? t(ENTITY_KEYS[entity]) : entity;
+  const entityLabel = ENTITY_KEYS[entity] ? t(ENTITY_KEYS[entity]) : t('act_title');
   const actionLabel = action ? t(`act_action_${action}`) : '';
   return {
     title: [entityLabel, actionLabel].filter(Boolean).join(' · '),
     number,
-    description: item.title || '',
+    // A reset notification names the modules it cleared by their saved keys.
+    description: entityLabelText(t, { entity, entity_label: item.title }) || '',
   };
 }
 
@@ -173,7 +174,7 @@ export default function NotificationPanel({
 
   const visible =
     tab === 'all' ? items : tab === 'unread' ? items.filter((i) => !i.read_at) : lists[tab] || [];
-  const time = (value) => relativeTime(value, locale, (d) => fmtDateTime(d, locale, timeZone));
+  const time = (value) => relativeTime(value, locale, (d) => fmtDateTime(d, locale, timeZone), t);
   const [panelRef, box] = usePanelPlacement(anchorRef, [tab, visible.length, locale]);
 
   return (
