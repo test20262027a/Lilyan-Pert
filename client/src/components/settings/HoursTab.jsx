@@ -49,10 +49,13 @@ export default function HoursTab({ draft, setJson, canManage }) {
                   onChange={(open) => setJson('working_hours', day, { ...value, closed: !open })}
                 />
               </div>
-              {/* Today sits on the same line as the open/closed verdict, so the
-                  two read as one answer instead of two separate rows. */}
+              {/* The open/closed verdict sits directly under the day name and
+                  the Today chip takes the opposite corner — the two labels
+                  swapped corners, their values and meaning are unchanged. */}
               <span className={`set-day__state ${closed ? 'is-closed' : ''}`}>
-                {closed ? t('settings_status_closed') : t('settings_status_open')}
+                <span className="set-day__status">
+                  {closed ? t('settings_status_closed') : t('settings_status_open')}
+                </span>
                 {isToday ? <span className="set-day__badge">{t('settings_today')}</span> : null}
               </span>
 

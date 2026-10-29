@@ -350,8 +350,9 @@
   background: color-mix(in srgb, var(--theme-primary) 12%, transparent);
   border-color: color-mix(in srgb, var(--primary) 45%, transparent);
 }
-/* The Today chip lives inside the state row, so it keeps a constant footprint
-   and never widens the card when its label changes between languages. */
+/* The Today chip sits at the opposite corner of the state row, so it keeps a
+   constant footprint and never widens the card when its label changes between
+   languages. The open/closed verdict stays directly under the day name. */
 .set-day__badge {
   flex: none;
   padding: 1px 8px;
@@ -373,9 +374,12 @@
   font-weight: 700;
   color: var(--text);
 }
+/* Verdict under the day name on the start edge, Today chip on the end edge:
+   the two labels swap corners without changing what either one says. */
 .set-day__state {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 6px;
   min-width: 0;
   font-size: 10.5px;
@@ -384,6 +388,7 @@
   white-space: nowrap;
 }
 .set-day__state.is-closed { color: var(--muted); }
+.set-day__status { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .set-day__times { display: flex; flex-direction: column; gap: 6px; }
 .set-day__time {
   display: flex;

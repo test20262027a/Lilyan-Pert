@@ -172,6 +172,7 @@ export default function NotificationBell() {
           onMarkAll={markAll}
           locale={locale}
           timeZone={business?.timezone}
+          anchorRef={wrapRef}
         />
       ) : null}
     </span>

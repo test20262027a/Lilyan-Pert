@@ -333,10 +333,22 @@
 
 /* ----------------------------------------------------- notification panel */
 
+/*
+ * Content-aware width. The panel is never a second fixed width: it measures
+ * its own content (`max-content`) — the reader's language, a long notification
+ * description, a 3-digit badge or a long order number — and only then clamps
+ * to [min, max] and to the viewport. A short English feed stays narrow, a long
+ * Kurdish or Persian one widens up to 650px, and neither can overflow the
+ * screen. The exact position (left / top / bottom, max height) is measured by
+ * NotificationPanel, so it can flip above the bell and slide off an edge.
+ */
 .notif-panel {
-  position: absolute; inset-inline-end: 0; top: calc(100% + 10px);
-  z-index: 62;
-  width: min(510px, calc(100vw - 20px));
+  position: fixed;
+  z-index: 70;
+  width: max-content;
+  min-width: min(420px, calc(100vw - 32px));
+  max-width: min(650px, calc(100vw - 32px));
+  max-height: calc(100vh - 24px);
   display: flex; flex-direction: column;
   background: color-mix(in srgb, var(--surface) 96%, var(--mint-soft));
   border: 1px solid color-mix(in srgb, var(--mint) 16%, var(--border));
@@ -346,7 +358,9 @@
   animation: hdr-menu-in 0.18s ease;
 }
 
+/* Header and tabs stay put; only the list below them scrolls. */
 .notif-panel__head {
+  flex: none;
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
   padding: 13px 16px 11px;
   border-bottom: 1px solid color-mix(in srgb, var(--mint) 14%, var(--border));
@@ -372,17 +386,19 @@
 .notif-panel__markall:hover:not(:disabled) { color: var(--mint-ink); background: var(--mint-soft); }
 .notif-panel__markall:disabled { opacity: 0.45; cursor: default; }
 
-/* Compact category tabs — the active one is a filled green pill. */
+/* Compact category tabs — the active one is a filled green pill. On a narrow
+   panel the row scrolls horizontally and the app's own ultra-thin scrollbar
+   appears as the overflow indicator, instead of the tabs wrapping or shrinking. */
 .notif-panel__tabs {
+  flex: none;
   display: flex; align-items: center; gap: 6px;
   padding: 10px 14px;
   border-bottom: 1px solid color-mix(in srgb, var(--mint) 12%, var(--border));
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  scrollbar-width: none;
   scroll-padding-inline: 14px;
+  scroll-snap-type: x proximity;
 }
-.notif-panel__tabs::-webkit-scrollbar { display: none; }
 /* Every tab is one flex row: label and count always share a baseline, the tab
    never grows past its content, and the count pill keeps a fixed foot print so
    a number going from 9 to 12 to 99+ cannot push the row around. */
@@ -397,6 +413,7 @@
   background: transparent;
   font: inherit; font-size: 12px; font-weight: 700; line-height: 1.2;
   color: var(--muted); cursor: pointer; white-space: nowrap;
+  scroll-snap-align: start;
   transition: background 0.16s ease, color 0.16s ease;
 }
 .notif-tab__label { display: inline-block; min-width: 0; }
@@ -421,9 +438,13 @@
   .notif-tab__count { min-width: 18px; padding: 0 4px; }
 }
 
+/* The only scrolling area: it takes whatever height the measured panel leaves
+   under the header and tabs, so there is never a second scrollbar. */
 .notif-panel__list {
-  max-height: min(400px, 62vh);
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 8px;
   display: flex; flex-direction: column; gap: 4px;
 }
@@ -447,16 +468,47 @@
 .notif-item--gold .notif-item__icon { background: #fff6e0; color: #c08a12; }
 .notif-item--red .notif-item__icon { background: #fdeced; color: #e94e55; }
 
-.notif-item__body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; }
+.notif-item__body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
+/* Titles wrap instead of being cut: a notification's own wording is never
+   truncated to fit a width, whatever the language. */
 .notif-item__title {
-  font-size: 12.5px; font-weight: 700; color: var(--text);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  font-size: 12.5px; font-weight: 700; color: var(--text); line-height: 1.4;
 }
+.notif-item__title-text { min-width: 0; overflow-wrap: anywhere; }
+.notif-item__chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.notif-item__chip {
+  flex: none;
+  display: inline-flex; align-items: center;
+  height: 18px; padding: 0 7px;
+  border-radius: var(--radius-pill);
+  font-size: 10.5px; font-weight: 750; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  background: color-mix(in srgb, var(--mint) 13%, transparent);
+  color: var(--mint-ink);
+}
+/* Order numbers are digits: fixed-width glyphs keep rows aligned, and `dir`
+   on the element keeps `#1234` reading left-to-right inside RTL text. */
+.notif-item__chip--num {
+  letter-spacing: 0.02em;
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
+}
+.notif-item--purple .notif-item__chip { background: color-mix(in srgb, #8054e8 13%, transparent); color: #6f45d6; }
+.notif-item--gold .notif-item__chip { background: color-mix(in srgb, #c08a12 15%, transparent); color: #96690d; }
+.notif-item--red .notif-item__chip { background: color-mix(in srgb, #e94e55 13%, transparent); color: #c93b41; }
+/* Descriptions wrap naturally; the row grows and the list is what scrolls. */
 .notif-item__desc {
   font-size: 11.5px; color: var(--text-soft); line-height: 1.45;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  overflow-wrap: anywhere;
 }
-.notif-item__time { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.notif-item__time {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  margin-top: 2px;
+  font-size: 10.5px; color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.notif-item__sep { opacity: 0.55; }
 .notif-item__dot {
   width: 7px; height: 7px; flex: none; margin-top: 6px;
   border-radius: 50%; background: var(--mint-deep);
@@ -486,8 +538,30 @@
 [data-theme='dark'] .notif-item--gold .notif-item__icon { background: rgba(245, 188, 55, 0.16); }
 [data-theme='dark'] .notif-item--red .notif-item__icon { background: rgba(233, 78, 85, 0.16); }
 [data-theme='dark'] .notif-empty__icon { background: rgba(255, 255, 255, 0.05); }
+[data-theme='dark'] .notif-item--purple .notif-item__chip { background: rgba(128, 84, 232, 0.22); color: #c9b4fb; }
+[data-theme='dark'] .notif-item--gold .notif-item__chip { background: rgba(245, 188, 55, 0.2); color: #f6d089; }
+[data-theme='dark'] .notif-item--red .notif-item__chip { background: rgba(233, 78, 85, 0.2); color: #f6a7ab; }
 
 /* ----------------------------------------------------------- responsive */
+
+/* Tablet: the panel follows the narrower viewport instead of keeping a
+   desktop floor. */
+@media (max-width: 1024px) {
+  .notif-panel {
+    min-width: min(360px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
+  }
+}
+
+/* Mobile: nearly the whole width, inside the safe margins the placement hook
+   uses, whatever the content. */
+@media (max-width: 640px) {
+  .notif-panel {
+    width: calc(100vw - 20px);
+    min-width: 0;
+    max-width: calc(100vw - 20px);
+  }
+}
 
 @media (max-width: 1000px) {
   .hdr { min-height: 64px; border-radius: 22px; }
@@ -519,7 +593,6 @@
   .hdr__tools { gap: 4px; }
   .hdr-btn { width: 34px; height: 34px; border-radius: 11px; }
   .hdr-lang__btn { height: 34px; padding-inline: 7px; }
-  .notif-panel { width: calc(100vw - 16px); }
   /* Narrowest phones: the avatar alone identifies the trigger, so its chevron
      gives the space back and the header can never scroll sideways. The doubled
      class outranks the global `.icon { display: block }`. */
