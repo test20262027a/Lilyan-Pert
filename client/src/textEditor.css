@@ -240,83 +240,6 @@
   background: linear-gradient(180deg, var(--surface-2), var(--surface));
 }
 
-/* ---------------------------------------------------------- list status bar */
-
-/*
- * The list's status bar: a soft card under the messages that says how many the
- * list is showing out of the total, and offers a way out of an active search.
- * It is a single row on a wide screen; the pieces wrap and stack on a phone.
- * Every colour comes from the theme layer, so it follows light/dark and the
- * chosen preset, and its spacing is flow-relative so it mirrors in RTL.
- */
-.tx-status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 9px 12px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: linear-gradient(180deg, var(--surface), var(--surface-2));
-  box-shadow:
-    0 1px 2px rgba(23, 26, 43, 0.05),
-    0 8px 18px -14px color-mix(in srgb, var(--primary) 55%, transparent);
-  font-size: 12.5px;
-  color: var(--muted);
-}
-.tx-status__icon {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  background: var(--theme-icon-bg);
-  color: var(--theme-primary-strong);
-  border: 1px solid var(--theme-primary-line);
-}
-.tx-status__text {
-  margin: 0;
-  min-width: 0;
-  line-height: 1.5;
-}
-.tx-status__num {
-  color: var(--text);
-  font-weight: 750;
-  font-variant-numeric: tabular-nums;
-}
-.tx-status__clear {
-  margin-inline-start: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 0 11px;
-  border-radius: 9px;
-  border: 1px solid var(--theme-primary-line);
-  background: var(--theme-primary-soft);
-  color: var(--theme-primary-strong);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 650;
-  cursor: pointer;
-  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
-}
-.tx-status__clear:hover {
-  background: var(--theme-selected-bg);
-  border-color: var(--theme-selected-border);
-}
-.tx-status__clear:active { transform: translateY(1px); }
-.tx-status__clear:focus-visible {
-  outline: 2px solid var(--theme-primary);
-  outline-offset: 1px;
-}
-[data-theme='dark'] .tx-status {
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.35),
-    0 10px 20px -16px rgba(0, 0, 0, 0.8);
-}
-
 /* ------------------------------------------------------------- one row */
 
 .tx-row {
@@ -537,8 +460,4 @@
   .tx-search { padding: 0 11px; }
   .tx-save { min-height: 42px; }
   .tx-hero .tx-art { max-width: 100%; }
-  /* The status bar wraps instead of squeezing: text first, control below it. */
-  .tx-status { gap: 8px; padding: 9px 10px; font-size: 12px; }
-  .tx-status__text { flex: 1 1 100%; }
-  .tx-status__clear { margin-inline-start: 0; min-height: 32px; }
 }

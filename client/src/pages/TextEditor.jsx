@@ -8,7 +8,6 @@ import { useBusiness } from '../context/BusinessContext';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import TextEditorArtwork from '../components/textEditor/TextEditorArtwork';
 import ReceiptMessageRow from '../components/textEditor/ReceiptMessageRow';
-import MessageListStatus from '../components/textEditor/MessageListStatus';
 import TranslationReviewModal from '../components/textEditor/TranslationReviewModal';
 import {
   MESSAGE_LOCALES,
@@ -308,16 +307,6 @@ export default function TextEditor() {
               ) : (
                 <EmptyState icon="search" title={t('text_editor_empty_search')} hint={t('text_editor_empty_search_hint')} />
               )}
-              {/* The bar reports the rows actually rendered; with no matches the
-                  empty state above already explains it, so the bar steps aside. */}
-              {visible.length ? (
-                <MessageListStatus
-                  shown={visible.length}
-                  total={total}
-                  filtering={Boolean(search)}
-                  onClear={() => setQuery('')}
-                />
-              ) : null}
             </div>
           ) : null}
         </section>
