@@ -426,36 +426,84 @@
   gap: 16px;
   align-items: start;
 }
+/*
+ * The live preview panel. It holds the real receipt drawn at its true paper
+ * width, a badge that marks the paper as sample data, and its own language
+ * switch. Beside the calibration fields it follows the scroll, so the paper
+ * stays in view while a setting far down the card is changed.
+ */
 .set-preview {
+  position: sticky;
+  top: 14px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 12px;
   border: 1px dashed var(--border-strong);
   border-radius: 14px;
-  background: var(--surface-2);
-  padding: 14px;
-  display: grid;
-  place-items: center;
-  min-height: 280px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 5%, var(--surface-2)),
+    var(--surface-2)
+  );
+  min-height: 240px;
 }
-.set-preview__paper {
-  width: 210px;
-  max-width: 100%;
-  background: #ffffff;
-  border: 1px dashed #d6dad6;
-  border-radius: 8px;
-  padding: 10px;
-  box-shadow: 0 8px 20px rgba(23, 26, 43, 0.08);
+.set-preview__bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.set-preview__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--theme-primary-strong);
 }
-.set-preview__paper .receipt-paper {
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-  max-width: none;
-  width: 100%;
-  padding: 0;
+.set-preview__badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  color: var(--theme-primary-strong);
   font-size: 10.5px;
-  overflow: hidden;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 1px 0 #ffffff;
 }
-.set-preview__paper .receipt-logo { max-width: 70px !important; }
-.set-preview__note { font-size: 11.5px; color: var(--muted); text-align: center; margin-top: 10px; }
+.set-preview__lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+  font-size: 11.5px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.set-preview__lang .select { min-height: 32px; padding-block: 4px; font-size: 12px; max-width: 118px; }
+.set-preview__toggle { display: none; }
+.set-preview__stage { display: grid; place-items: start center; min-height: 200px; padding: 4px 0; }
+/*
+ * The sheet is the paper itself: its width and its calibration margins are set
+ * inline by ReceiptPreview from the same geometry the print stylesheet uses,
+ * and only the fit factor keeps it inside the column — never a scrollbar.
+ */
+.set-preview__sheet {
+  box-sizing: border-box;
+  background: #ffffff;
+  border: 1px solid #e2e6ea;
+  border-radius: 6px;
+  box-shadow: 0 14px 28px -16px rgba(23, 26, 43, 0.45), 0 2px 6px rgba(23, 26, 43, 0.06);
+}
+/* The paper brings its own type scale; the panel only removes the screen chrome
+   so the sheet, and not a second frame, decides the width. */
+.set-preview__sheet .receipt-paper {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.set-preview__note { margin: 0; font-size: 11.5px; color: var(--muted); text-align: center; }
 
 /* ----------------------------------------------------------------- themes */
 
@@ -519,7 +567,23 @@
 @media (max-width: 960px) {
   .set-receipt { grid-template-columns: minmax(0, 1fr); }
   .set-themes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .set-preview { min-height: 220px; }
+  /* Stacked, the paper comes first and no longer follows the scroll. */
+  .set-preview-col { order: -1; }
+  .set-preview { position: static; min-height: 0; }
+  .set-preview__toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+    border: 1px solid var(--border-strong);
+    background: var(--surface);
+    color: var(--theme-primary-strong);
+    cursor: pointer;
+  }
+  .set-preview.is-closed .set-preview__stage,
+  .set-preview.is-closed .set-preview__note { display: none; }
 }
 
 @media (max-width: 760px) {

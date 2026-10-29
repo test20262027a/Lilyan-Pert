@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon';
 import { ConfirmDialog, useToast } from '../ui';
 import { useI18n } from '../../i18n';
+import { useBusiness } from '../../context/BusinessContext';
 import { pickReceiptFooter } from '../../receiptMessages';
 import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../Receipt';
 import { ChoiceCard, SettingsCard, SettingsToggleRow } from './SettingsCard';
 import { SetField } from './fields';
+import ReceiptPreview from './ReceiptPreview';
 
 /* Paper widths offered by the reference, plus a free width printers accept. */
 const WIDTHS = [
@@ -15,6 +17,13 @@ const WIDTHS = [
 ];
 const LOGO_SIZES = ['small', 'medium', 'large'];
 const ALIGNMENTS = ['auto', 'center', 'start'];
+const FONTS = ['naskh', 'kufi', 'system'];
+const WEIGHTS = ['normal', 'medium', 'bold'];
+const COLUMNS = ['auto', 'full', 'compact'];
+const GRANDS = ['boxed', 'rule', 'plain'];
+const FOOTER_ALIGNS = ['auto', 'center', 'start'];
+const FOOTER_SIZES = ['small', 'normal', 'large'];
+const LOGO_ALIGNS = ['center', 'start'];
 
 /* Restores receipt presentation only — business data and orders are untouched. */
 const RECEIPT_DEFAULTS = {
@@ -32,11 +41,23 @@ const RECEIPT_DEFAULTS = {
   paper_width: '80mm',
   custom_width: 80,
   print_scale: 100,
+  margin_top: 0,
   margin_left: 0,
   margin_right: 0,
   margin_bottom: 0,
+  font_family: 'naskh',
+  font_scale: 100,
+  text_weight: 'normal',
+  line_height: 1.4,
+  section_spacing: 7,
   logo_size: 'medium',
+  logo_align: 'center',
   alignment: 'auto',
+  show_dividers: true,
+  product_layout: 'auto',
+  grand_style: 'boxed',
+  footer_align: 'auto',
+  footer_scale: 'normal',
 };
 
 /** Sample receipt for the preview and Test print — no order is ever created. */
@@ -76,24 +97,48 @@ function sampleReceipt(draft, t) {
   };
 }
 
-export default function ReceiptTab({ draft, setJson, patch, canManage }) {
+/**
+ * Receipt printing settings.
+ *
+ * Everything here edits the unsaved draft, and the preview renders that draft
+ * through the real receipt component — so any change, from the paper width to a
+ * single margin, appears on the paper immediately. Nothing reaches the backend
+ * until the workspace's own Save is pressed.
+ */
+export default function ReceiptTab({ draft, setJson, patch, setVal, canManage }) {
   const { t, locale } = useI18n();
+  const { business } = useBusiness();
   const toast = useToast();
   const [confirmReset, setConfirmReset] = useState(false);
   const [printing, setPrinting] = useState(false);
+  /*
+   * The receipt's own language: it starts on the panel's language and can be
+   * switched for a look at another one without changing the account at all.
+   */
+  const [previewLocale, setPreviewLocale] = useState(locale);
   const receipt = draft.receipt_settings || {};
   const width = receipt.paper_width || '80mm';
   const data = sampleReceipt(draft, t);
+
+  useEffect(() => {
+    setPreviewLocale(locale);
+  }, [locale]);
+
   /*
    * One closing message for this preview and the print that follows it: the
    * pick is made here, once per language, and handed to both papers, so the
    * printed receipt never shows a different message from the preview.
    */
   const footerPick = useMemo(
-    () => pickReceiptFooter(data.business, locale),
+    () => pickReceiptFooter(data.business, previewLocale),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [locale, data.business?.id],
+    [previewLocale, data.business?.id],
   );
+
+  // Discarding only returns the receipt settings to what the server holds.
+  const savedReceipt = useMemo(() => business?.receipt_settings || {}, [business]);
+  const discardable = JSON.stringify(receipt) !== JSON.stringify(savedReceipt);
+  const discardReceipt = () => setVal('receipt_settings', { ...savedReceipt });
 
   useEffect(() => {
     if (!printing) return undefined;
@@ -106,13 +151,13 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
     };
   }, [printing]);
 
-  const numeric = (key, fallback, min, max) => ({
+  const numeric = (key, fallback, min, max, step = '1') => ({
     className: 'input',
     type: 'number',
     dir: 'ltr',
     min,
     max,
-    step: '1',
+    step,
     disabled: !canManage,
     value: receipt[key] ?? fallback,
     onChange: (event) =>
@@ -120,6 +165,22 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
   });
 
   const setChoice = (key, value) => canManage && setJson('receipt_settings', key, value);
+  const setToggle = (key, value) => setJson('receipt_settings', key, value);
+
+  /** A row of choice cards bound to one setting. */
+  const choices = (key, values, labelFor, fallback) => (
+    <div className="set-choices">
+      {values.map((value) => (
+        <ChoiceCard
+          key={value}
+          active={(receipt[key] ?? fallback) === value}
+          onClick={() => setChoice(key, value)}
+        >
+          {labelFor(value)}
+        </ChoiceCard>
+      ))}
+    </div>
+  );
 
   return (
     <>
@@ -130,6 +191,15 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
         subtitle={t('settings_receipt_subtitle')}
         footer={
           <>
+            <button
+              type="button"
+              className="btn btn--ghost"
+              onClick={discardReceipt}
+              disabled={!canManage || !discardable}
+            >
+              <Icon name="refresh" size={15} />
+              {t('settings_discard_changes')}
+            </button>
             <button type="button" className="btn" onClick={() => setConfirmReset(true)} disabled={!canManage}>
               <Icon name="refresh" size={15} />
               {t('settings_restore_defaults')}
@@ -172,6 +242,9 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
               <SetField label={t('settings_receipt_scale')} hint={t('settings_receipt_scale_hint')}>
                 <input {...numeric('print_scale', 100, 50, 150)} />
               </SetField>
+              <SetField label={t('settings_receipt_margin_top')} hint={t('settings_receipt_margin_hint')}>
+                <input {...numeric('margin_top', 0, 0, 20)} />
+              </SetField>
               <SetField label={t('settings_receipt_margin_left')} hint={t('settings_receipt_margin_hint')}>
                 <input {...numeric('margin_left', 0, 0, 20)} />
               </SetField>
@@ -185,17 +258,69 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
             <p className="set-hint">{t('settings_receipt_calibration_hint')}</p>
           </div>
 
-          <div>
-            <div className="set-group-label">{t('settings_receipt_preview')}</div>
-            <div className="set-preview">
-              <div className="set-preview__paper">
-                {/* The same renderer the printed receipt uses, so the preview
-                    follows every toggle below it. */}
-                <ReceiptPaper data={data} locale={locale} footerPick={footerPick} />
-              </div>
-            </div>
-            <p className="set-preview__note">{t('settings_receipt_preview_hint')}</p>
+          <div className="set-preview-col">
+            <ReceiptPreview
+              data={data}
+              settings={receipt}
+              locale={previewLocale}
+              onLocaleChange={setPreviewLocale}
+              footerPick={footerPick}
+              t={t}
+            />
           </div>
+        </div>
+
+        <hr className="set-divider" style={{ margin: '16px 0' }} />
+
+        <div className="set-group-label">{t('settings_receipt_typography')}</div>
+        <SetField label={t('settings_receipt_font_family')}>
+          {choices('font_family', FONTS, (value) => t(`settings_receipt_font_${value}`), 'naskh')}
+        </SetField>
+        <div className="set-grid" style={{ marginTop: 12 }}>
+          <SetField label={t('settings_receipt_font_size')} hint={t('settings_receipt_font_size_hint')}>
+            <input {...numeric('font_scale', 100, 80, 140)} />
+          </SetField>
+          <SetField label={t('settings_receipt_line_height')} hint={t('settings_receipt_line_height_hint')}>
+            <input {...numeric('line_height', 1.4, 1.1, 2, '0.05')} />
+          </SetField>
+          <SetField label={t('settings_receipt_section_spacing')} hint={t('settings_receipt_section_spacing_hint')}>
+            <input {...numeric('section_spacing', 7, 2, 16)} />
+          </SetField>
+        </div>
+        <div style={{ marginTop: 4 }}>
+          <SetField label={t('settings_receipt_text_weight')}>
+            {choices('text_weight', WEIGHTS, (value) => t(`settings_receipt_weight_${value}`), 'normal')}
+          </SetField>
+        </div>
+
+        <hr className="set-divider" style={{ margin: '16px 0' }} />
+
+        <div className="set-group-label">{t('settings_receipt_layout')}</div>
+        <SetField label={t('settings_receipt_product_columns')}>
+          {choices('product_layout', COLUMNS, (value) => t(`settings_receipt_columns_${value}`), 'auto')}
+        </SetField>
+        <div style={{ marginTop: 12 }}>
+          <SetField label={t('settings_receipt_grand_style')}>
+            {choices('grand_style', GRANDS, (value) => t(`settings_receipt_grand_${value}`), 'boxed')}
+          </SetField>
+        </div>
+        <SettingsToggleRow
+          title={t('settings_receipt_dividers')}
+          checked={receipt.show_dividers !== false}
+          disabled={!canManage}
+          onChange={(value) => setToggle('show_dividers', value)}
+        />
+
+        <hr className="set-divider" style={{ margin: '16px 0' }} />
+
+        <div className="set-group-label">{t('settings_receipt_footer_style')}</div>
+        <SetField label={t('settings_receipt_footer_align')}>
+          {choices('footer_align', FOOTER_ALIGNS, (value) => t(`settings_receipt_align_${value}`), 'auto')}
+        </SetField>
+        <div style={{ marginTop: 12 }}>
+          <SetField label={t('settings_receipt_footer_size')}>
+            {choices('footer_scale', FOOTER_SIZES, (value) => t(`settings_receipt_size_${value}`), 'normal')}
+          </SetField>
         </div>
 
         <hr className="set-divider" style={{ margin: '16px 0' }} />
@@ -204,37 +329,22 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
           title={t('settings_show_logo')}
           checked={receipt.show_logo !== false}
           disabled={!canManage}
-          onChange={(value) => setJson('receipt_settings', 'show_logo', value)}
+          onChange={(value) => setToggle('show_logo', value)}
         />
 
         <div style={{ marginTop: 14 }}>
           <div className="set-group-label">{t('settings_receipt_logo_size')}</div>
-          <div className="set-choices">
-            {LOGO_SIZES.map((value) => (
-              <ChoiceCard
-                key={value}
-                active={(receipt.logo_size || 'medium') === value}
-                onClick={() => setChoice('logo_size', value)}
-              >
-                {t(`settings_receipt_size_${value}`)}
-              </ChoiceCard>
-            ))}
-          </div>
+          {choices('logo_size', LOGO_SIZES, (value) => t(`settings_receipt_size_${value}`), 'medium')}
+        </div>
+
+        <div style={{ marginTop: 16 }}>
+          <div className="set-group-label">{t('settings_receipt_logo_position')}</div>
+          {choices('logo_align', LOGO_ALIGNS, (value) => t(`settings_receipt_position_${value}`), 'center')}
         </div>
 
         <div style={{ marginTop: 16 }}>
           <div className="set-group-label">{t('settings_receipt_alignment')}</div>
-          <div className="set-choices">
-            {ALIGNMENTS.map((value) => (
-              <ChoiceCard
-                key={value}
-                active={(receipt.alignment || 'auto') === value}
-                onClick={() => setChoice('alignment', value)}
-              >
-                {t(`settings_receipt_align_${value}`)}
-              </ChoiceCard>
-            ))}
-          </div>
+          {choices('alignment', ALIGNMENTS, (value) => t(`settings_receipt_align_${value}`), 'auto')}
         </div>
       </SettingsCard>
 
@@ -297,10 +407,12 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
         />
       ) : null}
 
+      {/* The same receipt component, the same draft values and the same footer
+          message as the preview: the test print can never disagree with it. */}
       {printing ? (
         <PrintPortal>
           <ReceiptPrintStyle settings={receipt} />
-          <ReceiptPaper data={data} locale={locale} footerPick={footerPick} />
+          <ReceiptPaper data={data} locale={previewLocale} footerPick={footerPick} />
         </PrintPortal>
       ) : null}
     </>

@@ -35,10 +35,15 @@
    * Latin. A monospace face (the old receipt font) has no Arabic coverage and
    * falls back per glyph, which is what produced broken, mismatched lines.
    */
-  font-family: 'Noto Naskh Arabic', 'Noto Kufi Arabic', 'Segoe UI', Tahoma,
-    'DejaVu Sans', Arial, sans-serif;
-  font-size: 12px;
-  line-height: 1.4;
+  /*
+   * Typography comes from the print settings as custom properties, written by
+   * ReceiptPaper on this element: the same values therefore style the live
+   * preview and the printed sheet, and a change repaints both at once.
+   */
+  font-family: var(--rc-font, 'Noto Naskh Arabic', 'Segoe UI', Tahoma, 'DejaVu Sans', Arial, sans-serif);
+  font-size: var(--rc-font-size, 12px);
+  line-height: var(--rc-line-height, 1.4);
+  font-weight: var(--rc-weight, 400);
   font-variant-numeric: tabular-nums;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
@@ -93,7 +98,11 @@
   text-align: start;
 }
 
-.receipt-paper[data-align='start'] .rc-foot { text-align: start; }
+/* The logo can sit at the start of the column while the identity stays centred. */
+.receipt-paper[data-logo='start'] .receipt-logo {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
 
 /* --------------------------------------------------------------- sections */
 
@@ -105,10 +114,15 @@
  * no notes) never leaves a double or orphan divider behind.
  */
 .rc-block {
-  margin-block-start: 7px;
-  padding-block-start: 7px;
+  margin-block-start: var(--rc-space, 7px);
+  padding-block-start: var(--rc-space, 7px);
   border-block-start: 1px dashed #000000;
 }
+
+/* Section separators can be switched off entirely; the spacing that separates
+   the sections stays, so the paper never runs together. */
+.receipt-paper[data-dividers='off'] .rc-block { border-block-start-style: none; }
+.receipt-paper[data-dividers='off'] .rc-items th { border-bottom-style: none; }
 
 /* ------------------------------------------------------------ order header */
 
@@ -241,15 +255,16 @@
 }
 
 /* 58 mm carries roughly half the characters: the quantity and unit price are
-   printed on the meta line under the name instead of in their own columns. */
-.receipt-paper[data-paper='58'] .rc-col--qty,
-.receipt-paper[data-paper='58'] .rc-col--unit,
-.receipt-paper[data-paper='58'] .rc-item__qty,
-.receipt-paper[data-paper='58'] .rc-item__unit {
+   printed on the meta line under the name instead of in their own columns. The
+   owner can pin either layout on any paper width from the print settings. */
+.receipt-paper[data-columns='compact'] .rc-col--qty,
+.receipt-paper[data-columns='compact'] .rc-col--unit,
+.receipt-paper[data-columns='compact'] .rc-item__qty,
+.receipt-paper[data-columns='compact'] .rc-item__unit {
   display: none;
 }
 
-.receipt-paper[data-paper='58'] .rc-item__meta { display: block; }
+.receipt-paper[data-columns='compact'] .rc-item__meta { display: block; }
 
 .rc-notes { margin-top: 4px; }
 
@@ -300,18 +315,38 @@
 
 .rc-grand > :last-child { white-space: nowrap; }
 
+/* Grand total presentation: boxed (the default), a single rule above, or a
+   plain bold line. All three keep the amount the strongest element on paper. */
+.receipt-paper[data-grand='rule'] .rc-grand {
+  border-block-end-style: none;
+  padding-block-end: 2px;
+}
+
+.receipt-paper[data-grand='plain'] .rc-grand {
+  border-block-start-style: none;
+  border-block-end-style: none;
+  padding-block: 3px;
+}
+
 /* ------------------------------------------------------------------ footer */
 
 /* The one closing message: its own section under the total's second strong
    rule, centred, with a little air so it never crowds the amount. */
 .rc-foot {
   margin: 9px 0 0;
-  font-size: 0.96em;
+  font-size: calc(0.96em * var(--rc-foot-scale, 1));
   line-height: 1.5;
   text-align: center;
   overflow-wrap: anywhere;
   break-inside: avoid;
 }
+
+/* The closing message keeps its own alignment, independent of the header. */
+.receipt-paper[data-align='start'] .rc-foot { text-align: start; }
+
+.receipt-paper[data-foot-align='start'] .rc-foot { text-align: start; }
+
+.receipt-paper[data-foot-align='center'] .rc-foot { text-align: center; }
 
 /* ------------------------------------------------------------------ print */
 
@@ -325,23 +360,21 @@
     border-radius: 0;
     box-shadow: none;
     background: #ffffff;
-    /* Point sizes are what a thermal driver maps most faithfully. */
-    font-size: 9.5pt;
-    line-height: 1.3;
-  }
-
-  /* 58 mm paper carries roughly half the characters: one step smaller. */
-  #print-root .receipt-paper[data-paper='58'] {
-    font-size: 8.4pt;
-    line-height: 1.28;
+    /*
+     * Point sizes are what a thermal driver maps most faithfully — and the size
+     * the owner chose is carried in the same custom property the preview uses,
+     * so 58 mm keeps its one-step-smaller base and the chosen scale on both.
+     */
+    font-size: var(--rc-print-font-size, 9.5pt);
+    line-height: var(--rc-line-height, 1.3);
   }
 
   #print-root .receipt-paper[data-paper='58'] .rc-name { font-size: 1.25em; }
   #print-root .receipt-paper[data-paper='58'] .rc-orderno__value { font-size: 1.35em; }
   #print-root .receipt-paper[data-paper='58'] .rc-grand { font-size: 1.26em; }
 
-  /* The dividers keep the same rhythm on paper as on screen. */
-  #print-root .rc-block { margin-block-start: 6px; padding-block-start: 6px; }
+  /* The dividers keep the same rhythm on paper as on screen (.rc-block uses
+     the shared --rc-space, so section spacing prints exactly as previewed). */
 
   /* Nothing important may straddle a cut: no product row, no summary block,
      no total and no closing message is ever split by a page break. */

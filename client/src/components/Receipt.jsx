@@ -33,6 +33,46 @@ export function paperWidth(settings) {
 
 const LOGO_PX = { small: 70, medium: 110, large: 150 };
 
+/* The type stacks a receipt can actually print: every one of them carries
+   Kurdish, Persian and Arabic as well as Latin, so no line falls back per glyph. */
+const FONT_STACKS = {
+  naskh: "'Noto Naskh Arabic', 'Segoe UI', Tahoma, 'DejaVu Sans', Arial, sans-serif",
+  kufi: "'Noto Kufi Arabic', 'Segoe UI', Tahoma, 'DejaVu Sans', Arial, sans-serif",
+  system: "'Segoe UI', Tahoma, 'DejaVu Sans', Arial, sans-serif",
+};
+const WEIGHTS = { normal: 400, medium: 600, bold: 700 };
+const FOOTER_SCALES = { small: 0.86, normal: 1, large: 1.14 };
+const GRAND_STYLES = ['boxed', 'rule', 'plain'];
+
+/** One numeric setting, kept inside the range its control offers. */
+function settingNumber(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * The paper geometry every receipt shares — the printed sheet and the on-screen
+ * preview read it from this one function, so the two can never disagree: the
+ * real paper width, the calibration margins, the print scale, and the printable
+ * width left between the two side margins.
+ */
+export function printGeometry(settings) {
+  const paper = paperWidth(settings);
+  const margins = {
+    top: settingNumber(settings?.margin_top, 0, 20, 0),
+    right: settingNumber(settings?.margin_right, 0, 20, 0),
+    bottom: settingNumber(settings?.margin_bottom, 0, 20, 0),
+    left: settingNumber(settings?.margin_left, 0, 20, 0),
+  };
+  return {
+    paper,
+    margins,
+    scale: settingNumber(settings?.print_scale, 50, 150, 100) / 100,
+    printable: Math.max(paper - margins.left - margins.right, paper * 0.5),
+  };
+}
+
 export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   /*
    * One closing message per receipt. The pick is identity-only (the text is
@@ -71,6 +111,32 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   const align = settings.alignment === 'center' || settings.alignment === 'start' ? settings.alignment : 'auto';
   const moreInfo = settings.show_more_info !== false;
   const currency = business?.currency || '';
+
+  /*
+   * Every printing preference is expressed as a custom property on the paper
+   * element itself — the very element the printer renders. A change therefore
+   * repaints the preview on the next render and prints identically: there is no
+   * second, static template that could drift away from the real receipt.
+   */
+  const fontScale = settingNumber(settings.font_scale, 80, 140, 100) / 100;
+  const paperVars = {
+    '--rc-font': FONT_STACKS[settings.font_family] || FONT_STACKS.naskh,
+    '--rc-font-size': `${(12 * fontScale).toFixed(2)}px`,
+    '--rc-print-font-size': `${((narrow ? 8.4 : 9.5) * fontScale).toFixed(2)}pt`,
+    '--rc-line-height': String(settingNumber(settings.line_height, 1.1, 2, 1.4)),
+    '--rc-weight': String(WEIGHTS[settings.text_weight] || 400),
+    '--rc-space': `${settingNumber(settings.section_spacing, 2, 16, 7)}px`,
+    '--rc-foot-scale': String(FOOTER_SCALES[settings.footer_scale] || 1),
+  };
+  /* The product columns follow the paper width unless the owner pinned them. */
+  const columns =
+    settings.product_layout === 'full' || settings.product_layout === 'compact'
+      ? settings.product_layout
+      : narrow
+        ? 'compact'
+        : 'full';
+  const footAlign =
+    settings.footer_align === 'center' || settings.footer_align === 'start' ? settings.footer_align : 'auto';
 
   /*
    * Money keeps the app's own formatting rules (localized digits, the business
@@ -113,6 +179,12 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       className="receipt-paper"
       data-paper={narrow ? '58' : '80'}
       data-align={align}
+      data-columns={columns}
+      data-logo={settings.logo_align === 'start' ? 'start' : 'center'}
+      data-dividers={settings.show_dividers === false ? 'off' : 'on'}
+      data-grand={GRAND_STYLES.includes(settings.grand_style) ? settings.grand_style : 'boxed'}
+      data-foot-align={footAlign}
+      style={paperVars}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
     >
       <header className="rc-head">
@@ -273,21 +345,16 @@ export function PrintPortal({ children }) {
  * `zoom`, so the sheet is widened by the same factor to still fill the paper.
  */
 export function ReceiptPrintStyle({ settings }) {
-  const clamp = (value, min, max, fallback) => {
-    const n = Number(value);
-    if (!Number.isFinite(n)) return fallback;
-    return Math.min(max, Math.max(min, n));
-  };
-  const paper = paperWidth(settings);
-  const scale = clamp(settings?.print_scale, 50, 150, 100) / 100;
-  const left = clamp(settings?.margin_left, 0, 20, 0);
-  const right = clamp(settings?.margin_right, 0, 20, 0);
-  const bottom = clamp(settings?.margin_bottom, 0, 20, 0);
-  const printable = Math.max(paper - left - right, paper * 0.5);
+  // The same geometry the live preview draws, so the paper on screen and the
+  // paper in the printer can never be laid out differently.
+  const { paper, margins, scale, printable } = printGeometry(settings);
 
   return (
     <style>{`
-      @page { size: ${paper}mm auto; margin: ${bottom}mm ${right}mm ${bottom}mm ${left}mm; }
+      @page {
+        size: ${paper}mm auto;
+        margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
+      }
       html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
       #print-root .receipt-paper {
         width: ${(printable / scale).toFixed(2)}mm;
