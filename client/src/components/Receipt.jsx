@@ -215,9 +215,82 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
      a dine-in order, one without a table is taken away. */
   const orderType = table ? 'dine_in' : 'takeaway';
   const hasOrderType = showOrderInfo;
-  const hasLeftColumn = hasDateTime || hasTable || hasCustomer;
-  const hasRightColumn = hasOrderType || hasCashier;
   const hasLineNotes = settings.show_notes !== false && (items || []).some((line) => line.notes);
+
+  /*
+   * The order card's facts, built as two lists so they can be laid out in
+   * matched rows: each fact is one icon-led caption with its value(s) below.
+   * A fact with nothing saved is not added at all, so the card never carries a
+   * reserved empty row.
+   */
+  const dateFmt = order ? fmtDate(order.created_at, locale, timeZone, { short: true }) : '';
+  const timeFmt = order ? fmtTime(order.created_at, locale, timeZone) : '';
+
+  const leftFacts = [];
+  if (hasDateTime) {
+    /* Date and its time share one fact, exactly as the reference stacks them. */
+    leftFacts.push(
+      <ReceiptField icon="calendar" label={msg('datetime')}>
+        <span className="rc-field__value rc-num">{dateFmt}</span>
+        <span className="rc-field__value rc-num">{timeFmt}</span>
+      </ReceiptField>,
+    );
+  }
+  if (hasTable || hasCustomer) {
+    /* The table and the guest who placed the order share the next fact. */
+    leftFacts.push(
+      <ReceiptField
+        icon={hasTable ? 'table' : 'person'}
+        label={hasTable ? msg('table') : msg('customer')}
+      >
+        {hasTable ? (
+          <span className="rc-field__value rc-field__value--strong">
+            <span dir="auto">{tableName}</span>
+          </span>
+        ) : null}
+        {hasCustomer ? (
+          <span className="rc-field__value" dir="auto">{order.customer_name}</span>
+        ) : null}
+      </ReceiptField>,
+    );
+  }
+
+  const rightFacts = [];
+  if (hasOrderType) {
+    rightFacts.push(
+      <ReceiptField icon={orderType === 'dine_in' ? 'utensils' : 'store'} label={msg('order_type')}>
+        <span className="rc-field__value rc-field__value--strong">{msg(orderType)}</span>
+      </ReceiptField>,
+    );
+  }
+  if (hasCashier) {
+    rightFacts.push(
+      <ReceiptField icon="person" label={msg('cashier')}>
+        <span className="rc-field__value" dir="auto">{order.created_by_name}</span>
+      </ReceiptField>,
+    );
+  }
+
+  /*
+   * Two matched columns: the facts are emitted row by row — left, right, left,
+   * right — into the one grid, so corresponding rows always start on the same
+   * line and the dashed divider between the columns is drawn by the grid itself.
+   * With facts on one side only the grid falls back to a single column.
+   */
+  const twoColumns = leftFacts.length > 0 && rightFacts.length > 0;
+  const orderCells = [];
+  if (twoColumns) {
+    const rows = Math.max(leftFacts.length, rightFacts.length);
+    for (let i = 0; i < rows; i += 1) {
+      orderCells.push(<div className="rc-cell" key={`l${i}`}>{leftFacts[i] || null}</div>);
+      orderCells.push(<div className="rc-cell" key={`r${i}`}>{rightFacts[i] || null}</div>);
+    }
+  } else {
+    [...leftFacts, ...rightFacts].forEach((fact, i) => {
+      orderCells.push(<div className="rc-cell" key={`s${i}`}>{fact}</div>);
+    });
+  }
+  const hasOrderDetails = orderCells.length > 0;
 
   /* The paper follows the receipt's own language, so Kurdish, Persian and
      Arabic print right-to-left even when the panel around them does not. */
@@ -257,7 +330,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
 
       {/* 2 · order card: the number leads with a receipt mark and a localised
           badge, then the two balanced columns of order facts. */}
-      {hasOrderNumber || hasLeftColumn || hasRightColumn ? (
+      {hasOrderNumber || hasOrderDetails ? (
         <section className="rc-block">
           <div className="rc-card">
             {hasOrderNumber ? (
@@ -271,52 +344,9 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
                 ) : null}
               </div>
             ) : null}
-            {hasLeftColumn || hasRightColumn ? (
-              <div className="rc-ordergrid" data-cols={hasLeftColumn && hasRightColumn ? 'two' : 'one'}>
-                {hasLeftColumn ? (
-                  /* One fact per row, in the reference's order: date, time, the
-                     table this order belongs to and the guest who placed it. */
-                  <div className="rc-ordergrid__col">
-                    {hasDateTime ? (
-                      <>
-                        <ReceiptField icon="calendar" label={msg('datetime')}>
-                          <span className="rc-field__value rc-num">
-                            {fmtDate(order?.created_at, locale, timeZone, { short: true })}
-                          </span>
-                        </ReceiptField>
-                        <ReceiptField icon="clock" label={msg('time')}>
-                          <span className="rc-field__value rc-num">
-                            {fmtTime(order?.created_at, locale, timeZone)}
-                          </span>
-                        </ReceiptField>
-                      </>
-                    ) : null}
-                    {hasTable ? (
-                      <ReceiptField icon="table" label={msg('table')}>
-                        <span className="rc-field__value rc-field__value--strong">{tableName}</span>
-                      </ReceiptField>
-                    ) : null}
-                    {hasCustomer ? (
-                      <ReceiptField icon="person" label={msg('customer')}>
-                        <span className="rc-field__value" dir="auto">{order.customer_name}</span>
-                      </ReceiptField>
-                    ) : null}
-                  </div>
-                ) : null}
-                {hasRightColumn ? (
-                  <div className="rc-ordergrid__col">
-                    {hasOrderType ? (
-                      <ReceiptField icon={orderType === 'dine_in' ? 'utensils' : 'store'} label={msg('order_type')}>
-                        <span className="rc-field__value rc-field__value--strong">{msg(orderType)}</span>
-                      </ReceiptField>
-                    ) : null}
-                    {hasCashier ? (
-                      <ReceiptField icon="person" label={msg('cashier')}>
-                        <span className="rc-field__value">{order.created_by_name}</span>
-                      </ReceiptField>
-                    ) : null}
-                  </div>
-                ) : null}
+            {hasOrderDetails ? (
+              <div className="rc-ordergrid" data-cols={twoColumns ? 'two' : 'one'}>
+                {orderCells}
               </div>
             ) : null}
           </div>
@@ -375,7 +405,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           <div className="rc-card">
             <div className="rc-secthead">
               <span className="rc-secthead__icon" aria-hidden="true">
-                <Icon name="message" size={11} />
+                <Icon name="clipboard" size={11} />
               </span>
               <span className="rc-secthead__title">{msg('notes')}</span>
             </div>

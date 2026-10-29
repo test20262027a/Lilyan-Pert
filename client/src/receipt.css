@@ -56,6 +56,9 @@
      every rule to solid black, so the design costs the least possible ink. */
   --rc-rule: #dfe4ec;
   --rc-rule-strong: #c4cbd7;
+  /* The one dashed rule of the paper: every section break uses it, so all the
+     dividers share a width, a weight and a shade. */
+  --rc-rule-dash: #9aa4b3;
   --rc-tint: #f4f7fb;
   --rc-tint-strong: #eaeff8;
   --rc-ink-soft: #4b5563;
@@ -149,7 +152,7 @@
 
 .receipt-paper[data-dividers='on'] .rc-block {
   padding-block-start: var(--rc-space, 7px);
-  border-block-start: 1px dashed var(--rc-rule-strong);
+  border-block-start: 1px dashed var(--rc-rule-dash);
 }
 
 /* One card per section: a light border, soft rounded corners and no fill, so
@@ -197,7 +200,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 9px;
-  border-block-end: 1px dashed var(--rc-rule-strong);
+  border-block-end: 1px dashed var(--rc-rule-dash);
 }
 
 .rc-ordertop__icon { display: inline-flex; flex: none; }
@@ -211,21 +214,26 @@
 
 .rc-ordertop__badge {
   margin-inline-start: auto;
-  padding: 1px 8px;
-  border: 1px solid var(--rc-rule-strong);
+  padding: 2px 9px;
   border-radius: 999px;
+  /* The pale blue-gray pill of the reference; print turns it plain white. */
+  background: var(--rc-tint-strong);
   font-size: 0.76em;
   font-weight: 700;
-  line-height: 1.5;
+  line-height: 1.4;
   white-space: nowrap;
 }
 
-/* Two balanced columns of order facts, split by one subtle vertical hairline
-   that runs the full height of the card, so the four left-hand facts and the
-   two right-hand facts read as two aligned groups. */
+/* Two balanced columns of order facts, split by ONE vertical dashed divider that
+   runs the height of the card. The divider is drawn by the grid itself, so it
+   stays continuous even where a row carries a fact on one side only; both
+   columns keep the same inline padding, so corresponding rows start together. */
 .rc-ordergrid {
+  position: relative;
   display: grid;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  row-gap: 5px;
   padding: 7px 9px 9px;
 }
 
@@ -234,19 +242,20 @@
   column-gap: 0;
 }
 
-.rc-ordergrid[data-cols='two'] .rc-ordergrid__col:first-child { padding-inline-end: 9px; }
-
-.rc-ordergrid[data-cols='two'] .rc-ordergrid__col + .rc-ordergrid__col {
-  padding-inline-start: 9px;
-  border-inline-start: 1px solid var(--rc-rule);
+.rc-ordergrid[data-cols='two']::after {
+  content: '';
+  position: absolute;
+  inset-block: 8px;
+  inset-inline-start: 50%;
+  border-inline-start: 1px dashed var(--rc-rule-dash);
+  pointer-events: none;
 }
 
-.rc-ordergrid__col {
-  display: grid;
-  gap: 5px;
-  align-content: start;
-  min-width: 0;
-}
+/* One cell of the facts grid: the fact itself is the only content. */
+.rc-cell { min-width: 0; }
+
+.rc-ordergrid[data-cols='two'] > .rc-cell:nth-child(odd) { padding-inline-end: 8px; }
+.rc-ordergrid[data-cols='two'] > .rc-cell:nth-child(even) { padding-inline-start: 8px; }
 
 /* One fact: its icon + caption, then the saved value(s). */
 .rc-field { display: grid; gap: 1px; min-width: 0; }
@@ -353,7 +362,7 @@
 }
 
 /* One hairline between products: readable on a thermal print, never a block. */
-.rc-row + .rc-row > .rc-col { border-block-start: 1px dashed var(--rc-rule-strong); }
+.rc-row + .rc-row > .rc-col { border-block-start: 1px dashed var(--rc-rule-dash); }
 
 /*
  * 58 mm carries roughly half the characters of 80 mm, so a five-column table
@@ -404,7 +413,7 @@
 
 .receipt-paper[data-columns='compact'] .rc-row + .rc-row > .rc-col--name,
 .receipt-paper[data-columns='compact'] .rc-row + .rc-row > .rc-col--no {
-  border-block-start: 1px dashed var(--rc-rule-strong);
+  border-block-start: 1px dashed var(--rc-rule-dash);
   padding-block-start: 4px;
 }
 
@@ -471,7 +480,7 @@
   gap: 10px;
   padding: 9px 10px;
   background: var(--rc-tint-strong);
-  border-block-start: 2px solid var(--rc-rule-strong);
+  border-block-start: 1px dashed var(--rc-rule-dash);
   border-end-start-radius: 9px;
   border-end-end-radius: 9px;
   font-size: 1.3em;
@@ -502,7 +511,7 @@
   border-end-end-radius: 0;
   padding-inline: 9px;
   padding-block: 6px 2px;
-  border-block-start: 2px solid var(--rc-rule-strong);
+  border-block-start: 1px dashed var(--rc-rule-dash);
 }
 
 .receipt-paper[data-grand='plain'] .rc-grand {
@@ -577,6 +586,7 @@
     /* Every decorative surface becomes white, every rule solid black. */
     --rc-rule: #000000;
     --rc-rule-strong: #000000;
+    --rc-rule-dash: #000000;
     --rc-tint: #ffffff;
     --rc-tint-strong: #ffffff;
   }
