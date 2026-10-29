@@ -211,14 +211,14 @@ export default function TextEditor() {
           ) : null}
           <button
             type="button"
-            className="btn btn--primary"
+            className="tx-save"
             onClick={saveAll}
             disabled={!isManager || busy || !dirty}
             title={dirty ? t('settings_unsaved_hint') : t('action_save')}
             aria-busy={busy || undefined}
           >
             {busy ? <span className="spinner" /> : <Icon name="check" size={15} />}
-            {t('action_save')}
+            <span className="tx-save__label">{t('action_save')}</span>
           </button>
         </PageHeroBanner>
       </div>

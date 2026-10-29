@@ -29,7 +29,6 @@ for (const item of NAV) {
 ROUTES.set('/order-menu', 'nav_order_menu');
 ROUTES.set('/login', 'auth_login');
 ROUTES.set('/register', 'auth_register');
-ROUTES.set('/forgot-password', 'auth_forgot_link');
 ROUTES.set('/m', 'nav_customer_menu');
 
 /* Longest path first, so /menu-settings wins over /menu. */

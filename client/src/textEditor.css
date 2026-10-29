@@ -53,6 +53,120 @@
   color: var(--theme-primary);
 }
 
+/* ------------------------------------------------------- hero save plate */
+
+/*
+ * The hero Save action is a light-blue glass plate, not the solid primary
+ * button: translucent enough that the header artwork stays visible behind it,
+ * tinted by the selected theme through --tx-save-tint, with white label and
+ * check icon on one row. Logical spacing keeps it correct in RTL, and the
+ * glass gains density in dark mode so the white copy stays readable.
+ */
+.tx-save {
+  --tx-save-tint: color-mix(in srgb, #1f5ede 82%, var(--theme-primary));
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #e6f1ff 52%, var(--tx-save-tint));
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  cursor: pointer;
+  overflow: hidden;
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  background:
+    radial-gradient(120% 150% at 22% 0%, rgba(255, 255, 255, 0.22), transparent 58%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tx-save-tint) 90%, transparent) 0%,
+      color-mix(in srgb, var(--tx-save-tint) 84%, transparent) 55%,
+      color-mix(in srgb, var(--tx-save-tint) 80%, transparent) 100%
+    );
+  box-shadow:
+    0 12px 24px -14px color-mix(in srgb, var(--tx-save-tint) 78%, transparent),
+    0 3px 8px -3px rgba(16, 22, 38, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.22);
+  /* A soft dark halo, not a plate: keeps the white label crisp on the glass. */
+  text-shadow: 0 1px 2px rgba(9, 26, 58, 0.55), 0 0 10px rgba(9, 26, 58, 0.28);
+  transition: transform 170ms ease, box-shadow 170ms ease, border-color 170ms ease;
+}
+
+.tx-save svg { flex: none; }
+
+/* Gentle glow and lift only — the button keeps its size and position. */
+.tx-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, #ffffff 62%, var(--tx-save-tint));
+  box-shadow:
+    0 16px 30px -14px color-mix(in srgb, var(--tx-save-tint) 88%, transparent),
+    0 0 0 1px color-mix(in srgb, #ffffff 26%, transparent),
+    0 4px 10px -3px rgba(16, 22, 38, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.tx-save:active:not(:disabled) {
+  transform: translateY(1px) scale(0.985);
+  box-shadow:
+    0 6px 14px -12px color-mix(in srgb, var(--tx-save-tint) 80%, transparent),
+    inset 0 2px 6px rgba(9, 18, 34, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.tx-save:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--tx-save-tint) 55%, #ffffff);
+  outline-offset: 3px;
+}
+
+.tx-save:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  text-shadow: none;
+  box-shadow:
+    0 6px 14px -12px rgba(16, 22, 38, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.tx-save[aria-busy='true'] { cursor: progress; opacity: 0.82; }
+
+.tx-save .spinner {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.34);
+  border-top-color: #ffffff;
+}
+
+[data-theme='dark'] .tx-save {
+  border-color: color-mix(in srgb, #dbe9ff 42%, var(--tx-save-tint));
+  background:
+    radial-gradient(120% 150% at 22% 0%, rgba(255, 255, 255, 0.24), transparent 58%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tx-save-tint) 78%, transparent) 0%,
+      color-mix(in srgb, var(--tx-save-tint) 70%, transparent) 58%,
+      color-mix(in srgb, var(--tx-save-tint) 64%, transparent) 100%
+    );
+  box-shadow:
+    0 14px 28px -16px color-mix(in srgb, var(--tx-save-tint) 90%, transparent),
+    0 3px 8px -3px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 640px) {
+  .tx-save { min-height: 40px; padding: 0 16px; font-size: 13.5px; }
+}
+
 /* ---------------------------------------------------------------- notices */
 
 .tx-notice {

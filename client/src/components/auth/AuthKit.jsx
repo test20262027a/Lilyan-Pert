@@ -1,5 +1,4 @@
 import { createContext, useContext, useEffect, useId, useState } from 'react';
-import { Link } from 'react-router-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { get } from '../../api';
@@ -9,10 +8,10 @@ import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
 /*
- * The shared pieces of the sign-in family (login, forgot password): one
- * cinematic café backdrop, a frosted glass card, the business's own logo, soft
- * 3D inputs and a themed call-to-action. Everything is tinted from `--primary`,
- * so the login page follows whatever appearance the business has selected.
+ * The shared pieces of the sign-in family (login, register): one cinematic
+ * café backdrop, a frosted glass card, the business's own logo, soft 3D inputs
+ * and a themed call-to-action. Everything is tinted from `--primary`, so the
+ * login page follows whatever appearance the business has selected.
  */
 
 const BrandContext = createContext(null);
@@ -138,15 +137,6 @@ export function AuthPrimaryButton({ busy, children, ...props }) {
       {busy ? <span className="spinner" aria-hidden="true" /> : null}
       <span>{children}</span>
     </button>
-  );
-}
-
-export function AuthSecondaryLink({ to, icon, children }) {
-  return (
-    <Link className="au-link" to={to}>
-      {icon ? <Icon name={icon} size={16} /> : null}
-      {children}
-    </Link>
   );
 }
 

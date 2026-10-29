@@ -156,7 +156,7 @@
   position: relative;
   isolation: isolate;
   width: 100%;
-  padding: 30px 30px 26px;
+  padding: 28px 30px 22px;
   border-radius: 30px;
   border: 1px solid var(--au-line);
   background: linear-gradient(158deg, rgba(58, 42, 32, 0.6), rgba(20, 15, 12, 0.82));
@@ -196,7 +196,7 @@
 .au-card__logo {
   display: grid;
   place-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
   min-height: 46px;
 }
 
@@ -246,7 +246,7 @@
 }
 
 .au-card__sub {
-  margin: 7px auto 22px;
+  margin: 7px auto 20px;
   max-width: 32ch;
   text-align: center;
   font-size: 14px;
@@ -349,36 +349,9 @@
 }
 
 .au-field__toggle:focus-visible,
-.au-link:focus-visible,
 .au-btn:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--primary) 55%, #ffffff);
   outline-offset: 3px;
-}
-
-/* ------------------------------------------------------------ text links */
-
-.au-row {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: -2px;
-}
-
-.au-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13.5px;
-  font-weight: 700;
-  color: var(--au-accent);
-  text-decoration: none;
-  border-radius: 8px;
-  transition: color 160ms ease, transform 160ms ease;
-}
-
-.au-link:hover {
-  color: color-mix(in srgb, var(--primary) 25%, #ffffff);
-  text-decoration: underline;
-  text-underline-offset: 3px;
 }
 
 /* --------------------------------------------------------------- button */
@@ -468,21 +441,6 @@
 
 /* ---------------------------------------------------------------- footer */
 
-.au-foot {
-  margin: 18px 0 0;
-  text-align: center;
-  font-size: 13.5px;
-  color: var(--au-ink-soft);
-}
-
-.au-foot a {
-  color: var(--au-accent);
-  font-weight: 700;
-  text-decoration: none;
-}
-
-.au-foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
-
 .au-note {
   display: flex;
   gap: 7px;
@@ -498,80 +456,6 @@
 }
 
 .au-note svg { flex: none; color: var(--au-accent); }
-
-/* ------------------------------------------------------------ reset done */
-
-.au-done {
-  display: grid;
-  gap: 16px;
-  justify-items: center;
-  text-align: center;
-}
-
-.au-done__icon {
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  color: var(--primary-ink);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 80%, #ffffff),
-    color-mix(in srgb, var(--primary) 80%, #14100c)
-  );
-  box-shadow:
-    0 16px 26px -12px color-mix(in srgb, var(--primary) 72%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.42);
-}
-
-/* ------------------------------------------------------- demo accounts */
-
-.au-demo {
-  width: 100%;
-  border-radius: 18px;
-  padding: 10px 14px;
-  color: var(--au-ink);
-  background: rgba(20, 14, 10, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-}
-
-.au-demo summary {
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 700;
-  list-style-position: inside;
-}
-
-.au-demo__list {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.au-demo__item {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(0, 0, 0, 0.24);
-  color: var(--au-ink);
-  font: inherit;
-  font-size: 12.5px;
-  cursor: pointer;
-  text-align: start;
-  transition: background-color 150ms ease, border-color 150ms ease;
-}
-
-.au-demo__item:hover {
-  background: rgba(0, 0, 0, 0.36);
-  border-color: color-mix(in srgb, var(--primary) 50%, rgba(255, 255, 255, 0.2));
-}
 
 /* ------------------------------------------------------------ responsive */
 
@@ -592,7 +476,7 @@
   .au__main { width: min(100%, 420px); }
 
   .au-card {
-    padding: 24px 20px 22px;
+    padding: 24px 20px 18px;
     border-radius: 26px;
   }
 
@@ -614,5 +498,5 @@
 
 @media (prefers-reduced-motion: reduce) {
   .au-card { animation: none; }
-  .au-btn, .au-field__box, .au-link { transition: none; }
+  .au-btn, .au-field__box { transition: none; }
 }

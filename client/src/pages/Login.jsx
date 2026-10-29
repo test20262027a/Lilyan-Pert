@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
   AuthCard,
@@ -7,19 +7,11 @@ import {
   AuthLayout,
   AuthPasswordInput,
   AuthPrimaryButton,
-  AuthSecondaryLink,
   AuthStatusMessage,
   isEmail,
 } from '../components/auth/AuthKit';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
-
-const SAMPLES = [
-  { email: 'owner@lilyan.app', password: 'lilyan1234', role: 'role_owner' },
-  { email: 'manager@lilyan.app', password: 'manager1234', role: 'role_manager' },
-  { email: 'staff@lilyan.app', password: 'staff1234', role: 'role_staff' },
-  { email: 'admin@lilyan.app', password: 'superadmin1234', role: 'role_super_admin' },
-];
 
 export default function Login() {
   const { t } = useI18n();
@@ -51,32 +43,8 @@ export default function Login() {
     }
   };
 
-  const demo = (
-    <details className="au-demo">
-      <summary>{t('auth_demo_accounts')}</summary>
-      <div className="au-demo__list">
-        {SAMPLES.map((s) => (
-          <button
-            key={s.email}
-            type="button"
-            className="au-demo__item"
-            onClick={() => {
-              setEmail(s.email);
-              setPassword(s.password);
-              setFieldErrors({});
-            }}
-          >
-            <Icon name="key" size={13} />
-            <span dir="ltr">{s.email}</span>
-            <span style={{ opacity: 0.75 }}>· {t(s.role)}</span>
-          </button>
-        ))}
-      </div>
-    </details>
-  );
-
   return (
-    <AuthLayout footer={demo}>
+    <AuthLayout>
       <AuthCard title={t('auth_login')} subtitle={t('auth_login_subtitle')}>
         <form className="au-form" onSubmit={submit} noValidate>
           <AuthInput
@@ -99,15 +67,9 @@ export default function Login() {
             error={fieldErrors.password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          <div className="au-row">
-            <AuthSecondaryLink to="/forgot-password">{t('auth_forgot_link')}</AuthSecondaryLink>
-          </div>
           {error ? <AuthStatusMessage>{error}</AuthStatusMessage> : null}
           <AuthPrimaryButton busy={busy}>{t('auth_login')}</AuthPrimaryButton>
         </form>
-        <p className="au-foot">
-          {t('auth_no_account')} <Link to="/register">{t('auth_register')}</Link>
-        </p>
         <p className="au-note">
           <Icon name="shield" size={13} />
           {t('auth_login_note')}

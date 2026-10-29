@@ -5,7 +5,6 @@ import { useI18n } from './i18n';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import MenuManagement from './pages/MenuManagement';
 import Orders from './pages/Orders';
@@ -50,7 +49,6 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/forgot-password" element={<ForgotPassword />} />
       {/* Public customer menu — deliberately outside the authenticated shell. */}
       <Route path="/m/:key" element={<CustomerMenu />} />
       <Route
