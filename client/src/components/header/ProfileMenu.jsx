@@ -127,10 +127,13 @@ export default function ProfileMenu() {
               logout();
             }}
           >
-            <span className="hdr-menu__logout-icon">
-              <Icon name="logout" size={15} className="icon--dir" />
-            </span>
             <span className="hdr-menu__logout-text">{t('auth_logout')}</span>
+            {/* Shaftless chevron only — no stem, door or icon detail. It sits
+                at the opposite end of the plate from the label, pointing at
+                the exit edge in either writing direction. */}
+            <span className="hdr-menu__logout-icon">
+              <Icon name="chevronRight" size={16} />
+            </span>
             {/* Decorative only: the label stays in the accessibility tree. */}
             <span className="hdr-menu__logout-chevrons" aria-hidden="true">
               {EXIT_CHEVRONS.map((size, index) => (

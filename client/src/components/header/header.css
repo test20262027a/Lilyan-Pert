@@ -265,7 +265,7 @@
   --logout-dir: 1;
 
   position: relative;
-  display: flex; align-items: center; gap: 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
   width: 100%; margin-top: 4px; padding: 7px 10px;
   border: 1px solid color-mix(in srgb, var(--danger) 20%, transparent);
   border-radius: 14px;
