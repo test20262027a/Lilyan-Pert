@@ -559,6 +559,34 @@
 
 [data-theme='dark'] .stats-revenue__item { border-inline-start-color: var(--border); }
 
+/* ------------------------------------------------------- menu counters */
+
+/*
+ * The menu summary is its own six-card section: one row of six on desktop,
+ * three per row on tablets and two per row on phones. Only the column count
+ * is scoped here — the tiles keep the shared .fstat surface, pastel tones,
+ * rounding and depth, and every row keeps one common height so the cards
+ * never end up staggered or oversized.
+ */
+.stats-page .fstat-row--six {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+}
+
+.stats-page .fstat-row--six .fstat {
+  min-height: 148px;
+  padding: 18px 10px 16px;
+}
+
+/* A longer label wraps inside its own tile instead of widening the card. */
+.stats-page .fstat-row--six .fstat__label {
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
 /* ------------------------------------------------------------ responsive */
 
 /* Tablet: two full rows, icon + title still side by side. */
@@ -570,6 +598,10 @@
   .stats-kpi {
     min-height: 124px;
     padding: 18px 16px;
+  }
+  /* Tablet: three cards per row, so the six counters fill two even rows. */
+  .stats-page .fstat-row--six {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -640,6 +672,15 @@
   }
   .stat-panel__head {
     padding: 12px 13px;
+  }
+  /* Phone: two counters per row — three even rows, never a single stretched card. */
+  .stats-page .fstat-row--six {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .stats-page .fstat-row--six .fstat {
+    min-height: 136px;
+    padding: 16px 10px 14px;
   }
   .stats-revenue {
     grid-template-columns: minmax(0, 1fr);

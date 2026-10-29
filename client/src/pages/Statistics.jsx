@@ -90,7 +90,7 @@ export default function Statistics() {
 
           {menu ? (
             <SectionCard icon="utensils" iconClass="ic-green" title={t('statistics_menu')}>
-              <div className="fstat-row">
+              <div className="fstat-row fstat-row--six">
                 <MenuCounter icon="layers" label={t('menu_stats_categories')} value={menu.categories.total} locale={locale} />
                 <MenuCounter icon="checkCircle" label={t('menu_stats_active')} value={menu.categories.active} locale={locale} />
                 <MenuCounter icon="xCircle" label={t('menu_stats_inactive')} value={menu.categories.inactive} locale={locale} />
