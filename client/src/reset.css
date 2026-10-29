@@ -31,8 +31,9 @@
 /* ------------------------------------------------------------- hero banner */
 
 .rs-page .mhero {
-  min-height: 110px;
-  padding: 14px 20px;
+  /* Same height and padding as the other main section banners. */
+  min-height: 150px;
+  padding: 18px 22px;
   border-radius: 18px;
   border-color: var(--theme-primary-line);
   background:
@@ -602,11 +603,7 @@
 }
 
 @media (max-width: 620px) {
-  .rs-page .mhero {
-    min-height: 96px;
-    padding: 12px 14px;
-    flex-wrap: wrap;
-  }
+  .rs-page .mhero { flex-wrap: wrap; }
   .rs-page .mhero__art { order: 3; flex-basis: 100%; }
   .rs-page .mart { max-height: 70px; }
   .rs-card__badge { display: none; }

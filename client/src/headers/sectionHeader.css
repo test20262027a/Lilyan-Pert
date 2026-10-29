@@ -29,13 +29,15 @@
   opacity: 0.92;
   transition: filter 0.2s ease;
 }
-/* The picture itself. `--sh-fit` is the host's fitting strategy: the default
-   keeps the whole picture visible (`contain`, never cropped or stretched) over
-   the blurred wash that extends it to the header's edges. */
+/* The picture itself: ONE rule for every illustrated header. The whole
+   artwork is painted across the header box edge to edge (100% x 100%), never
+   cropped, never zoomed — the picture's own shape is stretched to the header's
+   shape, exactly as the design calls for. */
 .sh-bg__art {
   position: absolute; inset: 0;
-  background-size: var(--sh-fit, contain);
-  background-position: var(--sh-pos, center);
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center;
   transition: filter 0.2s ease;
 }
 .sh-bg::after {
@@ -107,9 +109,9 @@
 .sh-bg--dcd { inset: 0 0 auto 0; height: 92px; border-radius: 19px 19px 0 0; opacity: 0.9;
   -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); }
 
-/* Customer cart / review sheets: a tall, narrow surface, so the picture keeps
-   its whole composition over the blurred wash instead of being zoomed into. */
-.sh-bg--cart { z-index: 0; --sh-fit: contain; }
+/* Customer cart / review sheets: the same full-bleed rule, raised above the
+   sheet's own painted background so the artwork is actually visible. */
+.sh-bg--cart { z-index: 0; }
 .sh-bg--cart::after { background: linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent)); }
 .cui-sheet__art:has(> .sh-bg) > .cui-art { display: none; }
 .cui-sheet__art:has(> .sh-bg) .cui-sheet__artbar { z-index: 1; }

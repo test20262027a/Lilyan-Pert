@@ -317,6 +317,22 @@ export default function CartPanel({
 
               {canCheckout ? (
                 <div className="cui-form">
+                  {/* The table the order belongs to comes first, directly under
+                      the header, and is required before submitting. A table
+                      resolved from the scanned QR code is final and read-only;
+                      otherwise the guest picks one of the business's own active
+                      tables — the main ordering menu's normal mode. */}
+                  {qrTable ? (
+                    <TableField mode="auto" table={qrTable} />
+                  ) : canPickTable ? (
+                    <TableField
+                      mode="manual"
+                      tables={tableList}
+                      value={validatedTableId}
+                      onChange={onTable}
+                    />
+                  ) : null}
+
                   <label className="cui-field">
                     <span className="cui-field__label">
                       <Icon name="user" size={14} />
@@ -342,21 +358,6 @@ export default function CartPanel({
                       onChange={(event) => setForm((f) => ({ ...f, customer_phone: event.target.value }))}
                     />
                   </label>
-
-                  {/* The table the order belongs to, right before the notes.
-                      A table resolved from the scanned QR code is final and
-                      read-only; otherwise the guest picks one of the business's
-                      own active tables — the main ordering menu's normal mode. */}
-                  {qrTable ? (
-                    <TableField mode="auto" table={qrTable} />
-                  ) : canPickTable ? (
-                    <TableField
-                      mode="manual"
-                      tables={tableList}
-                      value={validatedTableId}
-                      onChange={onTable}
-                    />
-                  ) : null}
 
                   <label className="cui-field">
                     <span className="cui-field__label">
