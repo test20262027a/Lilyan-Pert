@@ -132,7 +132,7 @@ export default function ProfileMenu() {
                 at the opposite end of the plate from the label, pointing at
                 the exit edge in either writing direction. */}
             <span className="hdr-menu__logout-icon">
-              <Icon name="chevronRight" size={16} />
+              <Icon name="chevronRight" size={18} />
             </span>
             {/* Decorative only: the label stays in the accessibility tree. */}
             <span className="hdr-menu__logout-chevrons" aria-hidden="true">
