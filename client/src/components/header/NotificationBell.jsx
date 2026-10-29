@@ -133,7 +133,8 @@ export default function NotificationBell() {
     }
     if (item.type === 'review') navigate('/reviews');
     else if (item.type === 'activity') navigate('/activity');
-    else if (item.order_id) navigate(`/orders/${item.order_id}`);
+    // The order opens in the details modal on the orders list.
+    else if (item.order_id) navigate(`/orders?order=${item.order_id}`);
     else navigate('/orders');
   };
 

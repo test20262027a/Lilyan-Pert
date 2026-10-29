@@ -9,7 +9,6 @@ import ForgotPassword from './pages/ForgotPassword';
 import Dashboard from './pages/Dashboard';
 import MenuManagement from './pages/MenuManagement';
 import Orders from './pages/Orders';
-import OrderDetail from './pages/OrderDetail';
 import Tables from './pages/Tables';
 import Reviews from './pages/Reviews';
 import Discounts from './pages/Discounts';
@@ -64,7 +63,9 @@ export default function App() {
         <Route path="/" element={<RequirePermission perm="dashboard.view"><Dashboard /></RequirePermission>} />
         <Route path="/menu" element={<RequirePermission perm="menu.products.view"><MenuManagement /></RequirePermission>} />
         <Route path="/orders" element={<RequirePermission perm="orders.view"><Orders /></RequirePermission>} />
-        <Route path="/orders/:id" element={<RequirePermission perm="orders.view"><OrderDetail /></RequirePermission>} />
+        {/* The standalone order page is gone: an old link lands on the list,
+            where the order opens in the details modal. */}
+        <Route path="/orders/:id" element={<Navigate to="/orders" replace />} />
         <Route path="/order-menu" element={<RequirePermission perm="orders.view"><AdminOrderMenu /></RequirePermission>} />
         <Route path="/tables" element={<RequirePermission perm="tables.view"><Tables /></RequirePermission>} />
         <Route path="/reviews" element={<RequirePermission perm="reviews.view"><Reviews /></RequirePermission>} />

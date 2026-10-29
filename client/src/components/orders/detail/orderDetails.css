@@ -683,3 +683,83 @@
   .odm__foot-btn,
   .odm-disc__apply { transition: none; }
 }
+
+/* ------------------------------------------------------- inline order editor */
+
+/*
+ * The editor lives inside the modal body: customer fields, the item lines and
+ * one save row. It uses the same card surface and the shared form controls, so
+ * it reads as part of the modal rather than a second screen.
+ */
+.odm-edit {
+  border-color: var(--theme-primary-line);
+  background:
+    linear-gradient(180deg, var(--theme-primary-soft), var(--surface));
+}
+
+.odm-edit__items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+.odm-edit__label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.odm-edit__line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 78px 36px;
+  align-items: center;
+  gap: 8px;
+}
+.odm-edit__qty { text-align: center; }
+
+.odm-edit__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* --------------------------------------------------- customer information */
+
+.odm-customer {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.odm-customer__row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 12.5px;
+}
+.odm-customer__row > span {
+  flex: none;
+  min-width: 96px;
+  color: var(--muted);
+}
+.odm-customer__row > strong {
+  min-width: 0;
+  font-weight: 650;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.odm-customer__notes { white-space: pre-line; }
+
+@media (max-width: 560px) {
+  .odm-edit__line {
+    grid-template-columns: minmax(0, 1fr) 64px 34px;
+  }
+  .odm-customer__row {
+    flex-direction: column;
+    gap: 2px;
+  }
+  .odm-customer__row > span {
+    min-width: 0;
+  }
+}

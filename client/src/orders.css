@@ -427,8 +427,38 @@
 .otable__actions {
   white-space: nowrap;
   text-align: end;
+  width: 1%;
 }
-.otable__actions > * + * { margin-inline-start: 8px; }
+
+/*
+ * The action cell is a fixed two-column grid: the view button owns its own
+ * column, the status control its own. A status change (a longer label, the
+ * saving spinner, a locked state) can never resize either column, so the eye
+ * buttons stay in one straight vertical line on every row.
+ */
+.orow-actions {
+  display: grid;
+  grid-template-columns: 34px 132px;
+  align-items: center;
+  gap: 8px;
+  justify-content: end;
+}
+.orow-actions .orow-btn { grid-column: 1; }
+.orow-actions .ostatus { grid-column: 2; min-width: 0; width: 100%; }
+.orow-actions .ostatus__btn {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: center;
+  overflow: hidden;
+}
+/* A long translation truncates inside the fixed column instead of pushing. */
+.orow-actions .ostatus__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Small white icon button that opens the order details. */
 .orow-btn {
@@ -567,6 +597,7 @@
   color: var(--muted);
 }
 .ocard__foot { display: flex; align-items: center; gap: 10px; }
+.ocard__foot .orow-actions { justify-content: start; }
 
 /* ------------------------------------------------------------ responsive */
 

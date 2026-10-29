@@ -58,8 +58,11 @@ export default function Orders() {
   const [list, setList] = useState({ orders: [], total: 0, loading: true, error: null });
   const [loadingMore, setLoadingMore] = useState(false);
   const [busyId, setBusyId] = useState(null);
-  /* The order opened in the details modal — the list stays mounted behind it. */
-  const [viewId, setViewId] = useState(null);
+  /*
+   * The order opened in the details modal — the list stays mounted behind it.
+   * A notification deep-links straight to it with `?order=…`.
+   */
+  const [viewId, setViewId] = useState(() => urlParams.get('order'));
   const [createOpen, setCreateOpen] = useState(false);
   const [products, setProducts] = useState([]);
   const [tables, setTables] = useState([]);
@@ -286,8 +289,11 @@ export default function Orders() {
       {viewId ? (
         <OrderDetailsModal
           orderId={viewId}
-          backTo={backTo}
-          onClose={() => setViewId(null)}
+          onClose={() => {
+            setViewId(null);
+            // A deep link opens the modal once; closing it leaves the plain list.
+            if (urlParams.get('order')) navigate(backTo, { replace: true });
+          }}
           onChanged={() => load({ silent: true })}
         />
       ) : null}
@@ -302,7 +308,8 @@ export default function Orders() {
             setCreateOpen(false);
             toast.success(t('order_created'));
             await load({ silent: true });
-            navigate(`/orders/${order.id}`);
+            // The new order opens in the details modal, on the same page.
+            setViewId(order.id);
           }}
         />
       ) : null}

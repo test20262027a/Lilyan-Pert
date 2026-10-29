@@ -50,20 +50,23 @@ export default function OrdersTable({ orders, currency, timeZone, busyId, onView
                 <Money value={order.total} currency={currency} />
               </td>
               <td className="otable__actions">
-                <button
-                  type="button"
-                  className="orow-btn"
-                  onClick={() => onView?.(order.id)}
-                  aria-label={`${t('action_view')} #${order.order_number}`}
-                  title={t('action_view')}
-                >
-                  <Icon name="eye" size={15} />
-                </button>
-                <StatusMenu
-                  order={order}
-                  busy={busyId === order.id}
-                  onSelect={(status) => onStatusChange(order, status)}
-                />
+                {/* Fixed two-column grid, so the eye never moves with the status. */}
+                <div className="orow-actions">
+                  <button
+                    type="button"
+                    className="orow-btn"
+                    onClick={() => onView?.(order.id)}
+                    aria-label={`${t('action_view')} #${order.order_number}`}
+                    title={t('action_view')}
+                  >
+                    <Icon name="eye" size={15} />
+                  </button>
+                  <StatusMenu
+                    order={order}
+                    busy={busyId === order.id}
+                    onSelect={(status) => onStatusChange(order, status)}
+                  />
+                </div>
               </td>
             </tr>
           ))}

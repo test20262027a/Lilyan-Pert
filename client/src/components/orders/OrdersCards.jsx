@@ -32,21 +32,24 @@ export default function OrdersCards({ orders, currency, timeZone, busyId, onView
             <span>{order.customer_name || '—'}</span>
           </div>
 
+          {/* Same fixed grid as the table row, so both actions keep their size. */}
           <div className="ocard__foot">
-            <button
-              type="button"
-              className="orow-btn"
-              onClick={() => onView?.(order.id)}
-              aria-label={`${t('action_view')} #${order.order_number}`}
-              title={t('action_view')}
-            >
-              <Icon name="eye" size={15} />
-            </button>
-            <StatusMenu
-              order={order}
-              busy={busyId === order.id}
-              onSelect={(status) => onStatusChange(order, status)}
-            />
+            <div className="orow-actions">
+              <button
+                type="button"
+                className="orow-btn"
+                onClick={() => onView?.(order.id)}
+                aria-label={`${t('action_view')} #${order.order_number}`}
+                title={t('action_view')}
+              >
+                <Icon name="eye" size={15} />
+              </button>
+              <StatusMenu
+                order={order}
+                busy={busyId === order.id}
+                onSelect={(status) => onStatusChange(order, status)}
+              />
+            </div>
           </div>
         </article>
       ))}

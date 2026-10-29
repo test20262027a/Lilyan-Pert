@@ -1,37 +1,37 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HeaderBackdrop from '../../../headers/HeaderBackdrop';
-import { useNavigate } from 'react-router-dom';
 import Icon from '../../Icon';
 import { Loading, Money, StatusBadge, useToast } from '../../ui';
 import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../../Receipt';
 import OrdersArtwork from '../OrdersArtwork';
 import ManualDiscountCard from './ManualDiscountCard';
 import DiscardChangesDialog from '../../confirm/DiscardChangesDialog';
+import OrderEditPanel from './OrderEditPanel';
 import OrderStatusControl from './OrderStatusControl';
 import OrderActivityTimeline from './OrderActivityTimeline';
 import { localized, useI18n } from '../../../i18n';
 import { useAuth } from '../../../context/AuthContext';
 import { useBusiness } from '../../../context/BusinessContext';
-import { get, patch, post } from '../../../api';
+import { get, patch, post, put } from '../../../api';
 import { fmtDateTime, zoneFor } from '../../../format';
 import './orderDetails.css';
 
 /*
- * The Order Details modal.
+ * The Order Details modal — the only order screen in the admin panel.
  *
- * It opens over the Orders page — the list, its filters, search, date and
- * scroll position stay mounted behind it — and reads the same `/orders/:id`
- * payload the standalone page used. Status changes and the manual discount go
- * through the existing endpoints; the standalone route stays available for
- * direct links and for the full edit screen.
+ * It opens over whatever list the order was picked from (dashboard, orders
+ * management, a notification) and reads the same `/orders/:id` payload the old
+ * standalone page used. Everything an administrator may do happens right here,
+ * without leaving the page: status changes, the manual discount, editing the
+ * customer details and the item list, and the receipt print.
  *
- * Closing never loses work silently: a typed-but-unapplied discount asks first.
+ * Closing never loses work silently: a typed-but-unapplied discount asks first,
+ * and an open editor is cancelled before the modal itself closes.
  */
-export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose, onChanged }) {
+export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
   const { t, locale } = useI18n();
   const { can } = useAuth();
   const { business } = useBusiness();
-  const navigate = useNavigate();
   const toast = useToast();
 
   const [data, setData] = useState(null);
@@ -39,6 +39,8 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
   const [failed, setFailed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [printing, setPrinting] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [products, setProducts] = useState([]);
   const [discountDirty, setDiscountDirty] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const bodyRef = useRef(null);
@@ -99,8 +101,10 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
 
   const requestClose = useCallback(() => {
     if (discountDirty) setConfirmDiscard(true);
+    // An open editor is cancelled first — never closed together with the modal.
+    else if (editing) setEditing(false);
     else onClose();
-  }, [discountDirty, onClose]);
+  }, [discountDirty, editing, onClose]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -190,9 +194,39 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
     }
   };
 
-  const editOrder = () => {
-    onClose?.();
-    navigate(`/orders/${orderId}`, { state: { from: backTo } });
+  /* The item editor needs the catalog; it is fetched the first time it opens. */
+  const startEditing = () => {
+    setEditing(true);
+    if (products.length) return;
+    get('/catalog/products')
+      .then((res) => setProducts(res.products || []))
+      .catch(() => {
+        /* the editor still opens; only adding lines needs the catalog */
+      });
+  };
+
+  /*
+   * One save for the editor: customer details through `PATCH /orders/:id`, the
+   * item list only when it changed through `PUT /orders/:id/items`. A failure
+   * leaves the panel open with everything the administrator typed.
+   */
+  const saveEdit = async (meta, items) => {
+    setBusy(true);
+    try {
+      await patch(`/orders/${orderId}`, meta);
+      if (items) await put(`/orders/${orderId}/items`, { items });
+      setEditing(false);
+      toast.success(t('state_saved'));
+      await refresh();
+    } catch (err) {
+      toast.error(
+        err.code === 'ORDER_COMPLETED_LOCKED' || err.code === 'ORDER_CANCELLED_LOCKED'
+          ? t('error_order_locked')
+          : t('error_generic'),
+      );
+    } finally {
+      setBusy(false);
+    }
   };
 
   const tableName = useMemo(() => {
@@ -281,7 +315,45 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
                 </div>
               ) : null}
 
-              {/* 2 — table */}
+              {/* The in-place editor, opened by Edit in the footer. */}
+              {editing && !locked && canEdit ? (
+                <OrderEditPanel
+                  order={order}
+                  items={items}
+                  products={products}
+                  busy={busy}
+                  onSave={saveEdit}
+                  onCancel={() => setEditing(false)}
+                />
+              ) : null}
+
+              {/* 2 — the customer this order belongs to */}
+              <section className="odm-card">
+                <header className="odm-card__head">
+                  <span className="odm-card__icon">
+                    <Icon name="users" size={16} />
+                  </span>
+                  <h3 className="odm-card__title">{t('label_customer')}</h3>
+                </header>
+                <div className="odm-customer">
+                  <div className="odm-customer__row">
+                    <span>{t('label_customer_name')}</span>
+                    <strong>{order.customer_name || '—'}</strong>
+                  </div>
+                  <div className="odm-customer__row">
+                    <span>{t('label_customer_phone')}</span>
+                    <strong dir="ltr">{order.customer_phone || '—'}</strong>
+                  </div>
+                  {order.notes ? (
+                    <div className="odm-customer__row">
+                      <span>{t('label_notes')}</span>
+                      <strong className="odm-customer__notes">{order.notes}</strong>
+                    </div>
+                  ) : null}
+                </div>
+              </section>
+
+              {/* 3 — table */}
               <div className={`odm-card odm-table ${tableName ? '' : 'is-neutral'}`}>
                 <span className="odm-table__icon">
                   <Icon name="table" size={18} />
@@ -293,7 +365,7 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
                 </div>
               </div>
 
-              {/* 3 — ordered items */}
+              {/* 4 — ordered items */}
               <section className="odm-card">
                 <header className="odm-card__head">
                   <span className="odm-card__icon">
@@ -327,7 +399,7 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
                 </ul>
               </section>
 
-              {/* 4 — manual discount */}
+              {/* 5 — manual discount */}
               <ManualDiscountCard
                 key={`${order.manual_discount_type}-${order.manual_discount_amount}`}
                 order={order}
@@ -340,7 +412,7 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
                 onDirtyChange={handleDirty}
               />
 
-              {/* 5 — financial summary */}
+              {/* 6 — financial summary */}
               <section className="odm-card odm-summary">
                 <header className="odm-card__head">
                   <span className="odm-card__icon">
@@ -397,7 +469,7 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
                 </div>
               </section>
 
-              {/* 6 — status workflow (same endpoint, restyled only) */}
+              {/* 7 — status workflow (same endpoint, restyled only) */}
               <section className="odm-card">
                 <header className="odm-card__head">
                   <span className="odm-card__icon">
@@ -413,7 +485,7 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
                 />
               </section>
 
-              {/* 7 — real activity */}
+              {/* 8 — real activity */}
               <section className="odm-card">
                 <header className="odm-card__head">
                   <span className="odm-card__icon">
@@ -438,10 +510,10 @@ export default function OrderDetailsModal({ orderId, backTo = '/orders', onClose
           <button
             type="button"
             className="odm__foot-btn"
-            onClick={editOrder}
-            disabled={!order || locked || !canEdit || busy}
+            onClick={startEditing}
+            disabled={!order || locked || !canEdit || busy || editing}
             title={editHint}
-            aria-disabled={!order || locked || !canEdit || busy}
+            aria-disabled={!order || locked || !canEdit || busy || editing}
           >
             <Icon name="pencil" size={15} />
             {t('od_edit')}
