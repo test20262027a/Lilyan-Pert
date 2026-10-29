@@ -89,6 +89,8 @@
 .rs-toolbar {
   display: flex;
   align-items: center;
+  /* Actions sit on the far side of the bar: left in RTL, right in LTR. */
+  justify-content: flex-end;
   padding: 7px 9px;
   border: 1px solid var(--rs-line);
   border-radius: 12px;
@@ -121,6 +123,7 @@
     transform 120ms ease;
 }
 
+.rs-btn { white-space: nowrap; }
 .rs-btn:active:not(:disabled) { transform: translateY(1px); }
 .rs-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -627,6 +630,8 @@
   .rs-page .mhero__art { order: 3; flex-basis: 100%; }
   .rs-page .mart { max-height: 70px; }
   .rs-card__badge { display: none; }
+  /* Phone widths can't hold three labelled buttons side by side, so the row
+     stays end-aligned and the last action takes a full-width row of its own. */
   .rs-toolbar__actions { width: 100%; }
   .rs-btn { flex: 1 1 auto; justify-content: center; }
 }
