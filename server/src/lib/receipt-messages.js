@@ -2,7 +2,7 @@
  * Receipt message overrides, validated on the way in.
  *
  * The client edits one message at a time, but the business row stores a single
- * JSONB object. This module keeps that object honest: only the fifteen known
+ * JSONB object. This module keeps that object honest: only the fourteen known
  * message ids survive, only the four supported locales are written, values
  * stay strings within the editor's limit, and an all-empty message is dropped
  * so it falls back to the printed default instead of printing nothing.
@@ -22,7 +22,6 @@ export const RECEIPT_MESSAGE_KEYS = [
   'service_charge',
   'total',
   'notes',
-  'change_info',
   'footer',
 ];
 

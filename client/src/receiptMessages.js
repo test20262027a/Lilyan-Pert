@@ -1,6 +1,7 @@
 /*
- * The fifteen automatic receipt messages — one canonical list shared by the
- * Text Editor and the receipt renderer.
+ * The fourteen automatic receipt messages — one canonical list shared by the
+ * Text Editor and the receipt renderer. Order-change audit is intentionally
+ * absent: it is internal and only ever appears in the Order Details timeline.
  *
  * A business never gets a copy of the defaults in the database: the stored
  * override lives in `businesses.editable_text.receipt_messages[key]` and only
@@ -44,9 +45,8 @@ export const RECEIPT_MESSAGES = [
   message('tax', 'باج', 'مالیات', 'الضريبة', 'Tax'),
   message('service_charge', 'خزمەتگوزاری', 'حق سرویس', 'خدمة', 'Service charge'),
   message('total', 'کۆی گشتی', 'مجموع کل', 'الإجمالي', 'Total'),
-  // 13–15: notes, the change-audit heading and the closing message.
+  // 13–14: notes and the closing message.
   message('notes', 'تێبینییەکان', 'یادداشت‌ها', 'الملاحظات', 'Notes'),
-  message('change_info', 'زانیاری گۆڕین', 'اطلاعات تغییر', 'معلومات التغيير', 'Change information'),
   message('footer', '', '', '', ''),
 ];
 

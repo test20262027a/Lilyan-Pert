@@ -113,7 +113,6 @@ export async function seed() {
           show_address: true,
           show_phone: true,
           show_order_info: true,
-          show_change_info: true,
           show_cashier: true,
           paper_width: '80mm',
           footer_text: 'Thank you for visiting Lilyan Pert',

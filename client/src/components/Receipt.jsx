@@ -6,15 +6,18 @@ import { receiptMessageText } from '../receiptMessages';
  * One receipt markup used by the on-screen receipt, the preview and the
  * printed output, so all three always show identical authoritative data.
  * It is a single continuous flow — no fixed heights, no page breaks.
+ *
+ * It is customer-facing only: the order's status history, edits, auditors and
+ * timestamps are internal and live in the Order Details activity timeline,
+ * never here — so printing and PDF export stay free of audit information.
  */
-export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
+export function ReceiptPaper({ data, locale }) {
   if (!data) return null;
   const { order, items, table, business } = data;
   const settings = business?.receipt_settings || {};
   const timeZone = zoneFor(locale, business?.timezone);
   const businessName =
     business?.[`name_${locale}`] || business?.name_en || business?.name || '';
-  const lastChange = (data.history || []).filter((h) => h.from_status).slice(-1)[0];
   /*
    * The stored per-language address wins; the original single address stays
    * the fallback so a business that never filled the new fields prints exactly
@@ -157,25 +160,10 @@ export function ReceiptPaper({ data, locale, t, showChangeInfo }) {
       </div>
 
       {/*
-        Order-change audit appears on the printed receipt only while
-        receipt_settings.show_change_info is enabled; the order-details form
-        always shows the same information regardless of this setting.
+        Deliberately no order-change audit here: status transitions, edits and
+        the users who made them belong to the Order Details activity timeline.
+        A receipt carries the final order only, on screen, in print and in PDF.
       */}
-      {moreInfo && showChangeInfo && settings.show_change_info !== false && lastChange ? (
-        <>
-          <hr className="receipt-hr" />
-          <div className="receipt-meta">
-            <div style={{ fontWeight: 700 }}>{msg('change_info')}</div>
-            <div className="receipt-row">
-              <span>
-                {t(`status_${lastChange.from_status}`)} → {t(`status_${lastChange.to_status}`)}
-              </span>
-              <span>{lastChange.changed_by_name || '—'}</span>
-            </div>
-            <div className="receipt-center">{fmtDateTime(lastChange.changed_at, locale, timeZone)}</div>
-          </div>
-        </>
-      ) : null}
 
       {footerText ? (
         <>

@@ -206,9 +206,14 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
     try {
       // The same append-only print audit the standalone page writes.
       await post(`/orders/${orderId}/print`, {});
+      /*
+       * Re-read the order before it is printed, so the paper always carries the
+       * latest saved values (and the print record just written) instead of the
+       * payload captured when the modal opened.
+       */
+      setData(await get(`/orders/${orderId}`));
       setPrinting(true);
       setTimeout(() => window.print(), 80);
-      await load({ silent: true });
     } catch (err) {
       toast.error(err?.code === 'ORDER_NOT_COMPLETED' ? t('od_print_locked') : t('error_generic'));
     } finally {
@@ -616,16 +621,14 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
       {printing && data ? (
         <PrintPortal>
           <ReceiptPrintStyle settings={data.business?.receipt_settings} />
+          {/* The receipt payload is the order alone — activity stays on screen. */}
           <ReceiptPaper
             data={{
               ...data,
-              history: data.history,
               // The receipt prints the currency the order was really saved in.
               business: { ...data.business, currency },
             }}
             locale={locale}
-            t={t}
-            showChangeInfo
           />
         </PrintPortal>
       ) : null}

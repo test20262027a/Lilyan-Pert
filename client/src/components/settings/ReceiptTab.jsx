@@ -21,7 +21,6 @@ const RECEIPT_DEFAULTS = {
   show_address: true,
   show_phone: true,
   show_order_info: true,
-  show_change_info: true,
   show_cashier: true,
   show_more_info: true,
   show_order_number: true,
@@ -179,7 +178,7 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
               <div className="set-preview__paper">
                 {/* The same renderer the printed receipt uses, so the preview
                     follows every toggle below it. */}
-                <ReceiptPaper data={data} locale={locale} t={t} showChangeInfo />
+                <ReceiptPaper data={data} locale={locale} />
               </div>
             </div>
             <p className="set-preview__note">{t('settings_receipt_preview_hint')}</p>
@@ -256,12 +255,10 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
           ['show_address', 'settings_show_address'],
           ['show_phone', 'settings_show_phone'],
           ['show_cashier', 'settings_show_cashier'],
-          ['show_change_info', 'settings_show_change_info'],
         ].map(([key, label]) => (
           <SettingsToggleRow
             key={key}
             title={t(label)}
-            hint={key === 'show_change_info' ? t('settings_show_change_info_hint') : undefined}
             checked={receipt[key] !== false}
             disabled={!canManage}
             onChange={(value) => setJson('receipt_settings', key, value)}
@@ -297,7 +294,7 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
       {printing ? (
         <PrintPortal>
           <ReceiptPrintStyle settings={receipt} />
-          <ReceiptPaper data={data} locale={locale} t={t} showChangeInfo />
+          <ReceiptPaper data={data} locale={locale} />
         </PrintPortal>
       ) : null}
     </>
