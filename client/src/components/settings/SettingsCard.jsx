@@ -5,9 +5,9 @@ import Icon from '../Icon';
  * raised icon container, an optional subtitle and action cluster, and a white
  * softly-shadowed body. `tone` only tints the icon container.
  */
-export function SettingsCard({ icon, tone = 'green', title, subtitle, actions, children, footer }) {
+export function SettingsCard({ icon, tone = 'green', title, subtitle, actions, children, footer, className = '' }) {
   return (
-    <section className="set-card">
+    <section className={`set-card ${className}`.trim()}>
       <header className="set-card__head">
         {icon ? (
           <span className={`set-card__icon is-${tone}`} aria-hidden="true">
@@ -22,6 +22,27 @@ export function SettingsCard({ icon, tone = 'green', title, subtitle, actions, c
       </header>
       <div className="set-card__body">{children}</div>
       {footer ? <div className="set-card__foot">{footer}</div> : null}
+    </section>
+  );
+}
+
+/**
+ * A grouped block inside a card — the receipt workspace stacks several of these
+ * beside its live preview, so related controls keep their own small heading
+ * instead of running into one long undivided list.
+ */
+export function SettingsPanel({ icon, title, children }) {
+  return (
+    <section className="set-subpanel">
+      <header className="set-subpanel__head">
+        {icon ? (
+          <span className="set-subpanel__icon" aria-hidden="true">
+            <Icon name={icon} size={14} />
+          </span>
+        ) : null}
+        <h3 className="set-subpanel__title">{title}</h3>
+      </header>
+      <div className="set-subpanel__body">{children}</div>
     </section>
   );
 }

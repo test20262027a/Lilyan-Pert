@@ -5,7 +5,7 @@ import { useI18n } from '../../i18n';
 import { useBusiness } from '../../context/BusinessContext';
 import { pickReceiptFooter } from '../../receiptMessages';
 import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../Receipt';
-import { ChoiceCard, SettingsCard, SettingsToggleRow } from './SettingsCard';
+import { ChoiceCard, SettingsCard, SettingsPanel, SettingsToggleRow } from './SettingsCard';
 import { SetField } from './fields';
 import ReceiptPreview from './ReceiptPreview';
 
@@ -24,6 +24,22 @@ const GRANDS = ['boxed', 'rule', 'plain'];
 const FOOTER_ALIGNS = ['auto', 'center', 'start'];
 const FOOTER_SIZES = ['small', 'normal', 'large'];
 const LOGO_ALIGNS = ['center', 'start'];
+
+/* The order details the paper may carry, in print order. */
+const ORDER_TOGGLES = [
+  ['show_order_number', 'settings_show_order_number'],
+  ['show_datetime', 'settings_show_datetime'],
+  ['show_customer_name', 'settings_show_customer_name'],
+  ['show_table_number', 'settings_show_table_number'],
+  ['show_notes', 'settings_show_notes'],
+  ['show_more_info', 'settings_show_more_info'],
+];
+/* Header/footer content that already exists on this business record. */
+const IDENTITY_TOGGLES = [
+  ['show_address', 'settings_show_address'],
+  ['show_phone', 'settings_show_phone'],
+  ['show_cashier', 'settings_show_cashier'],
+];
 
 /* Restores receipt presentation only — business data and orders are untouched. */
 const RECEIPT_DEFAULTS = {
@@ -104,6 +120,11 @@ function sampleReceipt(draft, t) {
  * through the real receipt component — so any change, from the paper width to a
  * single margin, appears on the paper immediately. Nothing reaches the backend
  * until the workspace's own Save is pressed.
+ *
+ * The workspace is one two-column layout: related controls grouped into their
+ * own panels on the reading side, the sticky live preview on the other, so the
+ * controls fill the card from top to bottom instead of leaving a hollow column
+ * beside the paper.
  */
 export default function ReceiptTab({ draft, setJson, patch, setVal, canManage }) {
   const { t, locale } = useI18n();
@@ -189,6 +210,7 @@ export default function ReceiptTab({ draft, setJson, patch, setVal, canManage })
         tone="teal"
         title={t('settings_receipt_title')}
         subtitle={t('settings_receipt_subtitle')}
+        className="set-card--receipt"
         footer={
           <>
             <button
@@ -211,54 +233,141 @@ export default function ReceiptTab({ draft, setJson, patch, setVal, canManage })
           </>
         }
       >
-        <SetField label={t('settings_receipt_width')}>
-          <div className="set-choices">
-            {WIDTHS.map((option) => (
-              <ChoiceCard
-                key={option.value}
-                active={width === option.value}
-                onClick={() => setChoice('paper_width', option.value)}
-              >
-                {option.labelKey ? t(option.labelKey) : option.label}
-              </ChoiceCard>
-            ))}
-          </div>
-        </SetField>
+        <div className="rcp">
+          <div className="rcp__controls">
+            <SettingsPanel icon="print" title={t('settings_receipt_group_paper')}>
+              <SetField label={t('settings_receipt_width')}>
+                {choices('paper_width', WIDTHS.map((option) => option.value), (value) => {
+                  const option = WIDTHS.find((item) => item.value === value);
+                  return option.labelKey ? t(option.labelKey) : option.label;
+                }, '80mm')}
+              </SetField>
 
-        {width === 'custom' ? (
-          <div style={{ marginTop: 14, maxWidth: 260 }}>
-            <SetField label={t('settings_receipt_custom_width')} hint={t('settings_receipt_custom_hint')}>
-              <input {...numeric('custom_width', 80, 40, 120)} />
-            </SetField>
-          </div>
-        ) : null}
+              {width === 'custom' ? (
+                <SetField label={t('settings_receipt_custom_width')} hint={t('settings_receipt_custom_hint')}>
+                  <input {...numeric('custom_width', 80, 40, 120)} />
+                </SetField>
+              ) : null}
 
-        <hr className="set-divider" style={{ margin: '16px 0' }} />
-
-        <div className="set-receipt">
-          <div>
-            <div className="set-group-label">{t('settings_receipt_calibration')}</div>
-            <div className="set-grid">
               <SetField label={t('settings_receipt_scale')} hint={t('settings_receipt_scale_hint')}>
                 <input {...numeric('print_scale', 100, 50, 150)} />
               </SetField>
-              <SetField label={t('settings_receipt_margin_top')} hint={t('settings_receipt_margin_hint')}>
-                <input {...numeric('margin_top', 0, 0, 20)} />
+
+              <div className="rcp-margins">
+                <SetField label={t('settings_receipt_margin_top')}>
+                  <input {...numeric('margin_top', 0, 0, 20)} />
+                </SetField>
+                <SetField label={t('settings_receipt_margin_bottom')}>
+                  <input {...numeric('margin_bottom', 0, 0, 20)} />
+                </SetField>
+                <SetField label={t('settings_receipt_margin_left')}>
+                  <input {...numeric('margin_left', 0, 0, 20)} />
+                </SetField>
+                <SetField label={t('settings_receipt_margin_right')}>
+                  <input {...numeric('margin_right', 0, 0, 20)} />
+                </SetField>
+              </div>
+              <p className="rcp-note">{t('settings_receipt_margin_hint')}</p>
+            </SettingsPanel>
+
+            <SettingsPanel icon="type" title={t('settings_receipt_typography')}>
+              <SetField label={t('settings_receipt_font_family')}>
+                {choices('font_family', FONTS, (value) => t(`settings_receipt_font_${value}`), 'naskh')}
               </SetField>
-              <SetField label={t('settings_receipt_margin_left')} hint={t('settings_receipt_margin_hint')}>
-                <input {...numeric('margin_left', 0, 0, 20)} />
+              <div className="rcp-three">
+                <SetField label={t('settings_receipt_font_size')} hint={t('settings_receipt_font_size_hint')}>
+                  <input {...numeric('font_scale', 100, 80, 140)} />
+                </SetField>
+                <SetField label={t('settings_receipt_line_height')} hint={t('settings_receipt_line_height_hint')}>
+                  <input {...numeric('line_height', 1.4, 1.1, 2, '0.05')} />
+                </SetField>
+                <SetField
+                  label={t('settings_receipt_section_spacing')}
+                  hint={t('settings_receipt_section_spacing_hint')}
+                >
+                  <input {...numeric('section_spacing', 7, 2, 16)} />
+                </SetField>
+              </div>
+              <SetField label={t('settings_receipt_text_weight')}>
+                {choices('text_weight', WEIGHTS, (value) => t(`settings_receipt_weight_${value}`), 'normal')}
               </SetField>
-              <SetField label={t('settings_receipt_margin_right')} hint={t('settings_receipt_margin_hint')}>
-                <input {...numeric('margin_right', 0, 0, 20)} />
+            </SettingsPanel>
+
+            <SettingsPanel icon="layers" title={t('settings_receipt_layout')}>
+              <SetField label={t('settings_receipt_product_columns')}>
+                {choices('product_layout', COLUMNS, (value) => t(`settings_receipt_columns_${value}`), 'auto')}
               </SetField>
-              <SetField label={t('settings_receipt_margin_bottom')} hint={t('settings_receipt_margin_hint')}>
-                <input {...numeric('margin_bottom', 0, 0, 20)} />
+              <SetField label={t('settings_receipt_grand_style')}>
+                {choices('grand_style', GRANDS, (value) => t(`settings_receipt_grand_${value}`), 'boxed')}
               </SetField>
-            </div>
-            <p className="set-hint">{t('settings_receipt_calibration_hint')}</p>
+              <SettingsToggleRow
+                title={t('settings_receipt_dividers')}
+                checked={receipt.show_dividers !== false}
+                disabled={!canManage}
+                onChange={(value) => setToggle('show_dividers', value)}
+              />
+              <div className="rcp-two">
+                <SetField label={t('settings_receipt_footer_align')}>
+                  {choices('footer_align', FOOTER_ALIGNS, (value) => t(`settings_receipt_align_${value}`), 'auto')}
+                </SetField>
+                <SetField label={t('settings_receipt_footer_size')}>
+                  {choices('footer_scale', FOOTER_SIZES, (value) => t(`settings_receipt_size_${value}`), 'normal')}
+                </SetField>
+              </div>
+            </SettingsPanel>
+
+            <SettingsPanel icon="image" title={t('settings_receipt_group_branding')}>
+              <SettingsToggleRow
+                title={t('settings_show_logo')}
+                checked={receipt.show_logo !== false}
+                disabled={!canManage}
+                onChange={(value) => setToggle('show_logo', value)}
+              />
+              <div className="rcp-two">
+                <SetField label={t('settings_receipt_logo_size')}>
+                  {choices('logo_size', LOGO_SIZES, (value) => t(`settings_receipt_size_${value}`), 'medium')}
+                </SetField>
+                <SetField label={t('settings_receipt_logo_position')}>
+                  {choices('logo_align', LOGO_ALIGNS, (value) => t(`settings_receipt_position_${value}`), 'center')}
+                </SetField>
+              </div>
+              <SetField label={t('settings_receipt_alignment')}>
+                {choices('alignment', ALIGNMENTS, (value) => t(`settings_receipt_align_${value}`), 'auto')}
+              </SetField>
+            </SettingsPanel>
+
+            <SettingsPanel icon="clipboard" title={t('settings_receipt_order_info')}>
+              <SettingsToggleRow
+                title={t('settings_show_order_info')}
+                checked={receipt.show_order_info !== false}
+                disabled={!canManage}
+                onChange={(value) => setJson('receipt_settings', 'show_order_info', value)}
+              />
+              {ORDER_TOGGLES.map(([key, label]) => (
+                <SettingsToggleRow
+                  key={key}
+                  title={t(label)}
+                  checked={receipt[key] !== false}
+                  disabled={!canManage || receipt.show_order_info === false}
+                  onChange={(value) => setJson('receipt_settings', key, value)}
+                />
+              ))}
+              <hr className="set-divider" />
+              {IDENTITY_TOGGLES.map(([key, label]) => (
+                <SettingsToggleRow
+                  key={key}
+                  title={t(label)}
+                  checked={receipt[key] !== false}
+                  disabled={!canManage}
+                  onChange={(value) => setJson('receipt_settings', key, value)}
+                />
+              ))}
+              {/* The receipt footer is written only in the Text Editor, where the
+                  fifteen multilingual messages are the single source of truth. */}
+            </SettingsPanel>
           </div>
 
-          <div className="set-preview-col">
+          <aside className="rcp__aside">
             <ReceiptPreview
               data={data}
               settings={receipt}
@@ -267,128 +376,8 @@ export default function ReceiptTab({ draft, setJson, patch, setVal, canManage })
               footerPick={footerPick}
               t={t}
             />
-          </div>
+          </aside>
         </div>
-
-        <hr className="set-divider" style={{ margin: '16px 0' }} />
-
-        <div className="set-group-label">{t('settings_receipt_typography')}</div>
-        <SetField label={t('settings_receipt_font_family')}>
-          {choices('font_family', FONTS, (value) => t(`settings_receipt_font_${value}`), 'naskh')}
-        </SetField>
-        <div className="set-grid" style={{ marginTop: 12 }}>
-          <SetField label={t('settings_receipt_font_size')} hint={t('settings_receipt_font_size_hint')}>
-            <input {...numeric('font_scale', 100, 80, 140)} />
-          </SetField>
-          <SetField label={t('settings_receipt_line_height')} hint={t('settings_receipt_line_height_hint')}>
-            <input {...numeric('line_height', 1.4, 1.1, 2, '0.05')} />
-          </SetField>
-          <SetField label={t('settings_receipt_section_spacing')} hint={t('settings_receipt_section_spacing_hint')}>
-            <input {...numeric('section_spacing', 7, 2, 16)} />
-          </SetField>
-        </div>
-        <div style={{ marginTop: 4 }}>
-          <SetField label={t('settings_receipt_text_weight')}>
-            {choices('text_weight', WEIGHTS, (value) => t(`settings_receipt_weight_${value}`), 'normal')}
-          </SetField>
-        </div>
-
-        <hr className="set-divider" style={{ margin: '16px 0' }} />
-
-        <div className="set-group-label">{t('settings_receipt_layout')}</div>
-        <SetField label={t('settings_receipt_product_columns')}>
-          {choices('product_layout', COLUMNS, (value) => t(`settings_receipt_columns_${value}`), 'auto')}
-        </SetField>
-        <div style={{ marginTop: 12 }}>
-          <SetField label={t('settings_receipt_grand_style')}>
-            {choices('grand_style', GRANDS, (value) => t(`settings_receipt_grand_${value}`), 'boxed')}
-          </SetField>
-        </div>
-        <SettingsToggleRow
-          title={t('settings_receipt_dividers')}
-          checked={receipt.show_dividers !== false}
-          disabled={!canManage}
-          onChange={(value) => setToggle('show_dividers', value)}
-        />
-
-        <hr className="set-divider" style={{ margin: '16px 0' }} />
-
-        <div className="set-group-label">{t('settings_receipt_footer_style')}</div>
-        <SetField label={t('settings_receipt_footer_align')}>
-          {choices('footer_align', FOOTER_ALIGNS, (value) => t(`settings_receipt_align_${value}`), 'auto')}
-        </SetField>
-        <div style={{ marginTop: 12 }}>
-          <SetField label={t('settings_receipt_footer_size')}>
-            {choices('footer_scale', FOOTER_SIZES, (value) => t(`settings_receipt_size_${value}`), 'normal')}
-          </SetField>
-        </div>
-
-        <hr className="set-divider" style={{ margin: '16px 0' }} />
-
-        <SettingsToggleRow
-          title={t('settings_show_logo')}
-          checked={receipt.show_logo !== false}
-          disabled={!canManage}
-          onChange={(value) => setToggle('show_logo', value)}
-        />
-
-        <div style={{ marginTop: 14 }}>
-          <div className="set-group-label">{t('settings_receipt_logo_size')}</div>
-          {choices('logo_size', LOGO_SIZES, (value) => t(`settings_receipt_size_${value}`), 'medium')}
-        </div>
-
-        <div style={{ marginTop: 16 }}>
-          <div className="set-group-label">{t('settings_receipt_logo_position')}</div>
-          {choices('logo_align', LOGO_ALIGNS, (value) => t(`settings_receipt_position_${value}`), 'center')}
-        </div>
-
-        <div style={{ marginTop: 16 }}>
-          <div className="set-group-label">{t('settings_receipt_alignment')}</div>
-          {choices('alignment', ALIGNMENTS, (value) => t(`settings_receipt_align_${value}`), 'auto')}
-        </div>
-      </SettingsCard>
-
-      <SettingsCard icon="receipt" tone="blue" title={t('settings_receipt_order_info')}>
-        <SettingsToggleRow
-          title={t('settings_show_order_info')}
-          checked={receipt.show_order_info !== false}
-          disabled={!canManage}
-          onChange={(value) => setJson('receipt_settings', 'show_order_info', value)}
-        />
-        {[
-          ['show_order_number', 'settings_show_order_number'],
-          ['show_datetime', 'settings_show_datetime'],
-          ['show_customer_name', 'settings_show_customer_name'],
-          ['show_table_number', 'settings_show_table_number'],
-          ['show_notes', 'settings_show_notes'],
-          ['show_more_info', 'settings_show_more_info'],
-        ].map(([key, label]) => (
-          <SettingsToggleRow
-            key={key}
-            title={t(label)}
-            checked={receipt[key] !== false}
-            disabled={!canManage || receipt.show_order_info === false}
-            onChange={(value) => setJson('receipt_settings', key, value)}
-          />
-        ))}
-
-        {/* Header/footer content that already exists on this business record. */}
-        <hr className="set-divider" style={{ margin: '12px 0 4px' }} />
-        {[
-          ['show_address', 'settings_show_address'],
-          ['show_phone', 'settings_show_phone'],
-          ['show_cashier', 'settings_show_cashier'],
-        ].map(([key, label]) => (
-          <SettingsToggleRow
-            key={key}
-            title={t(label)}
-            checked={receipt[key] !== false}
-            disabled={!canManage}
-            onChange={(value) => setJson('receipt_settings', key, value)}
-          />
-        ))}
-        {/* The receipt footer is written only in the Text Editor, where the
-            fifteen multilingual messages are the single source of truth. */}
       </SettingsCard>
 
       {confirmReset ? (

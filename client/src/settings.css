@@ -418,83 +418,188 @@
 .set-day.is-closed .set-day__time { opacity: 0.6; }
 .set-hint { font-size: 11.5px; color: var(--muted); margin-top: 12px; line-height: 1.55; }
 
-/* ---------------------------------------------------------------- receipt */
+/* ------------------------------------------------------- receipt workspace */
 
-.set-receipt {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
 /*
- * The live preview panel. It holds the real receipt drawn at its true paper
- * width, a badge that marks the paper as sample data, and its own language
- * switch. Beside the calibration fields it follows the scroll, so the paper
- * stays in view while a setting far down the card is changed.
+ * Receipt printing workspace: the related controls grouped into their own panels
+ * on the reading side, the sticky live preview on the other — so the card is
+ * filled from top to bottom instead of leaving a hollow column beside the paper.
  */
-.set-preview {
+.rcp {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 352px;
+  gap: 18px;
+  align-items: stretch;
+  min-width: 0;
+}
+.rcp__controls { display: grid; gap: 12px; align-content: start; min-width: 0; }
+.rcp__aside { position: relative; min-width: 0; }
+
+/*
+ * This card must not clip: `overflow: hidden` on a card makes it the nearest
+ * scrollport of the sticky preview, which would pin the paper to the card top
+ * and never follow the scroll. The corners are rounded on the head and the
+ * footer instead, so the card keeps its shape without clipping its contents.
+ */
+.set-card--receipt { overflow: visible; }
+.set-card--receipt > .set-card__head { border-radius: 18px 18px 0 0; }
+.set-card--receipt > .set-card__foot { border-radius: 0 0 18px 18px; }
+
+/* A grouped block inside the card — its own small heading and padded body. */
+.set-subpanel {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 1px 2px rgba(23, 26, 43, 0.035);
+}
+[data-theme='dark'] .set-subpanel { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.045); }
+.set-subpanel__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, var(--theme-primary-soft), var(--surface) 78%);
+}
+[dir='rtl'] .set-subpanel__head {
+  background: linear-gradient(270deg, var(--theme-primary-soft), var(--surface) 78%);
+}
+.set-subpanel__icon {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--primary) 20%, transparent), inset 0 1px 0 #ffffff;
+}
+[data-theme='dark'] .set-subpanel__icon { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+.set-subpanel__title {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--theme-primary-strong);
+  letter-spacing: 0.01em;
+}
+.set-subpanel__body { display: grid; gap: 12px; padding: 13px; }
+
+/* Compact rows that belong together: the four calibration margins, matched pairs. */
+.rcp-margins { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rcp-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.rcp-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.rcp-note { margin: 0; font-size: 11.5px; color: var(--muted); line-height: 1.55; }
+
+/* ---------------------------------------------------------- live preview */
+
+/*
+ * The live preview panel: its own header, the receipt language dropdown in the
+ * panel's own control style, the paper on a dotted "desk", and a quiet footer
+ * stating the geometry it is drawn at. It follows the scroll beside the control
+ * panels, so the paper stays in view while a setting far down is changed.
+ */
+.rcp-preview {
   position: sticky;
   top: 14px;
   display: grid;
-  gap: 10px;
-  align-content: start;
-  padding: 12px;
-  border: 1px dashed var(--border-strong);
-  border-radius: 14px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 5%, var(--surface-2)),
-    var(--surface-2)
-  );
-  min-height: 240px;
+  border: 1px solid var(--border-strong);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(23, 26, 43, 0.05),
+    0 20px 38px -24px rgba(23, 26, 43, 0.42);
+  overflow: hidden;
 }
-.set-preview__bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.set-preview__title {
-  display: inline-flex;
+[data-theme='dark'] .rcp-preview {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 20px 38px -26px rgba(0, 0, 0, 0.6);
+}
+.rcp-preview__head {
+  display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--theme-primary-strong);
+  gap: 8px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, var(--theme-primary-soft), var(--surface) 82%);
 }
-.set-preview__badge {
+[dir='rtl'] .rcp-preview__head {
+  background: linear-gradient(225deg, var(--theme-primary-soft), var(--surface) 82%);
+}
+.rcp-preview__icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  background: var(--surface);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--primary) 18%, transparent), inset 0 1px 0 #ffffff;
+}
+[data-theme='dark'] .rcp-preview__icon { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+.rcp-preview__title { font-size: 13px; font-weight: 800; color: var(--text); }
+.rcp-preview__badge {
+  margin-inline-start: auto;
   padding: 3px 9px;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+  border: 1px solid var(--theme-primary-line);
   background: color-mix(in srgb, var(--primary) 10%, var(--surface));
   color: var(--theme-primary-strong);
   font-size: 10.5px;
   font-weight: 800;
   letter-spacing: 0.02em;
-  box-shadow: inset 0 1px 0 #ffffff;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
-.set-preview__lang {
+[data-theme='dark'] .rcp-preview__badge { box-shadow: none; }
+/* Stacked layouts only — see the responsive block below. */
+.rcp-preview__fold { display: none; }
+.rcp-preview__lang {
+  display: grid;
+  gap: 6px;
+  padding: 11px 13px;
+  border-bottom: 1px solid var(--border);
+}
+.rcp-preview__lang-label {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-inline-start: auto;
   font-size: 11.5px;
-  color: var(--muted);
-  white-space: nowrap;
+  font-weight: 700;
+  color: var(--text-soft);
 }
-.set-preview__lang .select { min-height: 32px; padding-block: 4px; font-size: 12px; max-width: 118px; }
-.set-preview__toggle { display: none; }
-.set-preview__stage { display: grid; place-items: start center; min-height: 200px; padding: 4px 0; }
+.rcp-preview__lang .lysel__trigger { min-height: 40px; font-size: 13px; }
+/* The paper sits on a quiet dotted desk, so the white sheet reads as paper. */
+.rcp-preview__stage {
+  display: grid;
+  place-items: start center;
+  padding: 16px;
+  min-height: 260px;
+  background-color: color-mix(in srgb, var(--primary) 5%, var(--surface-2));
+  background-image: radial-gradient(color-mix(in srgb, var(--text) 11%, transparent) 1px, transparent 1px);
+  background-size: 12px 12px;
+}
 /*
  * The sheet is the paper itself: its width and its calibration margins are set
  * inline by ReceiptPreview from the same geometry the print stylesheet uses,
- * and only the fit factor keeps it inside the column — never a scrollbar.
+ * and only the fit factor keeps it inside the stage — never a scrollbar.
  */
-.set-preview__sheet {
+.rcp-preview__sheet {
   box-sizing: border-box;
   background: #ffffff;
-  border: 1px solid #e2e6ea;
-  border-radius: 6px;
-  box-shadow: 0 14px 28px -16px rgba(23, 26, 43, 0.45), 0 2px 6px rgba(23, 26, 43, 0.06);
+  border: 1px solid #e3e7ec;
+  border-radius: 3px;
+  box-shadow: 0 18px 30px -18px rgba(23, 26, 43, 0.45), 0 2px 6px rgba(23, 26, 43, 0.07);
 }
 /* The paper brings its own type scale; the panel only removes the screen chrome
    so the sheet, and not a second frame, decides the width. */
-.set-preview__sheet .receipt-paper {
+.rcp-preview__sheet .receipt-paper {
   width: 100%;
   max-width: none;
   margin: 0;
@@ -503,7 +608,25 @@
   border-radius: 0;
   background: transparent;
 }
-.set-preview__note { margin: 0; font-size: 11.5px; color: var(--muted); text-align: center; }
+.rcp-preview__foot {
+  display: grid;
+  gap: 7px;
+  padding: 10px 13px 12px;
+  border-top: 1px dashed var(--border-strong);
+}
+.rcp-preview__meta { display: flex; flex-wrap: wrap; gap: 6px; }
+.rcp-preview__chip {
+  padding: 2px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.rcp-preview__note { margin: 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
 
 /* ----------------------------------------------------------------- themes */
 
@@ -564,29 +687,38 @@
   .set-days { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 
-@media (max-width: 960px) {
-  .set-receipt { grid-template-columns: minmax(0, 1fr); }
-  .set-themes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  /* Stacked, the paper comes first and no longer follows the scroll. */
-  .set-preview-col { order: -1; }
-  .set-preview { position: static; min-height: 0; }
-  .set-preview__toggle {
+/* One column before the panels would be squeezed against the paper. */
+@media (max-width: 1100px) {
+  .rcp { grid-template-columns: minmax(0, 1fr); }
+  /* Stacked, the paper comes first, centred, and no longer follows the scroll. */
+  .rcp__aside { order: -1; display: grid; justify-items: center; }
+  .rcp-preview { position: static; width: 100%; max-width: 440px; }
+  .rcp-preview__fold {
+    flex: none;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 32px;
-    height: 32px;
-    border-radius: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
     border: 1px solid var(--border-strong);
     background: var(--surface);
     color: var(--theme-primary-strong);
     cursor: pointer;
   }
-  .set-preview.is-closed .set-preview__stage,
-  .set-preview.is-closed .set-preview__note { display: none; }
+  .rcp-preview.is-closed .rcp-preview__lang,
+  .rcp-preview.is-closed .rcp-preview__stage,
+  .rcp-preview.is-closed .rcp-preview__foot { display: none; }
+  .rcp-preview.is-closed .rcp-preview__head { border-bottom: none; }
+}
+
+@media (max-width: 960px) {
+  .set-themes { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 760px) {
+  .rcp-three { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .rcp-preview__stage { min-height: 200px; padding: 12px; }
   .set-grid { grid-template-columns: minmax(0, 1fr); }
   .set-grid--3 { grid-template-columns: minmax(0, 1fr); }
   .set-days { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -596,6 +728,10 @@
 }
 
 @media (max-width: 520px) {
+  .rcp-margins,
+  .rcp-two,
+  .rcp-three { grid-template-columns: minmax(0, 1fr); }
+  .rcp-preview { max-width: none; }
   .set-themes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .set-days { grid-template-columns: minmax(0, 1fr); }
   .set-choice { min-width: 76px; font-size: 12.5px; }
