@@ -724,28 +724,27 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
 .cui-cat:active { transform: scale(0.97); }
-/* Selected: the theme colour fills the card, with a soft glow ring and a
-   lifted, slightly larger body so the active chip is unmistakable. */
+/* Selected: the theme colour fills the card and a hairline ring marks it. The
+   chip never lifts or scales, so choosing a category never resizes the bar. */
 .cui-cat.is-active {
   color: var(--primary-ink);
-  border-color: color-mix(in srgb, var(--primary) 62%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 58%, transparent);
   background: linear-gradient(
     180deg,
     color-mix(in srgb, var(--primary) 94%, #ffffff),
     var(--theme-primary-active, var(--primary))
   );
-  box-shadow: 0 16px 28px -12px color-mix(in srgb, var(--primary) 62%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent),
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--primary) 52%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--primary) 12%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.4);
-  transform: translateY(-2px) scale(1.02);
 }
 [data-theme='dark'] .cui-cat {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 18px -10px rgba(0, 0, 0, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 [data-theme='dark'] .cui-cat.is-active {
-  box-shadow: 0 16px 28px -12px color-mix(in srgb, var(--primary) 70%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent),
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--primary) 55%, transparent),
+    0 0 0 2px color-mix(in srgb, var(--primary) 16%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
