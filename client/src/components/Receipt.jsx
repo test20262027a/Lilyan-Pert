@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from './Icon';
 import { fmtDate, fmtDateNumeric, fmtMoney, fmtNumber, fmtTime, zoneFor } from '../format';
@@ -22,6 +22,9 @@ import '../receipt.css';
  * timestamps are internal and live in the Order Details activity timeline,
  * never here — so printing and PDF export stay free of audit information.
  */
+
+/** A CSS millimetre, exactly as the browser resolves it. */
+export const MM_TO_PX = 96 / 25.4;
 
 /** The paper width in millimetres, from the saved print settings. */
 export function paperWidth(settings) {
@@ -143,7 +146,6 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   const paperVars = {
     '--rc-font': FONT_STACKS[settings.font_family] || FONT_STACKS.naskh,
     '--rc-font-size': `${(12 * fontScale).toFixed(2)}px`,
-    '--rc-print-font-size': `${((narrow ? 8.4 : 9.5) * fontScale).toFixed(2)}pt`,
     '--rc-line-height': String(settingNumber(settings.line_height, 1.1, 2, 1.4)),
     '--rc-weight': String(WEIGHTS[settings.text_weight] || 400),
     '--rc-space': `${settingNumber(settings.section_spacing, 2, 16, 7)}px`,
@@ -516,6 +518,58 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   );
 }
 
+/**
+ * The sheet the receipt is drawn on: a rectangle exactly as wide as the paper,
+ * with the calibration margins as its own padding and the print scale as its
+ * zoom. The preview and the printer both mount this same sheet with the same
+ * numbers, so the paper can never be laid out differently in the two places.
+ */
+export function ReceiptSheet({ settings, zoom = 1, className = '', children }) {
+  const { paper, margins, scale } = printGeometry(settings);
+  const mm = (value) => `${(value / scale).toFixed(2)}mm`;
+  return (
+    <div
+      className={className ? `rc-sheet ${className}` : 'rc-sheet'}
+      style={{
+        width: mm(paper),
+        padding: `${mm(margins.top)} ${mm(margins.right)} ${mm(margins.bottom)} ${mm(margins.left)}`,
+        zoom: scale * zoom,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Waits until the printed receipt is paint-ready — its fonts resolved, its logo
+ * decoded, one frame settled — so the printer never captures the paper with a
+ * fallback face or an empty logo box.
+ */
+export async function printReady() {
+  if (typeof document === 'undefined') return;
+  try {
+    await document.fonts?.ready;
+  } catch {
+    /* A browser without a FontFaceSet simply has nothing to wait for. */
+  }
+  const root = document.getElementById('print-root');
+  const images = root ? Array.from(root.querySelectorAll('img')) : [];
+  await Promise.all(
+    images.map((img) => {
+      if (!img.complete) {
+        return new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        });
+      }
+      return img.decode ? img.decode().catch(() => {}) : Promise.resolve();
+    }),
+  );
+  /* One settled frame, so the page length measured below is the final one. */
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+}
+
 /** Renders the receipt outside the app tree so printing produces one clean flow. */
 export function PrintPortal({ children }) {
   const node = typeof document !== 'undefined' ? document.getElementById('print-root') : null;
@@ -528,28 +582,56 @@ export function PrintPortal({ children }) {
  * It is mounted inside the print portal, so it only exists while printing and
  * leaves the on-screen stylesheet untouched.
  *
- * The sheet is exactly as wide as the paper minus the two side margins: a
- * sheet as wide as the paper would print outside the printable area and the
- * printer would clip the price column. The calibration scale is applied with
- * `zoom`, so the sheet is widened by the same factor to still fill the paper.
+ * The page itself carries no margin and no width of its own: the calibrated
+ * margins are padding of the shared `.rc-sheet` — the very rectangle the
+ * preview draws — so the printer starts the receipt exactly where the preview
+ * shows it and no margin is applied twice.
+ *
+ * The page is cut to the receipt's own measured length. A thermal roll has no
+ * page height, and a taller page would leave a strip of blank paper under every
+ * print; the sheet is drawn at real millimetres, so its height IS the length.
  */
 export function ReceiptPrintStyle({ settings }) {
-  // The same geometry the live preview draws, so the paper on screen and the
-  // paper in the printer can never be laid out differently.
-  const { paper, margins, scale, printable } = printGeometry(settings);
+  const { paper } = printGeometry(settings);
+  const [length, setLength] = useState(0);
+
+  useEffect(() => {
+    const measure = () => {
+      const sheet = document.querySelector('#print-root .rc-sheet');
+      const px = sheet ? sheet.getBoundingClientRect().height : 0;
+      // A millimetre of slack: a page a hair too short would spill the closing
+      // message onto a second sheet, a hair too long costs a sliver of paper.
+      if (px > 0) setLength(Math.ceil((px / MM_TO_PX) * 10) / 10 + 1);
+    };
+    measure();
+    window.addEventListener('beforeprint', measure);
+    return () => window.removeEventListener('beforeprint', measure);
+  }, [settings]);
 
   return (
     <style>{`
       @page {
-        size: ${paper}mm auto;
-        margin: ${margins.top}mm ${margins.right}mm ${margins.bottom}mm ${margins.left}mm;
+        ${length ? `size: ${paper}mm ${length.toFixed(2)}mm;` : ''}
+        margin: 0;
       }
       html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
-      #print-root .receipt-paper {
-        width: ${(printable / scale).toFixed(2)}mm;
-        max-width: none;
-        zoom: ${scale};
-      }
+      #print-root { width: ${paper}mm; }
     `}</style>
+  );
+}
+
+/**
+ * The complete printed receipt: one page geometry, one sheet, one receipt
+ * component — the same three the live preview mounts. A screen that prints the
+ * paper therefore cannot print a second, drifting design.
+ */
+export function PrintableReceipt({ settings, data, locale, footerPick }) {
+  return (
+    <PrintPortal>
+      <ReceiptPrintStyle settings={settings} />
+      <ReceiptSheet settings={settings}>
+        <ReceiptPaper data={data} locale={locale} footerPick={footerPick} />
+      </ReceiptSheet>
+    </PrintPortal>
   );
 }

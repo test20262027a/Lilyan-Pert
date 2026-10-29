@@ -4,7 +4,7 @@ import { ConfirmDialog, useToast } from '../ui';
 import { useI18n } from '../../i18n';
 import { useBusiness } from '../../context/BusinessContext';
 import { pickReceiptFooter } from '../../receiptMessages';
-import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../Receipt';
+import { PrintableReceipt, printReady } from '../Receipt';
 import { ChoiceCard, SettingsCard, SettingsPanel, SettingsToggleRow } from './SettingsCard';
 import { SetField } from './fields';
 import ReceiptPreview from './ReceiptPreview';
@@ -168,14 +168,21 @@ export default function ReceiptTab({ draft, setJson, patch, setVal, canManage })
   const discardable = JSON.stringify(receipt) !== JSON.stringify(savedReceipt);
   const discardReceipt = () => setVal('receipt_settings', { ...savedReceipt });
 
+  /*
+   * Print only once the paper is paint-ready: its fonts resolved and its logo
+   * decoded, so the printer receives the receipt the preview was showing.
+   */
   useEffect(() => {
     if (!printing) return undefined;
     const done = () => setPrinting(false);
     window.addEventListener('afterprint', done);
-    const id = setTimeout(() => window.print(), 120);
+    let cancelled = false;
+    printReady().then(() => {
+      if (!cancelled) window.print();
+    });
     return () => {
+      cancelled = true;
       window.removeEventListener('afterprint', done);
-      clearTimeout(id);
     };
   }, [printing]);
 
@@ -406,10 +413,7 @@ export default function ReceiptTab({ draft, setJson, patch, setVal, canManage })
       {/* The same receipt component, the same draft values and the same footer
           message as the preview: the test print can never disagree with it. */}
       {printing ? (
-        <PrintPortal>
-          <ReceiptPrintStyle settings={receipt} />
-          <ReceiptPaper data={data} locale={previewLocale} footerPick={footerPick} />
-        </PrintPortal>
+        <PrintableReceipt settings={receipt} data={data} locale={previewLocale} footerPick={footerPick} />
       ) : null}
     </>
   );

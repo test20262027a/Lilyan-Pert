@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import HeaderBackdrop from '../../../headers/HeaderBackdrop';
 import Icon from '../../Icon';
 import { Loading, Money, StatusBadge, useToast } from '../../ui';
-import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../../Receipt';
+import { PrintableReceipt, printReady } from '../../Receipt';
 import OrdersArtwork from '../OrdersArtwork';
 import ManualDiscountCard from './ManualDiscountCard';
 import DiscardChangesDialog from '../../confirm/DiscardChangesDialog';
@@ -213,13 +213,30 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
        */
       setData(await get(`/orders/${orderId}`));
       setPrinting(true);
-      setTimeout(() => window.print(), 80);
     } catch (err) {
       toast.error(err?.code === 'ORDER_NOT_COMPLETED' ? t('od_print_locked') : t('error_generic'));
     } finally {
       setBusy(false);
     }
   };
+
+  /*
+   * The paper prints only once it is paint-ready — fonts resolved, logo decoded
+   * — so the printer receives exactly the receipt the preview draws.
+   */
+  useEffect(() => {
+    if (!printing) return undefined;
+    const done = () => setPrinting(false);
+    window.addEventListener('afterprint', done);
+    let cancelled = false;
+    printReady().then(() => {
+      if (!cancelled) window.print();
+    });
+    return () => {
+      cancelled = true;
+      window.removeEventListener('afterprint', done);
+    };
+  }, [printing]);
 
   /* The item editor needs the catalog; it is fetched the first time it opens. */
   const startEditing = () => {
@@ -618,19 +635,17 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
         }}
       />
 
+      {/* The receipt payload is the order alone — activity stays on screen. */}
       {printing && data ? (
-        <PrintPortal>
-          <ReceiptPrintStyle settings={data.business?.receipt_settings} />
-          {/* The receipt payload is the order alone — activity stays on screen. */}
-          <ReceiptPaper
-            data={{
-              ...data,
-              // The receipt prints the currency the order was really saved in.
-              business: { ...data.business, currency },
-            }}
-            locale={locale}
-          />
-        </PrintPortal>
+        <PrintableReceipt
+          settings={data.business?.receipt_settings}
+          data={{
+            ...data,
+            // The receipt prints the currency the order was really saved in.
+            business: { ...data.business, currency },
+          }}
+          locale={locale}
+        />
       ) : null}
     </div>
   );

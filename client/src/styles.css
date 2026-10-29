@@ -1784,6 +1784,6 @@ body.nav-drawer-open { overflow: hidden; }
   .no-print { display: none !important; }
 }
 
-/* Fallback sheet, replaced per print by ReceiptPrintStyle with the paper the
-   owner selected in Settings. */
-@page { size: 80mm auto; margin: 0; }
+/* Fallback page, replaced per print by ReceiptPrintStyle with the paper and the
+   length the owner's settings produce. The receipt carries its own margins. */
+@page { margin: 0; }

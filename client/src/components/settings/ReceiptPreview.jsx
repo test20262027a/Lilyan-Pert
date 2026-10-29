@@ -1,11 +1,10 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { LOCALES } from '../../i18n';
-import { printGeometry, ReceiptPaper } from '../Receipt';
+import { MM_TO_PX, printGeometry, ReceiptPaper, ReceiptSheet } from '../Receipt';
 import Select from '../select/Select';
 import LanguageFlag from '../header/LanguageFlag';
 
-const MM_TO_PX = 96 / 25.4; // a CSS millimetre, exactly as the browser resolves it
 const MIN_FIT_WIDTH = 110;
 
 /**
@@ -44,7 +43,6 @@ export default function ReceiptPreview({ data, settings, locale, onLocaleChange,
   const available = Math.max(stageWidth, MIN_FIT_WIDTH);
   // 1:1 whenever the column is wide enough; smaller only to keep the paper whole.
   const fit = Math.min(1, available / (geometry.paper * MM_TO_PX));
-  const { top, right, bottom, left } = geometry.margins;
 
   /* The receipt's own language, in the same styled dropdown as the rest of the
      admin panel, with each language's flag as its marker. */
@@ -90,25 +88,15 @@ export default function ReceiptPreview({ data, settings, locale, onLocaleChange,
 
       <div className="rcp-preview__stage" ref={stageRef}>
         {/*
-         * The sheet is the paper itself, drawn exactly as the print stylesheet
-         * draws it: the width is the paper width divided by the print scale, and
-         * the calibration margins are padding of the same compensated size — so
-         * the printable area inside them is the printable width divided by the
-         * scale, just as on the printer. `zoom` then carries the print scale,
-         * and the fit factor only keeps the paper inside the stage.
+         * The sheet is the paper itself, mounted from the same ReceiptSheet the
+         * printer receives: the width is the paper width divided by the print
+         * scale, the calibration margins are its padding, and `zoom` carries
+         * the print scale. The fit factor only keeps the paper inside the
+         * stage, so what is drawn here is what the printer is handed.
          */}
-        <div
-          className="rcp-preview__sheet"
-          style={{
-            width: `${(geometry.paper / geometry.scale).toFixed(2)}mm`,
-            padding: `${(top / geometry.scale).toFixed(2)}mm ${(right / geometry.scale).toFixed(2)}mm ${
-              (bottom / geometry.scale).toFixed(2)
-            }mm ${(left / geometry.scale).toFixed(2)}mm`,
-            zoom: geometry.scale * fit,
-          }}
-        >
+        <ReceiptSheet settings={settings} zoom={fit} className="rcp-preview__sheet">
           <ReceiptPaper data={data} locale={locale} footerPick={footerPick} />
-        </div>
+        </ReceiptSheet>
       </div>
 
       <footer className="rcp-preview__foot">

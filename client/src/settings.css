@@ -586,29 +586,15 @@
   background-size: 12px 12px;
 }
 /*
- * The sheet is the paper itself: its width and its calibration margins are set
- * inline by ReceiptPreview from the same geometry the print stylesheet uses,
- * and only the fit factor keeps it inside the stage — never a scrollbar.
+ * The stage's frame around the shared sheet: the sheet itself (its paper width,
+ * its calibration margins and its scale) comes from ReceiptSheet, the same
+ * rectangle the printer receives. Only the screen chrome is added here, and
+ * only the fit factor keeps it inside the stage — never a scrollbar.
  */
 .rcp-preview__sheet {
-  box-sizing: border-box;
-  background: #ffffff;
   border: 1px solid #e3e7ec;
   border-radius: 3px;
   box-shadow: 0 18px 30px -18px rgba(23, 26, 43, 0.45), 0 2px 6px rgba(23, 26, 43, 0.07);
-}
-/* The paper brings its own type scale; the panel only removes the screen chrome
-   so the sheet, and not a second frame, decides the width. */
-.rcp-preview__sheet .receipt-paper {
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  /* The sheet already draws the paper; the receipt keeps only the small inset
-     its section cards need, never a second frame or a rounded edge. */
-  padding: 7px 8px 8px;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
 }
 .rcp-preview__foot {
   display: grid;
