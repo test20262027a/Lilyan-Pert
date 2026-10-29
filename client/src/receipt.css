@@ -66,6 +66,18 @@
 
 .receipt-paper * { color: #000000; }
 
+/*
+ * Every mark on the paper is a real monochrome SVG from the app's own icon set,
+ * drawn one step heavier than elsewhere: a thermal head prints a hairline as a
+ * faint, broken line, so the receipt uses one consistent, slightly thicker
+ * stroke at a size that stays legible in preview and on paper alike.
+ */
+.receipt-paper .icon {
+  flex: none;
+  vertical-align: middle;
+  stroke-width: 2.2;
+}
+
 /* Numbers, times, phones and prices stay in one direction on an RTL receipt.
    Only the values that must never reflow (prices) are kept on one line. */
 .rc-num {
@@ -97,7 +109,7 @@
   font-size: 1.45em;
   font-weight: 800;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* Address, phone and email share ONE two-column grid — a narrow icon column and
@@ -108,12 +120,14 @@
   grid-template-columns: auto minmax(0, 1fr);
   justify-content: center;
   align-items: start;
-  column-gap: 5px;
-  row-gap: 2px;
-  margin-block-start: 4px;
+  column-gap: 4px;
+  /* The address, the phone and the email sit right under one another: one gap
+     between rows, no extra leading in between. */
+  row-gap: 1px;
+  margin-block-start: 3px;
   max-width: 100%;
-  font-size: 0.9em;
-  line-height: 1.35;
+  font-size: 0.86em;
+  line-height: 1.3;
   text-align: start;
 }
 
@@ -121,12 +135,19 @@
    of the grid above, which is what aligns every contact row. */
 .rc-contact { display: contents; }
 
+/* The mark keeps its own column and stays centred on the first line of the row
+   it belongs to, so a wrapped address never leaves the pin floating. */
 .rc-contact__icon {
   display: inline-flex;
-  margin-block-start: 0.16em;
+  align-items: center;
+  align-self: start;
+  min-height: 1.3em;
 }
 
-.rc-contact__text { min-width: 0; overflow-wrap: anywhere; }
+.rc-contact__text {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
 
 /* The owner can start-align the header; centered is the default. */
 .receipt-paper[data-align='start'] .rc-head {
@@ -183,7 +204,7 @@
   font-size: 0.86em;
   font-weight: 700;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* Only the preview greys its captions; every printed label is solid black. */
@@ -226,78 +247,59 @@
   white-space: nowrap;
 }
 
-/* Two balanced columns of order facts, split by ONE vertical dashed divider that
-   runs the height of the card. The divider is drawn by the grid itself, so it
-   stays continuous even where a row carries a fact on one side only; both
-   columns keep the same inline padding, so corresponding rows start together. */
+/* The order card is a single column of fact rows, so every row has the whole
+   card width to print on and nothing can be squeezed into a half-width cell. */
 .rc-ordergrid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  /* The two groups stretch to the same height, so the one vertical divider is
-     drawn by the right-hand cell and runs the full height of the card. */
-  align-items: stretch;
-  row-gap: 4px;
-  padding: 6px 8px 6px;
+  row-gap: 3px;
+  padding: 6px 8px;
 }
 
-.rc-ordergrid[data-cols='two'] {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  column-gap: 0;
-  row-gap: 0;
-}
-
-/* One group of facts: its own stack, so a group never reserves an empty row
-   for a fact the other group has and this one does not. */
-.rc-factcell {
+/* One fact: a stable two-track grid — caption, then value. The caption keeps
+   the first track (the right-hand one on an RTL receipt, the left-hand one on
+   an LTR receipt, so the two mirror each other) and the value takes the rest,
+   which is what puts a name on the same row as its label. Baseline alignment
+   keeps the icon, the caption and the value on one line. */
+.rc-field {
   display: grid;
-  align-content: start;
-  gap: 4px;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 4px;
   min-width: 0;
 }
 
-.rc-ordergrid[data-cols='two'] > .rc-factcell:first-child { padding-inline-end: 10px; }
-.rc-ordergrid[data-cols='two'] > .rc-factcell:last-child {
-  padding-inline-start: 10px;
-  border-inline-start: 1px dashed var(--rc-rule-dash);
-}
-
-/* One fact: its icon + caption, then the saved value(s). */
-.rc-field { display: grid; gap: 1px; min-width: 0; }
-
 .rc-field__label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   font-size: 0.8em;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+  white-space: nowrap;
 }
 
+.rc-field__label .icon { flex: none; }
+
+/* The one colon between a caption and its value. */
+.rc-field__label::after { content: ':'; }
+
+/* The value wraps between words first and only breaks a word when it truly
+   cannot fit, so nothing is ever cut off with an ellipsis. */
 .rc-field__value {
   font-size: 0.95em;
-  line-height: 1.35;
-  overflow-wrap: anywhere;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: break-word;
 }
 
 .rc-field__value--strong { font-weight: 700; }
 
-/* A fact on one line: its icon-led caption, then its value beside it — used by
-   the table, which reads «میز: A1» instead of a caption and a value stacked. */
-.rc-field--inline {
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 0 4px;
-}
-
-/* The one colon that separates the caption from its value. */
-.rc-field--inline .rc-field__label::after { content: ':'; }
-
-/* The numeric date and its time on one line, with a clear gap between them. */
-.rc-field__value--inline {
+/* The numeric date and its time side by side, a clear gap between them, and
+   wrapping onto a second line only when the column is genuinely too narrow. */
+.rc-field__dates {
   display: inline-flex;
-  align-items: baseline;
-  gap: 8px;
+  flex-wrap: wrap;
+  column-gap: 6px;
 }
 
 /* ------------------------------------------------------------------ table */
@@ -341,7 +343,7 @@
   line-height: 1.25;
   vertical-align: middle;
   text-align: start;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* Column captions: each one sits over its own values — the number and the
@@ -440,7 +442,7 @@
    heading above it — never centred, never on the opposite edge. */
 .rc-note__text {
   min-width: 0;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   text-align: start;
 }
 
@@ -535,6 +537,13 @@
   padding: 8px;
   gap: 6px;
 }
+
+/* 58 mm is narrow: the date and its time step down together so they stay on one
+   line instead of splitting onto two. */
+.receipt-paper[data-paper='58'] .rc-field__dates {
+  column-gap: 4px;
+  font-size: 0.9em;
+}
 .receipt-paper[data-paper='58'] .rc-sum { column-gap: 6px; }
 .receipt-paper[data-paper='58'] .rc-sum__row dd { font-size: 0.94em; }
 
@@ -557,7 +566,7 @@
   margin: 0;
   font-size: calc(0.94em * var(--rc-foot-scale, 1));
   line-height: 1.5;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* The closing message keeps its own alignment, independent of the header. */
@@ -605,7 +614,7 @@
 
   /* A thermal head prints hair-thin strokes faintly, so the monochrome marks
      of the sections are drawn one step heavier on paper than on screen. */
-  #print-root .receipt-paper .icon { stroke-width: 2.1; }
+  #print-root .receipt-paper .icon { stroke-width: 2.4; }
 
   #print-root .rc-secthead {
     background: #ffffff;

@@ -76,15 +76,20 @@ export function printGeometry(settings) {
   };
 }
 
-/** One labelled fact of the order card: an icon, a caption and its value(s). */
+/**
+ * One labelled fact of the order card: an icon-led caption and its value on the
+ * SAME row, in a stable two-column grid — caption in the first column (the
+ * right-hand one on an RTL receipt), value in the second, so a name always
+ * prints opposite its own label and wraps inside its own column.
+ */
 function ReceiptField({ icon, label, children }) {
   return (
     <div className="rc-field">
       <span className="rc-field__label">
-        <Icon name={icon} size={10} />
+        <Icon name={icon} size={11} />
         {label}
       </span>
-      {children}
+      <span className="rc-field__value">{children}</span>
     </div>
   );
 }
@@ -220,70 +225,50 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   const hasLineNotes = settings.show_notes !== false && (items || []).some((line) => line.notes);
 
   /*
-   * The order card's facts, built as two lists so they can be laid out in
-   * matched rows: each fact is one icon-led caption with its value(s) below.
-   * A fact with nothing saved is not added at all, so the card never carries a
-   * reserved empty row.
+   * The order card's facts, one row each. Every row is the same two-column
+   * grid — caption, then value — so the date, the table, the guest and the
+   * cashier all line up, and a long value wraps inside its own column instead
+   * of pushing the next row around. A fact with nothing saved is not added at
+   * all, so the card never carries a reserved empty row.
    */
   const dateFmt = order ? fmtDateNumeric(order.created_at, locale, timeZone) : '';
   const timeFmt = order ? fmtTime(order.created_at, locale, timeZone) : '';
 
-  /*
-   * Two groups, exactly as the reference pairs them: the time the order was
-   * taken on the one side, the table and the guest on the other, split by one
-   * vertical dashed divider. Nothing is repeated here — the order's kind is
-   * already the badge beside the number, so no "type" fact is added.
-   */
-  const leftFacts = [];
+  const facts = [];
   if (hasDateTime) {
-    /* One line only: the numeric date, then its time beside it. */
-    leftFacts.push(
+    /* One line: the numeric date, then its time beside it. */
+    facts.push(
       <ReceiptField key="datetime" icon="calendar" label={msg('datetime')}>
-        <span className="rc-field__value rc-field__value--inline">
+        <span className="rc-field__dates">
           <span className="rc-num">{dateFmt}</span>
           <span className="rc-num">{timeFmt}</span>
         </span>
       </ReceiptField>,
     );
   }
-
-  const rightFacts = [];
   if (hasTable) {
-    /* The table label and the table name share one line: «میز: A1». */
-    rightFacts.push(
-      <div className="rc-field rc-field--inline" key="table">
-        <span className="rc-field__label">
-          <Icon name="table" size={10} />
-          {msg('table')}
-        </span>
-        <span className="rc-field__value rc-field__value--strong" dir="auto">{tableName}</span>
-      </div>,
+    facts.push(
+      <ReceiptField key="table" icon="table" label={msg('table')}>
+        <span className="rc-field__value--strong" dir="auto">{tableName}</span>
+      </ReceiptField>,
     );
   }
   if (hasCustomer) {
-    rightFacts.push(
+    facts.push(
       <ReceiptField key="customer" icon="person" label={msg('customer')}>
-        <span className="rc-field__value" dir="auto">{order.customer_name}</span>
+        <span dir="auto">{order.customer_name}</span>
       </ReceiptField>,
     );
   }
   if (hasCashier) {
-    rightFacts.push(
+    facts.push(
       <ReceiptField key="cashier" icon="person" label={msg('cashier')}>
-        <span className="rc-field__value" dir="auto">{order.created_by_name}</span>
+        <span dir="auto">{order.created_by_name}</span>
       </ReceiptField>,
     );
   }
 
-  /*
-   * Two groups in one grid: the date and its time on one side, the table and
-   * the guest on the other, split by the single vertical dashed divider that is
-   * the second cell's own border (so it is never an absolutely positioned
-   * line). Each group stacks its own facts, so a group with one fact leaves no
-   * reserved empty cell; with facts on one side only, the grid is one column.
-   */
-  const twoColumns = leftFacts.length > 0 && rightFacts.length > 0;
-  const hasOrderDetails = leftFacts.length > 0 || rightFacts.length > 0;
+  const hasOrderDetails = facts.length > 0;
 
   /* The paper follows the receipt's own language, so Kurdish, Persian and
      Arabic print right-to-left even when the panel around them does not. */
@@ -311,7 +296,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
             {contactRows.map((row) => (
               <div className="rc-contact" key={row.key}>
                 <span className="rc-contact__icon" aria-hidden="true">
-                  <Icon name={row.icon} size={10} />
+                  <Icon name={row.icon} size={11} />
                 </span>
                 <span className={`rc-contact__text${row.bidi ? ' rc-num' : ''}`}>{row.text}</span>
               </div>
@@ -321,14 +306,14 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       </header>
 
       {/* 2 · order card: the number leads with a receipt mark and a localised
-          badge, then the two balanced columns of order facts. */}
+          badge, then one aligned caption/value row per order fact. */}
       {hasOrderNumber || hasOrderDetails ? (
         <section className="rc-block">
           <div className="rc-card">
             {hasOrderNumber ? (
               <div className="rc-ordertop">
                 <span className="rc-ordertop__icon" aria-hidden="true">
-                  <Icon name="receipt" size={13} />
+                  <Icon name="receipt" size={14} />
                 </span>
                 <span className="rc-ordertop__number rc-num">#{order?.order_number}</span>
                 {hasOrderType ? (
@@ -336,12 +321,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
                 ) : null}
               </div>
             ) : null}
-            {hasOrderDetails ? (
-              <div className="rc-ordergrid" data-cols={twoColumns ? 'two' : 'one'}>
-                <div className="rc-factcell">{leftFacts}</div>
-                {twoColumns ? <div className="rc-factcell">{rightFacts}</div> : null}
-              </div>
-            ) : null}
+            {hasOrderDetails ? <div className="rc-ordergrid">{facts}</div> : null}
           </div>
         </section>
       ) : null}
@@ -354,7 +334,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           <div className="rc-card">
             <div className="rc-secthead">
               <span className="rc-secthead__icon" aria-hidden="true">
-                <Icon name="cart" size={11} />
+                <Icon name="cart" size={12} />
               </span>
               <span className="rc-secthead__title">{msg('products')}</span>
             </div>
@@ -455,13 +435,13 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           <div className="rc-card">
             <div className="rc-secthead">
               <span className="rc-secthead__icon" aria-hidden="true">
-                <Icon name="clipboard" size={11} />
+                <Icon name="clipboard" size={12} />
               </span>
               <span className="rc-secthead__title">{msg('notes')}</span>
             </div>
             <div className="rc-note">
               <span className="rc-note__icon" aria-hidden="true">
-                <Icon name="message" size={10} />
+                <Icon name="message" size={11} />
               </span>
               {/* The note keeps the paper's own direction, so its first word
                   always starts on the same side as the heading above it. */}
@@ -478,7 +458,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         <div className="rc-card">
           <div className="rc-secthead">
             <span className="rc-secthead__icon" aria-hidden="true">
-              <Icon name="calculator" size={11} />
+              <Icon name="calculator" size={12} />
             </span>
             <span className="rc-secthead__title">{msg('summary')}</span>
           </div>
@@ -512,7 +492,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           <div className="rc-grand">
             <span className="rc-grand__label">{msg('total')}</span>
             <span className="rc-grand__amount">
-              <Icon name="coins" size={12} className="rc-grand__icon" />
+              <Icon name="coins" size={13} className="rc-grand__icon" />
               <b className="rc-num">{fmtMoney(order?.total || 0, currency, locale)}</b>
             </span>
           </div>
@@ -528,7 +508,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           own language — never several messages, never several languages. */}
       {footer?.text ? (
         <footer className="rc-foot rc-block">
-          <Icon name="heart" size={11} className="rc-foot__icon" />
+          <Icon name="heart" size={12} className="rc-foot__icon" />
           <p className="rc-foot__text">{footer.text}</p>
         </footer>
       ) : null}
