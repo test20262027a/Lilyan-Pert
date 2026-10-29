@@ -106,7 +106,7 @@ export default function SelectiveBackupPanel({
         </div>
       </header>
 
-      <div className="bk-sel-grid">
+      <div className={`bk-sel-grid ${count ? 'is-selecting' : ''}`}>
         {categories.map((category) => {
           const cardSections = sectionsByCategory[category.key] || [];
           const picked = cardSections.filter((section) => selected.includes(section.key));

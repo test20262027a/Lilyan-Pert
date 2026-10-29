@@ -602,7 +602,27 @@
     border-color 200ms ease,
     border-radius 200ms ease,
     box-shadow 200ms ease,
-    transform 200ms ease;
+    transform 200ms ease,
+    opacity 200ms ease;
+}
+
+/*
+ * Smart ticks: while nothing is picked the corner boxes stay invisible so the
+ * cards look clean. They keep their place in the layout (opacity, not
+ * `display`), so the row never reflows when the first selection fades them all
+ * in — and the one under the keyboard cursor reappears on focus so the control
+ * is never unreachable.
+ */
+.bk-sel-grid:not(.is-selecting) .bk-tick {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.84);
+}
+
+.bk-sel-grid:not(.is-selecting) .bk-tick:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: none;
 }
 
 .bk-tick:hover {
