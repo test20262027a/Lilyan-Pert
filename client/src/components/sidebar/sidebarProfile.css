@@ -1,0 +1,150 @@
+/* ==========================================================================
+   Sidebar profile badge.
+
+   The rail's footer shows who is signed in: the person's real avatar inside a
+   themed ring, beside the role localized in the current language. It reuses the
+   shared UserAvatar, so an uploaded photo or a newly picked avatar in My Account
+   appears here immediately — the auth context repaints it, no reload.
+
+   The dark navy chrome stays; only the badge itself carries the theme tint,
+   a glass sheen, layered depth and a gentle hover lift. Collapsed to the icon
+   rail it becomes a compact circular portrait with the role as its tooltip.
+   ========================================================================== */
+
+.sidebar .sidebar__user {
+  flex: none;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--navy-line);
+  background:
+    radial-gradient(120% 140% at 15% 0%, color-mix(in srgb, var(--primary) 20%, transparent) 0%, transparent 62%),
+    var(--navy-2);
+}
+
+.sprofile {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 6px 12px 6px 6px;
+  border-radius: 15px;
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, var(--navy-line));
+  background:
+    linear-gradient(
+      150deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.03) 42%,
+      color-mix(in srgb, var(--primary) 18%, transparent) 100%
+    );
+  backdrop-filter: blur(10px) saturate(1.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 10px 22px -18px rgba(0, 0, 0, 0.95),
+    0 2px 5px rgba(3, 8, 14, 0.35);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+[dir='rtl'] .sprofile { padding: 6px 6px 6px 12px; }
+
+.sprofile:hover {
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--primary) 46%, var(--navy-line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 14px 26px -18px rgba(0, 0, 0, 0.95),
+    0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+/* The portrait's bezel: a themed conic rim around the shared avatar. */
+.sprofile__ring {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 2px;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 210deg,
+    color-mix(in srgb, var(--primary) 72%, #ffffff),
+    color-mix(in srgb, var(--primary) 28%, transparent) 40%,
+    rgba(255, 255, 255, 0.42) 62%,
+    color-mix(in srgb, var(--primary) 58%, transparent) 100%
+  );
+  box-shadow: 0 3px 8px -4px rgba(0, 0, 0, 0.8);
+}
+.sprofile__ring .uavatar {
+  border: 0;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.24),
+    0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.sprofile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.sprofile__role {
+  font-size: 12.5px;
+  font-weight: 750;
+  line-height: 1.3;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ----------------------------------------------------- collapsed icon rail */
+
+@media (min-width: 1001px) {
+  .sidebar.is-collapsed .sidebar__user { padding-inline: 0; }
+
+  .sidebar.is-collapsed .sprofile {
+    justify-content: center;
+    gap: 0;
+    padding: 5px;
+    border-radius: 999px;
+    margin-inline: auto;
+    width: max-content;
+  }
+  .sidebar.is-collapsed .sprofile__text { display: none; }
+
+  /* The role, in the current language, outside the rail on hover/focus. */
+  .sidebar.is-collapsed .sprofile::after {
+    content: attr(data-tip);
+    position: absolute;
+    inset-inline-start: calc(100% + 12px);
+    inset-block-start: 50%;
+    transform: translateY(-50%) scale(0.96);
+    transform-origin: center;
+    padding: 6px 10px;
+    border-radius: 9px;
+    background: var(--navy-2);
+    border: 1px solid var(--navy-line);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 10px 22px -12px rgba(3, 8, 14, 0.85);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.12s ease, transform 0.12s ease;
+    z-index: 6;
+  }
+  .sidebar.is-collapsed .sprofile:hover::after,
+  .sidebar.is-collapsed .sprofile:focus-within::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sprofile,
+  .sidebar.is-collapsed .sprofile::after { transition: none; }
+  .sprofile:hover { transform: none; }
+}

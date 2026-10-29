@@ -61,6 +61,7 @@ export default function UserPhotoField({
   name,
   disabled = false,
   onUploading,
+  className = '',
 }) {
   const { t } = useI18n();
   const toast = useToast();
@@ -100,7 +101,7 @@ export default function UserPhotoField({
   };
 
   return (
-    <div className="uphoto">
+    <div className={`uphoto ${className}`.trim()}>
       {/* Live preview beside the upload controls: the large circular frame is
           the same avatar component the rest of the app shows, so what the
           administrator sees here is exactly what the account will look like. */}

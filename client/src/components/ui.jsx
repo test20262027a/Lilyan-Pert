@@ -46,7 +46,7 @@ export function SectionCard({ icon, iconClass = 'ic-purple', title, subtitle, ac
 
 /* ------------------------------------------------------------------ modal */
 
-export function Modal({ title, subtitle, onClose, children, footer, wide = false, section }) {
+export function Modal({ title, subtitle, onClose, children, footer, wide = false, section, icon, className = '' }) {
   const { t } = useI18n();
 
   useEffect(() => {
@@ -69,12 +69,12 @@ export function Modal({ title, subtitle, onClose, children, footer, wide = false
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className={`modal ${wide ? 'modal--wide' : ''}`} role="dialog" aria-modal="true" aria-label={title}>
+      <div className={`modal ${wide ? 'modal--wide' : ''} ${className}`.trim()} role="dialog" aria-modal="true" aria-label={title}>
         {/* Exactly one close control per modal, positioned per the language rule. */}
         <button className="modal__close" onClick={onClose} aria-label={t('action_close')} title={t('action_close')}>
           <Icon name="close" size={17} />
         </button>
-        <SectionHeader section={section} title={title} subtitle={subtitle} />
+        <SectionHeader section={section} icon={icon} title={title} subtitle={subtitle} />
         <div className="modal__body">{children}</div>
         {footer ? <div className="modal__foot">{footer}</div> : null}
       </div>
