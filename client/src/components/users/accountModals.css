@@ -22,8 +22,76 @@
     radial-gradient(120% 90% at 100% 0%, var(--theme-primary-soft) 0%, transparent 55%),
     var(--surface);
 }
-.modal--account .sh-head__title,
-.modal--password .sh-head__title { font-size: 17px; }
+/* ------------------------------------------------ illustrated header
+   The same header as the Add / Edit User dialog: the users artwork fills the
+   whole header box (100% x 100%, see .sh-bg__art), a glass icon tile, the
+   title with its subtitle, and the close control floating on the opposite
+   side. `isolation` keeps the -1 backdrop inside the header — without it the
+   picture paints behind the dialog's own surface and the header reads white. */
+.modal.modal--account .sh-head,
+.modal.modal--password .sh-head {
+  isolation: isolate;
+  min-height: 104px;
+  padding-block: 16px;
+  padding-inline: 18px 58px;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary-line) 60%, var(--border));
+}
+
+.modal.modal--account .sh-head__icon,
+.modal.modal--password .sh-head__icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: var(--theme-primary-strong);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 6px 14px -8px rgba(16, 22, 38, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+}
+
+.modal.modal--account .sh-head__title,
+.modal.modal--password .sh-head__title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 45%, transparent);
+}
+.modal.modal--account .sh-head__sub,
+.modal.modal--password .sh-head__sub {
+  font-size: 12.5px;
+  line-height: 1.45;
+  margin-top: 3px;
+  color: var(--text-soft);
+}
+
+/* The close control matches the dialog's glass chrome and keeps its corner. */
+.modal.modal--account .modal__close,
+.modal.modal--password .modal__close {
+  top: 10px;
+  inset-inline-end: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 3px 10px rgba(23, 26, 43, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.modal.modal--account .modal__close:hover,
+.modal.modal--password .modal__close:hover {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    0 6px 16px rgba(23, 26, 43, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
 
 /* ------------------------------------------------------------------ layout */
 
@@ -234,14 +302,48 @@
 [data-theme='dark'] .am-field__control:focus-within { background: var(--surface); }
 [data-theme='dark'] .amodal__icon,
 [data-theme='dark'] .amodal__notice-icon { box-shadow: none; }
+[data-theme='dark'] .modal.modal--account .sh-head__title,
+[data-theme='dark'] .modal.modal--password .sh-head__title { text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55); }
+[data-theme='dark'] .modal.modal--account .sh-head__icon,
+[data-theme='dark'] .modal.modal--password .sh-head__icon { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12); }
+[data-theme='dark'] .modal.modal--account .modal__close,
+[data-theme='dark'] .modal.modal--password .modal__close {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
 
 /* ------------------------------------------------------------- responsive */
+
+@media (max-width: 860px) {
+  .modal.modal--account .sh-head,
+  .modal.modal--password .sh-head { min-height: 92px; padding-block: 14px; }
+}
 
 @media (max-width: 640px) {
   .amodal__grid { grid-template-columns: 1fr; }
   .amodal__section { padding: 12px; border-radius: 16px; gap: 11px; }
-  .modal--account .sh-head__title,
-  .modal--password .sh-head__title { font-size: 16px; }
+  /* Compact header: the picture still fills it, the title, icon and close
+     control stay visible and the subtitle never grows into the illustration. */
+  .modal.modal--account .sh-head,
+  .modal.modal--password .sh-head {
+    min-height: 84px;
+    padding-block: 12px;
+    padding-inline: 14px 52px;
+    gap: 10px;
+  }
+  .modal.modal--account .sh-head__icon,
+  .modal.modal--password .sh-head__icon { width: 34px; height: 34px; border-radius: 11px; }
+  .modal.modal--account .sh-head__title,
+  .modal.modal--password .sh-head__title { font-size: 16px; }
+  .modal.modal--account .sh-head__sub,
+  .modal.modal--password .sh-head__sub { font-size: 11.5px; margin-top: 2px; }
+  .modal.modal--account .modal__close,
+  .modal.modal--password .modal__close {
+    top: 8px;
+    inset-inline-end: 8px;
+    width: 34px;
+    height: 34px;
+  }
   .uphoto--account .uphoto__frame .uavatar { width: 96px; height: 96px; }
   .amodal__notice { font-size: 11.5px; }
 }
