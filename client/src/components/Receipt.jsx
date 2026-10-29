@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from './Icon';
-import { fmtDate, fmtMoney, fmtNumber, fmtTime, zoneFor } from '../format';
+import { fmtDate, fmtDateNumeric, fmtMoney, fmtNumber, fmtTime, zoneFor } from '../format';
 import { isRtl } from '../i18n';
 import { pickReceiptFooter, receiptLabel, receiptMessageText } from '../receiptMessages';
 import '../receipt.css';
@@ -214,7 +214,9 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   /* The order's kind comes from the order itself: an order taken at a table is
      a dine-in order, one without a table is taken away. */
   const orderType = table ? 'dine_in' : 'takeaway';
-  const hasOrderType = showOrderInfo;
+  /* A seated order needs no badge: the table is already printed beside it. Only
+     the takeaway order states its kind on the paper. */
+  const hasOrderType = showOrderInfo && orderType !== 'dine_in';
   const hasLineNotes = settings.show_notes !== false && (items || []).some((line) => line.notes);
 
   /*
@@ -223,7 +225,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
    * A fact with nothing saved is not added at all, so the card never carries a
    * reserved empty row.
    */
-  const dateFmt = order ? fmtDate(order.created_at, locale, timeZone, { short: true }) : '';
+  const dateFmt = order ? fmtDateNumeric(order.created_at, locale, timeZone) : '';
   const timeFmt = order ? fmtTime(order.created_at, locale, timeZone) : '';
 
   /*
@@ -234,30 +236,34 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
    */
   const leftFacts = [];
   if (hasDateTime) {
-    /* Date and its time share one fact, exactly as the reference stacks them. */
+    /* One line only: the numeric date, then its time beside it. */
     leftFacts.push(
       <ReceiptField key="datetime" icon="calendar" label={msg('datetime')}>
-        <span className="rc-field__value rc-num">{dateFmt}</span>
-        <span className="rc-field__value rc-num">{timeFmt}</span>
+        <span className="rc-field__value rc-field__value--inline">
+          <span className="rc-num">{dateFmt}</span>
+          <span className="rc-num">{timeFmt}</span>
+        </span>
       </ReceiptField>,
     );
   }
 
   const rightFacts = [];
-  if (hasTable || hasCustomer) {
-    /* The table and the guest who placed the order share the next fact. */
+  if (hasTable) {
+    /* The table label and the table name share one line: «میز: A1». */
     rightFacts.push(
-      <ReceiptField
-        key="party"
-        icon={hasTable ? 'table' : 'person'}
-        label={hasTable ? msg('table') : msg('customer')}
-      >
-        {hasTable ? (
-          <span className="rc-field__value rc-field__value--strong" dir="auto">{tableName}</span>
-        ) : null}
-        {hasCustomer ? (
-          <span className="rc-field__value" dir="auto">{order.customer_name}</span>
-        ) : null}
+      <div className="rc-field rc-field--inline" key="table">
+        <span className="rc-field__label">
+          <Icon name="table" size={10} />
+          {msg('table')}
+        </span>
+        <span className="rc-field__value rc-field__value--strong" dir="auto">{tableName}</span>
+      </div>,
+    );
+  }
+  if (hasCustomer) {
+    rightFacts.push(
+      <ReceiptField key="customer" icon="person" label={msg('customer')}>
+        <span className="rc-field__value" dir="auto">{order.customer_name}</span>
       </ReceiptField>,
     );
   }
@@ -457,7 +463,9 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
               <span className="rc-note__icon" aria-hidden="true">
                 <Icon name="message" size={10} />
               </span>
-              <span className="rc-note__text" dir="auto">{order.notes}</span>
+              {/* The note keeps the paper's own direction, so its first word
+                  always starts on the same side as the heading above it. */}
+              <span className="rc-note__text">{order.notes}</span>
             </div>
           </div>
         </section>

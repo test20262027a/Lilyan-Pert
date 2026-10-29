@@ -30,7 +30,7 @@
   width: 100%;
   max-width: 340px;
   margin: 0 auto;
-  padding: 12px 13px 11px;
+  padding: 10px 10px 9px;
   background: #ffffff;
   color: #000000;
   border: 1px solid #dde2ea;
@@ -89,7 +89,7 @@
   display: block;
   max-width: 110px;
   height: auto;
-  margin: 0 auto 6px;
+  margin: 0 auto 4px;
   object-fit: contain;
 }
 
@@ -148,10 +148,12 @@
  * same gap above and below it. The rule belongs to the section, so a hidden
  * section (no table, no notes, no discount) never leaves an orphan divider.
  */
-.rc-block { margin-block-start: var(--rc-space, 7px); }
+/* The gap sits on both sides of a divider, so half of it on each keeps the
+   section spacing the owner chose while tightening the paper overall. */
+.rc-block { margin-block-start: calc(var(--rc-space, 7px) / 2); }
 
 .receipt-paper[data-dividers='on'] .rc-block {
-  padding-block-start: var(--rc-space, 7px);
+  padding-block-start: calc(var(--rc-space, 7px) / 2);
   border-block-start: 1px dashed var(--rc-rule-dash);
 }
 
@@ -168,7 +170,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  padding: 6px 10px;
+  padding: 4px 8px;
   background: var(--rc-tint);
   border-block-end: 1px solid var(--rc-rule);
   border-start-start-radius: 9px;
@@ -199,7 +201,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 7px 10px;
+  padding: 5px 8px;
   border-block-end: 1px dashed var(--rc-rule-dash);
 }
 
@@ -234,8 +236,8 @@
   /* The two groups stretch to the same height, so the one vertical divider is
      drawn by the right-hand cell and runs the full height of the card. */
   align-items: stretch;
-  row-gap: 6px;
-  padding: 8px 10px 9px;
+  row-gap: 4px;
+  padding: 6px 8px 6px;
 }
 
 .rc-ordergrid[data-cols='two'] {
@@ -249,7 +251,7 @@
 .rc-factcell {
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
@@ -279,6 +281,25 @@
 
 .rc-field__value--strong { font-weight: 700; }
 
+/* A fact on one line: its icon-led caption, then its value beside it — used by
+   the table, which reads «میز: A1» instead of a caption and a value stacked. */
+.rc-field--inline {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 4px;
+}
+
+/* The one colon that separates the caption from its value. */
+.rc-field--inline .rc-field__label::after { content: ':'; }
+
+/* The numeric date and its time on one line, with a clear gap between them. */
+.rc-field__value--inline {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 /* ------------------------------------------------------------------ table */
 
 /*
@@ -298,35 +319,36 @@
   border-spacing: 0;
 }
 
-/* 80 mm proportions of the reference: 6 / 39 / 9 / 20 / 26. The colgroup that
-   carries these classes is the single place the columns are sized. */
-.rc-w--no { width: 6%; }
-.rc-w--name { width: 39%; }
-.rc-w--qty { width: 9%; }
-.rc-w--unit { width: 20%; }
-.rc-w--total { width: 26%; }
+/* 80 mm proportions: 5 / 46 / 8 / 19 / 22 — the product name owns the widest
+   track so a real name still fits on one line, and each money column is wide
+   enough for a five-digit amount that never breaks. The colgroup that carries
+   these classes is the single place the columns are sized. */
+.rc-w--no { width: 5%; }
+.rc-w--name { width: 46%; }
+.rc-w--qty { width: 8%; }
+.rc-w--unit { width: 19%; }
+.rc-w--total { width: 22%; }
 
-/* Every cell of the table, caption or value. */
+/* Every cell of the table, caption or value. No vertical rules: the columns are
+   held apart by their own tracks and by tabular numerals, so the block stays
+   clean on paper instead of becoming a grid of hairlines. */
 .rc-td,
 .rc-th {
   box-sizing: border-box;
   min-width: 0;
-  padding: 4px 3px;
+  padding: 3px 2px;
   font-size: 0.94em;
-  line-height: 1.3;
+  line-height: 1.25;
+  vertical-align: middle;
   text-align: start;
   overflow-wrap: anywhere;
 }
 
-/* A hairline between the columns of every row, so each value is separated by a
-   rule as well as by its position. */
-.rc-td + .rc-td,
-.rc-th + .rc-th { border-inline-start: 1px solid var(--rc-rule); }
-
-/* Column captions: the same alignment as the values beneath them. */
+/* Column captions: each one sits over its own values — the number and the
+   prices centred, the product name start-aligned like the names beneath it. */
 .rc-th {
-  padding-block: 5px;
-  font-size: 0.78em;
+  padding-block: 4px;
+  font-size: 0.76em;
   font-weight: 700;
   line-height: 1.2;
   text-align: center;
@@ -334,16 +356,22 @@
   border-block-end: 1px solid var(--rc-rule);
 }
 
+.rc-th--name { text-align: start; }
+
 .rc-th:first-child { border-start-start-radius: 9px; }
 .rc-th:last-child { border-start-end-radius: 9px; }
 
 .rc-td--no { text-align: center; font-size: 0.88em; }
 .rc-td--name { font-weight: 600; }
-/* Quantity and both prices are centred in their own column and never break a
-   number across two lines. */
+/* Quantity and both prices are centred in their own column, one step smaller
+   than the name so every amount fits on one line and nothing is ever wrapped. */
 .rc-td--qty,
 .rc-td--unit,
-.rc-td--total { text-align: center; white-space: nowrap; }
+.rc-td--total {
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.88em;
+}
 .rc-td--total { font-weight: 700; }
 
 .rc-td__name { display: block; }
@@ -400,15 +428,21 @@
 .rc-note {
   display: flex;
   align-items: flex-start;
-  gap: 6px;
-  padding: 8px 10px 9px;
+  gap: 5px;
+  padding: 6px 8px 7px;
   font-size: 0.92em;
-  line-height: 1.45;
+  line-height: 1.4;
   text-align: start;
 }
 
 .rc-note__icon { flex: none; display: inline-flex; margin-block-start: 0.18em; }
-.rc-note__text { min-width: 0; overflow-wrap: anywhere; }
+/* The note follows the paper's own direction and starts on the same side as the
+   heading above it — never centred, never on the opposite edge. */
+.rc-note__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: start;
+}
 
 /* ---------------------------------------------------------------- summary */
 
@@ -418,9 +452,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   column-gap: 10px;
-  row-gap: 4px;
+  row-gap: 3px;
   margin: 0;
-  padding: 8px 10px 9px;
+  padding: 6px 8px 7px;
 }
 
 .rc-sum__row { display: contents; }
@@ -449,8 +483,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 9px 10px;
+  gap: 8px;
+  padding: 7px 8px;
   background: var(--rc-tint-strong);
   border-block-start: 1px dashed var(--rc-rule-dash);
   border-end-start-radius: 9px;
@@ -512,7 +546,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   text-align: center;
   break-inside: avoid;
 }

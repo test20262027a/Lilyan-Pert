@@ -111,6 +111,28 @@ export function fmtDate(value, locale, timeZone, { weekday = false, short = fals
 }
 
 /**
+ * A calendar date as plain numbers — «29/03/2024» — for the thermal receipt,
+ * where a written month costs a line and prints unevenly. Kurdish digits, the
+ * Persian calendar and the business timezone keep their own numbering.
+ */
+export function fmtDateNumeric(value, locale, timeZone) {
+  const d = toDate(value);
+  if (!d) return '—';
+  if (isKurdishOnly(locale)) {
+    const f = zonedFields(d, timeZone);
+    return inKurdishDigits(
+      `${String(f.day).padStart(2, '0')}/${String(f.month).padStart(2, '0')}/${f.year}`,
+    );
+  }
+  return new Intl.DateTimeFormat(safeLocale(locale), {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    timeZone,
+  }).format(d);
+}
+
+/**
  * Full calendar date with the weekday in front: «پنجشنبه، ۳۰ مهر ۱۴۰۵» /
  * «Thursday, 22 October 2026». Built from two formatters because the CLDR
  * Persian order puts the weekday last, which reads backwards in this card.
