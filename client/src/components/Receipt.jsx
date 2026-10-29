@@ -12,11 +12,11 @@ import '../receipt.css';
  * flow — no fixed heights, no page breaks, nothing that can clip.
  *
  * Seven independent sections, each with its own boundary and the same inner
- * padding: identity (logo, name, contact) · order details (number, date, table,
- * guest, type, staff) · products (one real table of five columns) · notes ·
- * summary · the highlighted grand total · one closing message. Only the type
- * scale, the logo cap and the product table's shape change between 58 mm and
- * 80 mm (see receipt.css).
+ * padding: identity (logo, name, contact) · order details (number, type, date,
+ * time, table, guest, staff) · products (one real table of five columns) ·
+ * notes · financial summary, closed by the highlighted grand total · one
+ * closing message. Only the type scale, the logo cap and the product table's
+ * shape change between 58 mm and 80 mm (see receipt.css).
  *
  * It is customer-facing only: the order's status history, edits, auditors and
  * timestamps are internal and live in the Order Details activity timeline,
@@ -160,6 +160,9 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
    * recalculated here — the stored order values print exactly as saved.
    */
   const amount = (value) => fmtNumber(Number(value) || 0, locale);
+  /* Summary figures print with the receipt's own currency, exactly the way the
+     grand total does, so no amount on the paper is ambiguous about its unit. */
+  const money = (value) => fmtMoney(Number(value) || 0, currency, locale);
 
   /* The receipt's structural labels are fixed localized text, printed in their
      own place; only the closing message below is one of the fifteen editable
@@ -263,27 +266,39 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
                   <Icon name="receipt" size={13} />
                 </span>
                 <span className="rc-ordertop__number rc-num">#{order?.order_number}</span>
-                <span className="rc-ordertop__badge">{msg('receipt_badge')}</span>
+                {hasOrderType ? (
+                  <span className="rc-ordertop__badge">{msg(orderType)}</span>
+                ) : null}
               </div>
             ) : null}
             {hasLeftColumn || hasRightColumn ? (
               <div className="rc-ordergrid" data-cols={hasLeftColumn && hasRightColumn ? 'two' : 'one'}>
                 {hasLeftColumn ? (
+                  /* One fact per row, in the reference's order: date, time, the
+                     table this order belongs to and the guest who placed it. */
                   <div className="rc-ordergrid__col">
                     {hasDateTime ? (
-                      <ReceiptField icon="calendar" label={msg('datetime')}>
-                        <span className="rc-field__value rc-num">
-                          {fmtDate(order?.created_at, locale, timeZone, { short: true })}
-                        </span>
-                        <span className="rc-field__value rc-num">
-                          {fmtTime(order?.created_at, locale, timeZone)}
-                        </span>
+                      <>
+                        <ReceiptField icon="calendar" label={msg('datetime')}>
+                          <span className="rc-field__value rc-num">
+                            {fmtDate(order?.created_at, locale, timeZone, { short: true })}
+                          </span>
+                        </ReceiptField>
+                        <ReceiptField icon="clock" label={msg('time')}>
+                          <span className="rc-field__value rc-num">
+                            {fmtTime(order?.created_at, locale, timeZone)}
+                          </span>
+                        </ReceiptField>
+                      </>
+                    ) : null}
+                    {hasTable ? (
+                      <ReceiptField icon="table" label={msg('table')}>
+                        <span className="rc-field__value rc-field__value--strong">{tableName}</span>
                       </ReceiptField>
                     ) : null}
-                    {hasTable || hasCustomer ? (
-                      <ReceiptField icon={hasTable ? 'table' : 'person'} label={msg(hasTable ? 'table' : 'customer')}>
-                        {hasTable ? <span className="rc-field__value rc-field__value--strong">{tableName}</span> : null}
-                        {hasCustomer ? <span className="rc-field__value">{order.customer_name}</span> : null}
+                    {hasCustomer ? (
+                      <ReceiptField icon="person" label={msg('customer')}>
+                        <span className="rc-field__value" dir="auto">{order.customer_name}</span>
                       </ReceiptField>
                     ) : null}
                   </div>
@@ -338,7 +353,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
                 <div className="rc-row" key={`${line.name}-${idx}`}>
                   <span className="rc-col rc-col--no rc-num">{amount(idx + 1)}</span>
                   <span className="rc-col rc-col--name">
-                    <span className="rc-col__label">{line.name}</span>
+                    <span className="rc-col__label" dir="auto">{line.name}</span>
                     {!hasLineNotes || !line.notes ? null : <span className="rc-col__note">{line.notes}</span>}
                   </span>
                   <span className="rc-col rc-col--qty rc-num">{amount(line.quantity)}</span>
@@ -368,14 +383,15 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
               <span className="rc-note__icon" aria-hidden="true">
                 <Icon name="message" size={10} />
               </span>
-              <span className="rc-note__text">{order.notes}</span>
+              <span className="rc-note__text" dir="auto">{order.notes}</span>
             </div>
           </div>
         </section>
       ) : null}
 
-      {/* 5 · summary: one row per stored amount, label and amount on two
-          shared alignments. */}
+      {/* 5 · financial summary: one row per stored amount — label on one
+          alignment, amount with its currency on the other — and the grand total
+          closing the same card, above a strong divider. */}
       <section className="rc-block">
         <div className="rc-card">
           <div className="rc-secthead">
@@ -387,39 +403,37 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           <dl className="rc-sum">
             <div className="rc-sum__row">
               <dt>{msg('subtotal')}</dt>
-              <dd className="rc-num">{amount(order?.subtotal)}</dd>
+              <dd className="rc-num">{money(order?.subtotal)}</dd>
             </div>
             {Number(order?.discount || 0) > 0 ? (
               <div className="rc-sum__row">
                 <dt>{msg('discount')}</dt>
-                <dd className="rc-num">-{amount(order.discount)}</dd>
+                <dd className="rc-num">-{money(order.discount)}</dd>
               </div>
             ) : null}
             {Number(order?.tax || 0) > 0 ? (
               <div className="rc-sum__row">
                 <dt>{msg('tax')}</dt>
-                <dd className="rc-num">{amount(order.tax)}</dd>
+                <dd className="rc-num">{money(order.tax)}</dd>
               </div>
             ) : null}
             {Number(order?.service_charge || 0) > 0 ? (
               <div className="rc-sum__row">
                 <dt>{msg('service_charge')}</dt>
-                <dd className="rc-num">{amount(order.service_charge)}</dd>
+                <dd className="rc-num">{money(order.service_charge)}</dd>
               </div>
             ) : null}
           </dl>
-        </div>
-      </section>
 
-      {/* 6 · grand total: never merged with the summary above — its own
-          highlighted row, the strongest element on the paper. */}
-      <section className="rc-block rc-block--grand">
-        <div className="rc-grand">
-          <span className="rc-grand__label">{msg('total')}</span>
-          <span className="rc-grand__amount">
-            <Icon name="coins" size={12} className="rc-grand__icon" />
-            <b className="rc-num">{fmtMoney(order?.total || 0, currency, locale)}</b>
-          </span>
+          {/* 6 · grand total: the bottom of the same card — the strongest figure
+              on the paper, never one more line of the rows above it. */}
+          <div className="rc-grand">
+            <span className="rc-grand__label">{msg('total')}</span>
+            <span className="rc-grand__amount">
+              <Icon name="coins" size={12} className="rc-grand__icon" />
+              <b className="rc-num">{fmtMoney(order?.total || 0, currency, locale)}</b>
+            </span>
+          </div>
         </div>
       </section>
 

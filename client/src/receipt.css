@@ -9,8 +9,8 @@
    The paper is a stack of SEVEN independent sections, separated by a dashed
    rule and never merged:
 
-     identity · order details · products · notes · summary · grand total ·
-     one closing message
+     identity · order details · products · notes · financial summary, closed by
+     the grand total · one closing message
 
    Layout rules that keep the paper intact:
    · no fixed heights — the paper grows with its content, never clips it;
@@ -97,28 +97,28 @@
   overflow-wrap: anywhere;
 }
 
-/* Each contact row keeps its own icon area, so a wrapped address stays
-   aligned with the icon instead of running back under it. */
+/* Address, phone and email share ONE two-column grid — a narrow icon column and
+   a text column — so the three rows start on the same line instead of each
+   being centred on its own width. The block itself stays centred. */
 .rc-contacts {
   display: grid;
-  gap: 2px;
-  justify-items: center;
+  grid-template-columns: auto minmax(0, 1fr);
+  justify-content: center;
+  align-items: start;
+  column-gap: 5px;
+  row-gap: 2px;
   margin-block-start: 4px;
   max-width: 100%;
-}
-
-.rc-contact {
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  max-width: 100%;
-  text-align: start;
   font-size: 0.9em;
   line-height: 1.35;
+  text-align: start;
 }
 
+/* The row wrapper only groups its key: the icon and the text are the two cells
+   of the grid above, which is what aligns every contact row. */
+.rc-contact { display: contents; }
+
 .rc-contact__icon {
-  flex: none;
   display: inline-flex;
   margin-block-start: 0.16em;
 }
@@ -126,11 +126,11 @@
 .rc-contact__text { min-width: 0; overflow-wrap: anywhere; }
 
 /* The owner can start-align the header; centered is the default. */
-.receipt-paper[data-align='start'] .rc-head,
-.receipt-paper[data-align='start'] .rc-contacts {
+.receipt-paper[data-align='start'] .rc-head {
   justify-items: start;
   text-align: start;
 }
+.receipt-paper[data-align='start'] .rc-contacts { justify-content: start; }
 
 /* The logo can sit at the start of the column while the identity stays centred. */
 .receipt-paper[data-logo='start'] .receipt-logo {
@@ -220,11 +220,13 @@
   white-space: nowrap;
 }
 
-/* Two balanced columns of order facts, split by a dashed rule. */
+/* Two balanced columns of order facts, split by one subtle vertical hairline
+   that runs the full height of the card, so the four left-hand facts and the
+   two right-hand facts read as two aligned groups. */
 .rc-ordergrid {
   display: grid;
   gap: 6px;
-  padding: 7px 9px 8px;
+  padding: 7px 9px 9px;
 }
 
 .rc-ordergrid[data-cols='two'] {
@@ -232,16 +234,16 @@
   column-gap: 0;
 }
 
-.rc-ordergrid[data-cols='two'] .rc-ordergrid__col:first-child { padding-inline-end: 8px; }
+.rc-ordergrid[data-cols='two'] .rc-ordergrid__col:first-child { padding-inline-end: 9px; }
 
 .rc-ordergrid[data-cols='two'] .rc-ordergrid__col + .rc-ordergrid__col {
-  padding-inline-start: 8px;
-  border-inline-start: 1px dashed var(--rc-rule-strong);
+  padding-inline-start: 9px;
+  border-inline-start: 1px solid var(--rc-rule);
 }
 
 .rc-ordergrid__col {
   display: grid;
-  gap: 6px;
+  gap: 5px;
   align-content: start;
   min-width: 0;
 }
@@ -457,29 +459,34 @@
 /* ------------------------------------------------------------ grand total */
 
 /*
- * The payable amount is its own highlighted row, never one more line of the
- * summary: the strongest element on the paper, kept whole by any page cut.
+ * The payable amount closes the summary card: a strong rule above it separates
+ * it from the rows, and on screen it carries the reference's pale blue-gray
+ * highlight with the card's own rounded bottom corners. It is never one more
+ * line of the summary and is kept whole by any page cut.
  */
 .rc-grand {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
-  padding: 8px 10px;
-  border-radius: 9px;
+  padding: 9px 10px;
   background: var(--rc-tint-strong);
+  border-block-start: 2px solid var(--rc-rule-strong);
+  border-end-start-radius: 9px;
+  border-end-end-radius: 9px;
   font-size: 1.3em;
   font-weight: 800;
   line-height: 1.15;
   break-inside: avoid;
 }
 
-.rc-grand__label { font-weight: 800; }
+.rc-grand__label { font-weight: 800; overflow-wrap: anywhere; }
 
 .rc-grand__amount {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  flex: none;
   white-space: nowrap;
 }
 
@@ -491,18 +498,30 @@
    plain bold line. All three keep the amount the strongest element on paper. */
 .receipt-paper[data-grand='rule'] .rc-grand {
   background: transparent;
-  border-radius: 0;
-  padding-inline: 0;
-  padding-block: 5px 2px;
-  border-block-start: 2px solid #000000;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  padding-inline: 9px;
+  padding-block: 6px 2px;
+  border-block-start: 2px solid var(--rc-rule-strong);
 }
 
 .receipt-paper[data-grand='plain'] .rc-grand {
   background: transparent;
   border-radius: 0;
-  padding-inline: 0;
-  padding-block: 3px;
+  border-block-start: 0;
+  padding-inline: 9px;
+  padding-block: 4px;
 }
+
+/* 58 mm keeps the same total block one step smaller, so the amount and its
+   currency still share one line inside the narrower card. */
+.receipt-paper[data-paper='58'] .rc-grand {
+  font-size: 1.16em;
+  padding: 8px;
+  gap: 6px;
+}
+.receipt-paper[data-paper='58'] .rc-sum { column-gap: 6px; }
+.receipt-paper[data-paper='58'] .rc-sum__row dd { font-size: 0.94em; }
 
 /* ------------------------------------------------------------------ footer */
 
@@ -581,11 +600,19 @@
   #print-root .rc-ordertop__badge,
   #print-root .rc-note { border-radius: 0; }
 
-  /* The grand total is boxed by two strong rules of its own on paper. */
+  /* On paper the highlighted block becomes plain white; its strong rule sits
+     above the amount and the summary card's own frame closes it below. */
+  #print-root .rc-grand {
+    background: #ffffff;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+
   #print-root .receipt-paper[data-grand='boxed'] .rc-grand {
     padding-inline: 0;
-    padding-block: 4px;
-    border-block: 2px solid #000000;
+    padding-block: 4px 6px;
+    border-block-start: 2px solid #000000;
+    border-block-end: 0;
   }
 
   #print-root .receipt-paper[data-grand='rule'] .rc-grand {

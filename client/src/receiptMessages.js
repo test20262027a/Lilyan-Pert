@@ -43,6 +43,7 @@ const LABELS = {
   order_no: { ku: 'داواکاری', fa: 'سفارش', ar: 'طلب', en: 'Order' },
   table: { ku: 'مێز', fa: 'میز', ar: 'طاولة', en: 'Table' },
   datetime: { ku: 'بەروار', fa: 'تاریخ', ar: 'التاريخ', en: 'Date' },
+  time: { ku: 'کات', fa: 'ساعت', ar: 'الوقت', en: 'Time' },
   customer: { ku: 'کڕیار', fa: 'مشتری', ar: 'العميل', en: 'Customer' },
   cashier: { ku: 'کاشێر', fa: 'صندوق‌دار', ar: 'أمين الصندوق', en: 'Cashier' },
   items: { ku: 'بڕگە', fa: 'قلم', ar: 'عنصر', en: 'Item' },
@@ -69,7 +70,9 @@ const LABELS = {
   order_type: { ku: 'جۆر', fa: 'نوع سفارش', ar: 'النوع', en: 'Type' },
   dine_in: { ku: 'لە داخل', fa: 'داخل', ar: 'داخلي', en: 'Dine-in' },
   takeaway: { ku: 'دەرەوە', fa: 'بیرون‌بر', ar: 'سفري', en: 'Takeaway' },
-  summary: { ku: 'کۆی گشتی', fa: 'خلاصه', ar: 'الملخص', en: 'Summary' },
+  /* The card heading, not the payable amount: it must never read as a second
+     "Grand total" beside the real one in the same card. */
+  summary: { ku: 'پوختەی حساب', fa: 'خلاصه حساب', ar: 'ملخص الحساب', en: 'Summary' },
 };
 
 /** A layout label in one language (the fixed receipt structure). */
