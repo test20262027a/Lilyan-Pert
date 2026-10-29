@@ -133,10 +133,8 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         ) : null}
       </header>
 
-      <hr className="rc-rule" />
-
       {settings.show_order_info !== false ? (
-        <section className="rc-order">
+        <section className="rc-order rc-block">
           {settings.show_order_number !== false ? (
             <div className="rc-orderno">
               <span className="rc-orderno__label">{msg('order_no')}</span>
@@ -160,44 +158,58 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         </section>
       ) : null}
 
-      <hr className="rc-rule rc-rule--soft" />
-
       {(items || []).length ? (
-        <section className="rc-items">
-          <div className="rc-items__head">
-            <span>{msg('items')}</span>
-            <span>{msg('total_column')}</span>
-          </div>
-          {(items || []).map((line, idx) => (
-            <div className="rc-item" key={`${line.name}-${idx}`}>
-              {/* The name owns its column, so wrapping never moves a price. */}
-              <span className="rc-item__name">{line.name}</span>
-              <span className="rc-item__amount rc-num">{amount(line.line_total)}</span>
-              {/* Quantity × unit price under the name: the per-unit economics
-                  of the line, printed only when the order stored them. */}
-              <span className="rc-item__meta rc-num">
-                {line.unit_price == null
-                  ? amount(line.quantity)
-                  : `${amount(line.quantity)} × ${amount(line.unit_price)}`}
-              </span>
-              {settings.show_notes !== false && line.notes ? (
-                <span className="rc-item__note">{line.notes}</span>
-              ) : null}
-            </div>
-          ))}
-        </section>
+        /*
+         * A real table, so the header and every product row share one set of
+         * column tracks: quantity, unit price and line total line up down the
+         * paper whatever the names are. Column widths are content-driven, so
+         * the same markup adapts to 58 mm and 80 mm.
+         */
+        <table className="rc-items rc-block">
+          <thead>
+            <tr>
+              <th scope="col">{msg('items')}</th>
+              <th scope="col" className="rc-col rc-col--qty">{msg('qty')}</th>
+              <th scope="col" className="rc-col rc-col--unit">{msg('unit_price')}</th>
+              <th scope="col" className="rc-col">{msg('total_column')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(items || []).map((line, idx) => (
+              <tr className="rc-item" key={`${line.name}-${idx}`}>
+                <td className="rc-item__name">
+                  <span className="rc-item__label">{line.name}</span>
+                  {/* 80 mm prints quantity and unit price in their own columns;
+                      58 mm has no room for four, so the same two values print
+                      on this meta line under the name instead. */}
+                  <span className="rc-item__meta rc-num">
+                    {line.unit_price == null
+                      ? amount(line.quantity)
+                      : `${amount(line.quantity)} × ${amount(line.unit_price)}`}
+                  </span>
+                  {settings.show_notes !== false && line.notes ? (
+                    <span className="rc-item__note">{line.notes}</span>
+                  ) : null}
+                </td>
+                <td className="rc-item__qty rc-num">{amount(line.quantity)}</td>
+                <td className="rc-item__unit rc-num">
+                  {line.unit_price == null ? '—' : amount(line.unit_price)}
+                </td>
+                <td className="rc-item__amount rc-num">{amount(line.line_total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       ) : null}
 
       {settings.show_notes !== false && order?.notes ? (
-        <div className="rc-notes">
+        <div className="rc-notes rc-block">
           <div className="rc-notes__label">{msg('notes')}</div>
           <div className="rc-notes__text">{order.notes}</div>
         </div>
       ) : null}
 
-      <hr className="rc-rule" />
-
-      <dl className="rc-totals">
+      <dl className="rc-totals rc-block">
         <div className="rc-totals__row">
           <dt>{msg('subtotal')}</dt>
           <dd className="rc-num">{amount(order?.subtotal)}</dd>
@@ -232,14 +244,13 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         A receipt carries the final order only, on screen, in print and in PDF.
       */}
 
-      {/* Exactly one closing message, already resolved in this receipt's own
-          language — never several messages, never several languages. */}
-      {footer?.text ? (
-        <>
-          <hr className="rc-rule" />
-          <p className="rc-foot">{footer.text}</p>
-        </>
-      ) : null}
+      {/*
+        Exactly one closing message, already resolved in this receipt's own
+        language — never several messages, never several languages. The grand
+        total closes with its own strong rule, so the message reads as a final
+        section of its own without a second divider.
+      */}
+      {footer?.text ? <p className="rc-foot">{footer.text}</p> : null}
     </div>
   );
 }

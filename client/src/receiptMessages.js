@@ -46,6 +46,8 @@ const LABELS = {
   customer: { ku: 'کڕیار', fa: 'مشتری', ar: 'العميل', en: 'Customer' },
   cashier: { ku: 'کاشێر', fa: 'صندوق‌دار', ar: 'أمين الصندوق', en: 'Cashier' },
   items: { ku: 'بڕگە', fa: 'قلم', ar: 'عنصر', en: 'Item' },
+  qty: { ku: 'بڕ', fa: 'تعداد', ar: 'الكمية', en: 'Qty' },
+  unit_price: { ku: 'نرخی یەکە', fa: 'قیمت واحد', ar: 'سعر الوحدة', en: 'Price' },
   total_column: { ku: 'کۆی گشتی', fa: 'مجموع', ar: 'الإجمالي', en: 'Total' },
   subtotal: { ku: 'کۆی بڕگەکان', fa: 'جمع اقلام', ar: 'المجموع الفرعي', en: 'Subtotal' },
   discount: { ku: 'داشکاندن', fa: 'تخفیف', ar: 'الخصم', en: 'Discount' },
