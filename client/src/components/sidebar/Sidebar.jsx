@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Icon from '../Icon';
-import UserAvatar from '../UserAvatar';
 import { localized, useI18n } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
 import SidebarNav from './SidebarNav';
+import SidebarProfile from './SidebarProfile';
 import { NAV, groupFor, titleKeyFor } from '../nav/navConfig';
-import './sidebarProfile.css';
 
 const COLLAPSE_KEY = 'lilyan.sidebar.collapsed';
 const EXPANDED_WIDTH = '280px';
@@ -24,7 +23,7 @@ const COLLAPSED_WIDTH = '72px';
  */
 export default function Sidebar({ open = false, onNavigate }) {
   const { t, locale } = useI18n();
-  const { user, memberships, businessId, isManager, isOwner, can } = useAuth();
+  const { isManager, isOwner, can } = useAuth();
   const { business } = useBusiness();
   const location = useLocation();
 
@@ -74,16 +73,6 @@ export default function Sidebar({ open = false, onNavigate }) {
   const toggleGroup = (item) =>
     setExpandedGroup((current) => (current === item.key ? null : item.key));
 
-  const membership = memberships.find((m) => m.business_id === businessId);
-  // The role the footer badge names: this business's role, or the platform role
-  // when the signed-in person holds no membership here. Translated like every
-  // other role label, so it follows the interface language.
-  const roleKey = membership
-    ? `role_${membership.role}`
-    : user?.is_super_admin
-      ? 'role_super_admin'
-      : null;
-  const roleLabel = roleKey ? t(roleKey) : t('auth_account');
   // Brand in the active language, with the same graceful fallback chain the
   // header uses, so both names of the shell always agree.
   const brandName = localized(business, 'name', locale) || business?.name || t('app_name');
@@ -113,24 +102,8 @@ export default function Sidebar({ open = false, onNavigate }) {
           />
         </nav>
 
-        {user ? (
-          <div className="sidebar__user">
-            {/*
-             * The real avatar beside the localized role. It reads the signed-in
-             * record from the auth context, so saving a photo or avatar in My
-             * Account repaints this badge immediately, and it stays exactly the
-             * same after signing out and back in.
-             */}
-            <div className="sprofile" data-tip={roleLabel}>
-              <span className="sprofile__ring">
-                <UserAvatar user={user} size={34} alt={user?.full_name || user?.email || ''} />
-              </span>
-              <span className="sprofile__text">
-                <span className="sprofile__role">{roleLabel}</span>
-              </span>
-            </div>
-          </div>
-        ) : null}
+        {/* One horizontal card: avatar and, opposite it, the localized role. */}
+        <SidebarProfile collapsed={railCollapsed} />
       </aside>
 
       {/*

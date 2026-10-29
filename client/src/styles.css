@@ -1459,7 +1459,6 @@ table.data tr:hover td { background: var(--surface-2); }
     display: grid;
     place-items: center;
   }
-  .sidebar.is-collapsed .sidebar__role { font-size: 0; }
   .sidebar.is-collapsed .nav-link__label {
     max-width: 0;
     opacity: 0;
