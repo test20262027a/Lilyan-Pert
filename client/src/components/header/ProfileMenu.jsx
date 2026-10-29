@@ -6,6 +6,13 @@ import { useI18n } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 
 /*
+ * The exit strip drawn across the sign-out plate while it is engaged: seven
+ * chevrons, largest first, shrinking toward the edge the person is sent to.
+ * The index drives the chasing light in CSS, so the sizes stay declarative.
+ */
+const EXIT_CHEVRONS = [30, 25, 21, 17, 14, 11, 9];
+
+/*
  * Profile trigger + overlay menu. Every row points at a real route and the
  * sign-out row calls the app's actual logout; the menu is an overlay, so it
  * never pushes page content down.
@@ -124,6 +131,14 @@ export default function ProfileMenu() {
               <Icon name="logout" size={15} className="icon--dir" />
             </span>
             <span className="hdr-menu__logout-text">{t('auth_logout')}</span>
+            {/* Decorative only: the label stays in the accessibility tree. */}
+            <span className="hdr-menu__logout-chevrons" aria-hidden="true">
+              {EXIT_CHEVRONS.map((size, index) => (
+                <span className="lg-chev" key={size} style={{ '--i': index }}>
+                  <Icon name="chevronRight" size={size} />
+                </span>
+              ))}
+            </span>
           </button>
         </div>
       ) : null}
