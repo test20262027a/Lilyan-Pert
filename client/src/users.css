@@ -188,18 +188,24 @@
    here is spaced with `justify-content: space-between`: the tracks do the work. */
 .um-row {
   --um-avatar: 46px;
-  --um-name-lines: 2;
+  --um-role-col: 108px;
+  --um-status-col: 104px;
+  --um-actions-col: 110px;
 
   display: grid;
+  /* Every column is a fixed width, so a long name, email, role or permission
+     summary can only be clipped inside its own cell — it can never push the
+     next column sideways. Only the two prose columns flex. */
   grid-template-columns:
     var(--um-avatar)
     minmax(0, 1fr)
-    minmax(92px, 116px)
-    minmax(88px, 110px)
-    minmax(0, 1.2fr)
-    max-content;
+    var(--um-role-col)
+    var(--um-status-col)
+    minmax(0, 1.15fr)
+    var(--um-actions-col);
   grid-template-areas: 'avatar who role status perms actions';
   align-items: center;
+  align-content: center;
   column-gap: 14px;
 
   min-height: 84px;
@@ -242,31 +248,33 @@
   place-items: center;
 }
 
+/* The identity block is exactly two tight lines — name above, email below — so
+   it is the same height on every row and stays centred on the row's axis. */
 .um-row__who {
   grid-area: who;
   display: grid;
-  gap: 3px;
+  gap: 1px;
   min-width: 0;
 }
 
-/* A two-line slot that is always reserved, so a one-line name and a two-line
-   name start on the same line and leave the email on the same line too. */
+/* One line, clipped with an ellipsis: a long name can never grow the block and
+   push the email (or the row) out of alignment. The full value is still offered
+   by the shared tooltip while it is actually cut off. */
 .um-row__name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: var(--um-name-lines);
-  overflow: hidden;
-  height: calc(var(--um-name-lines) * 1.28em);
+  display: block;
+  min-width: 0;
   font-size: 14px;
-  line-height: 1.28;
+  line-height: 1.35;
   font-weight: 650;
   color: var(--um-ink);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .um-row__email {
   font-size: 11.5px;
-  line-height: 1.3;
+  line-height: 1.35;
   color: var(--um-muted);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -302,8 +310,15 @@
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
 }
-.um-row__role { grid-area: role; justify-self: start; }
-.um-row__status { grid-area: status; justify-self: start; }
+/* Both pills fill their own column and centre their label, so role and status
+   share the same left/right edges on every row whatever their text length. */
+.um-row__role { grid-area: role; }
+.um-row__status { grid-area: status; }
+.um-row__role,
+.um-row__status {
+  justify-self: stretch;
+  justify-content: center;
+}
 
 .um-badge--owner,
 .um-badge--manager {
@@ -342,9 +357,14 @@
 
 /* --------------------------------------------------------- row actions */
 
+/* A fixed action track: the three icon buttons are identical squares, and a row
+   where a member may not edit or delete keeps the same column width with its
+   remaining buttons aligned to the same edge. */
 .um-row__actions {
   grid-area: actions;
+  width: var(--um-actions-col);
   justify-self: end;
+  justify-content: flex-end;
   display: flex;
   align-items: center;
   gap: 4px;
@@ -870,9 +890,9 @@
     grid-template-columns:
       var(--um-avatar)
       minmax(0, 1fr)
-      minmax(88px, 112px)
-      minmax(84px, 104px)
-      max-content;
+      var(--um-role-col)
+      var(--um-status-col)
+      var(--um-actions-col);
     grid-template-areas:
       'avatar who role status actions'
       'avatar perms perms perms actions';

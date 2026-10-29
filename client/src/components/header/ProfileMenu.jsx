@@ -123,7 +123,7 @@ export default function ProfileMenu() {
             <span className="hdr-menu__logout-icon">
               <Icon name="logout" size={15} className="icon--dir" />
             </span>
-            <span>{t('auth_logout')}</span>
+            <span className="hdr-menu__logout-text">{t('auth_logout')}</span>
           </button>
         </div>
       ) : null}
