@@ -77,31 +77,19 @@
     0 10px 22px -16px rgba(2, 7, 12, 0.95);
 }
 
-/* The portrait's bezel: a themed conic rim around the shared avatar, with its
-   own soft contact shadow so it reads as a raised disc. */
+/* Nothing sits behind the portrait: no rim, ring or plate — the avatar is the
+   shared circle itself, lifted by a single soft contact shadow. */
 .sprofile__avatar {
-  position: relative;
   flex: none;
   display: grid;
   place-items: center;
-  padding: 2px;
   border-radius: 50%;
-  background: conic-gradient(
-    from 210deg,
-    color-mix(in srgb, var(--primary) 70%, #ffffff),
-    color-mix(in srgb, var(--primary) 24%, transparent) 40%,
-    rgba(255, 255, 255, 0.45) 62%,
-    color-mix(in srgb, var(--primary) 58%, transparent) 100%
-  );
-  box-shadow:
-    0 5px 11px -6px rgba(0, 0, 0, 0.9),
-    0 0 0 1px rgba(255, 255, 255, 0.07);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.9);
 }
 .sprofile__avatar .uavatar {
-  border: 0;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-    0 1px 3px rgba(0, 0, 0, 0.5);
+    inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+    0 1px 3px rgba(0, 0, 0, 0.45);
 }
 
 /* Directly opposite the avatar, vertically centred with it — nothing above. */

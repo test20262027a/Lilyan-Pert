@@ -294,12 +294,16 @@ a { color: var(--primary); }
  * scrolls with the wheel, touch or keyboard, it just does it invisibly.
  */
 .sidebar__nav {
+  /* Horizontal inset of every row. The active plate cancels it on the outer
+     side, so the highlight can reach the rail's edge and bend into it. */
+  --nav-gutter: 10px;
+  --plate-curve: 12px;
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 8px 10px calc(12px + env(safe-area-inset-bottom));
+  padding: 8px var(--nav-gutter) calc(12px + env(safe-area-inset-bottom));
   overflow-y: auto;
   overflow-x: hidden;
   overscroll-behavior: contain;
@@ -362,44 +366,74 @@ a { color: var(--primary); }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 /*
- * Active rail item: a translucent accent plate that follows the saved theme,
- * a thin accent edge, an inner highlight for the soft 3D lift and a theme
- * shadow — nothing here is a fixed blue or green.
+ * Active rail item: a theme-tinted glass plate that runs all the way to the
+ * rail's outer edge and bends into it at its top and bottom corners. The two
+ * concave shoulders come from ::before/::after, which paint the rail's own
+ * colour into the plate's outer corners, so the highlight swells out of the
+ * edge instead of ending in a rectangle.
  *
- * The plate is slightly rounder on its leading corners and tighter on its
- * trailing ones, so it bends into the rail without ever looking like a plain
- * pill. All radii are logical, so the bend mirrors with the layout direction.
+ * The outer edge is always the inline-end side — the rail sits at
+ * `inset-inline-start: 0` — so every offset here is logical and the RTL rail
+ * on the right mirrors the LTR rail on the left with no second rule. The
+ * shoulders stay inside the row, so no neighbouring item is ever covered.
  */
 .sidebar .nav-link.is-active {
+  margin-inline-end: calc(-1 * var(--nav-gutter, 10px));
+  padding-inline-end: calc(var(--nav-gutter, 10px) + 10px);
   background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 30%, var(--navy)),
-    color-mix(in srgb, var(--primary) 18%, var(--navy))
+    165deg,
+    color-mix(in srgb, var(--primary) 34%, var(--navy)) 0%,
+    color-mix(in srgb, var(--primary) 21%, var(--navy)) 55%,
+    color-mix(in srgb, var(--primary) 14%, var(--navy)) 100%
   );
-  color: color-mix(in srgb, var(--primary) 26%, #ffffff);
-  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  color: #ffffff;
+  border-color: transparent;
   border-start-start-radius: 13px;
   border-end-start-radius: 13px;
-  border-start-end-radius: 8px;
-  border-end-end-radius: 8px;
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 18%, transparent),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
-    0 10px 20px -14px color-mix(in srgb, var(--primary) 95%, transparent),
-    0 2px 6px -4px rgba(0, 0, 0, 0.45);
+  border-start-end-radius: 0;
+  border-end-end-radius: 0;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 24%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 14px 24px -18px color-mix(in srgb, var(--primary) 95%, transparent),
+    0 2px 6px -4px rgba(0, 0, 0, 0.5);
 }
-/* The leading edge light: a soft accent line just inside the plate that gives
-   the highlight its depth without ever touching the icon or the label. */
-.sidebar .nav-link.is-active::before {
+/* The concave shoulders: a rail-coloured square in each outer corner, with the
+   corner facing into the plate rounded away. */
+.sidebar:not(.is-collapsed) .nav-link.is-active::before,
+.sidebar:not(.is-collapsed) .nav-link.is-active::after {
   content: '';
   position: absolute;
-  inset-inline-start: 4px;
-  inset-block: 9px;
-  width: 2.5px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 50%, #ffffff);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 75%, transparent);
+  inline-size: var(--plate-curve, 12px);
+  block-size: var(--plate-curve, 12px);
+  inset-inline-end: 0;
+  background: var(--navy);
+  pointer-events: none;
 }
-.sidebar .nav-link.is-active .icon { color: color-mix(in srgb, var(--primary) 40%, #ffffff); }
+.sidebar:not(.is-collapsed) .nav-link.is-active::before {
+  inset-block-start: 0;
+  border-end-start-radius: var(--plate-curve, 12px);
+}
+.sidebar:not(.is-collapsed) .nav-link.is-active::after {
+  inset-block-end: 0;
+  border-start-start-radius: var(--plate-curve, 12px);
+}
+/* Hover and keyboard focus brighten the same plate without moving it. */
+.sidebar .nav-link.is-active:hover,
+.sidebar .nav-link.is-active:focus-visible {
+  background: linear-gradient(
+    165deg,
+    color-mix(in srgb, var(--primary) 42%, var(--navy)) 0%,
+    color-mix(in srgb, var(--primary) 27%, var(--navy)) 55%,
+    color-mix(in srgb, var(--primary) 18%, var(--navy)) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.24),
+    0 16px 26px -18px color-mix(in srgb, var(--primary) 100%, transparent),
+    0 2px 6px -4px rgba(0, 0, 0, 0.5);
+}
+.sidebar .nav-link.is-active .icon { color: color-mix(in srgb, var(--primary) 32%, #ffffff); }
 
 /* Labels fade out instead of popping while the rail narrows. */
 .sidebar .nav-link__label,
@@ -1478,6 +1512,12 @@ table.data tr:hover td { background: var(--surface-2); }
     height: 38px;
     min-height: 38px;
     margin-inline: auto;
+  }
+  /* The icon rail has no outer edge to bend into: the active tile keeps a
+     compact rounded square and drops the shoulders. */
+  .sidebar.is-collapsed .nav-link.is-active {
+    border-radius: 13px;
+    padding-inline: 0;
   }
 
   /* Tooltips for the icon-only rail: outside the rail, in the current language. */
