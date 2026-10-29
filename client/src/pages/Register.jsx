@@ -5,9 +5,12 @@ import { Alert, Field } from '../components/ui';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { applyTheme, DEFAULT_THEME } from '../theme';
+import useDocumentMetadata from '../hooks/useDocumentMetadata';
 
 export default function Register() {
   const { t } = useI18n();
+  // No business is loaded on this screen; the last known brand name is used.
+  useDocumentMetadata();
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ business_name: '', full_name: '', email: '', password: '' });

@@ -4,7 +4,8 @@ import Icon from './Icon';
 import { Badge } from './ui';
 import { useAuth } from '../context/AuthContext';
 import { useI18n } from '../i18n';
-import { BusinessProvider } from '../context/BusinessContext';
+import { BusinessProvider, useBusiness } from '../context/BusinessContext';
+import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import AppHeader from './header/AppHeader';
 import Sidebar from './sidebar/Sidebar';
 
@@ -15,6 +16,10 @@ import Sidebar from './sidebar/Sidebar';
  */
 function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { business } = useBusiness();
+
+  // The tab shows this section and this business, in this language.
+  useDocumentMetadata(business);
 
   // An open mobile drawer owns the screen, so the page behind it must not scroll.
   useEffect(() => {

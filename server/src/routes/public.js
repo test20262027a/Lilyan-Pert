@@ -67,6 +67,12 @@ router.get(
     const b = rows[0];
     res.json({
       name: b?.name || 'Lilyan Pert',
+      // The localized names, so the sign-in tab can name the business in the
+      // language the visitor is reading.
+      name_ku: b?.name_ku || null,
+      name_fa: b?.name_fa || null,
+      name_ar: b?.name_ar || null,
+      name_en: b?.name_en || null,
       logo_url: b ? publicMediaUrl(b.logo_url) : null,
       // The sign-in pages paint themselves in the business's own appearance.
       theme: b?.theme || null,

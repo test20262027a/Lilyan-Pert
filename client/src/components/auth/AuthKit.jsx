@@ -4,6 +4,7 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { get } from '../../api';
 import { applyTheme, DEFAULT_THEME } from '../../theme';
+import useDocumentMetadata from '../../hooks/useDocumentMetadata';
 import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
@@ -36,6 +37,10 @@ function useBrand() {
 
 export function AuthLayout({ children, footer }) {
   const brand = useBrand();
+
+  // The tab of the sign-in family names this screen and the business, in the
+  // language the visitor is reading.
+  useDocumentMetadata(brand);
 
   // The business picked this appearance for its public pages; the sign-in
   // screen is the first thing anyone sees, so it must not fall back to a

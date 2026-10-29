@@ -26,6 +26,7 @@ import OrderSuccessModal from '../components/customer/OrderSuccessModal';
 import ReviewModal from '../components/customer/ReviewModal';
 import CustomerClosedNotice from '../components/customer/CustomerClosedNotice';
 import useOpeningStatus from '../hooks/useOpeningStatus';
+import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import '../customer.css';
 import '../customerAvailability.css';
 
@@ -58,6 +59,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const toast = useToast();
 
   const [data, setData] = useState(null);
+  /* The guest's tab carries this menu's section and the business's own name. */
+  useDocumentMetadata(data?.business);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState({});
