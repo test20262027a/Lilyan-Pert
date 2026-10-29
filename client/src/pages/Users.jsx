@@ -12,8 +12,7 @@ import UsersArtwork from '../components/users/UsersArtwork';
 import UserFormModal from '../components/users/UserFormModal';
 import ChangePasswordModal from '../components/users/ChangePasswordModal';
 import ProfileModal from '../components/users/ProfileModal';
-import UserAvatar from '../components/UserAvatar';
-import { permissionSummaryKey } from '../permissions';
+import UserListRow from '../components/users/UserListRow';
 import '../users.css';
 
 /*
@@ -192,6 +191,13 @@ export default function Users() {
     }
   };
 
+  // Visibility: deactivating asks for confirmation first (it is how access is
+  // withdrawn), reactivating applies straight away.
+  const changeVisibility = (member) => {
+    if (member.status === 'active') setConfirm({ kind: 'access', user: member });
+    else toggleStatus(member);
+  };
+
   const roleOptions = [
     { value: 'all', label: t('user_filter_role_all') },
     ...['owner', 'manager', 'staff', 'customer'].map((key) => ({
@@ -308,10 +314,23 @@ export default function Users() {
         {loading ? (
           [0, 1, 2, 3].map((row) => (
             <div className="um-row um-row--skeleton" key={row} aria-hidden="true">
-              <span className="um-skel" style={{ width: 170, height: 12 }} />
-              <span className="um-skel" style={{ width: 60, height: 20, borderRadius: 999 }} />
-              <span className="um-skel" style={{ width: 52, height: 20, borderRadius: 999 }} />
-              <span className="um-skel" style={{ width: 130, height: 11 }} />
+              <div className="um-row__identity">
+                <span className="um-skel um-skel--avatar um-row__avatar" />
+                <div className="um-row__who">
+                  <span className="um-skel" style={{ width: '62%', height: 12 }} />
+                  <span className="um-skel" style={{ width: '42%', height: 10 }} />
+                </div>
+              </div>
+              <div className="um-row__badges">
+                <span className="um-skel um-skel--chip um-row__role" />
+                <span className="um-skel um-skel--chip um-row__status" />
+              </div>
+              <span className="um-skel um-row__perms" style={{ height: 10, width: '80%' }} />
+              <div className="um-row__actions">
+                <span className="um-skel um-skel--btn" />
+                <span className="um-skel um-skel--btn" />
+                <span className="um-skel um-skel--btn" />
+              </div>
             </div>
           ))
         ) : loadError ? (
@@ -329,78 +348,19 @@ export default function Users() {
             hint={filtered ? t('user_search_empty_hint') : undefined}
           />
         ) : (
-          data.users.map((member) => {
-            const self = member.id === me?.id;
-            const activeMember = member.status === 'active';
-            return (
-              <div className="um-row" key={member.membership_id}>
-                <div className="um-row__identity">
-                  <UserAvatar user={member} size={44} alt={member.full_name || member.email} />
-                  <div className="um-row__who">
-                    <span className="um-row__name">{member.full_name || member.email}</span>
-                    <span className="um-row__email" dir="ltr">
-                      {member.email}
-                    </span>
-                  </div>
-                </div>
-
-                <span className={`um-badge um-badge--${member.role}`}>{t(`role_${member.role}`)}</span>
-
-                <span className={`um-badge ${activeMember ? 'um-badge--active' : 'um-badge--off'}`}>
-                  {t(activeMember ? 'user_active' : 'user_disabled')}
-                </span>
-
-                <span className="um-row__perms">
-                  {t('user_permissions_label')}{' '}
-                  <strong>{t(permissionSummaryKey(member))}</strong>
-                </span>
-
-                <div className="um-row__actions">
-                  {canEdit ? (
-                    <button
-                      type="button"
-                      className="um-iconbtn"
-                      onClick={() => setModal({ mode: 'edit', user: member })}
-                      title={t('user_edit_title')}
-                      aria-label={t('user_edit_title')}
-                    >
-                      <Icon name="pencil" size={15} />
-                    </button>
-                  ) : null}
-                  {canEdit ? (
-                    <button
-                      type="button"
-                      className="um-iconbtn"
-                      disabled={self || busy}
-                      onClick={() =>
-                        activeMember
-                          ? setConfirm({ kind: 'access', user: member })
-                          : toggleStatus(member)
-                      }
-                      title={self
-                        ? t('user_cannot_modify_self')
-                        : t(activeMember ? 'user_deactivate' : 'user_activate')}
-                      aria-label={t(activeMember ? 'user_deactivate' : 'user_activate')}
-                    >
-                      <Icon name={activeMember ? 'eyeOff' : 'eye'} size={15} />
-                    </button>
-                  ) : null}
-                  {canDelete ? (
-                    <button
-                      type="button"
-                      className="um-iconbtn um-iconbtn--danger"
-                      disabled={self || busy}
-                      onClick={() => setConfirm({ kind: 'delete', user: member })}
-                      title={self ? t('user_cannot_modify_self') : t('action_delete')}
-                      aria-label={t('action_delete')}
-                    >
-                      <Icon name="trash" size={15} />
-                    </button>
-                  ) : null}
-                </div>
-              </div>
-            );
-          })
+          data.users.map((member) => (
+            <UserListRow
+              key={member.membership_id}
+              member={member}
+              self={member.id === me?.id}
+              busy={busy}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              onEdit={() => setModal({ mode: 'edit', user: member })}
+              onVisibility={() => changeVisibility(member)}
+              onDelete={() => setConfirm({ kind: 'delete', user: member })}
+            />
+          ))
         )}
       </div>
 
