@@ -2,6 +2,7 @@ import { LOCALES, useI18n } from '../../i18n';
 import { Select } from '../ui';
 import { SettingsCard } from './SettingsCard';
 import { SetField } from './fields';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 
 /*
  * The four localized business names in the reference order: on a right-to-left
@@ -21,9 +22,10 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
   return (
     <>
       <SettingsCard icon="building" tone="green" title={t('settings_business_card')}>
-        {/* Auto-fit keeps the visible names in ONE filled row: three enabled
-            languages share the width instead of leaving a hole next to two. */}
-        <div className="set-grid set-grid--auto">
+        {/* The shared language grid keeps the visible names in ONE filled row:
+            three enabled languages share the width instead of leaving a hole
+            next to two, and one language fills the card. */}
+        <LanguageFieldsGrid count={locales.length}>
           {locales.map((l) => (
             <SetField
               key={l.code}
@@ -41,7 +43,7 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
               />
             </SetField>
           ))}
-        </div>
+        </LanguageFieldsGrid>
 
         <div style={{ marginTop: 14 }}>
           <SetField label={t('settings_business_type')}>

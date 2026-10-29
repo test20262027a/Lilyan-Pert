@@ -559,8 +559,46 @@
 
 /* --------------------------------------------------------- best selling */
 
-.best-list { display: flex; flex-direction: column; gap: 12px; }
-.best-row { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+/*
+ * The widget fills its card. The wrap measures the space the card actually
+ * gives it (a half-width dashboard column or a full-width row), and the list
+ * shares that height evenly between the products, so a short list never leaves
+ * a block of empty card under the last bar and a long one never overflows.
+ */
+.best-wrap {
+  container-type: inline-size;
+  display: flex;
+  min-width: 0;
+  height: 100%;
+}
+.best-list {
+  flex: 1 1 auto;
+  display: grid;
+  grid-auto-rows: minmax(0, 1fr);
+  align-content: stretch;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.best-row {
+  display: grid;
+  align-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px 9px;
+  border-radius: 14px;
+  transition: background 160ms ease, box-shadow 160ms ease;
+}
+/* A soft lift on hover: the row is the whole hit area, never just the bar. */
+.best-row:hover {
+  background: color-mix(in srgb, var(--mint) 9%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+[data-theme='dark'] .best-row:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
+
 .best-row__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .best-row__rank {
   width: 22px; height: 22px; border-radius: 7px; flex: none;
@@ -568,42 +606,62 @@
   background: color-mix(in srgb, var(--mint) 16%, transparent);
   color: var(--mint-ink); font-size: 11px; font-weight: 800;
   font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 /* A long name wraps to a second line instead of being cut off — the product
    name is the row's identity, and Kurdish / Persian / Arabic names are often
    longer than one line. Never more than two, so every row keeps its height. */
 .best-row__name {
-  flex: 1 1 auto; min-width: 0; font-size: 12.5px; font-weight: 650; color: var(--text);
+  flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 700; color: var(--text);
   line-height: 1.35; overflow-wrap: anywhere;
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
   overflow: hidden;
 }
 /* Bar plus a fixed value column: the column is what keeps every circle on the
-   same vertical line, whatever the quantity's digit count. The line is indented
-   by the rank marker so the bar starts under the name, not under the number. */
+   same vertical line, whatever the quantity's digit count. */
 .best-row__line {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 34px;
-  align-items: center; gap: 9px;
+  align-items: center; gap: 10px;
   padding-inline-start: 30px;
   min-width: 0;
 }
 .best-row__track {
-  height: 9px; border-radius: var(--radius-pill);
-  background: color-mix(in srgb, var(--border-strong) 45%, transparent);
-  box-shadow: inset 0 1px 2px rgba(20, 45, 30, 0.09);
+  height: 11px; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--border-strong) 42%, transparent);
+  box-shadow:
+    inset 0 1px 2px rgba(20, 45, 30, 0.11),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.55);
   overflow: hidden;
   min-width: 0;
 }
+/* Each product keeps the section's own colour, in a slightly different depth,
+   so the bars read as one family and still distinguish their rows. */
+.best-row { --best-depth: 100%; }
+.best-list > .best-row:nth-child(5n + 2) { --best-depth: 86%; }
+.best-list > .best-row:nth-child(5n + 3) { --best-depth: 72%; }
+.best-list > .best-row:nth-child(5n + 4) { --best-depth: 58%; }
+.best-list > .best-row:nth-child(5n + 5) { --best-depth: 46%; }
 .best-row__fill {
   display: block; height: 100%; border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--mint) 70%, #ffffff), var(--mint));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  transition: width 240ms ease;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--mint) calc(var(--best-depth) * 0.72), #ffffff),
+    color-mix(in srgb, var(--mint) var(--best-depth), var(--mint-soft))
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 1px 3px color-mix(in srgb, var(--mint) 30%, transparent);
+  transition: width 260ms ease, filter 160ms ease;
 }
+.best-row:hover .best-row__fill { filter: saturate(1.12) brightness(1.04); }
 /* The bar grows from the start of the line, which is the right edge in RTL. */
 [dir='rtl'] .best-row__fill {
-  background: linear-gradient(270deg, color-mix(in srgb, var(--mint) 70%, #ffffff), var(--mint));
+  background: linear-gradient(
+    270deg,
+    color-mix(in srgb, var(--mint) calc(var(--best-depth) * 0.72), #ffffff),
+    color-mix(in srgb, var(--mint) var(--best-depth), var(--mint-soft))
+  );
 }
 
 /* The quantity: one colour-matched pastel circle at the end of its own bar. */
@@ -626,6 +684,34 @@
 /* Three digits and up (a locale may also group them) shrink instead of
    spilling out of the circle or pushing the bar sideways. */
 .best-row__badge.is-tight { font-size: 10.5px; letter-spacing: -0.02em; }
+
+/*
+ * A card wide enough to hold it lays each product out on ONE line: name on the
+ * starting edge, then the bar running to the card's far edge with its count at
+ * the end. Every bar therefore starts and ends on the same two vertical lines.
+ */
+@container (min-width: 430px) {
+  .best-row {
+    grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 14px;
+  }
+  .best-row__top { grid-column: 1; }
+  .best-row__line {
+    grid-column: 2;
+    grid-template-columns: minmax(0, 1fr) 34px;
+    padding-inline-start: 0;
+  }
+  /* One line on a wide card: the row is already short, and the full name is
+     still there in the hover title. */
+  .best-row__name { -webkit-line-clamp: 1; }
+}
+
+/* A narrow card stacks them: the name above a full-width bar, the count at the
+   bar's end. No horizontal scrolling and nothing clipped. */
+@container (max-width: 429.98px) {
+  .best-row__line { padding-inline-start: 0; }
+}
 
 /* --------------------------------------------------------- status tiles */
 
@@ -923,13 +1009,16 @@
   .kpi__icon, .fstat__icon, .status-tile__icon { width: 44px; height: 44px; }
   .fstat__value { font-size: 19px; }
   .status-tile__value { font-size: 28px; }
+  .best-row { padding: 5px 6px; }
   .best-row__line { grid-template-columns: minmax(0, 1fr) 32px; gap: 8px; }
   .best-row__badge { width: 28px; height: 28px; font-size: 11.5px; }
+  .best-row__name { font-size: 12.5px; }
   .hours-card__body { flex-direction: column; gap: 12px; }
   .hours-card__divider { width: auto; height: 1px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .best-row, .best-row__fill { transition: none; }
   .dash .card, .kpi, .fstat, .status-tile, .kpi__icon, .fstat__icon, .status-tile__icon,
   .sound-play, .range-pill, .chart__dot, .best-row__fill {
     transition: none;

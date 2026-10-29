@@ -2,6 +2,7 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { SettingsCard, SettingsToggleRow } from './SettingsCard';
 import { SetField } from './fields';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 
 /*
  * Customer-menu navigation. Turning the customer menu off also turns the
@@ -55,7 +56,11 @@ export default function CustomerMenuTab({ draft, patch, setEditable, canManage }
         <div className="set-stack">
           <div>
             <div className="set-group-label">{t('settings_editable_menu_title')}</div>
-            <div className="set-grid">
+            {/* Only the enabled languages are rendered, and the shared grid
+                gives every one of them an equal share of the card width — one
+                language fills the row, three sit side by side when the card is
+                wide enough instead of leaving a hole. */}
+            <LanguageFieldsGrid count={locales.length}>
               {locales.map((l) => (
                 <SetField key={l.code} label={l.label}>
                   <input
@@ -67,14 +72,14 @@ export default function CustomerMenuTab({ draft, patch, setEditable, canManage }
                   />
                 </SetField>
               ))}
-            </div>
+            </LanguageFieldsGrid>
           </div>
 
           <div>
             <div className="set-group-label">
               <Icon name="sparkles" size={13} /> {t('settings_editable_welcome')}
             </div>
-            <div className="set-grid">
+            <LanguageFieldsGrid count={locales.length}>
               {locales.map((l) => (
                 <SetField key={l.code} label={l.label}>
                   <textarea
@@ -86,7 +91,7 @@ export default function CustomerMenuTab({ draft, patch, setEditable, canManage }
                   />
                 </SetField>
               ))}
-            </div>
+            </LanguageFieldsGrid>
           </div>
         </div>
       </SettingsCard>

@@ -1,6 +1,7 @@
 import { useI18n } from '../../i18n';
 import { SettingsCard } from './SettingsCard';
 import { SetField } from './fields';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 
 /* The four addresses in the order the reference shows them. */
 const ADDRESSES = [
@@ -46,7 +47,7 @@ export default function ContactTab({ draft, setField, setJson, canManage }) {
           />
         </SetField>
 
-        <div className="set-grid set-grid--auto">
+        <LanguageFieldsGrid count={languages.length}>
           {languages.map((entry) => (
             <SetField key={entry.code} label={t(entry.labelKey)}>
               <input
@@ -58,7 +59,7 @@ export default function ContactTab({ draft, setField, setJson, canManage }) {
               />
             </SetField>
           ))}
-        </div>
+        </LanguageFieldsGrid>
       </div>
     </SettingsCard>
   );
