@@ -1,5 +1,6 @@
 import Icon from '../Icon';
 import CustomerCarousel from '../customer/CustomerCarousel';
+import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { localized, useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 import '../../customer-ads.css';
@@ -34,9 +35,11 @@ export default function CustomerAds({ ads, locale, onOpen }) {
 
   return (
     <section className="cui-ads" aria-labelledby="cui-ads-title">
-      {/* The mark leads the title, so it sits on the right in RTL and on the
-          left in LTR — always before the text it belongs to. */}
+      {/* The same illustrated, theme-painted bar as every other section header:
+          the Advertising artwork the Admin Panel assigned, behind a glass icon
+          tile, the localized title and the count on the opposite side. */}
       <header className="cui-ads__head">
+        <HeaderBackdrop section="advertising" />
         <span className="cui-ads__icon" aria-hidden="true">
           <Icon name="megaphone" size={20} />
         </span>

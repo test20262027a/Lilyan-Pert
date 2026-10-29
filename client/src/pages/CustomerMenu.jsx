@@ -155,27 +155,16 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   }, [cart, storageKey]);
 
   /*
-   * A manually chosen table survives a reload, but only while it is still one of
-   * this business's active tables — a deleted or deactivated table is dropped
-   * instead of silently ordering to it. A QR session never inherits it: the QR
-   * table is resolved from the scanned token on the server, not from storage.
+   * A manually chosen table belongs to the order being placed, never to the
+   * guest as a preference: nothing is stored and nothing is restored, so every
+   * fresh order starts with no table selected and the selector shows its
+   * placeholder again. A table saved by an older build is dropped here instead
+   * of resurfacing. A QR session is unaffected — its table is resolved from the
+   * scanned token on the server, not from this state.
    */
-  const tableStoreKey = `lilyan.table.${key}`;
   useEffect(() => {
-    if (!data) return;
-    const ids = new Set((data.tables || []).map((row) => row.id));
-    setTableId((current) => {
-      if (current && ids.has(current)) return current;
-      const saved = localStorage.getItem(tableStoreKey) || '';
-      return ids.has(saved) ? saved : '';
-    });
-  }, [data, tableStoreKey]);
-
-  useEffect(() => {
-    if (!data) return;
-    if (tableId) localStorage.setItem(tableStoreKey, tableId);
-    else localStorage.removeItem(tableStoreKey);
-  }, [data, tableId, tableStoreKey]);
+    localStorage.removeItem(`lilyan.table.${key}`);
+  }, [key]);
 
   // Counts one view per browser session per day.
   useEffect(() => {
@@ -322,6 +311,14 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       setPlaced(res.order);
       setCart({});
       setCartOpen(false);
+      /*
+       * The backend confirmed the order, so the table this order was placed at
+       * is spent: it is cleared here, which returns the selector to its
+       * placeholder and requires a new choice for the next order. A QR table is
+       * never cleared — it identifies the guest's table for the whole session —
+       * and a failed submission keeps both the table and the cart for a retry.
+       */
+      if (!data?.table) setTableId('');
       toast.success(t('customer_menu_order_placed'));
     } catch (err) {
       if (err.code === 'MENU_DISABLED') toast.error(t('customer_menu_unavailable'));

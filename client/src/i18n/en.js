@@ -983,7 +983,7 @@ export default {
   customer_menu_cart_phone: 'Your phone number',
   customer_menu_cart_notes: 'Notes for your order…',
   customer_menu_cart_table: 'Select a table',
-  customer_menu_cart_table_placeholder: 'Choose a table',
+  customer_menu_cart_table_placeholder: 'Select a Table',
   customer_menu_cart_table_required: 'Choose a table to confirm the order',
   customer_menu_cart_clear_question: 'Remove every item from the cart?',
   customer_cart_increase: 'Increase quantity',

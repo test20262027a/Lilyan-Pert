@@ -981,7 +981,7 @@ export default {
   customer_menu_cart_phone: 'شماره موبایل شما',
   customer_menu_cart_notes: 'یادداشت برای سفارش شما...',
   customer_menu_cart_table: 'انتخاب میز',
-  customer_menu_cart_table_placeholder: 'یک میز انتخاب کنید',
+  customer_menu_cart_table_placeholder: 'میز را انتخاب کنید',
   customer_menu_cart_table_required: 'برای ثبت سفارش یک میز انتخاب کنید',
   customer_menu_cart_clear_question: 'همه محصولات سبد خرید حذف شوند؟',
   customer_cart_increase: 'افزایش تعداد',

@@ -30,41 +30,70 @@
 
 /* ---------------------------------------------------------------- header */
 
+/* The section picture fills the bar; it is fitted by the shared header system
+   (a blurred full-bleed wash underneath the artwork), so it never stretches or
+   leaves a gap. The theme-tinted gradient beneath it is the decorative fallback
+   while the Advertising picture is missing, and the same metrics as the product
+   panels' header keep the three sections visually identical in height. */
 .cui-ads__head {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  gap: 10px;
+  min-height: 62px;
+  padding: 11px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--primary) 16%, var(--cui-line, var(--border)));
+  background:
+    radial-gradient(120% 170% at 10% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 72%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary) 13%, var(--surface)),
+      color-mix(in srgb, var(--primary) 6%, var(--surface))
+    );
 }
+/* Everything but the artwork itself sits above it. */
+.cui-ads__head > *:not(.sh-bg) { position: relative; z-index: 1; }
 
 .cui-ads__title {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
-  font-size: 17px;
-  font-weight: 850;
-  letter-spacing: 0.01em;
+  font-size: 14.5px;
+  font-weight: 820;
+  letter-spacing: 0.1px;
   color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 2px color-mix(in srgb, var(--surface) 55%, transparent);
 }
 
+/* A glass tile, so the mark stays legible on top of the illustration instead of
+   carrying a flat tint over it. */
 .cui-ads__icon {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 14px;
-  color: color-mix(in srgb, var(--primary) 74%, #0b1220);
-  background: color-mix(in srgb, var(--primary) 13%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent);
+  border-radius: 13px;
+  color: color-mix(in srgb, var(--primary) 84%, #0b1220);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 6px 14px color-mix(in srgb, var(--primary) 16%, transparent);
+    0 6px 14px -8px rgba(16, 22, 38, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
 }
 [data-theme='dark'] .cui-ads__icon {
   color: color-mix(in srgb, var(--primary) 78%, #ffffff);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+[data-theme='dark'] .cui-ads__title {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
 }
 
 /* ------------------------------------------------------------------ grid */
@@ -329,14 +358,16 @@
 
 @media (max-width: 700px) {
   .cui-ads { border-radius: 22px; }
-  .cui-ads__head { padding: 14px 16px 12px; }
-  .cui-ads__title { font-size: 16px; }
-  .cui-ads__icon { width: 40px; height: 40px; border-radius: 13px; }
   .cui-ads__grid { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px; }
   .cui-adcard__body { padding: 14px 15px 15px; }
   .cui-adcard__foot { flex-wrap: nowrap; }
   .cui-adcard__related { flex: 1 1 auto; }
   .cui-adcard__cta { flex: 0 0 auto; }
+}
+
+/* Same compact head as the product panels on a phone. */
+@media (max-width: 560px) {
+  .cui-ads__head { min-height: 58px; padding: 10px 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

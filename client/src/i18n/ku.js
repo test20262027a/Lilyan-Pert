@@ -982,7 +982,7 @@ export default {
   customer_menu_cart_phone: 'ژمارەی مۆبایلت',
   customer_menu_cart_notes: 'تێبینی بۆ داواکارییەکەت...',
   customer_menu_cart_table: 'مێز هەڵبژێرە',
-  customer_menu_cart_table_placeholder: 'مێزێک هەڵبژێرە',
+  customer_menu_cart_table_placeholder: 'مێز هەڵبژێرە',
   customer_menu_cart_table_required: 'بۆ تۆمارکردنی داواکاری مێزێک هەڵبژێرە',
   customer_menu_cart_clear_question: 'هەموو بەرهەمەکانی ناو سەبەتە لاببرێن؟',
   customer_cart_increase: 'زیادکردنی بڕ',
