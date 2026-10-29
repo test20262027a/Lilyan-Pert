@@ -65,10 +65,19 @@
 
 /* ----------------------------------------------------- language switcher */
 
+/*
+ * Pinned to the reading-direction start corner: top-right in Kurdish, Persian
+ * and Arabic, top-left in English. The inset is logical, so the pill changes
+ * side the instant the language (and with it the document `dir`) changes,
+ * without the card ever moving. The side padding takes the larger of the two
+ * safe-area insets, so a notched phone never tucks it under the bezel.
+ */
 .au__lang {
   position: absolute;
   top: calc(clamp(12px, 1.7vw, 22px) + env(safe-area-inset-top));
-  inset-inline-end: calc(clamp(12px, 1.7vw, 22px) + env(safe-area-inset-right));
+  inset-inline-start: calc(
+    clamp(12px, 1.7vw, 22px) + max(env(safe-area-inset-left), env(safe-area-inset-right))
+  );
   z-index: 5;
   max-width: calc(100vw - 24px);
 }
