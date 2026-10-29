@@ -866,6 +866,7 @@ export default {
   text_editor_search: 'گەڕان لە دەقە دەستکاریکراوەکان...',
   text_editor_group: 'پەیامە خۆکارەکانی وەسڵ',
   text_editor_count: '{count} دانە',
+  text_editor_status_range: 'پیشاندانی {from} تا {to} لە {total} پەیام',
   text_editor_message_title: 'پەیام {n}',
   text_editor_custom: 'تایبەت',
   text_editor_standard: 'بنەڕەت',

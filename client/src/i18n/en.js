@@ -867,6 +867,7 @@ export default {
   text_editor_search: 'Search editable texts...',
   text_editor_group: 'Automatic receipt messages',
   text_editor_count: '{count} items',
+  text_editor_status_range: 'Showing {from} to {to} of {total} messages',
   text_editor_message_title: 'Message {n}',
   text_editor_custom: 'Custom',
   text_editor_standard: 'Default',

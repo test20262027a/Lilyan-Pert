@@ -864,6 +864,7 @@ export default {
   text_editor_search: 'ابحث في النصوص القابلة للتعديل...',
   text_editor_group: 'رسائل الإيصال التلقائية',
   text_editor_count: '{count} عنصر',
+  text_editor_status_range: 'عرض {from} إلى {to} من {total} رسالة',
   text_editor_message_title: 'رسالة {n}',
   text_editor_custom: 'مخصص',
   text_editor_standard: 'افتراضي',

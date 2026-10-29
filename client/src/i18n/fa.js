@@ -865,6 +865,7 @@ export default {
   text_editor_search: 'جستجو متن‌های قابل ویرایش...',
   text_editor_group: 'پیام‌های خودکار رسید',
   text_editor_count: '{count} مورد',
+  text_editor_status_range: 'نمایش {from} تا {to} از {total} پیام',
   text_editor_message_title: 'پیام {n}',
   text_editor_custom: 'سفارشی',
   text_editor_standard: 'پیش‌فرض',
