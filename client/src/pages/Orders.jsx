@@ -17,13 +17,14 @@ import { localized, useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { get, patch, post } from '../api';
-import { fmtDay, fmtNumber, isoDay, zoneFor } from '../format';
+import { fmtDay, isoDay, zoneFor } from '../format';
 import useMediaQuery from '../hooks/useMediaQuery';
 import OrdersBanner from '../components/orders/OrdersBanner';
 import DateNav from '../components/orders/DateNav';
 import OrdersToolbar from '../components/orders/OrdersToolbar';
 import OrdersTable from '../components/orders/OrdersTable';
 import OrdersCards from '../components/orders/OrdersCards';
+import OrdersListStatus from '../components/orders/OrdersListStatus';
 import OrderDetailsModal from '../components/orders/detail/OrderDetailsModal';
 import '../orders.css';
 
@@ -260,27 +261,14 @@ export default function Orders() {
         )}
 
         {orders.length > 0 ? (
-          <div className="otable__foot">
-            <span>{t('order_showing', { shown: fmtNumber(orders.length, locale), total: fmtNumber(total, locale) })}</span>
-            {searching ? (
-              <span className="ofoot__note">
-                <Icon name="search" size={13} />
-                {t('order_search_all_dates')}
-              </span>
-            ) : null}
-            <span className="ofoot__spacer" />
-            {hasMore ? (
-              <button
-                type="button"
-                className="btn btn--sm"
-                onClick={loadMore}
-                disabled={loadingMore || list.loading}
-              >
-                {loadingMore ? <span className="spinner" /> : <Icon name="chevronDown" size={14} />}
-                {t('order_load_more')}
-              </button>
-            ) : null}
-          </div>
+          <OrdersListStatus
+            shown={orders.length}
+            total={total}
+            searching={searching}
+            hasMore={hasMore}
+            loading={loadingMore || list.loading}
+            onLoadMore={loadMore}
+          />
         ) : null}
       </div>
 

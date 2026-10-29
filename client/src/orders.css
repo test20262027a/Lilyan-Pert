@@ -555,19 +555,127 @@
 
 /* ------------------------------------------------------- list footer/state */
 
+/*
+ * The list's summary strip at the foot of the card. It is a quiet band that
+ * carries a raised glass pill with the count, an optional note about a
+ * cross-date search, and the load-more control — one row on a wide screen, a
+ * stack on a phone. Every value is a theme token or flow-relative, so it
+ * follows the selected appearance and mirrors in RTL without overrides.
+ */
 .otable__foot {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 11px 14px;
+  padding: 11px 14px 12px;
   border-top: 1px solid var(--border);
-  background: var(--surface-2);
+  background:
+    linear-gradient(180deg, var(--surface-2) 0%, color-mix(in srgb, var(--surface-2) 60%, var(--surface)) 100%);
   font-size: 12.5px;
   color: var(--muted);
 }
-.ofoot__note { display: inline-flex; align-items: center; gap: 6px; color: var(--mint-ink); font-weight: 650; }
-.ofoot__spacer { flex: 1 1 auto; }
+
+.ofoot__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* The count: a glass capsule lifted off the band by its own inner light and a
+   single soft contact shadow. */
+.ofoot__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding-block: 0;
+  padding-inline: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(23, 26, 43, 0.04),
+    0 1px 2px rgba(23, 26, 43, 0.06),
+    0 10px 18px -16px color-mix(in srgb, var(--primary) 70%, transparent);
+  line-height: 1.4;
+}
+
+.ofoot__count-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--theme-icon-bg);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ofoot__count-text {
+  min-width: 0;
+}
+
+/* Only the numbers carry weight, so the sentence reads at a glance. */
+.ofoot__num {
+  color: var(--text);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The active-search note: the same capsule language, tinted like the theme. */
+.ofoot__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding-inline: 11px;
+  border-radius: 999px;
+  border: 1px solid var(--mint-line);
+  background: color-mix(in srgb, var(--mint) 9%, transparent);
+  color: var(--mint-ink);
+  font-weight: 650;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ofoot__more {
+  flex: none;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme='dark'] .ofoot__count {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 12px 20px -18px rgba(0, 0, 0, 0.9);
+}
+[data-theme='dark'] .ofoot__count-icon,
+[data-theme='dark'] .ofoot__note {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* A phone: the count owns its own row and the next-page control settles on the
+   end edge, so nothing crowds and nothing is stranded mid-row. */
+@media (max-width: 640px) {
+  .otable__foot {
+    padding: 10px 12px 12px;
+    gap: 8px;
+  }
+  .ofoot__group { flex: 1 1 100%; }
+  .ofoot__count {
+    flex: 1 1 100%;
+    min-height: 36px;
+    padding-inline: 7px 12px;
+  }
+  .ofoot__note { min-height: 28px; font-size: 12px; }
+  .ofoot__more { margin-inline-start: auto; }
+}
 
 .olist__state { padding: 6px; }
 
