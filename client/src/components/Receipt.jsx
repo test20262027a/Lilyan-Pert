@@ -226,27 +226,34 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   const dateFmt = order ? fmtDate(order.created_at, locale, timeZone, { short: true }) : '';
   const timeFmt = order ? fmtTime(order.created_at, locale, timeZone) : '';
 
+  /*
+   * Two groups, exactly as the reference pairs them: the time the order was
+   * taken on the one side, the table and the guest on the other, split by one
+   * vertical dashed divider. Nothing is repeated here — the order's kind is
+   * already the badge beside the number, so no "type" fact is added.
+   */
   const leftFacts = [];
   if (hasDateTime) {
     /* Date and its time share one fact, exactly as the reference stacks them. */
     leftFacts.push(
-      <ReceiptField icon="calendar" label={msg('datetime')}>
+      <ReceiptField key="datetime" icon="calendar" label={msg('datetime')}>
         <span className="rc-field__value rc-num">{dateFmt}</span>
         <span className="rc-field__value rc-num">{timeFmt}</span>
       </ReceiptField>,
     );
   }
+
+  const rightFacts = [];
   if (hasTable || hasCustomer) {
     /* The table and the guest who placed the order share the next fact. */
-    leftFacts.push(
+    rightFacts.push(
       <ReceiptField
+        key="party"
         icon={hasTable ? 'table' : 'person'}
         label={hasTable ? msg('table') : msg('customer')}
       >
         {hasTable ? (
-          <span className="rc-field__value rc-field__value--strong">
-            <span dir="auto">{tableName}</span>
-          </span>
+          <span className="rc-field__value rc-field__value--strong" dir="auto">{tableName}</span>
         ) : null}
         {hasCustomer ? (
           <span className="rc-field__value" dir="auto">{order.customer_name}</span>
@@ -254,43 +261,23 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       </ReceiptField>,
     );
   }
-
-  const rightFacts = [];
-  if (hasOrderType) {
-    rightFacts.push(
-      <ReceiptField icon={orderType === 'dine_in' ? 'utensils' : 'store'} label={msg('order_type')}>
-        <span className="rc-field__value rc-field__value--strong">{msg(orderType)}</span>
-      </ReceiptField>,
-    );
-  }
   if (hasCashier) {
     rightFacts.push(
-      <ReceiptField icon="person" label={msg('cashier')}>
+      <ReceiptField key="cashier" icon="person" label={msg('cashier')}>
         <span className="rc-field__value" dir="auto">{order.created_by_name}</span>
       </ReceiptField>,
     );
   }
 
   /*
-   * Two matched columns: the facts are emitted row by row — left, right, left,
-   * right — into the one grid, so corresponding rows always start on the same
-   * line and the dashed divider between the columns is drawn by the grid itself.
-   * With facts on one side only the grid falls back to a single column.
+   * Two groups in one grid: the date and its time on one side, the table and
+   * the guest on the other, split by the single vertical dashed divider that is
+   * the second cell's own border (so it is never an absolutely positioned
+   * line). Each group stacks its own facts, so a group with one fact leaves no
+   * reserved empty cell; with facts on one side only, the grid is one column.
    */
   const twoColumns = leftFacts.length > 0 && rightFacts.length > 0;
-  const orderCells = [];
-  if (twoColumns) {
-    const rows = Math.max(leftFacts.length, rightFacts.length);
-    for (let i = 0; i < rows; i += 1) {
-      orderCells.push(<div className="rc-cell" key={`l${i}`}>{leftFacts[i] || null}</div>);
-      orderCells.push(<div className="rc-cell" key={`r${i}`}>{rightFacts[i] || null}</div>);
-    }
-  } else {
-    [...leftFacts, ...rightFacts].forEach((fact, i) => {
-      orderCells.push(<div className="rc-cell" key={`s${i}`}>{fact}</div>);
-    });
-  }
-  const hasOrderDetails = orderCells.length > 0;
+  const hasOrderDetails = leftFacts.length > 0 || rightFacts.length > 0;
 
   /* The paper follows the receipt's own language, so Kurdish, Persian and
      Arabic print right-to-left even when the panel around them does not. */
@@ -299,7 +286,6 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       className="receipt-paper"
       data-paper={narrow ? '58' : '80'}
       data-align={align}
-      data-columns={columns}
       data-logo={settings.logo_align === 'start' ? 'start' : 'center'}
       data-dividers={settings.show_dividers === false ? 'off' : 'on'}
       data-grand={GRAND_STYLES.includes(settings.grand_style) ? settings.grand_style : 'boxed'}
@@ -346,7 +332,8 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
             ) : null}
             {hasOrderDetails ? (
               <div className="rc-ordergrid" data-cols={twoColumns ? 'two' : 'one'}>
-                {orderCells}
+                <div className="rc-factcell">{leftFacts}</div>
+                {twoColumns ? <div className="rc-factcell">{rightFacts}</div> : null}
               </div>
             ) : null}
           </div>
@@ -365,35 +352,92 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
               </span>
               <span className="rc-secthead__title">{msg('products')}</span>
             </div>
-            <div className={`rc-table${hasLineNotes ? ' rc-table--noted' : ''}`}>
-              <div className="rc-table__head">
-                <span className="rc-col rc-col--no">#</span>
-                <span className="rc-col rc-col--name">{msg('product')}</span>
-                <span className="rc-col rc-col--qty">{msg('qty')}</span>
-                <span className="rc-col rc-col--unit">{msg('unit_price')}</span>
-                <span className="rc-col rc-col--total">{msg('total_column')}</span>
-              </div>
-              {(items || []).map((line, idx) => (
-                /*
-                 * One grid, not one block per product: the header and every row
-                 * are laid out by the same five column tracks (see receipt.css),
-                 * so each value keeps its position down the whole paper whatever
-                 * the product names are.
-                 */
-                <div className="rc-row" key={`${line.name}-${idx}`}>
-                  <span className="rc-col rc-col--no rc-num">{amount(idx + 1)}</span>
-                  <span className="rc-col rc-col--name">
-                    <span className="rc-col__label" dir="auto">{line.name}</span>
-                    {!hasLineNotes || !line.notes ? null : <span className="rc-col__note">{line.notes}</span>}
-                  </span>
-                  <span className="rc-col rc-col--qty rc-num">{amount(line.quantity)}</span>
-                  <span className="rc-col rc-col--unit rc-num">
-                    {line.unit_price == null ? '—' : amount(line.unit_price)}
-                  </span>
-                  <span className="rc-col rc-col--total rc-num">{amount(line.line_total)}</span>
-                </div>
-              ))}
-            </div>
+            {/*
+              * One real <table> with a <colgroup> and `table-layout: fixed`:
+              * the five columns of the reference (# · product · quantity ·
+              * unit price · line total) are fixed proportions of the paper, so
+              * a value keeps its column down the whole receipt whatever the
+              * names are, and a long name wraps inside the name column only.
+              * The columns run right-to-left on an RTL receipt on their own.
+              */}
+            {columns === 'compact' ? (
+              /*
+               * 58 mm: the product name takes its own line with the row number,
+               * then the quantity, the unit price and the line total sit under
+               * one another in three aligned fields — never one merged string.
+               */
+              <table className="rc-table rc-table--compact">
+                <colgroup>
+                  <col className="rc-w rc-w--qty" />
+                  <col className="rc-w rc-w--unit" />
+                  <col className="rc-w rc-w--total" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col" className="rc-th rc-th--qty">{msg('qty')}</th>
+                    <th scope="col" className="rc-th rc-th--unit">{msg('unit_price')}</th>
+                    <th scope="col" className="rc-th rc-th--total">{msg('total_column')}</th>
+                  </tr>
+                </thead>
+                {(items || []).map((line, idx) => (
+                  <tbody className="rc-item" key={`${line.name}-${idx}`}>
+                    <tr>
+                      <td className="rc-td rc-td--name" colSpan={3}>
+                        <span className="rc-td__index rc-num">{amount(idx + 1)}</span>
+                        <span className="rc-td__name" dir="auto">{line.name}</span>
+                        {hasLineNotes && line.notes ? (
+                          <span className="rc-td__note" dir="auto">{line.notes}</span>
+                        ) : null}
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="rc-td rc-td--qty rc-num">{amount(line.quantity)}</td>
+                      <td className="rc-td rc-td--unit rc-num">
+                        {line.unit_price == null ? '—' : amount(line.unit_price)}
+                      </td>
+                      <td className="rc-td rc-td--total rc-num">{amount(line.line_total)}</td>
+                    </tr>
+                  </tbody>
+                ))}
+              </table>
+            ) : (
+              <table className="rc-table">
+                <colgroup>
+                  <col className="rc-w rc-w--no" />
+                  <col className="rc-w rc-w--name" />
+                  <col className="rc-w rc-w--qty" />
+                  <col className="rc-w rc-w--unit" />
+                  <col className="rc-w rc-w--total" />
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th scope="col" className="rc-th rc-th--no">#</th>
+                    <th scope="col" className="rc-th rc-th--name">{msg('product')}</th>
+                    <th scope="col" className="rc-th rc-th--qty">{msg('qty')}</th>
+                    <th scope="col" className="rc-th rc-th--unit">{msg('unit_price')}</th>
+                    <th scope="col" className="rc-th rc-th--total">{msg('total_column')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(items || []).map((line, idx) => (
+                    <tr className="rc-item" key={`${line.name}-${idx}`}>
+                      <td className="rc-td rc-td--no rc-num">{amount(idx + 1)}</td>
+                      <td className="rc-td rc-td--name">
+                        <span className="rc-td__name" dir="auto">{line.name}</span>
+                        {hasLineNotes && line.notes ? (
+                          <span className="rc-td__note" dir="auto">{line.notes}</span>
+                        ) : null}
+                      </td>
+                      <td className="rc-td rc-td--qty rc-num">{amount(line.quantity)}</td>
+                      <td className="rc-td rc-td--unit rc-num">
+                        {line.unit_price == null ? '—' : amount(line.unit_price)}
+                      </td>
+                      <td className="rc-td rc-td--total rc-num">{amount(line.line_total)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </section>
       ) : null}
