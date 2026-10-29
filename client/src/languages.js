@@ -48,11 +48,42 @@ export function normalizeLanguageSettings(raw) {
 let current = normalizeLanguageSettings(allEnabled());
 const listeners = new Set();
 
-export function setLanguageSettings(raw) {
-  const next = normalizeLanguageSettings(raw);
-  if (JSON.stringify(next) === JSON.stringify(current)) return;
+function apply(next) {
+  if (JSON.stringify(next) === JSON.stringify(current)) return false;
   current = next;
   listeners.forEach((listener) => listener());
+  return true;
+}
+
+/*
+ * Open tabs of the same browser share the store: an owner switching a language
+ * off in Menu Settings reaches an ordering panel that is already on screen
+ * without a reload. The received value is normalized again, so a malformed or
+ * outdated message can never widen the enabled set. Other devices are covered by
+ * each ordering panel's own lightweight settings poll.
+ */
+const SYNC_CHANNEL = 'lilyan.languages';
+
+let channel = null;
+if (typeof window !== 'undefined' && typeof window.BroadcastChannel === 'function') {
+  try {
+    channel = new window.BroadcastChannel(SYNC_CHANNEL);
+    channel.onmessage = (event) => {
+      if (event?.data) apply(normalizeLanguageSettings(event.data));
+    };
+  } catch {
+    // A browser without a usable channel simply keeps the per-panel poll.
+    channel = null;
+  }
+}
+
+export function setLanguageSettings(raw) {
+  if (!apply(normalizeLanguageSettings(raw))) return;
+  try {
+    channel?.postMessage(current);
+  } catch {
+    // A closed channel must never break loading the owner's settings.
+  }
 }
 
 export function subscribeLanguageSettings(listener) {

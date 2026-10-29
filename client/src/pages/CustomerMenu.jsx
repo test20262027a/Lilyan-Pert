@@ -27,6 +27,7 @@ import ReviewModal from '../components/customer/ReviewModal';
 import CustomerClosedNotice from '../components/customer/CustomerClosedNotice';
 import useOpeningStatus from '../hooks/useOpeningStatus';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
+import useLanguageAvailability from '../hooks/useLanguageAvailability';
 import '../customer.css';
 import '../customerAvailability.css';
 
@@ -54,13 +55,16 @@ function businessNameIn(business, locale, fallback) {
 export default function CustomerMenu({ slug, adminMode = false }) {
   const params = useParams();
   const key = slug || params.key;
-  const { t, locale } = useI18n();
+  const { t, locale, languageSettings } = useI18n();
   const { user } = useAuth();
   const toast = useToast();
 
   const [data, setData] = useState(null);
   /* The guest's tab carries this menu's section and the business's own name. */
   useDocumentMetadata(data?.business);
+  /* Menu Settings owns the enabled languages; a switch made while this panel is
+     open arrives here without a reload, on both the main and customer menus. */
+  useLanguageAvailability(key);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [cart, setCart] = useState({});
@@ -368,7 +372,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const biz = data.business;
   /* The banner heading follows the guest's language, then the business's own
      default language, then the main name. */
-  const brandName = businessNameIn(biz, locale, data.language_settings?.default_language);
+  /* The fallback name follows the store, so a default language the owner just
+     changed is honoured without waiting for the full payload to reload. */
+  const brandName = businessNameIn(
+    biz,
+    locale,
+    languageSettings?.default_language || data.language_settings?.default_language,
+  );
   /* The owner's saved welcome line, shown under the name when it exists. */
   const welcome = biz.editable_text?.welcome?.[locale] || '';
 

@@ -346,6 +346,26 @@ router.get(
   }),
 );
 
+/**
+ * Language availability only.
+ *
+ * The smallest payload that keeps an already-open ordering panel in sync: when
+ * the owner switches a language off in Menu Settings, the panel re-reads this
+ * and stops offering it, falling back to the configured default language — no
+ * page refresh, and nothing else in the menu payload is re-sent. It reads the
+ * very same record and normalizer as the full menu, so both can never disagree.
+ */
+router.get(
+  '/menu/:key/languages',
+  ah(async (req, res) => {
+    const business = await loadBusiness(req.params.key);
+    res.set('Cache-Control', 'no-store');
+    res.json({
+      language_settings: normalizeLanguageSettings(business.menu_settings?.language_settings),
+    });
+  }),
+);
+
 /** Counts one menu view per browser session per day. */
 router.post(
   '/views/:key',

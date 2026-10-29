@@ -870,7 +870,7 @@ export default {
   text_editor_custom: 'سفارشی',
   text_editor_standard: 'پیش‌فرض',
   text_editor_field_placeholder: 'متن پیام را بنویسید...',
-  text_editor_placeholders_hint: 'متغیرهایی مانند {order_number} باید در همه زبان‌ها دست‌نخورده بمانند.',
+  text_editor_placeholders_hint: 'متغیر {{businessName}} باید در همه زبان‌ها دست‌نخورده بماند.',
   text_editor_translate: 'ترجمه از کردی',
   text_editor_translate_empty: 'ابتدا متن کردی سۆرانی را وارد کنید.',
   text_editor_translate_unavailable: 'سرویس ترجمه پیکربندی نشده است. کلید سرویس ترجمه را اضافه کنید.',

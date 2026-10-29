@@ -871,7 +871,7 @@ export default {
   text_editor_custom: 'تایبەت',
   text_editor_standard: 'بنەڕەت',
   text_editor_field_placeholder: 'دەقی پەیام بنووسە...',
-  text_editor_placeholders_hint: 'گۆڕەکانی وەک {order_number} دەبێت لە هەموو زمانەکاندا بە نەگۆڕی بمێننەوە.',
+  text_editor_placeholders_hint: 'گۆڕی {{businessName}} دەبێت لە هەموو زمانەکاندا بە نەگۆڕی بمێنێتەوە.',
   text_editor_translate: 'وەرگێڕان لە کوردییەوە',
   text_editor_translate_empty: 'سەرەتا دەقی کوردی سۆرانی بنووسە.',
   text_editor_translate_unavailable: 'خزمەتگوزاری وەرگێڕان ڕێک نەخراوە. کلیلی خزمەتگوزاری وەرگێڕان زیاد بکە.',

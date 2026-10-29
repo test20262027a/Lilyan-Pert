@@ -869,7 +869,7 @@ export default {
   text_editor_custom: 'مخصص',
   text_editor_standard: 'افتراضي',
   text_editor_field_placeholder: 'اكتب نص الرسالة...',
-  text_editor_placeholders_hint: 'يجب أن تبقى المتغيرات مثل {order_number} دون تغيير في جميع اللغات.',
+  text_editor_placeholders_hint: 'يجب أن يبقى المتغير {{businessName}} دون تغيير في جميع اللغات.',
   text_editor_translate: 'الترجمة من الكردية',
   text_editor_translate_empty: 'أدخل النص الكردي أولاً.',
   text_editor_translate_unavailable: 'خدمة الترجمة غير مهيأة. أضف مفتاح خدمة الترجمة لتفعيلها.',

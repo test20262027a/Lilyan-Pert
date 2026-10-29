@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { fmtDateTime, zoneFor } from '../format';
-import { receiptMessageText, selectReceiptFooterMessage } from '../receiptMessages';
+import { isRtl } from '../i18n';
+import { pickReceiptFooter, receiptLabel, receiptMessageText } from '../receiptMessages';
 
 /**
  * One receipt markup used by the on-screen receipt, the preview and the
@@ -12,36 +13,29 @@ import { receiptMessageText, selectReceiptFooterMessage } from '../receiptMessag
  * timestamps are internal and live in the Order Details activity timeline,
  * never here — so printing and PDF export stay free of audit information.
  */
-export function ReceiptPaper({ data, locale }) {
+export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   /*
-   * One closing message per mounted receipt: every print operation mounts its
-   * own paper, so the message picked here stays the same while the browser
-   * preview is generated and while the paper is actually printed.
+   * One closing message per receipt. The pick is identity-only (the text is
+   * resolved on every render), and it is chosen once per receipt and language —
+   * so it never changes while the receipt is being printed. A screen that shows
+   * the receipt and then prints it (the settings preview) passes its own pick
+   * down, so the printed paper carries the very message that was previewed.
    */
-  const [printToken] = useState(() => Math.random().toString(36).slice(2));
-  const footer = useMemo(() => {
-    if (!data) return null;
-    const { order, table, business: biz } = data;
-    return selectReceiptFooterMessage(biz, locale, {
-      business_name: biz?.[`name_${locale}`] || biz?.name_en || biz?.name || '',
-      order_number: order?.order_number ?? '',
-      table: table?.name || '',
-      customer_name: order?.customer_name || '',
-      date: order ? fmtDateTime(order.created_at, locale, zoneFor(locale, biz?.timezone)) : '',
-      total: `${Number(order?.total || 0).toFixed(0)}${biz?.currency ? ` ${biz.currency}` : ''}`,
-      currency: biz?.currency || '',
-    });
-    // Keyed by the print operation, not by the payload object: the chosen
-    // message must never change while this receipt is being printed.
+  const pick = useMemo(
+    () => givenPick || pickReceiptFooter(data?.business, locale),
+    // Keyed by the receipt's business and language, never by the payload object
+    // the parent rebuilds on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [printToken, locale]);
+    [givenPick, locale, data?.business?.id],
+  );
 
   if (!data) return null;
   const { order, items, table, business } = data;
   const settings = business?.receipt_settings || {};
   const timeZone = zoneFor(locale, business?.timezone);
-  const businessName =
-    business?.[`name_${locale}`] || business?.name_en || business?.name || '';
+  /* The business's own name in the receipt's language; a missing translation
+     falls back to the configured default name, never to another language. */
+  const businessName = business?.[`name_${locale}`] || business?.name || business?.name_en || '';
   /*
    * The stored per-language address wins; the original single address stays
    * the fallback so a business that never filled the new fields prints exactly
@@ -53,13 +47,35 @@ export function ReceiptPaper({ data, locale }) {
     settings.alignment === 'center' ? 'center' : settings.alignment === 'start' ? 'start' : undefined;
   const moreInfo = settings.show_more_info !== false;
   /*
-   * Every printed wording comes from the Text Editor (defaults included), so a
-   * business edit appears on the next receipt without touching this layout.
+   * The receipt's structural labels are fixed localized text, printed in their
+   * own place; only the closing message below is one of the fifteen editable
+   * messages, and its {{businessName}} is resolved from the business profile at
+   * print time, so a renamed business prints its new name.
    */
-  const msg = (key) => receiptMessageText(business, key, locale);
+  const msg = (key) => receiptLabel(key, locale);
+  const footer = pick
+    ? {
+        ...pick,
+        text: receiptMessageText(business, pick.key, pick.language, {
+          business_name: businessName,
+          order_number: order?.order_number ?? '',
+          table: table?.name || '',
+          customer_name: order?.customer_name || '',
+          date: order ? fmtDateTime(order.created_at, locale, timeZone) : '',
+          total: `${Number(order?.total || 0).toFixed(0)}${business?.currency ? ` ${business.currency}` : ''}`,
+          currency: business?.currency || '',
+        }),
+      }
+    : null;
 
+  /* The paper follows the receipt's own language, so Kurdish, Persian and
+     Arabic print right-to-left even when the panel around them does not. */
   return (
-    <div className="receipt-paper" style={contentAlign ? { textAlign: contentAlign } : undefined}>
+    <div
+      className="receipt-paper"
+      dir={isRtl(locale) ? 'rtl' : 'ltr'}
+      style={contentAlign ? { textAlign: contentAlign } : undefined}
+    >
       {settings.show_logo && business?.logo_url ? (
         <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: logoWidth }} />
       ) : null}

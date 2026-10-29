@@ -42,9 +42,9 @@ export async function migrateReceiptFooterMessages() {
       const language = row.menu_settings?.language_settings?.default_language;
       const code = MESSAGE_LOCALES.includes(language) ? language : 'ku';
       const messages = { ...(editable.receipt_messages || {}) };
-      const footer = { ...(messages.footer || {}) };
+      const footer = { ...(messages.footer_1 || {}) };
       if (!String(footer[code] || '').trim()) footer[code] = legacy;
-      messages.footer = footer;
+      messages.footer_1 = footer;
       editable.receipt_messages = messages;
     }
 
@@ -187,21 +187,11 @@ export async function seed() {
             ar: 'مرحباً بكم في ليليان بيرت',
             en: 'Welcome to Lilyan Pert',
           },
-          // The two closing messages a receipt picks one of at print time.
-          receipt_messages: {
-            footer: {
-              ku: 'سوپاس بۆ سەردانتان لە لیانیان پێرت',
-              fa: 'از بازدید شما از لیلیان پورت سپاسگزاریم',
-              ar: 'شكراً لزيارتكم ليليان بيرت',
-              en: 'Thank you for visiting Lilyan Pert',
-            },
-            footer_2: {
-              ku: 'هیوادارین بەم زووانە دیسان بیبینینەوە',
-              fa: 'امیدواریم به زودی دوباره شما را ببینیم',
-              ar: 'نتمنى أن نراكم قريباً مرة أخرى',
-              en: 'We hope to see you again soon',
-            },
-          },
+          /*
+           * No receipt-message overrides: the fifteen closing messages ship
+           * with the app (and resolve {{businessName}} from this profile), so a
+           * new business prints its own name without seeded text.
+           */
         }),
         'Asia/Baghdad',
       ],

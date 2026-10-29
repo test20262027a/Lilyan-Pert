@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Icon from '../Icon';
 import { ConfirmDialog, useToast } from '../ui';
 import { useI18n } from '../../i18n';
+import { pickReceiptFooter } from '../../receiptMessages';
 import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../Receipt';
 import { ChoiceCard, SettingsCard, SettingsToggleRow } from './SettingsCard';
 import { SetField } from './fields';
@@ -81,6 +82,16 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
   const receipt = draft.receipt_settings || {};
   const width = receipt.paper_width || '80mm';
   const data = sampleReceipt(draft, t);
+  /*
+   * One closing message for this preview and the print that follows it: the
+   * pick is made here, once per language, and handed to both papers, so the
+   * printed receipt never shows a different message from the preview.
+   */
+  const footerPick = useMemo(
+    () => pickReceiptFooter(data.business, locale),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [locale, data.business?.id],
+  );
 
   useEffect(() => {
     if (!printing) return undefined;
@@ -178,7 +189,7 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
               <div className="set-preview__paper">
                 {/* The same renderer the printed receipt uses, so the preview
                     follows every toggle below it. */}
-                <ReceiptPaper data={data} locale={locale} />
+                <ReceiptPaper data={data} locale={locale} footerPick={footerPick} />
               </div>
             </div>
             <p className="set-preview__note">{t('settings_receipt_preview_hint')}</p>
@@ -287,7 +298,7 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
       {printing ? (
         <PrintPortal>
           <ReceiptPrintStyle settings={receipt} />
-          <ReceiptPaper data={data} locale={locale} />
+          <ReceiptPaper data={data} locale={locale} footerPick={footerPick} />
         </PrintPortal>
       ) : null}
     </>

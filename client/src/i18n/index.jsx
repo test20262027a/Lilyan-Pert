@@ -50,9 +50,17 @@ export function I18nProvider({ children, overrideLocale }) {
   const enabled = LANGUAGE_CODES.filter((code) => settings.languages[code].enabled);
   const enabledKey = enabled.join(',');
 
-  const [locale, setLocaleState] = useState(
-    () => overrideLocale || localStorage.getItem(STORAGE_KEY) || settings.default_language || 'ku',
-  );
+  /*
+   * The first paint is already restricted to an allowed language: a preference
+   * stored before the owner switched that language off (or a value passed in by
+   * a link) is dropped in favour of the configured default enabled one, so a
+   * disabled language is never shown, even for a frame.
+   */
+  const [locale, setLocaleState] = useState(() => {
+    const preferred = overrideLocale || localStorage.getItem(STORAGE_KEY);
+    if (preferred && enabled.includes(preferred)) return preferred;
+    return settings.default_language || 'ku';
+  });
 
   useEffect(() => {
     if (overrideLocale) setLocaleState(overrideLocale);

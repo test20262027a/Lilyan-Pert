@@ -872,7 +872,7 @@ export default {
   text_editor_custom: 'Custom',
   text_editor_standard: 'Default',
   text_editor_field_placeholder: 'Write the message text...',
-  text_editor_placeholders_hint: 'Placeholders such as {order_number} must stay unchanged in every language.',
+  text_editor_placeholders_hint: 'The {{businessName}} placeholder must stay unchanged in every language.',
   text_editor_translate: 'Translate from Kurdish',
   text_editor_translate_empty: 'Enter the Kurdish Sorani text first.',
   text_editor_translate_unavailable: 'The translation service is not configured. Add a translation service key to enable it.',

@@ -8,22 +8,24 @@
  * so it falls back to the printed default instead of printing nothing.
  */
 
+/* The fifteen closing messages a receipt picks one of. The layout labels
+   (order number, table, totals …) are fixed text and are not stored here. */
 export const RECEIPT_MESSAGE_KEYS = [
-  'order_no',
-  'table',
-  'datetime',
-  'customer',
-  'cashier',
-  'items',
-  'total_column',
-  'subtotal',
-  'discount',
-  'tax',
-  'service_charge',
-  'total',
-  'notes',
-  'footer',
+  'footer_1',
   'footer_2',
+  'footer_3',
+  'footer_4',
+  'footer_5',
+  'footer_6',
+  'footer_7',
+  'footer_8',
+  'footer_9',
+  'footer_10',
+  'footer_11',
+  'footer_12',
+  'footer_13',
+  'footer_14',
+  'footer_15',
 ];
 
 export const MESSAGE_LOCALES = ['ku', 'fa', 'ar', 'en'];
