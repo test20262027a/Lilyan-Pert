@@ -1341,7 +1341,7 @@ export default {
   customer_hours_unset: 'ساعت تعیین نشده',
   customer_menu_open_map: 'نمایش روی نقشه',
   customer_table_select: 'انتخاب میز',
-  customer_table_pick_hint: 'برای انتخاب میز ضربه بزنید',
+  customer_table_pick_hint: 'میز را انتخاب کنید',
   customer_table_select_placeholder: 'یک میز انتخاب کنید',
   customer_table_missing: 'میز شناسایی نشد؛ سفارش بدون میز ثبت می‌شود.',
   customer_table_invalid: 'لینک QR میز معتبر نیست.',

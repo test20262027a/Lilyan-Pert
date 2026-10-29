@@ -137,9 +137,7 @@
     white-space: nowrap;
   }
 
-  /* The same role, in the current language, outside the rail on hover/focus —
-     drawn by the global TooltipLayer from `data-tip`, so it matches every
-     other tooltip in the app instead of carrying a private bubble here. */
+  /* No floating bubble, badge or popover repeats the role over the portrait. */
 }
 
 @media (prefers-reduced-motion: reduce) {

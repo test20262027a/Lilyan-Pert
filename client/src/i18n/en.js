@@ -1343,7 +1343,7 @@ export default {
   customer_hours_unset: 'Hours not set',
   customer_menu_open_map: 'Open in maps',
   customer_table_select: 'Select a table',
-  customer_table_pick_hint: 'Tap to choose your table',
+  customer_table_pick_hint: 'Select a Table',
   customer_table_select_placeholder: 'Choose a table',
   customer_table_missing: 'No table was identified; the order will be placed without a table.',
   customer_table_invalid: 'The table QR link is not valid.',

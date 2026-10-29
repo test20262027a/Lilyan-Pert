@@ -35,86 +35,6 @@
   border-color: rgba(179, 164, 255, 0.34);
 }
 
-/*
- * The Save button is drawn entirely from the theme layer (`--primary` and the
- * `--theme-primary-*` tokens derived from it), so switching the appearance
- * recolours its fill, border, label, icon and shadow immediately — no page
- * hard-codes an accent. Hover, active, focus and disabled states are each a
- * step of that same ramp, which keeps the button readable in light and dark
- * mode and in every preset (pale presets get dark ink via `--primary-ink`).
- * Layout uses flow-relative spacing, so it mirrors with the reading direction.
- */
-.tx-save {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  min-height: 40px;
-  padding: 0 18px;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--primary) 82%, var(--text));
-  /* The fill is deepened a step below the raw accent so the label keeps its
-     contrast against every preset — including the light blue and amber ones,
-     where the plain accent with white ink is too pale to read comfortably. */
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 86%, #10141f),
-    var(--theme-primary-active)
-  );
-  color: var(--primary-ink);
-  font: inherit;
-  font-size: 13.5px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow:
-    0 6px 16px -8px color-mix(in srgb, var(--primary) 70%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent);
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    background 180ms ease,
-    border-color 180ms ease,
-    color 180ms ease;
-}
-.tx-save:hover:not(:disabled) {
-  background: linear-gradient(180deg, var(--theme-primary-hover), var(--theme-primary-active));
-  border-color: var(--theme-primary-active);
-  color: var(--primary-ink);
-  box-shadow:
-    0 10px 22px -10px color-mix(in srgb, var(--primary) 85%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent);
-  transform: translateY(-1px);
-}
-.tx-save:active:not(:disabled) {
-  transform: translateY(0);
-  background: var(--theme-primary-active);
-  box-shadow:
-    inset 0 2px 6px color-mix(in srgb, #10141f 26%, transparent),
-    0 2px 6px -4px color-mix(in srgb, var(--primary) 55%, transparent);
-}
-.tx-save:focus-visible {
-  outline: 2px solid var(--theme-primary);
-  outline-offset: 2px;
-}
-.tx-save:disabled {
-  cursor: not-allowed;
-  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
-  border-color: color-mix(in srgb, var(--primary) 24%, var(--border));
-  color: color-mix(in srgb, var(--primary) 52%, var(--text));
-  box-shadow: none;
-  opacity: 1;
-}
-.tx-save .spinner {
-  border-color: color-mix(in srgb, currentColor 35%, transparent);
-  border-top-color: currentColor;
-}
-/* On a dark surface the accent fill needs a deeper, softer drop shadow. */
-[data-theme='dark'] .tx-save:not(:disabled) {
-  box-shadow:
-    0 8px 20px -12px rgba(0, 0, 0, 0.75),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 22%, transparent);
-}
-
 .tx-unsaved {
   display: inline-flex;
   align-items: center;
@@ -458,6 +378,5 @@
   .tx-lang__input { min-height: 82px; }
   .tx-row__label { gap: 5px; }
   .tx-search { padding: 0 11px; }
-  .tx-save { min-height: 42px; }
   .tx-hero .tx-art { max-width: 100%; }
 }

@@ -1342,7 +1342,7 @@ export default {
   customer_hours_unset: 'کاتژمێر دیاری نەکراوە',
   customer_menu_open_map: 'کردنەوەی نەخشە',
   customer_table_select: 'هەڵبژاردنی مێز',
-  customer_table_pick_hint: 'بۆ هەڵبژاردنی مێز لێی بدە',
+  customer_table_pick_hint: 'مێز هەڵبژێرە',
   customer_table_select_placeholder: 'مێزێک هەڵبژێرە',
   customer_table_missing: 'مێز نەناسرایەوە؛ داواکاری بەبێ مێز تۆمار دەکرێت.',
   customer_table_invalid: 'لینکی QR ی مێز دروست نییە.',

@@ -1339,7 +1339,7 @@ export default {
   customer_hours_unset: 'الساعات غير محددة',
   customer_menu_open_map: 'افتح الخريطة',
   customer_table_select: 'اختيار الطاولة',
-  customer_table_pick_hint: 'اضغط لاختيار طاولتك',
+  customer_table_pick_hint: 'اختر طاولة',
   customer_table_select_placeholder: 'اختر طاولة',
   customer_table_missing: 'لم يتم تحديد الطاولة؛ سيُسجّل الطلب بدون طاولة.',
   customer_table_invalid: 'رابط QR للطاولة غير صالح.',

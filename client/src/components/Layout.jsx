@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Icon from './Icon';
-import { Badge } from './ui';
-import { useAuth } from '../context/AuthContext';
-import { useI18n } from '../i18n';
 import { BusinessProvider, useBusiness } from '../context/BusinessContext';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import AppHeader from './header/AppHeader';
@@ -44,18 +40,9 @@ function Shell() {
 }
 
 export default function Layout() {
-  const { isSuperAdmin, role } = useAuth();
-  const { t } = useI18n();
   return (
     <BusinessProvider>
       <Shell />
-      {isSuperAdmin ? (
-        <div style={{ position: 'fixed', insetBlockEnd: 8, insetInlineStart: 8, zIndex: 50 }}>
-          <Badge kind="active">
-            <Icon name="shield" size={12} /> {role === 'super_admin' ? t('role_super_admin') : t(`role_${role}`)}
-          </Badge>
-        </div>
-      ) : null}
     </BusinessProvider>
   );
 }

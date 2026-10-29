@@ -12,11 +12,12 @@ import './sidebarProfile.css';
  * The record comes from the auth context, so a photo or avatar saved in My
  * Account repaints the card immediately — no reload, no sign-out.
  *
- * Collapsed to the icon rail the card narrows to the portrait alone; the same
- * localized role is revealed as a tooltip on hover or keyboard focus, and stays
- * in the accessibility tree either way.
+ * Collapsed to the icon rail the card narrows to the portrait alone. The role
+ * is never repeated as a floating badge or tooltip over the avatar: it stays
+ * inside the card, and on the rail it remains in the accessibility tree for
+ * screen readers.
  */
-export default function SidebarProfile({ collapsed = false }) {
+export default function SidebarProfile() {
   const { t } = useI18n();
   const { user, memberships, businessId } = useAuth();
 
@@ -34,12 +35,11 @@ export default function SidebarProfile({ collapsed = false }) {
 
   return (
     <div className="sidebar__user">
-      <div
-        className="sprofile"
-        data-tip={roleLabel}
-        data-tip-side="inline-end"
-        tabIndex={collapsed ? 0 : undefined}
-      >
+      {/* No tooltip, badge or popover repeats the role here: the label lives
+          inside the card, and on the collapsed rail it stays in the
+          accessibility tree for screen readers instead of floating over the
+          avatar. */}
+      <div className="sprofile">
         <span className="sprofile__avatar">
           <UserAvatar
             user={user}

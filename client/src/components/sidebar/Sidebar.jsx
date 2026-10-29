@@ -103,7 +103,7 @@ export default function Sidebar({ open = false, onNavigate }) {
         </nav>
 
         {/* One horizontal card: avatar and, opposite it, the localized role. */}
-        <SidebarProfile collapsed={railCollapsed} />
+        <SidebarProfile />
       </aside>
 
       {/*
