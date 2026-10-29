@@ -1520,36 +1520,10 @@ table.data tr:hover td { background: var(--surface-2); }
     padding-inline: 0;
   }
 
-  /* Tooltips for the icon-only rail: outside the rail, in the current language. */
-  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip] { position: relative; }
-  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]::after {
-    content: attr(data-tip);
-    position: absolute;
-    inset-inline-start: calc(100% + 12px);
-    inset-block-start: 50%;
-    transform: translateY(-50%) scale(0.96);
-    transform-origin: center;
-    padding: 6px 10px;
-    border-radius: 9px;
-    background: var(--navy-2);
-    border: 1px solid var(--navy-line);
-    color: #ffffff;
-    font-size: 12.5px;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: 0 10px 22px -12px rgba(3, 8, 14, 0.85);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.12s ease, transform 0.12s ease;
-    z-index: 6;
-  }
-  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]:hover::after,
-  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]:focus-visible::after {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-  /* The open group already names itself in its flyout header. */
-  .sidebar.is-collapsed .nav-link.is-flyout::after { display: none; }
+  /* Tooltips for the icon-only rail come from the global TooltipLayer (see
+     components/tooltip/tooltip.css): `data-tip` marks the row and
+     `data-tip-side="inline-end"` puts the bubble outside the rail, mirrored
+     automatically in RTL. No local pseudo-element bubble here anymore. */
 
   /* Collapsed group flyout: keeps submenu destinations reachable and keyboard
      focusable without widening the rail. */
@@ -1612,8 +1586,7 @@ table.data tr:hover td { background: var(--surface-2); }
   .nav-collapse,
   .nav-collapse__chev,
   .nav-children,
-  .nav-flyout,
-  .sidebar.is-collapsed .sidebar__nav .nav-link[data-tip]::after {
+  .nav-flyout {
     transition: none !important;
     animation: none !important;
   }

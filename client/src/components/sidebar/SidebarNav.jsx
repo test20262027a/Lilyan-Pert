@@ -71,6 +71,7 @@ export default function SidebarNav({
             rel="noreferrer"
             title={collapsed ? undefined : t(item.key)}
             data-tip={collapsed ? t(item.key) : undefined}
+            data-tip-side="inline-end"
             onClick={(e) => {
               if (!previewHref) e.preventDefault();
               navigate(e);
@@ -91,6 +92,7 @@ export default function SidebarNav({
             className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
             title={collapsed ? undefined : t(item.key)}
             data-tip={collapsed ? t(item.key) : undefined}
+            data-tip-side="inline-end"
             onClick={navigate}
           >
             <Icon name={item.icon} size={18} />
@@ -115,7 +117,8 @@ export default function SidebarNav({
             aria-expanded={collapsed ? isFlyout : isOpen}
             aria-controls={isOpen || isFlyout ? panelId : undefined}
             title={collapsed ? undefined : t(item.key)}
-            data-tip={collapsed ? t(item.key) : undefined}
+            data-tip={collapsed && !isFlyout ? t(item.key) : undefined}
+            data-tip-side="inline-end"
             onClick={() => {
               if (collapsed) {
                 setFlyout((current) => (current === item.key ? null : item.key));

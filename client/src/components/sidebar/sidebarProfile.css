@@ -134,42 +134,12 @@
     white-space: nowrap;
   }
 
-  /* The same role, in the current language, outside the rail on hover/focus. */
-  .sidebar.is-collapsed .sprofile::after {
-    content: attr(data-tip);
-    position: absolute;
-    inset-inline-start: calc(100% + 12px);
-    inset-block-start: 50%;
-    transform: translateY(-50%) scale(0.96);
-    transform-origin: center;
-    padding: 7px 11px;
-    border-radius: 10px;
-    background: linear-gradient(
-      155deg,
-      color-mix(in srgb, var(--primary) 26%, var(--navy-2)),
-      var(--navy-2)
-    );
-    border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--navy-line));
-    color: #ffffff;
-    font-size: 12.5px;
-    font-weight: 650;
-    letter-spacing: 0.01em;
-    white-space: nowrap;
-    box-shadow: 0 12px 24px -14px rgba(2, 7, 12, 0.95);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.12s ease, transform 0.12s ease;
-    z-index: 6;
-  }
-  .sidebar.is-collapsed .sprofile:hover::after,
-  .sidebar.is-collapsed .sprofile:focus::after {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
+  /* The same role, in the current language, outside the rail on hover/focus —
+     drawn by the global TooltipLayer from `data-tip`, so it matches every
+     other tooltip in the app instead of carrying a private bubble here. */
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .sprofile,
-  .sidebar.is-collapsed .sprofile::after { transition: none; }
+  .sprofile { transition: none; }
   .sprofile:hover { transform: none; }
 }

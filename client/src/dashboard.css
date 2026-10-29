@@ -544,18 +544,22 @@
 .chart__x, .chart__y { font-size: 10.5px; fill: var(--muted); }
 .chart__x { text-anchor: middle; }
 .chart__y { text-anchor: end; }
+/* The chart's point readout is a tooltip too: it wears the same solid,
+   theme-derived bubble as every other tooltip in the app (tokens live in
+   components/tooltip/tooltip.css), so hovering a point and hovering a button
+   read as one design. */
 .chart__tip {
   position: absolute; z-index: 2; pointer-events: none;
   transform: translate(-50%, -118%);
-  background: var(--surface);
-  border: 1px solid var(--glass-line);
-  border-radius: 10px;
-  padding: 4px 9px;
-  font-size: 11.5px; font-weight: 700; color: var(--text);
-  box-shadow: var(--shadow-soft);
+  background: var(--ttip-bg);
+  border: 1px solid var(--ttip-line);
+  border-radius: 12px;
+  padding: 7px 11px;
+  font-size: 12px; font-weight: 700; color: var(--ttip-ink);
+  box-shadow: var(--ttip-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   white-space: nowrap;
 }
-.chart__tip span { color: var(--muted); font-weight: 650; }
+.chart__tip span { color: color-mix(in srgb, var(--ttip-ink) 68%, transparent); font-weight: 650; }
 
 /* --------------------------------------------------------- best selling */
 

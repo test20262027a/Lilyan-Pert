@@ -37,6 +37,7 @@ export default function SidebarProfile({ collapsed = false }) {
       <div
         className="sprofile"
         data-tip={roleLabel}
+        data-tip-side="inline-end"
         tabIndex={collapsed ? 0 : undefined}
       >
         <span className="sprofile__avatar">
