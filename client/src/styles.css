@@ -1284,26 +1284,6 @@ table.data tr:hover td { background: var(--surface-2); }
 .totals__row { display: flex; justify-content: space-between; gap: 10px; }
 .totals__row--grand { font-weight: 800; font-size: 15.5px; border-top: 1px dashed var(--border-strong); padding-top: 8px; }
 
-/* --------------------------------------------------------------- receipt */
-
-.receipt-paper {
-  background: #fff; color: #111;
-  font-family: 'Courier New', ui-monospace, monospace;
-  font-size: 12px; line-height: 1.45;
-  padding: 14px; border-radius: 8px;
-  border: 1px solid #ddd;
-  max-width: 340px; margin: 0 auto;
-  overflow-x: auto;
-}
-.receipt-paper * { color: #111; }
-.receipt-center { text-align: center; }
-.receipt-hr { border: none; border-top: 1px dashed #999; margin: 8px 0; }
-.receipt-row { display: flex; justify-content: space-between; gap: 8px; }
-.receipt-row--wrap { align-items: flex-start; }
-.receipt-item-name { flex: 1 1 auto; min-width: 0; word-break: break-word; }
-.receipt-logo { max-width: 110px; height: auto; display: block; margin: 0 auto 6px; }
-.receipt-meta { font-size: 11px; }
-
 /* ------------------------------------------------------------ data viz */
 
 .bars { display: flex; align-items: flex-end; gap: 8px; min-height: 130px; }
@@ -1782,15 +1762,13 @@ body.nav-drawer-open { overflow: hidden; }
 
 @media print {
   html, body { background: #fff !important; }
-  /* One continuous receipt: nothing else is in the printed flow. */
+  /* One continuous receipt: nothing else is in the printed flow. The receipt
+     itself is styled in receipt.css, next to the component that renders it. */
   body > *:not(#print-root) { display: none !important; }
   #print-root { display: block !important; }
-  #print-root .receipt-paper {
-    max-width: none; width: 100%; border: none; border-radius: 0;
-    padding: 0; margin: 0; overflow: visible; max-height: none;
-  }
-  #print-root .receipt-row, #print-root .receipt-item { break-inside: avoid; }
   .no-print { display: none !important; }
 }
 
-@page { size: 80mm auto; margin: 4mm; }
+/* Fallback sheet, replaced per print by ReceiptPrintStyle with the paper the
+   owner selected in Settings. */
+@page { size: 80mm auto; margin: 0; }

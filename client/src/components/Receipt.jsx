@@ -1,18 +1,38 @@
 import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { fmtDateTime, zoneFor } from '../format';
+import { fmtDateTime, fmtMoney, fmtNumber, zoneFor } from '../format';
 import { isRtl } from '../i18n';
 import { pickReceiptFooter, receiptLabel, receiptMessageText } from '../receiptMessages';
+import '../receipt.css';
 
 /**
- * One receipt markup used by the on-screen receipt, the preview and the
- * printed output, so all three always show identical authoritative data.
- * It is a single continuous flow — no fixed heights, no page breaks.
+ * One receipt markup used by the on-screen preview and the printed output, so
+ * both always show identical authoritative data. It is a single continuous
+ * flow — no fixed heights, no page breaks, nothing that can clip.
+ *
+ * The structure is fixed for both paper widths: logo, business identity,
+ * rule, order number and details, rule, product list, rule, totals with a bold
+ * grand total, rule, one closing message. Only the type scale and the logo cap
+ * change between 58 mm and 80 mm (see receipt.css).
  *
  * It is customer-facing only: the order's status history, edits, auditors and
  * timestamps are internal and live in the Order Details activity timeline,
  * never here — so printing and PDF export stay free of audit information.
  */
+
+/** The paper width in millimetres, from the saved print settings. */
+export function paperWidth(settings) {
+  const raw = String(settings?.paper_width || '80mm');
+  if (raw === '58mm') return 58;
+  if (raw === 'custom') {
+    const n = Number(settings?.custom_width);
+    return Number.isFinite(n) ? Math.min(120, Math.max(40, n)) : 80;
+  }
+  return 80;
+}
+
+const LOGO_PX = { small: 70, medium: 110, large: 150 };
+
 export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   /*
    * One closing message per receipt. The pick is identity-only (the text is
@@ -33,6 +53,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
   const { order, items, table, business } = data;
   const settings = business?.receipt_settings || {};
   const timeZone = zoneFor(locale, business?.timezone);
+
   /* The business's own name in the receipt's language; a missing translation
      falls back to the configured default name, never to another language. */
   const businessName = business?.[`name_${locale}`] || business?.name || business?.name_en || '';
@@ -42,16 +63,26 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
    * what it printed before.
    */
   const addressText = business?.addresses?.[locale] || business?.addresses?.en || business?.address;
-  const logoWidth = { small: 70, medium: 110, large: 150 }[settings.logo_size] || 110;
-  const contentAlign =
-    settings.alignment === 'center' ? 'center' : settings.alignment === 'start' ? 'start' : undefined;
+  const tableName = table ? table[`name_${locale}`] || table.name : '';
+
+  const mm = paperWidth(settings);
+  const narrow = mm <= 60;
+  const logoWidth = Math.min(LOGO_PX[settings.logo_size] || LOGO_PX.medium, narrow ? 84 : 150);
+  const align = settings.alignment === 'center' || settings.alignment === 'start' ? settings.alignment : 'auto';
   const moreInfo = settings.show_more_info !== false;
+  const currency = business?.currency || '';
+
   /*
-   * The receipt's structural labels are fixed localized text, printed in their
-   * own place; only the closing message below is one of the fifteen editable
-   * messages, and its {{businessName}} is resolved from the business profile at
-   * print time, so a renamed business prints its new name.
+   * Money keeps the app's own formatting rules (localized digits, the business
+   * currency, whole numbers where the currency has no decimals). Nothing is
+   * recalculated here — the stored order values print exactly as saved.
    */
+  const amount = (value) => fmtNumber(Number(value) || 0, locale);
+
+  /* The receipt's structural labels are fixed localized text, printed in their
+     own place; only the closing message below is one of the fifteen editable
+     messages, and its {{businessName}} is resolved from the business profile at
+     print time, so a renamed business prints its new name. */
   const msg = (key) => receiptLabel(key, locale);
   const footer = pick
     ? {
@@ -59,136 +90,141 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         text: receiptMessageText(business, pick.key, pick.language, {
           business_name: businessName,
           order_number: order?.order_number ?? '',
-          table: table?.name || '',
+          table: tableName || '',
           customer_name: order?.customer_name || '',
           date: order ? fmtDateTime(order.created_at, locale, timeZone) : '',
-          total: `${Number(order?.total || 0).toFixed(0)}${business?.currency ? ` ${business.currency}` : ''}`,
-          currency: business?.currency || '',
+          total: `${amount(order?.total)}${currency ? ` ${currency}` : ''}`,
+          currency,
         }),
       }
     : null;
+
+  const kvRow = (label, value, key) => (
+    <div className="rc-kv__row" key={key}>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
 
   /* The paper follows the receipt's own language, so Kurdish, Persian and
      Arabic print right-to-left even when the panel around them does not. */
   return (
     <div
       className="receipt-paper"
+      data-paper={narrow ? '58' : '80'}
+      data-align={align}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
-      style={contentAlign ? { textAlign: contentAlign } : undefined}
     >
-      {settings.show_logo && business?.logo_url ? (
-        <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: logoWidth }} />
-      ) : null}
-      <div className="receipt-center" style={{ fontWeight: 700, fontSize: 14 }}>{businessName}</div>
-      {moreInfo && settings.show_address && (addressText || business?.city) ? (
-        <div className="receipt-center receipt-meta">
-          {[addressText, business?.city].filter(Boolean).join(', ')}
-        </div>
-      ) : null}
-      {moreInfo && settings.show_phone && business?.phone ? (
-        <div className="receipt-center receipt-meta">{business.phone}</div>
-      ) : null}
+      <header className="rc-head">
+        {settings.show_logo && business?.logo_url ? (
+          <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: `${logoWidth}px` }} />
+        ) : null}
+        <div className="rc-name">{businessName}</div>
+        {moreInfo && settings.show_address && (addressText || business?.city) ? (
+          <div className="rc-contact">{[addressText, business?.city].filter(Boolean).join(', ')}</div>
+        ) : null}
+        {moreInfo && settings.show_phone && business?.phone ? (
+          <div className="rc-contact rc-num">{business.phone}</div>
+        ) : null}
+        {moreInfo && (business?.email || business?.website) ? (
+          <div className="rc-contact rc-num">
+            {[business?.email, business?.website].filter(Boolean).join(' · ')}
+          </div>
+        ) : null}
+      </header>
 
-      <hr className="receipt-hr" />
+      <hr className="rc-rule" />
 
       {settings.show_order_info !== false ? (
-        <div className="receipt-meta">
+        <section className="rc-order">
           {settings.show_order_number !== false ? (
-            <div className="receipt-row">
-              <span>{msg('order_no')}</span>
-              <span>#{order?.order_number}</span>
+            <div className="rc-orderno">
+              <span className="rc-orderno__label">{msg('order_no')}</span>
+              <span className="rc-orderno__value rc-num">#{order?.order_number}</span>
             </div>
           ) : null}
-          {table && settings.show_table_number !== false ? (
-            <div className="receipt-row">
-              <span>{msg('table')}</span>
-              <span>{table.name}</span>
-            </div>
-          ) : null}
-          {settings.show_datetime !== false ? (
-            <div className="receipt-row">
-              <span>{msg('datetime')}</span>
-              <span>{fmtDateTime(order?.created_at, locale, timeZone)}</span>
-            </div>
-          ) : null}
-          {settings.show_customer_name !== false && order?.customer_name ? (
-            <div className="receipt-row">
-              <span>{msg('customer')}</span>
-              <span>{order.customer_name}</span>
-            </div>
-          ) : null}
-          {moreInfo && settings.show_cashier ? (
-            <div className="receipt-row">
-              <span>{msg('cashier')}</span>
-              <span>{order?.created_by_name || '—'}</span>
-            </div>
-          ) : null}
-        </div>
+          <dl className="rc-kv">
+            {tableName && settings.show_table_number !== false
+              ? kvRow(msg('table'), tableName, 'table')
+              : null}
+            {settings.show_datetime !== false
+              ? kvRow(msg('datetime'), <span className="rc-num">{fmtDateTime(order?.created_at, locale, timeZone)}</span>, 'date')
+              : null}
+            {settings.show_customer_name !== false && order?.customer_name
+              ? kvRow(msg('customer'), order.customer_name, 'customer')
+              : null}
+            {moreInfo && settings.show_cashier
+              ? kvRow(msg('cashier'), order?.created_by_name || '—', 'cashier')
+              : null}
+          </dl>
+        </section>
       ) : null}
 
-      <hr className="receipt-hr" />
+      <hr className="rc-rule rc-rule--soft" />
 
-      <div className="receipt-row receipt-meta" style={{ fontWeight: 700 }}>
-        <span>{msg('items')}</span>
-        <span>{msg('total_column')}</span>
-      </div>
-      {(items || []).map((line, idx) => (
-        <div key={`${line.name}-${idx}`} style={{ marginTop: 4 }}>
-          <div className="receipt-row receipt-item">
-            <span className="receipt-item-name">
-              {line.quantity} × {line.name}
-            </span>
-            <span style={{ whiteSpace: 'nowrap' }}>
-              {Number(line.line_total).toFixed(0)}
-            </span>
+      {(items || []).length ? (
+        <section className="rc-items">
+          <div className="rc-items__head">
+            <span>{msg('items')}</span>
+            <span>{msg('total_column')}</span>
           </div>
-          {settings.show_notes !== false && line.notes ? (
-            <div className="receipt-meta receipt-item-name" style={{ paddingInlineStart: 12 }}>
-              {line.notes}
+          {(items || []).map((line, idx) => (
+            <div className="rc-item" key={`${line.name}-${idx}`}>
+              {/* The name owns its column, so wrapping never moves a price. */}
+              <span className="rc-item__name">{line.name}</span>
+              <span className="rc-item__amount rc-num">{amount(line.line_total)}</span>
+              {/* Quantity × unit price under the name: the per-unit economics
+                  of the line, printed only when the order stored them. */}
+              <span className="rc-item__meta rc-num">
+                {line.unit_price == null
+                  ? amount(line.quantity)
+                  : `${amount(line.quantity)} × ${amount(line.unit_price)}`}
+              </span>
+              {settings.show_notes !== false && line.notes ? (
+                <span className="rc-item__note">{line.notes}</span>
+              ) : null}
             </div>
-          ) : null}
-        </div>
-      ))}
+          ))}
+        </section>
+      ) : null}
 
       {settings.show_notes !== false && order?.notes ? (
-        <div className="receipt-meta" style={{ marginTop: 6 }}>
-          <div style={{ fontWeight: 700 }}>{msg('notes')}</div>
-          <div>{order.notes}</div>
+        <div className="rc-notes">
+          <div className="rc-notes__label">{msg('notes')}</div>
+          <div className="rc-notes__text">{order.notes}</div>
         </div>
       ) : null}
 
-      <hr className="receipt-hr" />
+      <hr className="rc-rule" />
 
-      <div className="receipt-meta">
-        <div className="receipt-row">
-          <span>{msg('subtotal')}</span>
-          <span>{Number(order?.subtotal || 0).toFixed(0)}</span>
+      <dl className="rc-totals">
+        <div className="rc-totals__row">
+          <dt>{msg('subtotal')}</dt>
+          <dd className="rc-num">{amount(order?.subtotal)}</dd>
         </div>
         {Number(order?.discount || 0) > 0 ? (
-          <div className="receipt-row">
-            <span>{msg('discount')}</span>
-            <span>-{Number(order.discount).toFixed(0)}</span>
+          <div className="rc-totals__row">
+            <dt>{msg('discount')}</dt>
+            <dd className="rc-num">-{amount(order.discount)}</dd>
           </div>
         ) : null}
         {Number(order?.tax || 0) > 0 ? (
-          <div className="receipt-row">
-            <span>{msg('tax')}</span>
-            <span>{Number(order.tax).toFixed(0)}</span>
+          <div className="rc-totals__row">
+            <dt>{msg('tax')}</dt>
+            <dd className="rc-num">{amount(order.tax)}</dd>
           </div>
         ) : null}
         {Number(order?.service_charge || 0) > 0 ? (
-          <div className="receipt-row">
-            <span>{msg('service_charge')}</span>
-            <span>{Number(order.service_charge).toFixed(0)}</span>
+          <div className="rc-totals__row">
+            <dt>{msg('service_charge')}</dt>
+            <dd className="rc-num">{amount(order.service_charge)}</dd>
           </div>
         ) : null}
-        <div className="receipt-row" style={{ fontWeight: 700, fontSize: 13.5, marginTop: 4 }}>
+        <div className="rc-grand">
           <span>{msg('total')}</span>
-          <span>
-            {Number(order?.total || 0).toFixed(0)} {business?.currency || ''}
-          </span>
+          <span className="rc-num">{fmtMoney(order?.total || 0, currency, locale)}</span>
         </div>
-      </div>
+      </dl>
 
       {/*
         Deliberately no order-change audit here: status transitions, edits and
@@ -200,8 +236,8 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           language — never several messages, never several languages. */}
       {footer?.text ? (
         <>
-          <hr className="receipt-hr" />
-          <div className="receipt-center receipt-meta">{footer.text}</div>
+          <hr className="rc-rule" />
+          <p className="rc-foot">{footer.text}</p>
         </>
       ) : null}
     </div>
@@ -218,8 +254,12 @@ export function PrintPortal({ children }) {
 /**
  * Page geometry for the printed receipt, taken from the saved print settings.
  * It is mounted inside the print portal, so it only exists while printing and
- * leaves the on-screen stylesheet untouched. Missing or invalid values fall
- * back to the historical 80 mm / 100% / 4 mm behaviour.
+ * leaves the on-screen stylesheet untouched.
+ *
+ * The sheet is exactly as wide as the paper minus the two side margins: a
+ * sheet as wide as the paper would print outside the printable area and the
+ * printer would clip the price column. The calibration scale is applied with
+ * `zoom`, so the sheet is widened by the same factor to still fill the paper.
  */
 export function ReceiptPrintStyle({ settings }) {
   const clamp = (value, min, max, fallback) => {
@@ -227,19 +267,19 @@ export function ReceiptPrintStyle({ settings }) {
     if (!Number.isFinite(n)) return fallback;
     return Math.min(max, Math.max(min, n));
   };
-  const paper = String(settings?.paper_width || '80mm');
-  const width =
-    paper === '58mm' ? 58 : paper === 'custom' ? clamp(settings?.custom_width, 40, 120, 80) : 80;
+  const paper = paperWidth(settings);
   const scale = clamp(settings?.print_scale, 50, 150, 100) / 100;
-  const left = clamp(settings?.margin_left, 0, 20, 4);
-  const right = clamp(settings?.margin_right, 0, 20, 4);
-  const bottom = clamp(settings?.margin_bottom, 0, 20, 4);
+  const left = clamp(settings?.margin_left, 0, 20, 0);
+  const right = clamp(settings?.margin_right, 0, 20, 0);
+  const bottom = clamp(settings?.margin_bottom, 0, 20, 0);
+  const printable = Math.max(paper - left - right, paper * 0.5);
 
   return (
     <style>{`
-      @page { size: ${width}mm auto; margin: ${bottom}mm ${right}mm ${bottom}mm ${left}mm; }
+      @page { size: ${paper}mm auto; margin: ${bottom}mm ${right}mm ${bottom}mm ${left}mm; }
+      html, body { margin: 0 !important; padding: 0 !important; background: #fff !important; }
       #print-root .receipt-paper {
-        width: ${(width / scale).toFixed(2)}mm;
+        width: ${(printable / scale).toFixed(2)}mm;
         max-width: none;
         zoom: ${scale};
       }

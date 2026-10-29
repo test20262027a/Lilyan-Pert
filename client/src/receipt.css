@@ -1,0 +1,302 @@
+/* ==========================================================================
+   Lilyan Pert — thermal receipt (58 mm / 80 mm)
+
+   One stylesheet for the receipt drawn on screen and the receipt that comes
+   out of the printer. Everything is black ink on white paper: a thermal head
+   cannot render gradients, tints or shadows, so the design carries its
+   hierarchy through weight, size, spacing and rules instead.
+
+   Layout rules that keep the paper intact:
+   · no fixed heights — the paper grows with its content, never clips it;
+   · every row is a grid of `minmax(0, 1fr) auto`, so a long product name
+     wraps inside its own column and never pushes the price off the paper;
+   · amounts are tabular and nowrap, so columns line up and digits never
+     reflow; they are bidi-isolated so an RTL receipt cannot reverse them;
+   · the sheet is exactly the printable width of the paper (the print style
+     subtracts the calibration margins), so nothing prints outside it.
+   ========================================================================== */
+
+.receipt-paper {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 12px 14px 10px;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  /*
+   * A proportional face that really carries Kurdish, Persian, Arabic and
+   * Latin. A monospace face (the old receipt font) has no Arabic coverage and
+   * falls back per glyph, which is what produced broken, mismatched lines.
+   */
+  font-family: 'Noto Naskh Arabic', 'Noto Kufi Arabic', 'Segoe UI', Tahoma,
+    'DejaVu Sans', Arial, sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  font-variant-numeric: tabular-nums;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.receipt-paper * { color: #000000; }
+
+/* Numbers, times, phones and prices stay in one direction on an RTL receipt.
+   Only the values that must never reflow (prices) are also kept on one line;
+   a long date or phone in a detail row is allowed to wrap instead of pushing
+   the sheet past the paper width. */
+.rc-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.rc-head {
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  text-align: center;
+}
+
+.receipt-logo {
+  display: block;
+  max-width: 110px;
+  height: auto;
+  margin: 0 auto 5px;
+  object-fit: contain;
+}
+
+.rc-name {
+  font-size: 1.35em;
+  font-weight: 800;
+  line-height: 1.22;
+  letter-spacing: 0.01em;
+  overflow-wrap: anywhere;
+}
+
+.rc-contact {
+  font-size: 0.92em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* The owner can left/start-align the header; centered is the default. */
+.receipt-paper[data-align='start'] .rc-head {
+  justify-items: start;
+  text-align: start;
+}
+
+.receipt-paper[data-align='start'] .rc-foot { text-align: start; }
+
+/* ------------------------------------------------------------------ rules */
+
+.rc-rule {
+  border: 0;
+  border-top: 1px solid #000000;
+  margin: 6px 0;
+}
+
+.rc-rule--soft {
+  border-top-style: dashed;
+  border-top-color: #6b6b6b;
+}
+
+/* ------------------------------------------------------------ order header */
+
+.rc-order { display: grid; gap: 3px; }
+
+.rc-orderno {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rc-orderno__label {
+  font-size: 0.92em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rc-orderno__value {
+  font-size: 1.5em;
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.rc-kv {
+  display: grid;
+  gap: 1px;
+  margin: 0;
+}
+
+.rc-kv__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rc-kv__row dt {
+  flex: none;
+  font-size: 0.92em;
+  color: #333333;
+}
+
+.rc-kv__row dd {
+  margin: 0;
+  min-width: 0;
+  font-weight: 600;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------- items */
+
+.rc-items { display: grid; }
+
+.rc-items__head,
+.rc-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+  align-items: baseline;
+}
+
+.rc-items__head {
+  padding-bottom: 3px;
+  margin-bottom: 2px;
+  border-bottom: 1px solid #000000;
+  font-size: 0.92em;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.rc-items__head > :last-child { text-align: end; }
+
+/* A hairline between products: readable on a thermal print, never a block. */
+.rc-item {
+  padding: 3px 0;
+  break-inside: avoid;
+}
+
+.rc-item + .rc-item { border-top: 1px dotted #9a9a9a; }
+
+.rc-item__name {
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.rc-item__amount {
+  text-align: end;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.rc-item__meta {
+  grid-column: 1;
+  font-size: 0.9em;
+  color: #333333;
+}
+
+.rc-item__note {
+  grid-column: 1 / -1;
+  font-size: 0.88em;
+  color: #333333;
+  overflow-wrap: anywhere;
+}
+
+.rc-notes { margin-top: 4px; }
+
+.rc-notes__label { font-weight: 700; font-size: 0.92em; }
+
+.rc-notes__text { overflow-wrap: anywhere; }
+
+/* ------------------------------------------------------------------ totals */
+
+.rc-totals { display: grid; gap: 1px; }
+
+.rc-totals__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rc-totals__row dt { font-size: 0.94em; }
+
+.rc-totals__row dd {
+  margin: 0;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.rc-grand {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 2px solid #000000;
+  font-size: 1.32em;
+  font-weight: 800;
+  line-height: 1.15;
+  break-inside: avoid;
+}
+
+.rc-grand > :last-child { white-space: nowrap; }
+
+/* ------------------------------------------------------------------ footer */
+
+.rc-foot {
+  margin: 0;
+  font-size: 0.96em;
+  line-height: 1.45;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------------ print */
+
+@media print {
+  #print-root .receipt-paper {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    background: #ffffff;
+    /* Point sizes are what a thermal driver maps most faithfully. */
+    font-size: 9.5pt;
+    line-height: 1.3;
+  }
+
+  /* 58 mm paper carries roughly half the characters: one step smaller. */
+  #print-root .receipt-paper[data-paper='58'] {
+    font-size: 8.4pt;
+    line-height: 1.28;
+  }
+
+  #print-root .receipt-paper[data-paper='58'] .rc-name { font-size: 1.25em; }
+  #print-root .receipt-paper[data-paper='58'] .rc-orderno__value { font-size: 1.35em; }
+  #print-root .receipt-paper[data-paper='58'] .rc-grand { font-size: 1.2em; }
+
+  /* Nothing important may straddle a cut. */
+  #print-root .rc-item,
+  #print-root .rc-kv__row,
+  #print-root .rc-totals__row,
+  #print-root .rc-grand,
+  #print-root .rc-head { break-inside: avoid; }
+
+  #print-root .rc-foot { break-inside: avoid; }
+}

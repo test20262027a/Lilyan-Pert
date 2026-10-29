@@ -53,7 +53,9 @@ function sampleReceipt(draft, t) {
       total: 12000,
       notes: null,
     },
-    items: [{ name: t('settings_receipt_sample_item'), quantity: 1, line_total: 12000, notes: null }],
+    items: [
+      { name: t('settings_receipt_sample_item'), quantity: 1, unit_price: 12000, line_total: 12000, notes: null },
+    ],
     table: { name: 'A1' },
     business: {
       name_en: draft.name_en,
