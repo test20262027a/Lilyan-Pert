@@ -1,6 +1,7 @@
+import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { fmtDateTime, zoneFor } from '../format';
-import { receiptMessageText } from '../receiptMessages';
+import { receiptMessageText, selectReceiptFooterMessage } from '../receiptMessages';
 
 /**
  * One receipt markup used by the on-screen receipt, the preview and the
@@ -12,6 +13,29 @@ import { receiptMessageText } from '../receiptMessages';
  * never here — so printing and PDF export stay free of audit information.
  */
 export function ReceiptPaper({ data, locale }) {
+  /*
+   * One closing message per mounted receipt: every print operation mounts its
+   * own paper, so the message picked here stays the same while the browser
+   * preview is generated and while the paper is actually printed.
+   */
+  const [printToken] = useState(() => Math.random().toString(36).slice(2));
+  const footer = useMemo(() => {
+    if (!data) return null;
+    const { order, table, business: biz } = data;
+    return selectReceiptFooterMessage(biz, locale, {
+      business_name: biz?.[`name_${locale}`] || biz?.name_en || biz?.name || '',
+      order_number: order?.order_number ?? '',
+      table: table?.name || '',
+      customer_name: order?.customer_name || '',
+      date: order ? fmtDateTime(order.created_at, locale, zoneFor(locale, biz?.timezone)) : '',
+      total: `${Number(order?.total || 0).toFixed(0)}${biz?.currency ? ` ${biz.currency}` : ''}`,
+      currency: biz?.currency || '',
+    });
+    // Keyed by the print operation, not by the payload object: the chosen
+    // message must never change while this receipt is being printed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [printToken, locale]);
+
   if (!data) return null;
   const { order, items, table, business } = data;
   const settings = business?.receipt_settings || {};
@@ -33,15 +57,6 @@ export function ReceiptPaper({ data, locale }) {
    * business edit appears on the next receipt without touching this layout.
    */
   const msg = (key) => receiptMessageText(business, key, locale);
-  const footerText = receiptMessageText(business, 'footer', locale, {
-    business_name: businessName,
-    order_number: order?.order_number ?? '',
-    table: table?.name || '',
-    customer_name: order?.customer_name || '',
-    date: order ? fmtDateTime(order.created_at, locale, timeZone) : '',
-    total: `${Number(order?.total || 0).toFixed(0)}${business?.currency ? ` ${business.currency}` : ''}`,
-    currency: business?.currency || '',
-  });
 
   return (
     <div className="receipt-paper" style={contentAlign ? { textAlign: contentAlign } : undefined}>
@@ -165,10 +180,12 @@ export function ReceiptPaper({ data, locale }) {
         A receipt carries the final order only, on screen, in print and in PDF.
       */}
 
-      {footerText ? (
+      {/* Exactly one closing message, already resolved in this receipt's own
+          language — never several messages, never several languages. */}
+      {footer?.text ? (
         <>
           <hr className="receipt-hr" />
-          <div className="receipt-center receipt-meta">{footerText}</div>
+          <div className="receipt-center receipt-meta">{footer.text}</div>
         </>
       ) : null}
     </div>

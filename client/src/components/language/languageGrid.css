@@ -96,6 +96,45 @@
   }
 }
 
+/* ------------------------------------------------------- long-form fields */
+/* Multi-line text (receipt messages): one column per enabled language while
+   there is room, two columns on a tablet and one full-width field on a phone. */
+
+.lang-grid-host[data-variant='text'][data-langs='2'] .lang-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lang-grid-host[data-variant='text'][data-langs='4'] .lang-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@container (max-width: 900px) {
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid,
+  .lang-grid-host[data-variant='text'][data-langs='4'] .lang-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 560px) {
+  .lang-grid-host[data-variant='text'][data-langs='2'] .lang-grid,
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid,
+  .lang-grid-host[data-variant='text'][data-langs='4'] .lang-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
 /* Form-specific rhythm, without touching the column logic. */
 .ad-langs .lang-grid { gap: 10px; }
 .tx-langs .lang-grid { gap: 10px; }

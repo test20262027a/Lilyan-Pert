@@ -3,12 +3,57 @@ import path from 'node:path';
 import url from 'node:url';
 import { q, tx } from './db.js';
 import { hashPassword, UNCLAIMED_PASSWORD } from './auth.js';
+import { MESSAGE_LOCALES } from './lib/receipt-messages.js';
 
 const here = path.dirname(url.fileURLToPath(import.meta.url));
 
 export async function migrate() {
   const sql = fs.readFileSync(path.join(here, 'schema.sql'), 'utf8');
   await q(sql);
+}
+
+/**
+ * One-time data migration for the receipt footer.
+ *
+ * The footer used to be a single free-text field (`receipt_settings.footer_text`)
+ * written in whatever language the admin typed it in, and it printed as-is on
+ * every receipt. It now lives in the first closing message, in the business's
+ * default language, so the fifteen multilingual messages are the only source of
+ * a printed receipt footer. The old field is dropped in the same pass, so no
+ * business keeps a second, hidden footer that could print twice.
+ *
+ * Safe to run on every boot: a business without the old field is skipped, and a
+ * language that already carries text is never overwritten.
+ */
+export async function migrateReceiptFooterMessages() {
+  const { rows } = await q(
+    `SELECT id, receipt_settings, menu_settings, editable_text
+       FROM businesses
+      WHERE receipt_settings ? 'footer_text'`,
+  );
+
+  for (const row of rows) {
+    const receipt = { ...(row.receipt_settings || {}) };
+    const legacy = String(receipt.footer_text || '').trim();
+    delete receipt.footer_text;
+
+    const editable = { ...(row.editable_text || {}) };
+    if (legacy) {
+      const language = row.menu_settings?.language_settings?.default_language;
+      const code = MESSAGE_LOCALES.includes(language) ? language : 'ku';
+      const messages = { ...(editable.receipt_messages || {}) };
+      const footer = { ...(messages.footer || {}) };
+      if (!String(footer[code] || '').trim()) footer[code] = legacy;
+      messages.footer = footer;
+      editable.receipt_messages = messages;
+    }
+
+    await q('UPDATE businesses SET receipt_settings = $2::jsonb, editable_text = $3::jsonb WHERE id = $1', [
+      row.id,
+      JSON.stringify(receipt),
+      JSON.stringify(editable),
+    ]);
+  }
 }
 
 const WORKING_HOURS = {
@@ -115,7 +160,6 @@ export async function seed() {
           show_order_info: true,
           show_cashier: true,
           paper_width: '80mm',
-          footer_text: 'Thank you for visiting Lilyan Pert',
         }),
         JSON.stringify({
           sound_enabled: true,
@@ -142,6 +186,21 @@ export async function seed() {
             fa: 'به لیلیان پورت خوش آمدید',
             ar: 'مرحباً بكم في ليليان بيرت',
             en: 'Welcome to Lilyan Pert',
+          },
+          // The two closing messages a receipt picks one of at print time.
+          receipt_messages: {
+            footer: {
+              ku: 'سوپاس بۆ سەردانتان لە لیانیان پێرت',
+              fa: 'از بازدید شما از لیلیان پورت سپاسگزاریم',
+              ar: 'شكراً لزيارتكم ليليان بيرت',
+              en: 'Thank you for visiting Lilyan Pert',
+            },
+            footer_2: {
+              ku: 'هیوادارین بەم زووانە دیسان بیبینینەوە',
+              fa: 'امیدواریم به زودی دوباره شما را ببینیم',
+              ar: 'نتمنى أن نراكم قريباً مرة أخرى',
+              en: 'We hope to see you again soon',
+            },
           },
         }),
         'Asia/Baghdad',

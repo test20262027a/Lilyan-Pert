@@ -261,13 +261,12 @@
 /* ------------------------------------------------------ language fields */
 
 /*
- * One field, one column: the row edits the language that is active in the
- * interface, so the input always fills the whole body instead of leaving the
- * empty slots of the languages that are hidden or switched off.
+ * One field per enabled language. The columns come from LanguageFieldsGrid
+ * (`variant="text"`), which plans the grid from the number of languages the
+ * owner actually enabled — so switching one off widens the others instead of
+ * leaving an empty slot behind.
  */
 .tx-langs {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
   padding-top: 11px;
   border-top: 1px dashed var(--border);
 }

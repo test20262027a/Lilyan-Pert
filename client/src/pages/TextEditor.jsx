@@ -39,7 +39,7 @@ function draftFrom(business) {
 const EMPTY = Object.fromEntries(MESSAGE_LOCALES.map((code) => [code, '']));
 
 export default function TextEditor() {
-  const { t } = useI18n();
+  const { t, enabledLanguages } = useI18n();
   const { business, loading, save, reload } = useBusiness();
   const { isManager } = useAuth();
   const toast = useToast();
@@ -162,7 +162,10 @@ export default function TextEditor() {
     try {
       const result = await post('/text/translate', { text: source });
       const values = result?.translations || {};
-      const occupied = ['fa', 'ar', 'en'].filter((code) => String(draft?.[key]?.[code] || '').trim());
+      // Only the languages the owner enabled are offered for translation.
+      const occupied = enabledLanguages
+        .filter((code) => code !== 'ku')
+        .filter((code) => String(draft?.[key]?.[code] || '').trim());
       setReview({ key, values, occupied });
     } catch (err) {
       const code = err?.code;

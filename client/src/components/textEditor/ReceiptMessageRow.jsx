@@ -1,20 +1,22 @@
 import { useEffect, useRef } from 'react';
 import Icon from '../Icon';
 import LanguageFlag from '../header/LanguageFlag';
-import { useI18n } from '../../i18n';
+import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
+import { isRtl, useI18n } from '../../i18n';
 import { MESSAGE_LOCALES } from '../../receiptMessages';
 
 /*
- * One receipt message: a compact accordion header plus the field of the
- * language that is active in the interface right now. The row is fully
- * controlled — every keystroke reaches the page's single draft store, so
- * opening another row, searching, switching the interface language or
- * collapsing never loses what was typed.
+ * One receipt message: a compact accordion header plus one field per enabled
+ * language. The row is fully controlled — every keystroke reaches the page's
+ * single draft store, so opening another row, searching, switching a language
+ * or collapsing never loses what was typed.
  *
- * Only the active language is rendered and editable: the message the customer
- * reads depends on the menu they opened, so editing it in one language at a
- * time keeps the field wide enough to read, and a disabled language can never
- * leave an empty slot behind.
+ * Only the languages the owner enabled in Language Settings are rendered, so
+ * the grid always matches what is shown: four languages make four columns on a
+ * wide screen, two on a tablet and one per row on a phone, and switching a
+ * language off never leaves an empty slot behind. A disabled language keeps
+ * its saved text — it is hidden, never deleted, and reappears when it is
+ * switched back on.
  */
 
 const MAX_LENGTH = 1000;
@@ -31,19 +33,24 @@ export default function ReceiptMessageRow({
   onTranslate,
   translating,
 }) {
-  const { t, locale, rtl } = useI18n();
-  const ref = useRef(null);
+  const { t, enabledLanguages } = useI18n();
+  const refs = useRef({});
   const label = String(number).padStart(2, '0');
-  const languageLabel = t(`menu_lang_name_${locale}`);
+  const languages = enabledLanguages.length ? enabledLanguages : ['ku'];
+  const enabledKey = languages.join(',');
   const hasPlaceholder = MESSAGE_LOCALES.some((code) => /\{[a-z_]+\}/i.test(values?.[code] || ''));
 
-  // Auto-grow so a long message is never clipped while it is being edited.
+  // Auto-grow every visible field so a long message is never clipped while it
+  // is being edited; the row keeps its own rhythm in each language column.
   useEffect(() => {
-    const el = ref.current;
-    if (!open || !el) return;
-    el.style.height = 'auto';
-    el.style.height = `${Math.min(Math.max(el.scrollHeight, 88), 340)}px`;
-  }, [open, locale, values]);
+    if (!open) return;
+    for (const code of enabledKey.split(',')) {
+      const el = refs.current[code];
+      if (!el) continue;
+      el.style.height = 'auto';
+      el.style.height = `${Math.min(Math.max(el.scrollHeight, 84), 320)}px`;
+    }
+  }, [open, enabledKey, values]);
 
   return (
     <article className={`tx-row ${open ? 'is-open' : ''} ${dirty ? 'is-dirty' : ''}`}>
@@ -72,24 +79,31 @@ export default function ReceiptMessageRow({
 
       {open ? (
         <div className="tx-row__body" id={`tx-message-${number}`}>
-          <div className="tx-langs" data-lang={locale}>
-            <label className="tx-lang">
-              <span className="tx-lang__label">
-                <LanguageFlag code={locale} />
-                {languageLabel}
-              </span>
-              <textarea
-                ref={ref}
-                className="tx-lang__input"
-                dir={rtl ? 'rtl' : 'ltr'}
-                rows={3}
-                maxLength={MAX_LENGTH}
-                value={values?.[locale] || ''}
-                disabled={!canManage}
-                placeholder={t('text_editor_field_placeholder')}
-                onChange={(event) => onChange(locale, event.target.value)}
-              />
-            </label>
+          <div className="tx-langs">
+            <LanguageFieldsGrid count={languages.length} variant="text">
+              {languages.map((code) => (
+                <label className="tx-lang" key={code}>
+                  <span className="tx-lang__label">
+                    <LanguageFlag code={code} />
+                    {t(`menu_lang_name_${code}`)}
+                  </span>
+                  <textarea
+                    ref={(el) => {
+                      if (el) refs.current[code] = el;
+                    }}
+                    className="tx-lang__input"
+                    dir={isRtl(code) ? 'rtl' : 'ltr'}
+                    lang={code}
+                    rows={3}
+                    maxLength={MAX_LENGTH}
+                    value={values?.[code] || ''}
+                    disabled={!canManage}
+                    placeholder={t('text_editor_field_placeholder')}
+                    onChange={(event) => onChange(code, event.target.value)}
+                  />
+                </label>
+              ))}
+            </LanguageFieldsGrid>
           </div>
 
           {hasPlaceholder ? <p className="tx-placeholders">{t('text_editor_placeholders_hint')}</p> : null}

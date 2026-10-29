@@ -264,16 +264,8 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
             onChange={(value) => setJson('receipt_settings', key, value)}
           />
         ))}
-        <div style={{ marginTop: 14 }}>
-          <SetField label={t('settings_footer_text')}>
-            <input
-              className="input"
-              value={receipt.footer_text || ''}
-              disabled={!canManage}
-              onChange={(event) => setJson('receipt_settings', 'footer_text', event.target.value)}
-            />
-          </SetField>
-        </div>
+        {/* The receipt footer is written only in the Text Editor, where the
+            fifteen multilingual messages are the single source of truth. */}
       </SettingsCard>
 
       {confirmReset ? (
@@ -283,8 +275,9 @@ export default function ReceiptTab({ draft, setJson, patch, canManage }) {
           confirmLabel={t('settings_restore_defaults')}
           onCancel={() => setConfirmReset(false)}
           onConfirm={() => {
-            // Only receipt presentation is reset; the footer text stays.
-            patch('receipt_settings', { ...RECEIPT_DEFAULTS, footer_text: receipt.footer_text || '' });
+            // Only receipt presentation is reset; the footer messages live in
+            // the Text Editor and are never touched from here.
+            patch('receipt_settings', { ...RECEIPT_DEFAULTS });
             setConfirmReset(false);
             toast.success(t('settings_receipt_restored'));
           }}

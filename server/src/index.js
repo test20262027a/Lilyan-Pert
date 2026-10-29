@@ -1,6 +1,6 @@
 import express from 'express';
 import { q } from './db.js';
-import { migrate, seed } from './seed.js';
+import { migrate, seed, migrateReceiptFooterMessages } from './seed.js';
 import { attachSession } from './auth.js';
 import { HttpError } from './lib/http.js';
 import { activityLogger } from './lib/activity.js';
@@ -62,6 +62,7 @@ async function start() {
     try {
       await migrate();
       await seed();
+      await migrateReceiptFooterMessages();
       break;
     } catch (err) {
       attempt += 1;
