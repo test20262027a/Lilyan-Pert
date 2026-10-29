@@ -1,0 +1,252 @@
+/* ==========================================================================
+   AnimatedBackToTop — premium glass plate with a three-chevron animation.
+   Everything is derived from the active business theme (`--primary` plus the
+   surface/border tokens), so a theme or light/dark switch recolours it with no
+   extra rules. Arrow order in the DOM is top → middle → bottom (the stack
+   reads bottom-up: one large chevron, then two, then three).
+   ========================================================================== */
+
+.btt {
+  position: fixed;
+  inset-block-end: calc(22px + env(safe-area-inset-bottom, 0px));
+  inset-inline-end: 20px;
+  z-index: 45;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, var(--border));
+  /* Mixed with the text token, so the chevrons darken on a light plate and
+     lighten on a dark one — a solid accent would fail one of the two. */
+  color: color-mix(in srgb, var(--primary) 62%, var(--text));
+  background:
+    radial-gradient(120% 78% at 50% 0%, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 62%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--surface) 94%, #ffffff),
+      color-mix(in srgb, var(--primary) 12%, var(--surface))
+    );
+  box-shadow:
+    0 12px 26px -12px color-mix(in srgb, var(--primary) 62%, transparent),
+    0 3px 8px rgba(14, 22, 18, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -2px 7px color-mix(in srgb, var(--primary) 12%, transparent);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(12px) scale(0.94);
+  transition:
+    opacity 260ms ease,
+    transform 320ms cubic-bezier(0.22, 0.9, 0.3, 1.15),
+    box-shadow 260ms ease,
+    color 200ms ease,
+    visibility 260ms;
+}
+.btt.is-visible { opacity: 1; visibility: visible; transform: translateY(0) scale(1); }
+
+/* Dark mode: the tokens already darken the plate; the ink and the inner
+   highlight are tuned so the chevrons keep their contrast. */
+[data-theme='dark'] .btt {
+  color: color-mix(in srgb, var(--primary) 58%, #ffffff);
+  background:
+    radial-gradient(120% 78% at 50% 0%, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0) 64%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--surface-2) 90%, #ffffff),
+      color-mix(in srgb, var(--primary) 22%, var(--surface))
+    );
+  border-color: color-mix(in srgb, var(--primary) 38%, var(--border));
+  box-shadow:
+    0 14px 30px -12px rgba(0, 0, 0, 0.65),
+    0 0 0 1px color-mix(in srgb, var(--primary) 16%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 8px color-mix(in srgb, var(--primary) 26%, transparent);
+}
+
+.btt.is-visible:hover {
+  transform: translateY(-3px) scale(1.035);
+  color: color-mix(in srgb, var(--primary) 48%, var(--text));
+  box-shadow:
+    0 22px 36px -14px color-mix(in srgb, var(--primary) 75%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--primary) 26%, transparent),
+    0 4px 10px rgba(14, 22, 18, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+}
+[data-theme='dark'] .btt.is-visible:hover {
+  color: color-mix(in srgb, var(--primary) 40%, #ffffff);
+  box-shadow:
+    0 22px 38px -14px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in srgb, var(--primary) 45%, transparent),
+    0 0 22px -4px color-mix(in srgb, var(--primary) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.btt.is-visible:active { transform: translateY(-1px) scale(0.985); }
+
+.btt:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 6px var(--theme-focus-ring),
+    0 12px 26px -12px color-mix(in srgb, var(--primary) 62%, transparent);
+}
+
+/* ------------------------------------------------------------- chevrons --- */
+
+.btt__arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  pointer-events: none;
+}
+.btt__arrow {
+  display: block;
+  height: auto;
+  overflow: visible;
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(0 3px 6px color-mix(in srgb, var(--primary) 30%, transparent));
+}
+[data-theme='dark'] .btt__arrow {
+  filter:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12))
+    drop-shadow(0 3px 8px color-mix(in srgb, var(--primary) 45%, transparent));
+}
+
+/* Bottom LARGE — middle MEDIUM — top SMALL. */
+.btt__arrow--bottom { width: 24px; }
+.btt__arrow--middle { width: 17.5px; }
+.btt__arrow--top { width: 12px; }
+
+/*
+ * Stage 1 → 2 → 3 on a 2.4s loop: the bottom chevron stands alone, the middle
+ * one rises into place, then the small top one, the three hold, and both upper
+ * chevrons fade away so the loop restarts on a single arrow. The arrows only
+ * animate while the button is on screen.
+ */
+.btt__arrow {
+  animation-duration: 2.4s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+}
+.btt.is-visible .btt__arrow { animation-play-state: running; }
+
+.btt__arrow--bottom { animation-name: btt-arrow-bottom; }
+.btt__arrow--middle { animation-name: btt-arrow-middle; }
+.btt__arrow--top { animation-name: btt-arrow-top; }
+
+@keyframes btt-arrow-bottom {
+  0%, 86% { opacity: 1; transform: translateY(0) scale(1); }
+  93% { opacity: 1; transform: translateY(0) scale(1.07); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes btt-arrow-middle {
+  0%, 26% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.68);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+  34% {
+    opacity: 1;
+    transform: translateY(0) scale(1.05);
+    filter:
+      drop-shadow(0 0 8px color-mix(in srgb, var(--primary) 60%, transparent))
+      drop-shadow(0 2px 5px color-mix(in srgb, var(--primary) 36%, transparent));
+  }
+  44%, 84% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter:
+      drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+      drop-shadow(0 3px 6px color-mix(in srgb, var(--primary) 30%, transparent));
+  }
+  92%, 100% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.68);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+}
+
+@keyframes btt-arrow-top {
+  0%, 42% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.62);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+  51% {
+    opacity: 1;
+    transform: translateY(0) scale(1.06);
+    filter:
+      drop-shadow(0 0 9px color-mix(in srgb, var(--primary) 62%, transparent))
+      drop-shadow(0 2px 5px color-mix(in srgb, var(--primary) 38%, transparent));
+  }
+  60%, 84% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter:
+      drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+      drop-shadow(0 3px 6px color-mix(in srgb, var(--primary) 30%, transparent));
+  }
+  92%, 100% {
+    opacity: 0;
+    transform: translateY(7px) scale(0.62);
+    filter: drop-shadow(0 0 0 rgba(0, 0, 0, 0));
+  }
+}
+
+/* ------------------------------------------------------- avoidance rules --- */
+
+/* The guest cart bar owns the bottom edge; the control lifts above it instead
+   of sitting on the checkout button. */
+.customer-shell:has(.cart-bar) .btt { inset-block-end: calc(88px + env(safe-area-inset-bottom, 0px)); }
+
+/* A dialog owns the screen; the control must not sit in its footer. */
+body:has(.modal-backdrop) .btt,
+body:has(.cui-overlay) .btt { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* ----------------------------------------------------------- responsive --- */
+
+@media (max-width: 1024px) {
+  .btt { width: 48px; height: 48px; border-radius: 16px; }
+  .btt__arrow--bottom { width: 22px; }
+  .btt__arrow--middle { width: 16px; }
+  .btt__arrow--top { width: 11px; }
+}
+
+@media (max-width: 640px) {
+  .btt {
+    width: 46px;
+    height: 46px;
+    border-radius: 15px;
+    inset-inline-end: 14px;
+    inset-block-end: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  .btt__arrow--bottom { width: 21px; }
+  .btt__arrow--middle { width: 15.5px; }
+  .btt__arrow--top { width: 10.5px; }
+  .customer-shell:has(.cart-bar) .btt { inset-block-end: calc(84px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ------------------------------------------------- reduced motion support --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .btt {
+    transition: opacity 200ms ease, visibility 200ms;
+    transform: none;
+  }
+  .btt.is-visible { transform: none; }
+  .btt.is-visible:hover,
+  .btt.is-visible:active { transform: none; }
+  /* All three chevrons, held still. */
+  .btt__arrow {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

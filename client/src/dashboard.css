@@ -908,20 +908,6 @@
   text-align: start;
 }
 
-/* --------------------------------------------------------- scroll to top */
-
-.scroll-top {
-  position: fixed;
-  inset-block-end: calc(20px + env(safe-area-inset-bottom));
-  inset-inline-end: 20px;
-  width: 44px; height: 44px; border-radius: 50%;
-  z-index: 45; display: grid; place-items: center; cursor: pointer;
-  background: var(--surface); border: 1px solid var(--border);
-  color: var(--mint-deep);
-  box-shadow: var(--shadow);
-}
-.scroll-top:hover { background: var(--mint-soft); }
-
 /* ----------------------------------------------------------- responsive */
 
 @media (max-width: 1180px) {
@@ -1001,7 +987,6 @@
     font-size: 11.5px;
   }
   .orders-table__state { padding: 24px 12px; }
-  .scroll-top { width: 40px; height: 40px; inset-block-end: calc(14px + env(safe-area-inset-bottom)); }
 }
 
 @media (max-width: 420px) {

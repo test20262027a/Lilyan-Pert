@@ -4,6 +4,7 @@ import { BusinessProvider, useBusiness } from '../context/BusinessContext';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import AppHeader from './header/AppHeader';
 import Sidebar from './sidebar/Sidebar';
+import AnimatedBackToTop from './backToTop/AnimatedBackToTop';
 
 /*
  * The authenticated shell: the admin rail (its own component, so navigation
@@ -34,6 +35,9 @@ function Shell() {
         <main className="page">
           <Outlet />
         </main>
+
+        {/* One control for every admin screen. */}
+        <AnimatedBackToTop />
       </div>
     </div>
   );

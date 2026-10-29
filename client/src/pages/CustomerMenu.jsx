@@ -25,6 +25,7 @@ import CartPanel from '../components/customer/CartPanel';
 import OrderSuccessModal from '../components/customer/OrderSuccessModal';
 import ReviewModal from '../components/customer/ReviewModal';
 import CustomerClosedNotice from '../components/customer/CustomerClosedNotice';
+import AnimatedBackToTop from '../components/backToTop/AnimatedBackToTop';
 import useOpeningStatus from '../hooks/useOpeningStatus';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import useLanguageAvailability from '../hooks/useLanguageAvailability';
@@ -697,6 +698,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           </div>
         </div>
       ) : null}
+
+      {/* Guests get the floating control here; the admin ordering panel is
+          already inside the admin shell, which renders it once for the page. */}
+      {adminMode ? null : <AnimatedBackToTop />}
 
       {cartOpen ? (
         <CartPanel

@@ -10,7 +10,6 @@ import BestSelling from '../components/dashboard/BestSelling';
 import StatusBreakdown from '../components/dashboard/StatusBreakdown';
 import NewOrders from '../components/dashboard/NewOrders';
 import OrderDetailsModal from '../components/orders/detail/OrderDetailsModal';
-import ScrollTop from '../components/dashboard/ScrollTop';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
@@ -209,8 +208,6 @@ export default function Dashboard() {
           onOpenOrder={setOpenOrderId}
         />
       ) : null}
-
-      <ScrollTop />
 
       {openOrderId ? (
         <OrderDetailsModal
