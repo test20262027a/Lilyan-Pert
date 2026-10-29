@@ -350,15 +350,25 @@ a { color: var(--primary); }
 
 /* Navy rail overrides: muted labels, theme-accented active plate. */
 .sidebar .nav-link {
+  position: relative;
   color: var(--navy-muted);
   transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease,
-    box-shadow 0.16s ease, padding 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow 0.16s ease, border-radius 0.16s ease,
+    padding 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.sidebar .nav-link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
 /*
  * Active rail item: a translucent accent plate that follows the saved theme,
  * a thin accent edge, an inner highlight for the soft 3D lift and a theme
  * shadow — nothing here is a fixed blue or green.
+ *
+ * The plate is slightly rounder on its leading corners and tighter on its
+ * trailing ones, so it bends into the rail without ever looking like a plain
+ * pill. All radii are logical, so the bend mirrors with the layout direction.
  */
 .sidebar .nav-link.is-active {
   background: linear-gradient(
@@ -368,8 +378,26 @@ a { color: var(--primary); }
   );
   color: color-mix(in srgb, var(--primary) 26%, #ffffff);
   border-color: color-mix(in srgb, var(--primary) 55%, transparent);
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent),
-    0 8px 18px -12px color-mix(in srgb, var(--primary) 90%, transparent);
+  border-start-start-radius: 13px;
+  border-end-start-radius: 13px;
+  border-start-end-radius: 8px;
+  border-end-end-radius: 8px;
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 18%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    0 10px 20px -14px color-mix(in srgb, var(--primary) 95%, transparent),
+    0 2px 6px -4px rgba(0, 0, 0, 0.45);
+}
+/* The leading edge light: a soft accent line just inside the plate that gives
+   the highlight its depth without ever touching the icon or the label. */
+.sidebar .nav-link.is-active::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 4px;
+  inset-block: 9px;
+  width: 2.5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 50%, #ffffff);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--primary) 75%, transparent);
 }
 .sidebar .nav-link.is-active .icon { color: color-mix(in srgb, var(--primary) 40%, #ffffff); }
 
@@ -1291,15 +1319,40 @@ table.data tr:hover td { background: var(--surface-2); }
    so it is never mirrored by the layout direction. */
 .nav-group__caret.is-open { transform: rotate(180deg); opacity: 1; }
 .nav-group.is-current { color: #ffffff; }
-/* The group that holds the current page keeps a faint accent, so the open
-   accordion always explains where the member is. */
-.nav-group.is-current:not(.is-open) {
-  background: color-mix(in srgb, var(--primary) 13%, transparent);
+/*
+ * Group emphasis, in two steps below the active plate: a closed group that
+ * holds the current page keeps a faint accent, and an open group keeps a
+ * slightly warmer accent wash — same bent shape and inner lift as the active
+ * item, so the tree reads as one family of plates, just quieter.
+ */
+.sidebar .nav-group.is-current:not(.is-open) {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 16%, transparent),
+    color-mix(in srgb, var(--primary) 9%, transparent)
+  );
   color: #ffffff;
+  border-color: color-mix(in srgb, var(--primary) 26%, transparent);
+  border-start-start-radius: 12px;
+  border-end-start-radius: 12px;
+  border-start-end-radius: 7px;
+  border-end-end-radius: 7px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
-.nav-group.is-open {
-  background: rgba(255, 255, 255, 0.05);
+.sidebar .nav-group.is-open {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 12%, var(--navy)),
+    color-mix(in srgb, var(--primary) 7%, var(--navy))
+  );
   color: #ffffff;
+  border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  border-start-start-radius: 12px;
+  border-end-start-radius: 12px;
+  border-start-end-radius: 7px;
+  border-end-end-radius: 7px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 14px -12px color-mix(in srgb, var(--primary) 85%, transparent);
 }
 
 @keyframes nav-submenu-in {

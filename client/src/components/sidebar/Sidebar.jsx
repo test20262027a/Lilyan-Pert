@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Icon from '../Icon';
-import { useI18n } from '../../i18n';
+import { localized, useI18n } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
 import SidebarNav from './SidebarNav';
@@ -21,7 +21,7 @@ const COLLAPSED_WIDTH = '72px';
  * never leave two submenus open at once.
  */
 export default function Sidebar({ open = false, onNavigate }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { memberships, businessId, isManager, isOwner, can } = useAuth();
   const { business } = useBusiness();
   const location = useLocation();
@@ -73,6 +73,9 @@ export default function Sidebar({ open = false, onNavigate }) {
     setExpandedGroup((current) => (current === item.key ? null : item.key));
 
   const membership = memberships.find((m) => m.business_id === businessId);
+  // Brand in the active language, with the same graceful fallback chain the
+  // header uses, so both names of the shell always agree.
+  const brandName = localized(business, 'name', locale) || business?.name || t('app_name');
 
   return (
     <div className={`sidebar-shell ${open ? 'is-open' : ''} ${railCollapsed ? 'is-collapsed' : ''}`}>
@@ -82,7 +85,7 @@ export default function Sidebar({ open = false, onNavigate }) {
             <Icon name="qr" size={20} />
           </span>
           <span className="brand__text">
-            <span className="brand__name">{business?.name_en || business?.name || t('app_name')}</span>
+            <span className="brand__name" title={brandName}>{brandName}</span>
           </span>
         </div>
 
