@@ -468,6 +468,10 @@ export default {
   od_unsaved_message: 'The discount you typed has not been applied and will be lost.',
   od_discard: 'Discard',
   od_keep_editing: 'Keep editing',
+  od_save_changes: 'Save changes',
+  od_edit_saved: 'Order updated',
+  od_edit_unsaved_title: 'Discard unsaved changes?',
+  od_edit_unsaved_message: 'The changes you made to this order have not been saved and will be lost.',
 
   receipt_title: 'Receipt',
   receipt_order_no: 'Order',

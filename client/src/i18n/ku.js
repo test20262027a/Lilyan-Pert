@@ -468,6 +468,10 @@ export default {
   od_unsaved_message: 'ئەو داشکاندنەی نووسیوتە جێبەجێ نەکراوە و لەدەست دەچێت.',
   od_discard: 'فڕێدان',
   od_keep_editing: 'بەردەوامبوون لە دەستکاری',
+  od_save_changes: 'پاشەکەوتکردنی گۆڕانکارییەکان',
+  od_edit_saved: 'داواکاری نوێکرایەوە',
+  od_edit_unsaved_title: 'گۆڕانکارییە پاشەکەوتنەکراوەکان فڕێبدرێن؟',
+  od_edit_unsaved_message: 'ئەو گۆڕانکارییانەی لەم داواکارییەدا کردووتە پاشەکەوت نەکراون و لەدەست دەچن.',
 
   receipt_title: 'وەسڵ',
   receipt_order_no: 'داواکاری',

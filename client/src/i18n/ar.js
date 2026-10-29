@@ -468,6 +468,10 @@ export default {
   od_unsaved_message: 'الخصم الذي أدخلته لم يُطبّق وسيُفقد.',
   od_discard: 'تجاهل',
   od_keep_editing: 'متابعة التعديل',
+  od_save_changes: 'حفظ التغييرات',
+  od_edit_saved: 'تم تحديث الطلب',
+  od_edit_unsaved_title: 'تجاهل التغييرات غير المحفوظة؟',
+  od_edit_unsaved_message: 'التغييرات التي أجريتها على هذا الطلب لم تُحفظ وستُفقد.',
 
   receipt_title: 'إيصال',
   receipt_order_no: 'طلب',

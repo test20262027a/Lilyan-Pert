@@ -6,7 +6,7 @@ import { PrintPortal, ReceiptPaper, ReceiptPrintStyle } from '../../Receipt';
 import OrdersArtwork from '../OrdersArtwork';
 import ManualDiscountCard from './ManualDiscountCard';
 import DiscardChangesDialog from '../../confirm/DiscardChangesDialog';
-import OrderEditPanel from './OrderEditPanel';
+import OrderEditPanel, { ORDER_EDIT_FORM_ID } from './OrderEditPanel';
 import OrderStatusControl from './OrderStatusControl';
 import OrderActivityTimeline from './OrderActivityTimeline';
 import { localized, useI18n } from '../../../i18n';
@@ -42,7 +42,9 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
   const [editing, setEditing] = useState(false);
   const [products, setProducts] = useState([]);
   const [discountDirty, setDiscountDirty] = useState(false);
+  const [editDirty, setEditDirty] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [confirmEditDiscard, setConfirmEditDiscard] = useState(false);
   const bodyRef = useRef(null);
 
   const load = useCallback(
@@ -74,6 +76,11 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
     };
   }, []);
 
+  /* Each mode opens at the top — the body is the only scroll area. */
+  useEffect(() => {
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [editing]);
+
   useEffect(() => {
     const after = () => setPrinting(false);
     window.addEventListener('afterprint', after);
@@ -99,12 +106,20 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
         : t('od_edit');
   const printHint = !completed ? t('od_print_locked') : can('orders.print') ? t('od_print') : t('od_no_permission');
 
+  /* Leaves Edit Mode for the details view in the same modal — never a page. */
+  const exitEdit = useCallback(() => {
+    setEditing(false);
+    setEditDirty(false);
+  }, []);
+
   const requestClose = useCallback(() => {
     if (discountDirty) setConfirmDiscard(true);
     // An open editor is cancelled first — never closed together with the modal.
-    else if (editing) setEditing(false);
-    else onClose();
-  }, [discountDirty, editing, onClose]);
+    else if (editing) {
+      if (editDirty) setConfirmEditDiscard(true);
+      else exitEdit();
+    } else onClose();
+  }, [discountDirty, editing, editDirty, exitEdit, onClose]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -115,6 +130,13 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
   }, [requestClose]);
 
   const handleDirty = useCallback((next) => setDiscountDirty(next), []);
+  const handleEditDirty = useCallback((next) => setEditDirty(next), []);
+
+  /* Cancel returns to the details view; a form with edits asks first. */
+  const cancelEdit = useCallback(() => {
+    if (editDirty) setConfirmEditDiscard(true);
+    else exitEdit();
+  }, [editDirty, exitEdit]);
 
   const refresh = async () => {
     await load({ silent: true });
@@ -196,6 +218,7 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
 
   /* The item editor needs the catalog; it is fetched the first time it opens. */
   const startEditing = () => {
+    setEditDirty(false);
     setEditing(true);
     if (products.length) return;
     get('/catalog/products')
@@ -207,17 +230,19 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
 
   /*
    * One save for the editor: customer details through `PATCH /orders/:id`, the
-   * item list only when it changed through `PUT /orders/:id/items`. A failure
-   * leaves the panel open with everything the administrator typed.
+   * item list only when it changed through `PUT /orders/:id/items`. The fresh
+   * payload lands before Edit Mode closes, so the details view it returns to
+   * already shows the new values. A failure leaves the form open with
+   * everything the administrator typed.
    */
   const saveEdit = async (meta, items) => {
     setBusy(true);
     try {
       await patch(`/orders/${orderId}`, meta);
       if (items) await put(`/orders/${orderId}/items`, { items });
-      setEditing(false);
-      toast.success(t('state_saved'));
       await refresh();
+      exitEdit();
+      toast.success(t('od_edit_saved'));
     } catch (err) {
       toast.error(
         err.code === 'ORDER_COMPLETED_LOCKED' || err.code === 'ORDER_CANCELLED_LOCKED'
@@ -262,7 +287,9 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
               <Icon name="receipt" size={19} />
             </span>
             <div className="odm__head-text">
-              <h2 className="odm__title">{t('od_title')}</h2>
+              <h2 className="odm__title">
+                {editing && !locked && canEdit ? t('od_edit') : t('od_title')}
+              </h2>
               {order ? <p className="odm__subtitle">#{order.order_number}</p> : null}
             </div>
           </div>
@@ -287,8 +314,18 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
               <Icon name="alert" size={22} />
               <p>{t('error_not_found')}</p>
             </div>
+          ) : editing && !locked && canEdit ? (
+            /* Edit Mode — only the fields the administrator may change. */
+            <OrderEditPanel
+              order={order}
+              items={items}
+              products={products}
+              busy={busy}
+              onSubmit={saveEdit}
+              onDirtyChange={handleEditDirty}
+            />
           ) : (
-            <>
+            <div className="odm-details">
               {/* 1 — order number, status, dates */}
               <div className="odm-identity">
                 <div className="odm-identity__main">
@@ -313,18 +350,6 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
                   <Icon name="lock" size={14} />
                   {order.status === 'completed' ? t('order_completed_lock_hint') : t('order_locked')}
                 </div>
-              ) : null}
-
-              {/* The in-place editor, opened by Edit in the footer. */}
-              {editing && !locked && canEdit ? (
-                <OrderEditPanel
-                  order={order}
-                  items={items}
-                  products={products}
-                  busy={busy}
-                  onSave={saveEdit}
-                  onCancel={() => setEditing(false)}
-                />
               ) : null}
 
               {/* 2 — the customer this order belongs to */}
@@ -502,33 +527,63 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
                   timeZone={timeZone}
                 />
               </section>
-            </>
+            </div>
           )}
         </div>
 
         <footer className="odm__foot">
-          <button
-            type="button"
-            className="odm__foot-btn"
-            onClick={startEditing}
-            disabled={!order || locked || !canEdit || busy || editing}
-            title={editHint}
-            aria-disabled={!order || locked || !canEdit || busy || editing}
-          >
-            <Icon name="pencil" size={15} />
-            {t('od_edit')}
-          </button>
-          <button
-            type="button"
-            className="odm__foot-btn odm__foot-btn--primary"
-            onClick={doPrint}
-            disabled={!order || busy || !canPrint}
-            title={printHint}
-            aria-disabled={!order || busy || !canPrint}
-          >
-            {busy && canPrint ? <span className="spinner" /> : <Icon name="print" size={15} />}
-            {t('od_print')}
-          </button>
+          {editing && !locked && canEdit ? (
+            /*
+             * Edit Mode footer — Cancel then Save in the DOM, so Save sits on
+             * the physical right in English and on the left in Kurdish, Persian
+             * and Arabic without a second rule.
+             */
+            <>
+              <button
+                type="button"
+                className="odm__foot-btn odm__foot-btn--cancel"
+                onClick={cancelEdit}
+                disabled={busy}
+              >
+                <Icon name="close" size={15} />
+                {t('action_cancel')}
+              </button>
+              <button
+                type="submit"
+                form={ORDER_EDIT_FORM_ID}
+                className="odm__foot-btn odm__foot-btn--primary"
+                disabled={busy}
+              >
+                {busy ? <span className="spinner" /> : <Icon name="check" size={15} />}
+                {t('od_save_changes')}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className="odm__foot-btn"
+                onClick={startEditing}
+                disabled={!order || locked || !canEdit || busy || editing}
+                title={editHint}
+                aria-disabled={!order || locked || !canEdit || busy || editing}
+              >
+                <Icon name="pencil" size={15} />
+                {t('od_edit')}
+              </button>
+              <button
+                type="button"
+                className="odm__foot-btn odm__foot-btn--primary"
+                onClick={doPrint}
+                disabled={!order || busy || !canPrint}
+                title={printHint}
+                aria-disabled={!order || busy || !canPrint}
+              >
+                {busy && canPrint ? <span className="spinner" /> : <Icon name="print" size={15} />}
+                {t('od_print')}
+              </button>
+            </>
+          )}
         </footer>
       </section>
 
@@ -541,6 +596,20 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
         onDiscard={() => {
           setConfirmDiscard(false);
           onClose?.();
+        }}
+      />
+
+      {/* Unsaved edits: discarding returns to the details view, never closes. */}
+      <DiscardChangesDialog
+        open={confirmEditDiscard}
+        title={t('od_edit_unsaved_title')}
+        description={t('od_edit_unsaved_message')}
+        confirmLabel={t('od_discard')}
+        cancelLabel={t('od_keep_editing')}
+        onContinue={() => setConfirmEditDiscard(false)}
+        onDiscard={() => {
+          setConfirmEditDiscard(false);
+          exitEdit();
         }}
       />
 

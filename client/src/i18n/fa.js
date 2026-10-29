@@ -468,6 +468,10 @@ export default {
   od_unsaved_message: 'تخفیفی که وارد کرده‌اید اعمال نشده و از دست می‌رود.',
   od_discard: 'دور انداختن',
   od_keep_editing: 'ادامه ویرایش',
+  od_save_changes: 'ذخیره تغییرات',
+  od_edit_saved: 'سفارش به‌روزرسانی شد',
+  od_edit_unsaved_title: 'تغییرات ذخیره‌نشده دور ریخته شود؟',
+  od_edit_unsaved_message: 'تغییراتی که در این سفارش داده‌اید ذخیره نشده و از دست می‌رود.',
 
   receipt_title: 'رسید',
   receipt_order_no: 'سفارش',
