@@ -182,12 +182,17 @@ export default function TooltipLayer() {
       if (e.key === 'Escape') hide();
     };
 
+    // A surface whose tooltips stop being valid (the admin rail expanding, for
+    // one) retires the bubble at once instead of leaving it floating there.
+    const onDismiss = () => hide();
+
     document.addEventListener('pointerover', onOver, true);
     document.addEventListener('pointerout', onOut, true);
     document.addEventListener('focusin', onFocusIn, true);
     document.addEventListener('focusout', onFocusOut, true);
     document.addEventListener('pointerdown', onDown, true);
     document.addEventListener('keydown', onKey, true);
+    document.addEventListener('base44:tooltip-hide', onDismiss);
     window.addEventListener('blur', hide);
     return () => {
       document.removeEventListener('pointerover', onOver, true);
@@ -196,6 +201,7 @@ export default function TooltipLayer() {
       document.removeEventListener('focusout', onFocusOut, true);
       document.removeEventListener('pointerdown', onDown, true);
       document.removeEventListener('keydown', onKey, true);
+      document.removeEventListener('base44:tooltip-hide', onDismiss);
       window.removeEventListener('blur', hide);
       clearTimeout(timerRef.current);
       parkedTitles.current.forEach((value, el) => {

@@ -58,6 +58,13 @@ export default function Sidebar({ open = false, onNavigate }) {
     return () => root.style.removeProperty('--admin-sidebar-width');
   }, [railCollapsed]);
 
+  // An expanded rail (or an open mobile drawer) shows its labels, so every
+  // navigation tooltip is retired the moment the rail widens again instead of
+  // lingering over a row that now spells its own name out.
+  useEffect(() => {
+    if (!railCollapsed) document.dispatchEvent(new Event('base44:tooltip-hide'));
+  }, [railCollapsed]);
+
   // Reaching a page opens the group that holds it and closes every other one.
   useEffect(() => {
     setExpandedGroup(groupFor(titleKeyFor(location.pathname))?.key ?? null);
@@ -85,7 +92,8 @@ export default function Sidebar({ open = false, onNavigate }) {
             <Icon name="qr" size={20} />
           </span>
           <span className="brand__text">
-            <span className="brand__name" title={brandName}>{brandName}</span>
+            {/* The name is hidden on the icon rail — only then is a bubble useful. */}
+            <span className="brand__name" title={railCollapsed ? brandName : undefined}>{brandName}</span>
           </span>
         </div>
 

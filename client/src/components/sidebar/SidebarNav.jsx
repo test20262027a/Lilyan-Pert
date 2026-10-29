@@ -13,6 +13,12 @@ import { canSee } from '../nav/navConfig';
  * On the collapsed icon rail there is no room for submenu rows, so a group
  * opens a compact flyout beside the rail instead — its destinations stay
  * reachable, keyboard included, and the rail itself never has to expand.
+ *
+ * Tooltips follow the rail's real state, not a CSS trick: only the icon-only
+ * rail marks a row with `data-tip`, so the global TooltipLayer has nothing to
+ * show while the labels are visible. Expanded rows carry no `title` either —
+ * their own label is already on screen, and a second floating copy of it is
+ * exactly the duplicate the tooltip layer would otherwise paint.
  */
 export default function SidebarNav({
   items,
@@ -69,7 +75,6 @@ export default function SidebarNav({
             href={previewHref || '#'}
             target="_blank"
             rel="noreferrer"
-            title={collapsed ? undefined : t(item.key)}
             data-tip={collapsed ? t(item.key) : undefined}
             data-tip-side="inline-end"
             onClick={(e) => {
@@ -90,7 +95,6 @@ export default function SidebarNav({
             to={item.to}
             end={item.exact}
             className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
-            title={collapsed ? undefined : t(item.key)}
             data-tip={collapsed ? t(item.key) : undefined}
             data-tip-side="inline-end"
             onClick={navigate}
@@ -116,7 +120,6 @@ export default function SidebarNav({
             }`}
             aria-expanded={collapsed ? isFlyout : isOpen}
             aria-controls={isOpen || isFlyout ? panelId : undefined}
-            title={collapsed ? undefined : t(item.key)}
             data-tip={collapsed && !isFlyout ? t(item.key) : undefined}
             data-tip-side="inline-end"
             onClick={() => {
@@ -139,7 +142,6 @@ export default function SidebarNav({
                   key={child.to}
                   to={child.to}
                   className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
-                  title={t(child.key)}
                   onClick={navigate}
                 >
                   {/* Submenu rows carry their own small outlined mark. */}
