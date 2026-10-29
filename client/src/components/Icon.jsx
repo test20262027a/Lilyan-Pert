@@ -121,6 +121,11 @@ const BASE_PATHS = {
   leaf: <><path d="M11 20.5A7.5 7.5 0 0 1 9.8 6.1C15.5 5 17.2 4.4 19.2 2c1 2 1.8 4.2 1.8 8 0 5.5-4.7 10.5-10 10.5z" /><path d="M2.5 21.5c0-3.2 1.9-5.6 5.1-6.3 2.4-.5 4.9-2 5.9-3.2" /></>,
   bread: <><path d="M4 11.4c0-3.1 3.6-5.2 8-5.2s8 2.1 8 5.2v5.4a2.4 2.4 0 0 1-2.4 2.4H6.4A2.4 2.4 0 0 1 4 16.8z" /><path d="M4 12.6h16" /><path d="M9.2 7.6v2.4M14.8 7.6v2.4" /></>,
 
+  /* Receipt marks: the closing thank-you, the totals heading and the money
+     marker that sits beside the printed grand total. */
+  heart: <path d="M12 20.6S4.2 16 4.2 10.7A4.5 4.5 0 0 1 12 7.6a4.5 4.5 0 0 1 7.8 3.1c0 5.3-7.8 9.9-7.8 9.9z" />,
+  calculator: <><rect x="4.5" y="2.8" width="15" height="18.4" rx="2.6" /><path d="M8 6.8h8" /><path d="M8.4 11.4h.01M12 11.4h.01M15.6 11.4h.01M8.4 15h.01M12 15h.01M15.6 15h.01M8.4 18.4h.01M12 18.4h.01M15.6 18.4h.01" /></>,
+  coins: <><ellipse cx="9" cy="7" rx="5.4" ry="2.6" /><path d="M3.6 7v4c0 1.4 2.4 2.6 5.4 2.6s5.4-1.2 5.4-2.6V7" /><ellipse cx="15" cy="15" rx="5.4" ry="2.6" /><path d="M9.6 15v4c0 1.4 2.4 2.6 5.4 2.6s5.4-1.2 5.4-2.6v-4" /></>,
   /* Profile avatars — one neutral silhouette and two visibly distinct
      masculine / feminine ones, so the two choices are never confused. */
   person: <><circle cx="12" cy="8" r="3.6" /><path d="M4.8 20.6a7.2 7.2 0 0 1 14.4 0" /></>,

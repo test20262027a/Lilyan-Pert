@@ -603,7 +603,9 @@
   width: 100%;
   max-width: none;
   margin: 0;
-  padding: 0;
+  /* The sheet already draws the paper; the receipt keeps only the small inset
+     its section cards need, never a second frame or a rounded edge. */
+  padding: 7px 8px 8px;
   border: 0;
   border-radius: 0;
   background: transparent;

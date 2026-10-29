@@ -1266,6 +1266,7 @@ export default {
   settings_receipt_scale_invalid: 'The print scale must be between 50 and 150 percent.',
   settings_receipt_margin_invalid: 'Margins must be between 0 and 20 mm.',
   settings_receipt_sample_customer: 'Sample customer',
+  settings_receipt_sample_cashier: 'Sample cashier',
   settings_receipt_group_paper: 'Paper and calibration',
   settings_receipt_group_branding: 'Logo and alignment',
   settings_receipt_calibration: 'Printer calibration',

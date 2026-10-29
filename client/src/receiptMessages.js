@@ -55,6 +55,21 @@ const LABELS = {
   service_charge: { ku: 'خزمەتگوزاری', fa: 'حق سرویس', ar: 'خدمة', en: 'Service charge' },
   total: { ku: 'کۆی گشتی', fa: 'مجموع کل', ar: 'الإجمالي', en: 'Total' },
   notes: { ku: 'تێبینییەکان', fa: 'یادداشت‌ها', ar: 'الملاحظات', en: 'Notes' },
+  /* The receipt's own card headings, plus the two order facts a receipt reads
+     from the order itself: its kind (seated at a table or a takeaway) and the
+     staff member who took it. */
+  receipt_badge: { ku: 'وەسڵ', fa: 'رسید', ar: 'إيصال', en: 'Receipt' },
+  products: {
+    ku: 'بەرهەم و خواردنەکان',
+    fa: 'محصولات و نوشیدنی‌ها',
+    ar: 'المنتجات والمشروبات',
+    en: 'Products & Drinks',
+  },
+  product: { ku: 'کاڵا', fa: 'کالا', ar: 'المنتج', en: 'Product' },
+  order_type: { ku: 'جۆر', fa: 'نوع سفارش', ar: 'النوع', en: 'Type' },
+  dine_in: { ku: 'لە داخل', fa: 'داخل', ar: 'داخلي', en: 'Dine-in' },
+  takeaway: { ku: 'دەرەوە', fa: 'بیرون‌بر', ar: 'سفري', en: 'Takeaway' },
+  summary: { ku: 'کۆی گشتی', fa: 'خلاصه', ar: 'الملخص', en: 'Summary' },
 };
 
 /** A layout label in one language (the fixed receipt structure). */

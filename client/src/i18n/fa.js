@@ -1264,6 +1264,7 @@ export default {
   settings_receipt_scale_invalid: 'مقیاس چاپ باید بین ۵۰ تا ۱۵۰ درصد باشد.',
   settings_receipt_margin_invalid: 'حاشیه‌ها باید بین ۰ تا ۲۰ میلی‌متر باشند.',
   settings_receipt_sample_customer: 'مشتری نمونه',
+  settings_receipt_sample_cashier: 'صندوق‌دار نمونه',
   settings_receipt_group_paper: 'کاغذ و کالیبراسیون',
   settings_receipt_group_branding: 'لوگو و چیدمان',
   settings_receipt_calibration: 'کالیبراسیون چاپگر',

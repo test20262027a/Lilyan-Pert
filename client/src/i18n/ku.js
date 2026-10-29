@@ -1265,6 +1265,7 @@ export default {
   settings_receipt_scale_invalid: 'پێوانەی چاپ دەبێت لە نێوان ٥٠ و ١٥٠ لەسەددا بێت.',
   settings_receipt_margin_invalid: 'لاوازەکان دەبێت لە نێوان ٠ و ٢٠ ملیمەتر بن.',
   settings_receipt_sample_customer: 'کڕیاری نموونە',
+  settings_receipt_sample_cashier: 'کارمەندی نموونە',
   settings_receipt_group_paper: 'کاغەز و کالیبراسیۆن',
   settings_receipt_group_branding: 'لۆگۆ و ڕیزکردن',
   settings_receipt_calibration: 'کالیبراسیۆنی چاپکەر',

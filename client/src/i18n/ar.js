@@ -1263,6 +1263,7 @@ export default {
   settings_receipt_scale_invalid: 'يجب أن تكون نسبة الطباعة بين ٥٠ و١٥٠ بالمئة.',
   settings_receipt_margin_invalid: 'يجب أن تكون الهوامش بين ٠ و٢٠ مم.',
   settings_receipt_sample_customer: 'عميل تجريبي',
+  settings_receipt_sample_cashier: 'أمين صندوق تجريبي',
   settings_receipt_group_paper: 'الورق والمعايرة',
   settings_receipt_group_branding: 'الشعار والمحاذاة',
   settings_receipt_calibration: 'معايرة الطابعة',

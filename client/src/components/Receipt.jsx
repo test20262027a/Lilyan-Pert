@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { fmtDateTime, fmtMoney, fmtNumber, zoneFor } from '../format';
+import Icon from './Icon';
+import { fmtDate, fmtMoney, fmtNumber, fmtTime, zoneFor } from '../format';
 import { isRtl } from '../i18n';
 import { pickReceiptFooter, receiptLabel, receiptMessageText } from '../receiptMessages';
 import '../receipt.css';
@@ -10,11 +11,12 @@ import '../receipt.css';
  * both always show identical authoritative data. It is a single continuous
  * flow — no fixed heights, no page breaks, nothing that can clip.
  *
- * Six sections, each with its own boundary and the same inner padding:
- * identity (logo, name, contact) · order (number, date, table, guest) ·
- * products (one real table) · notes · summary (rows plus a bold payable
- * total) · one closing message. Only the type scale, the logo cap and the
- * product table's shape change between 58 mm and 80 mm (see receipt.css).
+ * Seven independent sections, each with its own boundary and the same inner
+ * padding: identity (logo, name, contact) · order details (number, date, table,
+ * guest, type, staff) · products (one real table of five columns) · notes ·
+ * summary · the highlighted grand total · one closing message. Only the type
+ * scale, the logo cap and the product table's shape change between 58 mm and
+ * 80 mm (see receipt.css).
  *
  * It is customer-facing only: the order's status history, edits, auditors and
  * timestamps are internal and live in the Order Details activity timeline,
@@ -72,6 +74,19 @@ export function printGeometry(settings) {
     scale: settingNumber(settings?.print_scale, 50, 150, 100) / 100,
     printable: Math.max(paper - margins.left - margins.right, paper * 0.5),
   };
+}
+
+/** One labelled fact of the order card: an icon, a caption and its value(s). */
+function ReceiptField({ icon, label, children }) {
+  return (
+    <div className="rc-field">
+      <span className="rc-field__label">
+        <Icon name={icon} size={10} />
+        {label}
+      </span>
+      {children}
+    </div>
+  );
 }
 
 export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
@@ -159,44 +174,47 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
           order_number: order?.order_number ?? '',
           table: tableName || '',
           customer_name: order?.customer_name || '',
-          date: order ? fmtDateTime(order.created_at, locale, timeZone) : '',
+          date: order ? fmtDate(order.created_at, locale, timeZone, { short: true }) : '',
           total: `${amount(order?.total)}${currency ? ` ${currency}` : ''}`,
           currency,
         }),
       }
     : null;
 
-  const kvRow = (label, value, key) => (
-    <div className="rc-kv__row" key={key}>
-      <dt>{label}</dt>
-      <dd>{value}</dd>
-    </div>
-  );
-
   /*
-   * The paper is a stack of independent sections — identity, contact, order,
-   * guest, products, notes, totals, closing message. Each one is computed here
-   * so a section whose settings are all off is not rendered at all: the paper
+   * The paper is a stack of independent sections — identity, order, products,
+   * notes, summary, grand total, closing message. Each one is computed here so
+   * a section whose settings are all off is not rendered at all: the paper
    * never carries an empty block or a divider with nothing under it.
    */
-  const contactLines = [];
+  const contactRows = [];
   if (moreInfo && settings.show_address && (addressText || business?.city)) {
-    contactLines.push({ key: 'address', text: [addressText, business?.city].filter(Boolean).join(', ') });
+    contactRows.push({
+      key: 'address',
+      icon: 'pin',
+      text: [addressText, business?.city].filter(Boolean).join(', '),
+    });
   }
   if (moreInfo && settings.show_phone && business?.phone) {
-    contactLines.push({ key: 'phone', text: business.phone, numeric: true });
+    contactRows.push({ key: 'phone', icon: 'phone', text: business.phone, bidi: true });
   }
-  const webLine = [business?.email, business?.website].filter(Boolean).join(' · ');
-  if (moreInfo && webLine) contactLines.push({ key: 'web', text: webLine, numeric: true });
+  if (moreInfo && business?.email) {
+    contactRows.push({ key: 'email', icon: 'mail', text: business.email, bidi: true });
+  }
 
   const showOrderInfo = settings.show_order_info !== false;
   const hasOrderNumber = showOrderInfo && settings.show_order_number !== false;
   const hasDateTime = showOrderInfo && settings.show_datetime !== false;
-  const hasCashier = showOrderInfo && moreInfo && settings.show_cashier;
+  const hasCashier = showOrderInfo && moreInfo && settings.show_cashier !== false && !!order?.created_by_name;
   const hasTable = showOrderInfo && settings.show_table_number !== false && !!tableName;
   const hasCustomer = showOrderInfo && settings.show_customer_name !== false && !!order?.customer_name;
-  const hasOrderSection = hasOrderNumber || hasDateTime || hasCashier;
-  const hasGuestSection = hasTable || hasCustomer;
+  /* The order's kind comes from the order itself: an order taken at a table is
+     a dine-in order, one without a table is taken away. */
+  const orderType = table ? 'dine_in' : 'takeaway';
+  const hasOrderType = showOrderInfo;
+  const hasLeftColumn = hasDateTime || hasTable || hasCustomer;
+  const hasRightColumn = hasOrderType || hasCashier;
+  const hasLineNotes = settings.show_notes !== false && (items || []).some((line) => line.notes);
 
   /* The paper follows the receipt's own language, so Kurdish, Persian and
      Arabic print right-to-left even when the panel around them does not. */
@@ -213,139 +231,211 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       style={paperVars}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
     >
-      {/* 1 · identity: the logo, the business name and its contact details,
-          one section under one boundary. */}
+      {/* 1 · identity: the logo, the business name, then one icon-led row per
+          contact detail — each row its own icon area and its own text area. */}
       <header className="rc-head">
         {settings.show_logo && business?.logo_url ? (
           <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: `${logoWidth}px` }} />
         ) : null}
         <div className="rc-name">{businessName}</div>
-        {contactLines.length ? (
-          <div className="rc-contact-block">
-            {contactLines.map((line) => (
-              <div className={`rc-contact${line.numeric ? ' rc-num' : ''}`} key={line.key}>
-                {line.text}
+        {contactRows.length ? (
+          <div className="rc-contacts">
+            {contactRows.map((row) => (
+              <div className="rc-contact" key={row.key}>
+                <span className="rc-contact__icon" aria-hidden="true">
+                  <Icon name={row.icon} size={10} />
+                </span>
+                <span className={`rc-contact__text${row.bidi ? ' rc-num' : ''}`}>{row.text}</span>
               </div>
             ))}
           </div>
         ) : null}
       </header>
 
-      {/* 2 · order: the number first, then when, by whom, for which table and
-          which guest — one order block, exactly as the reference reads. */}
-      {hasOrderSection || hasGuestSection ? (
-        <section className="rc-order rc-block">
-          {hasOrderNumber ? (
-            <div className="rc-orderno">
-              <span className="rc-orderno__label">{msg('order_no')}</span>
-              <span className="rc-orderno__value rc-num">#{order?.order_number}</span>
-            </div>
-          ) : null}
-          {hasDateTime || hasCashier || hasTable || hasCustomer ? (
-            <dl className="rc-kv">
-              {hasDateTime
-                ? kvRow(
-                    msg('datetime'),
-                    <span className="rc-num">{fmtDateTime(order?.created_at, locale, timeZone)}</span>,
-                    'date',
-                  )
-                : null}
-              {hasCashier ? kvRow(msg('cashier'), order?.created_by_name || '—', 'cashier') : null}
-              {hasTable ? kvRow(msg('table'), tableName, 'table') : null}
-              {hasCustomer ? kvRow(msg('customer'), order.customer_name, 'customer') : null}
-            </dl>
-          ) : null}
-        </section>
-      ) : null}
-
-      {/* 3 · products: name, quantity, unit price and line total, each in its
-          own column so the three values can never read as one figure. */}
-      {(items || []).length ? (
-        <section className="rc-items rc-block">
-          <div className="rc-items__head">
-            <span>{msg('items')}</span>
-            <span>{msg('qty')}</span>
-            <span>{msg('unit_price')}</span>
-            <span>{msg('total_column')}</span>
-          </div>
-          {(items || []).map((line, idx) => (
-            /*
-             * One grid, not one block per product: the header and every row are
-             * laid out by the same column tracks (see receipt.css), so the
-             * quantity, the unit price and the line total each keep the same
-             * position down the whole paper whatever the product names are.
-             */
-            <div className="rc-item" key={`${line.name}-${idx}`}>
-              <span className="rc-item__name">
-                <span className="rc-item__label">{line.name}</span>
-                {settings.show_notes !== false && line.notes ? (
-                  <span className="rc-item__note">{line.notes}</span>
+      {/* 2 · order card: the number leads with a receipt mark and a localised
+          badge, then the two balanced columns of order facts. */}
+      {hasOrderNumber || hasLeftColumn || hasRightColumn ? (
+        <section className="rc-block">
+          <div className="rc-card">
+            {hasOrderNumber ? (
+              <div className="rc-ordertop">
+                <span className="rc-ordertop__icon" aria-hidden="true">
+                  <Icon name="receipt" size={13} />
+                </span>
+                <span className="rc-ordertop__number rc-num">#{order?.order_number}</span>
+                <span className="rc-ordertop__badge">{msg('receipt_badge')}</span>
+              </div>
+            ) : null}
+            {hasLeftColumn || hasRightColumn ? (
+              <div className="rc-ordergrid" data-cols={hasLeftColumn && hasRightColumn ? 'two' : 'one'}>
+                {hasLeftColumn ? (
+                  <div className="rc-ordergrid__col">
+                    {hasDateTime ? (
+                      <ReceiptField icon="calendar" label={msg('datetime')}>
+                        <span className="rc-field__value rc-num">
+                          {fmtDate(order?.created_at, locale, timeZone, { short: true })}
+                        </span>
+                        <span className="rc-field__value rc-num">
+                          {fmtTime(order?.created_at, locale, timeZone)}
+                        </span>
+                      </ReceiptField>
+                    ) : null}
+                    {hasTable || hasCustomer ? (
+                      <ReceiptField icon={hasTable ? 'table' : 'person'} label={msg(hasTable ? 'table' : 'customer')}>
+                        {hasTable ? <span className="rc-field__value rc-field__value--strong">{tableName}</span> : null}
+                        {hasCustomer ? <span className="rc-field__value">{order.customer_name}</span> : null}
+                      </ReceiptField>
+                    ) : null}
+                  </div>
                 ) : null}
-              </span>
-              <span className="rc-item__qty rc-num">{amount(line.quantity)}</span>
-              <span className="rc-item__unit rc-num">
-                {line.unit_price == null ? '—' : amount(line.unit_price)}
-              </span>
-              <span className="rc-item__amount rc-num">{amount(line.line_total)}</span>
-            </div>
-          ))}
+                {hasRightColumn ? (
+                  <div className="rc-ordergrid__col">
+                    {hasOrderType ? (
+                      <ReceiptField icon={orderType === 'dine_in' ? 'utensils' : 'store'} label={msg('order_type')}>
+                        <span className="rc-field__value rc-field__value--strong">{msg(orderType)}</span>
+                      </ReceiptField>
+                    ) : null}
+                    {hasCashier ? (
+                      <ReceiptField icon="person" label={msg('cashier')}>
+                        <span className="rc-field__value">{order.created_by_name}</span>
+                      </ReceiptField>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
         </section>
       ) : null}
 
-      {/* 4 · notes: their own section. The label leads and the note starts
-          directly beside it, wrapping inside the same block — the text is never
-          centred and never pushed away from its label. */}
-      {settings.show_notes !== false && order?.notes ? (
-        <div className="rc-notes rc-block">
-          <span className="rc-notes__label">{msg('notes')}</span>
-          <span className="rc-notes__text">{order.notes}</span>
-        </div>
+      {/* 3 · products: one real table — row number, product, quantity, unit
+          price and line total, each of the five in its own column, so the three
+          money values can never read as one figure. */}
+      {(items || []).length ? (
+        <section className="rc-block">
+          <div className="rc-card">
+            <div className="rc-secthead">
+              <span className="rc-secthead__icon" aria-hidden="true">
+                <Icon name="cart" size={11} />
+              </span>
+              <span className="rc-secthead__title">{msg('products')}</span>
+            </div>
+            <div className={`rc-table${hasLineNotes ? ' rc-table--noted' : ''}`}>
+              <div className="rc-table__head">
+                <span className="rc-col rc-col--no">#</span>
+                <span className="rc-col rc-col--name">{msg('product')}</span>
+                <span className="rc-col rc-col--qty">{msg('qty')}</span>
+                <span className="rc-col rc-col--unit">{msg('unit_price')}</span>
+                <span className="rc-col rc-col--total">{msg('total_column')}</span>
+              </div>
+              {(items || []).map((line, idx) => (
+                /*
+                 * One grid, not one block per product: the header and every row
+                 * are laid out by the same five column tracks (see receipt.css),
+                 * so each value keeps its position down the whole paper whatever
+                 * the product names are.
+                 */
+                <div className="rc-row" key={`${line.name}-${idx}`}>
+                  <span className="rc-col rc-col--no rc-num">{amount(idx + 1)}</span>
+                  <span className="rc-col rc-col--name">
+                    <span className="rc-col__label">{line.name}</span>
+                    {!hasLineNotes || !line.notes ? null : <span className="rc-col__note">{line.notes}</span>}
+                  </span>
+                  <span className="rc-col rc-col--qty rc-num">{amount(line.quantity)}</span>
+                  <span className="rc-col rc-col--unit rc-num">
+                    {line.unit_price == null ? '—' : amount(line.unit_price)}
+                  </span>
+                  <span className="rc-col rc-col--total rc-num">{amount(line.line_total)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       ) : null}
 
-      {/* 5 · summary: one row per stored amount, the payable total strongest. */}
-      <dl className="rc-totals rc-block">
-        <div className="rc-totals__row">
-          <dt>{msg('subtotal')}</dt>
-          <dd className="rc-num">{amount(order?.subtotal)}</dd>
+      {/* 4 · notes: their own headed card, the note itself in its own field
+          beside a speech mark — start-aligned, never centred, wrapping inside. */}
+      {settings.show_notes !== false && order?.notes ? (
+        <section className="rc-block">
+          <div className="rc-card">
+            <div className="rc-secthead">
+              <span className="rc-secthead__icon" aria-hidden="true">
+                <Icon name="message" size={11} />
+              </span>
+              <span className="rc-secthead__title">{msg('notes')}</span>
+            </div>
+            <div className="rc-note">
+              <span className="rc-note__icon" aria-hidden="true">
+                <Icon name="message" size={10} />
+              </span>
+              <span className="rc-note__text">{order.notes}</span>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
+      {/* 5 · summary: one row per stored amount, label and amount on two
+          shared alignments. */}
+      <section className="rc-block">
+        <div className="rc-card">
+          <div className="rc-secthead">
+            <span className="rc-secthead__icon" aria-hidden="true">
+              <Icon name="calculator" size={11} />
+            </span>
+            <span className="rc-secthead__title">{msg('summary')}</span>
+          </div>
+          <dl className="rc-sum">
+            <div className="rc-sum__row">
+              <dt>{msg('subtotal')}</dt>
+              <dd className="rc-num">{amount(order?.subtotal)}</dd>
+            </div>
+            {Number(order?.discount || 0) > 0 ? (
+              <div className="rc-sum__row">
+                <dt>{msg('discount')}</dt>
+                <dd className="rc-num">-{amount(order.discount)}</dd>
+              </div>
+            ) : null}
+            {Number(order?.tax || 0) > 0 ? (
+              <div className="rc-sum__row">
+                <dt>{msg('tax')}</dt>
+                <dd className="rc-num">{amount(order.tax)}</dd>
+              </div>
+            ) : null}
+            {Number(order?.service_charge || 0) > 0 ? (
+              <div className="rc-sum__row">
+                <dt>{msg('service_charge')}</dt>
+                <dd className="rc-num">{amount(order.service_charge)}</dd>
+              </div>
+            ) : null}
+          </dl>
         </div>
-        {Number(order?.discount || 0) > 0 ? (
-          <div className="rc-totals__row">
-            <dt>{msg('discount')}</dt>
-            <dd className="rc-num">-{amount(order.discount)}</dd>
-          </div>
-        ) : null}
-        {Number(order?.tax || 0) > 0 ? (
-          <div className="rc-totals__row">
-            <dt>{msg('tax')}</dt>
-            <dd className="rc-num">{amount(order.tax)}</dd>
-          </div>
-        ) : null}
-        {Number(order?.service_charge || 0) > 0 ? (
-          <div className="rc-totals__row">
-            <dt>{msg('service_charge')}</dt>
-            <dd className="rc-num">{amount(order.service_charge)}</dd>
-          </div>
-        ) : null}
+      </section>
+
+      {/* 6 · grand total: never merged with the summary above — its own
+          highlighted row, the strongest element on the paper. */}
+      <section className="rc-block rc-block--grand">
         <div className="rc-grand">
-          <span>{msg('total')}</span>
-          <span className="rc-num">{fmtMoney(order?.total || 0, currency, locale)}</span>
+          <span className="rc-grand__label">{msg('total')}</span>
+          <span className="rc-grand__amount">
+            <Icon name="coins" size={12} className="rc-grand__icon" />
+            <b className="rc-num">{fmtMoney(order?.total || 0, currency, locale)}</b>
+          </span>
         </div>
-      </dl>
+      </section>
 
       {/*
         Deliberately no order-change audit here: status transitions, edits and
         the users who made them belong to the Order Details activity timeline.
         A receipt carries the final order only, on screen, in print and in PDF.
       */}
-
-      {/*
-        Exactly one closing message, already resolved in this receipt's own
-        language — never several messages, never several languages. The grand
-        total closes with its own strong rule, so the message reads as a final
-        section of its own without a second divider.
-      */}
-      {/* 6 · the one closing thank-you message. */}
-      {footer?.text ? <p className="rc-foot">{footer.text}</p> : null}
+      {/* 7 · exactly one closing message, already resolved in this receipt's
+          own language — never several messages, never several languages. */}
+      {footer?.text ? (
+        <footer className="rc-foot rc-block">
+          <Icon name="heart" size={11} className="rc-foot__icon" />
+          <p className="rc-foot__text">{footer.text}</p>
+        </footer>
+      ) : null}
     </div>
   );
 }
