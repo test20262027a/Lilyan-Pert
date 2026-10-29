@@ -5,17 +5,16 @@ import './sidebarProfile.css';
 
 /*
  * The signed-in person at the foot of the admin rail: ONE horizontal card that
- * holds the real avatar on the inline-start side and, directly opposite it
- * inside the same card, the role localized in the interface language. Nothing
- * sits above the role.
+ * holds the real avatar on the inline-start side and, directly beside it, the
+ * person's own full name with the role localized in the interface language as
+ * quieter secondary text underneath.
  *
- * The record comes from the auth context, so a photo or avatar saved in My
- * Account repaints the card immediately — no reload, no sign-out.
+ * Everything comes from the auth context, so a name, photo or avatar saved in
+ * My Account repaints the card immediately — no reload, no sign-out.
  *
- * Collapsed to the icon rail the card narrows to the portrait alone. The role
- * is never repeated as a floating badge or tooltip over the avatar: it stays
- * inside the card, and on the rail it remains in the accessibility tree for
- * screen readers.
+ * Collapsed to the icon rail the card narrows to the portrait alone; the name
+ * and role stay in the accessibility tree as the account label instead of
+ * floating over the avatar as a badge or tooltip.
  */
 export default function SidebarProfile() {
   const { t } = useI18n();
@@ -32,22 +31,23 @@ export default function SidebarProfile() {
       ? 'role_super_admin'
       : null;
   const roleLabel = roleKey ? t(roleKey) : t('auth_account');
+  // The person's real name; the sign-in identifier only when no name is set.
+  const displayName = user.full_name || user.email || t('auth_account');
 
   return (
     <div className="sidebar__user">
-      {/* No tooltip, badge or popover repeats the role here: the label lives
-          inside the card, and on the collapsed rail it stays in the
-          accessibility tree for screen readers instead of floating over the
-          avatar. */}
-      <div className="sprofile">
+      <div className="sprofile" title={displayName}>
         <span className="sprofile__avatar">
           <UserAvatar
             user={user}
             size={38}
-            alt={user.full_name || user.email || ''}
+            alt={displayName}
           />
         </span>
-        <span className="sprofile__role">{roleLabel}</span>
+        <span className="sprofile__text">
+          <span className="sprofile__name" title={displayName}>{displayName}</span>
+          <span className="sprofile__role">{roleLabel}</span>
+        </span>
       </div>
     </div>
   );

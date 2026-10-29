@@ -366,53 +366,38 @@ a { color: var(--primary); }
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
 }
 /*
- * Active rail item: a theme-tinted glass plate that runs all the way to the
- * rail's outer edge and bends into it at its top and bottom corners. The two
- * concave shoulders come from ::before/::after, which paint the rail's own
- * colour into the plate's outer corners, so the highlight swells out of the
- * edge instead of ending in a rectangle.
+ * Active rail item: ONE continuous, full-width plate.
  *
- * The outer edge is always the inline-end side — the rail sits at
- * `inset-inline-start: 0` — so every offset here is logical and the RTL rail
- * on the right mirrors the LTR rail on the left with no second rule. The
- * shoulders stay inside the row, so no neighbouring item is ever covered.
+ * It keeps its sibling's exact box — same margin, padding and rounded corners
+ * on all four sides — so selecting a destination never widens the row, leaves
+ * a notch, or clips a shape into the rail. The selection reads purely from a
+ * raised theme gradient, an inner light line and a soft halo underneath; every
+ * colour is mixed from `--primary`, so a new appearance repaints it instantly.
  */
 .sidebar .nav-link.is-active {
-  margin-inline-end: calc(-1 * var(--nav-gutter, 10px));
-  padding-inline-end: calc(var(--nav-gutter, 10px) + 10px);
-  /*
-   * A raised accent plate: a lit top band over a vertical accent gradient that
-   * sinks towards the rail, ringed by its own inner light and a theme-tinted
-   * halo underneath. Every colour is mixed from `--primary`, so a new
-   * appearance repaints the selection immediately.
-   */
+  border-radius: 10px;
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, #ffffff 20%, transparent) 0%,
-      color-mix(in srgb, #ffffff 4%, transparent) 42%,
-      transparent 62%
+      color-mix(in srgb, #ffffff 18%, transparent) 0%,
+      color-mix(in srgb, #ffffff 3%, transparent) 46%,
+      transparent 64%
     ),
     linear-gradient(
       170deg,
-      color-mix(in srgb, var(--primary) 56%, var(--navy)) 0%,
-      color-mix(in srgb, var(--primary) 38%, var(--navy)) 54%,
+      color-mix(in srgb, var(--primary) 54%, var(--navy)) 0%,
+      color-mix(in srgb, var(--primary) 36%, var(--navy)) 55%,
       color-mix(in srgb, var(--primary) 24%, var(--navy)) 100%
     );
   color: #ffffff;
-  border-color: color-mix(in srgb, var(--primary) 44%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
   font-weight: 700;
-  border-start-start-radius: 13px;
-  border-end-start-radius: 13px;
-  border-start-end-radius: 0;
-  border-end-end-radius: 0;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, #ffffff 12%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
-    inset 0 0 20px color-mix(in srgb, var(--primary) 26%, transparent),
-    0 16px 26px -20px color-mix(in srgb, var(--primary) 100%, transparent),
-    0 2px 7px -4px rgba(0, 0, 0, 0.55);
+    inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26),
+    inset 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent),
+    0 10px 20px -16px color-mix(in srgb, var(--primary) 90%, transparent),
+    0 2px 6px -4px rgba(0, 0, 0, 0.5);
 }
 /* The label sits on a lit plate: full-strength ink with a whisper of shadow so
    it stays crisp against every preset. */
@@ -420,26 +405,8 @@ a { color: var(--primary); }
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(3, 8, 14, 0.45);
 }
-/* The concave shoulders: a rail-coloured square in each outer corner, with the
-   corner facing into the plate rounded away. */
-.sidebar:not(.is-collapsed) .nav-link.is-active::before,
-.sidebar:not(.is-collapsed) .nav-link.is-active::after {
-  content: '';
-  position: absolute;
-  inline-size: var(--plate-curve, 12px);
-  block-size: var(--plate-curve, 12px);
-  inset-inline-end: 0;
-  background: var(--navy);
-  pointer-events: none;
-}
-.sidebar:not(.is-collapsed) .nav-link.is-active::before {
-  inset-block-start: 0;
-  border-end-start-radius: var(--plate-curve, 12px);
-}
-.sidebar:not(.is-collapsed) .nav-link.is-active::after {
-  inset-block-end: 0;
-  border-start-start-radius: var(--plate-curve, 12px);
-}
+/* No concave shoulders, corner cut-outs or notches: the plate is a plain
+   rounded rectangle, so nothing is ever painted over the rail's own edge. */
 /* Hover and keyboard focus brighten the same plate without moving it. */
 .sidebar .nav-link.is-active:hover,
 .sidebar .nav-link.is-active:focus-visible {
@@ -1446,10 +1413,7 @@ table.data tr:hover td { background: var(--surface-2); }
   );
   color: #ffffff;
   border-color: color-mix(in srgb, var(--primary) 26%, transparent);
-  border-start-start-radius: 12px;
-  border-end-start-radius: 12px;
-  border-start-end-radius: 7px;
-  border-end-end-radius: 7px;
+  border-radius: 10px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 .sidebar .nav-group.is-open {
@@ -1460,10 +1424,7 @@ table.data tr:hover td { background: var(--surface-2); }
   );
   color: #ffffff;
   border-color: color-mix(in srgb, var(--primary) 20%, transparent);
-  border-start-start-radius: 12px;
-  border-end-start-radius: 12px;
-  border-start-end-radius: 7px;
-  border-end-end-radius: 7px;
+  border-radius: 10px;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 6px 14px -12px color-mix(in srgb, var(--primary) 85%, transparent);
 }

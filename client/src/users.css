@@ -580,6 +580,21 @@
 }
 .um-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .um-field__label { font-size: 11.5px; font-weight: 650; color: #6d756b; }
+
+/* Required marker: the one red accent in the form, next to the label only. */
+.um-field__req {
+  margin-inline-start: 3px;
+  color: #d64545;
+  font-weight: 800;
+}
+/* Beside its own field, never in a banner at the top of the form. */
+.um-field__error { font-size: 11px; font-weight: 650; line-height: 1.45; color: #b3262b; }
+.um-input.is-invalid { border-color: #e5a6a6; }
+.um-input.is-invalid:focus {
+  border-color: #d97a7a;
+  box-shadow: 0 0 0 3px rgba(214, 69, 69, 0.1);
+}
+.um-note--req { margin: 0 0 2px; }
 .um-field__wrap { position: relative; display: flex; align-items: center; }
 
 .um-input {

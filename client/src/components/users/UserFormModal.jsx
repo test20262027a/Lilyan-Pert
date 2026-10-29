@@ -52,20 +52,52 @@ function Section({ title, children, aside }) {
   );
 }
 
-function PasswordField({ label, value, onChange, autoComplete }) {
+/* The red asterisk every required field carries; the label itself stays the
+   accessible name, so the mark is decoration and the input is aria-required. */
+function FieldLabel({ label, required }) {
+  return (
+    <span className="um-field__label">
+      {label}
+      {required ? <span className="um-field__req" aria-hidden="true">*</span> : null}
+    </span>
+  );
+}
+
+function FieldError({ id, message }) {
+  if (!message) return null;
+  return <span className="um-field__error" id={id} role="alert">{message}</span>;
+}
+
+function PasswordField({
+  label,
+  value,
+  onChange,
+  onBlur,
+  autoComplete,
+  required = false,
+  error = null,
+}) {
   const { t } = useI18n();
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
   const [shown, setShown] = useState(false);
   return (
     <label className="um-field">
-      <span className="um-field__label">{label}</span>
+      <FieldLabel label={label} required={required} />
       <span className="um-field__wrap">
         <input
-          className="um-input"
+          id={inputId}
+          className={`um-input ${error ? 'is-invalid' : ''}`}
           type={shown ? 'text' : 'password'}
           dir="ltr"
           autoComplete={autoComplete}
           value={value}
+          required={required}
+          aria-required={required || undefined}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={error ? errorId : undefined}
           onChange={(e) => onChange(e.target.value)}
+          onBlur={onBlur}
         />
         <button
           type="button"
@@ -77,6 +109,7 @@ function PasswordField({ label, value, onChange, autoComplete }) {
           <Icon name={shown ? 'eyeOff' : 'eye'} size={15} />
         </button>
       </span>
+      <FieldError id={errorId} message={error} />
     </label>
   );
 }
@@ -156,6 +189,10 @@ export default function UserFormModal({
   );
   const [roleNotice, setRoleNotice] = useState(false);
   const [error, setError] = useState(null);
+  // Required-field validation. A field reports itself once it has been left or
+  // the form was submitted — never while the first character is being typed.
+  const [touched, setTouched] = useState({});
+  const [submitted, setSubmitted] = useState(false);
   // One discard confirmation at a time: the flag is the single owner, so a
   // double click on Cancel can never stack two dialogs.
   const [askDiscard, setAskDiscard] = useState(false);
@@ -170,6 +207,34 @@ export default function UserFormModal({
   const cleanUsername = username.trim().toLowerCase();
   const cleanSuffix = normalizeSuffixInput(suffix);
   const identifier = cleanUsername && cleanSuffix ? `${cleanUsername}${cleanSuffix}` : '';
+
+  /*
+   * Required information, checked in one place so the asterisks, the inline
+   * messages and the disabled Save button can never disagree. Creating an
+   * account always needs a password (and its confirmation); editing one never
+   * asks for the current password unless a new one is typed.
+   */
+  const passwordNeeded = mode === 'create';
+  const confirmNeeded = passwordNeeded || password.length > 0;
+  const errors = useMemo(() => {
+    const found = {};
+    if (!fullName.trim()) found.fullName = t('user_name_required');
+    if (!cleanUsername) found.username = t('user_required_field');
+    else if (!USERNAME_RE.test(cleanUsername)) found.username = t('user_invalid_username');
+    if (!cleanSuffix) found.suffix = t('user_required_field');
+    else if (!SUFFIX_RE.test(cleanSuffix)) found.suffix = t('user_invalid_suffix');
+    if (passwordNeeded && !password) found.password = t('user_required_field');
+    else if (password && password.length < 8) found.password = t('auth_weak_password');
+    if (confirmNeeded && !confirmPassword) found.confirm = t('user_confirm_required');
+    else if (confirmNeeded && confirmPassword !== password) found.confirm = t('user_password_mismatch');
+    if (!role) found.role = t('user_required_field');
+    return found;
+  }, [fullName, cleanUsername, cleanSuffix, password, confirmPassword, passwordNeeded, confirmNeeded, role, t]);
+
+  const hasErrors = Object.keys(errors).length > 0;
+  const touch = (field) => setTouched((current) => ({ ...current, [field]: true }));
+  // A message is visible once its field was left, or after a save attempt.
+  const errorFor = (field) => ((touched[field] || submitted) ? errors[field] : null);
 
   const dirty =
     fullName !== (user?.full_name || '')
@@ -244,18 +309,16 @@ export default function UserFormModal({
   };
 
   const submit = () => {
-    const name = fullName.trim();
-    if (!name) return setError(t('user_name_required'));
-    if (!USERNAME_RE.test(cleanUsername)) return setError(t('user_invalid_username'));
-    if (!SUFFIX_RE.test(cleanSuffix)) return setError(t('user_invalid_suffix'));
-    // A new account needs a working password; an edit keeps the current one
-    // unless a new one is typed.
-    if ((mode === 'create' || password) && password.length < 8) return setError(t('auth_weak_password'));
-    if (password !== confirmPassword) return setError(t('user_password_mismatch'));
+    // Every required field is now on show, and an incomplete form never leaves.
+    setSubmitted(true);
+    if (hasErrors) {
+      setError(null);
+      return undefined;
+    }
     if (uploading) return setError(t('user_photo_wait'));
     setError(null);
     return onSubmit({
-      full_name: name,
+      full_name: fullName.trim(),
       username: cleanUsername,
       login_suffix: cleanSuffix,
       password: password || undefined,
@@ -304,40 +367,60 @@ export default function UserFormModal({
         <div className="um-modal__body">
           {error ? <div className="um-error">{error}</div> : null}
 
+          <p className="um-note um-note--req">{t('user_required_note')}</p>
+
           <Section title={t('user_section_general')}>
             <div className="um-fields">
               <label className="um-field">
-                <span className="um-field__label">{t('label_full_name')}</span>
+                <FieldLabel label={t('label_full_name')} required />
                 <input
-                  className="um-input"
+                  className={`um-input ${errorFor('fullName') ? 'is-invalid' : ''}`}
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  onBlur={() => touch('fullName')}
                   autoComplete="name"
+                  required
+                  aria-required="true"
+                  aria-invalid={errorFor('fullName') ? 'true' : undefined}
+                  aria-describedby={errorFor('fullName') ? 'um-full-name-error' : undefined}
                 />
+                <FieldError id="um-full-name-error" message={errorFor('fullName')} />
               </label>
               <div className="um-fields--2">
                 <label className="um-field">
-                  <span className="um-field__label">{t('user_username')}</span>
+                  <FieldLabel label={t('user_username')} required />
                   <input
-                    className="um-input"
+                    className={`um-input ${errorFor('username') ? 'is-invalid' : ''}`}
                     dir="ltr"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
+                    onBlur={() => touch('username')}
                     autoComplete="off"
                     spellCheck={false}
+                    required
+                    aria-required="true"
+                    aria-invalid={errorFor('username') ? 'true' : undefined}
+                    aria-describedby={errorFor('username') ? 'um-username-error' : undefined}
                   />
+                  <FieldError id="um-username-error" message={errorFor('username')} />
                 </label>
                 <label className="um-field">
-                  <span className="um-field__label">{t('user_login_suffix')}</span>
+                  <FieldLabel label={t('user_login_suffix')} required />
                   <input
-                    className="um-input"
+                    className={`um-input ${errorFor('suffix') ? 'is-invalid' : ''}`}
                     dir="ltr"
                     value={suffix}
                     onChange={(e) => setSuffix(e.target.value)}
+                    onBlur={() => touch('suffix')}
                     placeholder={loginSuffix || '@lilyanpert.app'}
                     autoComplete="off"
                     spellCheck={false}
+                    required
+                    aria-required="true"
+                    aria-invalid={errorFor('suffix') ? 'true' : undefined}
+                    aria-describedby={errorFor('suffix') ? 'um-suffix-error' : undefined}
                   />
+                  <FieldError id="um-suffix-error" message={errorFor('suffix')} />
                 </label>
               </div>
               {/* The identifier the person will actually sign in with. */}
@@ -367,13 +450,19 @@ export default function UserFormModal({
                 label={t('label_password')}
                 value={password}
                 onChange={setPassword}
+                onBlur={() => touch('password')}
                 autoComplete="new-password"
+                required={passwordNeeded}
+                error={errorFor('password')}
               />
               <PasswordField
                 label={t('user_confirm_password')}
                 value={confirmPassword}
                 onChange={setConfirmPassword}
+                onBlur={() => touch('confirm')}
                 autoComplete="new-password"
+                required={confirmNeeded}
+                error={errorFor('confirm')}
               />
             </div>
             <p className="um-note">{t('user_password_notice')}</p>
@@ -382,7 +471,7 @@ export default function UserFormModal({
           <Section title={t('user_section_role')}>
             <div className="um-fields um-fields--2">
               <label className="um-field">
-                <span className="um-field__label">{t('user_role')}</span>
+                <FieldLabel label={t('user_role')} required />
                 <Select
                   value={role}
                   onChange={changeRole}
@@ -448,6 +537,7 @@ export default function UserFormModal({
           <ModalActions
             primaryLabel={t('action_save')}
             onPrimary={submit}
+            primaryDisabled={hasErrors}
             loading={busy || uploading}
             secondaryLabel={t('action_cancel')}
             onSecondary={close}
