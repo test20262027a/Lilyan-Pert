@@ -607,19 +607,19 @@
 }
 
 /*
- * Smart ticks: while nothing is picked the corner boxes stay invisible so the
- * cards look clean. They keep their place in the layout (opacity, not
- * `display`), so the row never reflows when the first selection fades them all
- * in — and the one under the keyboard cursor reappears on focus so the control
- * is never unreachable.
+ * Smart ticks: a card only shows its corner box while it is picked or partly
+ * picked, so untouched cards stay clean and no empty square is ever shown.
+ * The box keeps its place in the layout (opacity, not `display`), so nothing
+ * reflows as it fades in and out — and the one under the keyboard cursor
+ * reappears on focus so the control is never unreachable.
  */
-.bk-sel-grid:not(.is-selecting) .bk-tick {
+.bk-sel-card:not(.is-on):not(.is-partial) .bk-tick {
   opacity: 0;
   pointer-events: none;
   transform: scale(0.84);
 }
 
-.bk-sel-grid:not(.is-selecting) .bk-tick:focus-visible {
+.bk-sel-card:not(.is-on):not(.is-partial) .bk-tick:focus-visible {
   opacity: 1;
   pointer-events: auto;
   transform: none;

@@ -229,7 +229,7 @@ export default function ResetSampleData() {
       {loading ? <Loading /> : null}
 
       {!loading && cards.length ? (
-        <div className={`rs-grid ${selected.length ? 'is-selecting' : ''}`}>
+        <div className="rs-grid">
           {cards.map((card) => {
             const on = selected.includes(card.key);
             const disabled = card.eligible === 0;

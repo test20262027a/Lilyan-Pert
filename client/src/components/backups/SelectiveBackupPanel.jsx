@@ -106,7 +106,7 @@ export default function SelectiveBackupPanel({
         </div>
       </header>
 
-      <div className={`bk-sel-grid ${count ? 'is-selecting' : ''}`}>
+      <div className="bk-sel-grid">
         {categories.map((category) => {
           const cardSections = sectionsByCategory[category.key] || [];
           const picked = cardSections.filter((section) => selected.includes(section.key));
@@ -118,6 +118,9 @@ export default function SelectiveBackupPanel({
             <article
               key={category.key}
               className={`bk-sel-card ${all ? 'is-on' : ''} ${part ? 'is-partial' : ''}`}
+              /* The card's own tick is hidden until the card is picked, so the
+                 whole card stays the target for its category shortcut. */
+              onClick={() => onToggleCategory?.(category.key)}
             >
               <div className="bk-sel-card__top">
                 <span className={`bk-ico bk-tone--${visual.tone}`} aria-hidden="true">
@@ -130,7 +133,10 @@ export default function SelectiveBackupPanel({
                   aria-checked={all ? 'true' : part ? 'mixed' : 'false'}
                   aria-label={name}
                   title={name}
-                  onClick={() => onToggleCategory?.(category.key)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onToggleCategory?.(category.key);
+                  }}
                 >
                   {all ? <Icon name="check" size={13} /> : null}
                   {part ? <span className="bk-tick__dash" aria-hidden="true" /> : null}
@@ -154,7 +160,10 @@ export default function SelectiveBackupPanel({
                         reference ? 'bk-chip--ref' : ''
                       }`}
                       title={reference ? t('backup_ref_only') : sectionLabel(t, section.key)}
-                      onClick={() => onToggleSection?.(section.key)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onToggleSection?.(section.key);
+                      }}
                       disabled={busy}
                     >
                       <span className="bk-chip__box" aria-hidden="true">
