@@ -30,11 +30,11 @@
   transition: filter 0.2s ease;
 }
 /* The picture itself. `--sh-fit` is the host's fitting strategy: the default
-   fills the surface completely (page banners, modal and drawer heads, dialogs);
-   tall, narrow surfaces ask for `contain` so their composition stays whole. */
+   keeps the whole picture visible (`contain`, never cropped or stretched) over
+   the blurred wash that extends it to the header's edges. */
 .sh-bg__art {
   position: absolute; inset: 0;
-  background-size: var(--sh-fit, cover);
+  background-size: var(--sh-fit, contain);
   background-position: var(--sh-pos, center);
   transition: filter 0.2s ease;
 }
