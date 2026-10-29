@@ -87,13 +87,13 @@
   overflow-wrap: anywhere;
 }
 
-/* The contact details are a section of their own, centred under the identity
-   and separated from it by the section rule, so the header never turns into
-   one long run of lines. */
+/* The contact details close section 1: they sit under the identity inside the
+   same boundary, never as a run of loose lines on the paper. */
 .rc-contact-block {
   display: grid;
   justify-items: center;
   gap: 1px;
+  margin-block-start: 2px;
   text-align: center;
 }
 
@@ -121,7 +121,7 @@
 /*
  * Every section after the business identity opens with its own dashed rule,
  * with the same gap above and below it, so the paper reads as six independent
- * blocks: identity · order · products · notes · summary · total · message.
+ * blocks: identity · order · products · notes · summary · message.
  * The rule belongs to the section, so a hidden section (no table, no discount,
  * no notes) never leaves a double or orphan divider behind.
  */
@@ -129,6 +129,19 @@
   margin-block-start: var(--rc-space, 7px);
   padding-block-start: var(--rc-space, 7px);
   border-block-start: 1px dashed #000000;
+}
+
+/* On screen each section also gets a soft rounded plate, so the preview reads
+   as organised panels. It is drawn with a background and an inset hairline —
+   never padding that would shift a column — and never reaches the paper. */
+@media screen {
+  .receipt-paper .rc-block {
+    padding-inline: 9px;
+    padding-block-end: 8px;
+    border-radius: 12px;
+    background: #fbfcfd;
+    box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.055);
+  }
 }
 
 /* Section separators can be switched off entirely; the spacing that separates
@@ -200,7 +213,19 @@
  */
 .rc-items {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto auto auto;
+  /*
+   * Four dedicated columns with fixed proportional widths — name, quantity,
+   * unit price, line total — so each value owns one position down the whole
+   * paper and never drifts into its neighbour. The money tracks are
+   * proportional but floored at their own content width: a wide amount widens
+   * its column instead of spilling over the one beside it, and the name
+   * column absorbs the difference and wraps.
+   */
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(min-content, 0.3fr)
+    minmax(min-content, 0.62fr)
+    minmax(min-content, 0.62fr);
   align-items: baseline;
 }
 
@@ -217,13 +242,14 @@
 .rc-item > * { box-sizing: border-box; }
 
 .rc-items__head > * {
-  padding-block-end: 4px;
+  padding-block: 5px 4px;
   border-bottom: 1px solid #000000;
   font-size: 0.84em;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  white-space: nowrap;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 /* The column captions sit exactly above the values they name. */
@@ -231,6 +257,27 @@
 .rc-items__head > :not(:first-child) {
   padding-inline-start: 7px;
   text-align: end;
+}
+
+/* A visible divider stands between the four columns of every row, so quantity,
+   unit price and line total are separated by a line as well as by position. */
+.rc-items__head > * + *,
+.rc-item > * + * {
+  border-inline-start: 1px solid rgba(17, 24, 39, 0.22);
+}
+
+/* The caption band is lightly shaded in the preview only: a thermal head
+   cannot print a tint, and a heavy block would waste paper. */
+@media screen {
+  .rc-items__head > * { background: #eef1f6; }
+  .rc-items__head > :first-child {
+    border-start-start-radius: 7px;
+    border-end-start-radius: 7px;
+  }
+  .rc-items__head > :last-child {
+    border-start-end-radius: 7px;
+    border-end-end-radius: 7px;
+  }
 }
 
 .rc-item > * { padding-block: 4px 2px; }
@@ -282,7 +329,6 @@
    inset and wraps inside its own column instead of pushing past the paper. */
 .receipt-paper[data-columns='compact'] .rc-items__head > * {
   padding-inline-start: 0;
-  white-space: normal;
   overflow-wrap: anywhere;
 }
 
@@ -292,21 +338,37 @@
 .receipt-paper[data-columns='compact'] .rc-item__name {
   grid-column: 1 / -1;
   padding-inline-end: 0;
-  padding-block-end: 0;
+  padding-block-end: 1px;
 }
 
 .receipt-paper[data-columns='compact'] .rc-item__qty {
   padding-inline-start: 0;
   text-align: start;
+  border-inline-start: 0;
 }
 
 .receipt-paper[data-columns='compact'] .rc-item__unit { text-align: start; }
 
-/* The notes are a section like any other, so they keep the shared rhythm
-   instead of a spacing of their own. */
-.rc-notes__label { font-weight: 700; font-size: 0.92em; }
+/* One divider per product, not one above the name and another under it: on the
+   stacked layout the hairline belongs to the product block. */
+.receipt-paper[data-columns='compact'] .rc-item__qty,
+.receipt-paper[data-columns='compact'] .rc-item__unit,
+.receipt-paper[data-columns='compact'] .rc-item__amount { border-block-start-style: none; }
 
-.rc-notes__text { overflow-wrap: anywhere; }
+/* Notes: the label leads and the note begins directly beside it on the same
+   line, then wraps inside the same block — never centred, never pushed away
+   from the label. Both are inline, so an RTL note simply runs the other way. */
+.rc-notes {
+  font-size: 0.96em;
+  line-height: 1.45;
+  text-align: start;
+  overflow-wrap: anywhere;
+}
+.rc-notes__label {
+  font-weight: 800;
+  margin-inline-end: 6px;
+}
+.rc-notes__label::after { content: ':'; }
 
 /* ------------------------------------------------------------------ totals */
 
@@ -315,9 +377,13 @@
  * separates two products), so the price block is unmistakable, and each line
  * puts its label and its amount on the same baseline at the two paper edges.
  */
+/* Two shared tracks — one label column, one amount column — so every line of
+   the summary has its amount on the same edge, whatever the labels are. */
 .rc-totals {
   display: grid;
-  gap: 2px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 3px;
   margin-block-start: calc(var(--rc-space, 7px) + 3px);
   padding-block-start: calc(var(--rc-space, 7px) + 1px);
   border-block-start: 2px solid #000000;
@@ -329,12 +395,9 @@
   border-block-start-style: none;
 }
 
-.rc-totals__row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
+/* The row box itself is not painted: its label and amount become cells of the
+   summary grid above, so no row can drift onto its own alignment. */
+.rc-totals__row { display: contents; }
 
 .rc-totals__row dt {
   font-size: 0.94em;

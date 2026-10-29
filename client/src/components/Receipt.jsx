@@ -10,10 +10,11 @@ import '../receipt.css';
  * both always show identical authoritative data. It is a single continuous
  * flow — no fixed heights, no page breaks, nothing that can clip.
  *
- * The structure is fixed for both paper widths: logo, business identity,
- * rule, order number and details, rule, product list, rule, totals with a bold
- * grand total, rule, one closing message. Only the type scale and the logo cap
- * change between 58 mm and 80 mm (see receipt.css).
+ * Six sections, each with its own boundary and the same inner padding:
+ * identity (logo, name, contact) · order (number, date, table, guest) ·
+ * products (one real table) · notes · summary (rows plus a bold payable
+ * total) · one closing message. Only the type scale, the logo cap and the
+ * product table's shape change between 58 mm and 80 mm (see receipt.css).
  *
  * It is customer-facing only: the order's status history, edits, auditors and
  * timestamps are internal and live in the Order Details activity timeline,
@@ -212,27 +213,27 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
       style={paperVars}
       dir={isRtl(locale) ? 'rtl' : 'ltr'}
     >
-      {/* 1 · identity: the logo and the business name on their own. */}
+      {/* 1 · identity: the logo, the business name and its contact details,
+          one section under one boundary. */}
       <header className="rc-head">
         {settings.show_logo && business?.logo_url ? (
           <img className="receipt-logo" src={business.logo_url} alt="" style={{ maxWidth: `${logoWidth}px` }} />
         ) : null}
         <div className="rc-name">{businessName}</div>
+        {contactLines.length ? (
+          <div className="rc-contact-block">
+            {contactLines.map((line) => (
+              <div className={`rc-contact${line.numeric ? ' rc-num' : ''}`} key={line.key}>
+                {line.text}
+              </div>
+            ))}
+          </div>
+        ) : null}
       </header>
 
-      {/* 2 · contact: address, phone, email and site, a section of their own. */}
-      {contactLines.length ? (
-        <section className="rc-contact-block rc-block">
-          {contactLines.map((line) => (
-            <div className={`rc-contact${line.numeric ? ' rc-num' : ''}`} key={line.key}>
-              {line.text}
-            </div>
-          ))}
-        </section>
-      ) : null}
-
-      {/* 3 · order: the number first, then when and by whom it was taken. */}
-      {hasOrderSection ? (
+      {/* 2 · order: the number first, then when, by whom, for which table and
+          which guest — one order block, exactly as the reference reads. */}
+      {hasOrderSection || hasGuestSection ? (
         <section className="rc-order rc-block">
           {hasOrderNumber ? (
             <div className="rc-orderno">
@@ -240,7 +241,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
               <span className="rc-orderno__value rc-num">#{order?.order_number}</span>
             </div>
           ) : null}
-          {hasDateTime || hasCashier ? (
+          {hasDateTime || hasCashier || hasTable || hasCustomer ? (
             <dl className="rc-kv">
               {hasDateTime
                 ? kvRow(
@@ -250,22 +251,14 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
                   )
                 : null}
               {hasCashier ? kvRow(msg('cashier'), order?.created_by_name || '—', 'cashier') : null}
+              {hasTable ? kvRow(msg('table'), tableName, 'table') : null}
+              {hasCustomer ? kvRow(msg('customer'), order.customer_name, 'customer') : null}
             </dl>
           ) : null}
         </section>
       ) : null}
 
-      {/* 4 · guest: which table the order belongs to and who it is for. */}
-      {hasGuestSection ? (
-        <section className="rc-guest rc-block">
-          <dl className="rc-kv">
-            {hasTable ? kvRow(msg('table'), tableName, 'table') : null}
-            {hasCustomer ? kvRow(msg('customer'), order.customer_name, 'customer') : null}
-          </dl>
-        </section>
-      ) : null}
-
-      {/* 5 · products: name, quantity, unit price and line total, each in its
+      {/* 3 · products: name, quantity, unit price and line total, each in its
           own column so the three values can never read as one figure. */}
       {(items || []).length ? (
         <section className="rc-items rc-block">
@@ -299,13 +292,17 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         </section>
       ) : null}
 
+      {/* 4 · notes: their own section. The label leads and the note starts
+          directly beside it, wrapping inside the same block — the text is never
+          centred and never pushed away from its label. */}
       {settings.show_notes !== false && order?.notes ? (
         <div className="rc-notes rc-block">
-          <div className="rc-notes__label">{msg('notes')}</div>
-          <div className="rc-notes__text">{order.notes}</div>
+          <span className="rc-notes__label">{msg('notes')}</span>
+          <span className="rc-notes__text">{order.notes}</span>
         </div>
       ) : null}
 
+      {/* 5 · summary: one row per stored amount, the payable total strongest. */}
       <dl className="rc-totals rc-block">
         <div className="rc-totals__row">
           <dt>{msg('subtotal')}</dt>
@@ -347,6 +344,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
         total closes with its own strong rule, so the message reads as a final
         section of its own without a second divider.
       */}
+      {/* 6 · the one closing thank-you message. */}
       {footer?.text ? <p className="rc-foot">{footer.text}</p> : null}
     </div>
   );
