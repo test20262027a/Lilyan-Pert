@@ -50,7 +50,7 @@ export default function AppHeader({ onOpenSidebar, sidebarOpen = false }) {
     if (!business) return;
     const next = { ...(business.notification_settings || {}), sound_enabled: !soundEnabled };
     setBusiness({ ...business, notification_settings: next });
-    if (!soundEnabled) playSound(next.sound_key); // preview on the same gesture
+    if (!soundEnabled) playSound(next.sound_key, next.sound_volume); // preview on the same gesture
     try {
       await put('/dashboard/notification-settings', { sound_enabled: !soundEnabled });
     } catch {

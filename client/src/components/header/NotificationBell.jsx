@@ -38,6 +38,7 @@ export default function NotificationBell() {
   const wrapRef = useRef(null);
   const soundEnabled = business?.notification_settings?.sound_enabled !== false;
   const soundKey = business?.notification_settings?.sound_key;
+  const soundVolume = business?.notification_settings?.sound_volume;
   const priority = useMemo(() => priorityOf(unread), [unread]);
 
   const load = useCallback(async () => {
@@ -57,7 +58,7 @@ export default function NotificationBell() {
         } else if (newestOrder.id !== seenRef.current) {
           seenRef.current = newestOrder.id;
           // One alert per genuinely new order, whatever the poll interval did.
-          if (soundEnabled) playSound(soundKey);
+          if (soundEnabled) playSound(soundKey, soundVolume);
           toast.success(`${t('dash_new_orders')} · ${newestOrder.title || ''}`.trim());
         }
       }
@@ -66,7 +67,7 @@ export default function NotificationBell() {
     } finally {
       setLoading(false);
     }
-  }, [soundEnabled, soundKey, t, toast]);
+  }, [soundEnabled, soundKey, soundVolume, t, toast]);
 
   useEffect(() => {
     load();

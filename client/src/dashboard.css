@@ -271,7 +271,135 @@
 .sound-picker__row { display: flex; align-items: center; gap: 10px; }
 /* The shared dropdown stretches to the row; its skin lives in select.css. */
 .sound-picker__select { flex: 1 1 auto; min-width: 0; }
-.sound-picker__select .lysel__trigger { min-height: 46px; font-size: 13.5px; }
+/* The ringtone picker wears the panel's premium 3D plate as well, so choosing
+   a sound reads as the same physical object as the buttons beside it. */
+.sound-picker__select .lysel__trigger {
+  min-height: 46px;
+  font-size: 13.5px;
+  border-radius: var(--btn-radius, 14px);
+  border-color: var(--btn-line, var(--border-strong));
+  background-image:
+    var(--btn-sheen, linear-gradient(rgba(255, 255, 255, 0.35), transparent)),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 78%, var(--surface)), var(--surface-2));
+  box-shadow: var(--btn-shadow, var(--shadow-sm));
+  transition:
+    transform 200ms var(--ui-ease),
+    border-color 200ms var(--ui-ease),
+    box-shadow 200ms var(--ui-ease);
+}
+.sound-picker__select .lysel__trigger:hover:not(:disabled) {
+  border-color: var(--btn-line-hover, var(--theme-primary-line));
+  box-shadow: var(--btn-shadow-hover, var(--shadow-md));
+}
+/* The saved ringtone is marked in the active theme colour, not a neutral tint. */
+.sound-picker__select .lysel__value { color: var(--theme-primary-strong); }
+
+/*
+ * Volume: one 3D groove filled in the active theme, with a raised thumb. The
+ * fill length arrives as `--sound-fill` from the component, so nothing here
+ * hardcodes a level.
+ */
+.sound-volume {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 2px;
+}
+.sound-volume__label { font-size: 11.5px; font-weight: 650; color: var(--muted); }
+.sound-volume__value {
+  min-width: 46px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--theme-primary-line);
+  background-color: color-mix(in srgb, var(--theme-primary) 14%, var(--surface));
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent);
+  color: var(--theme-primary-strong);
+  font-size: 11.5px;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 2px 5px rgba(16, 22, 38, 0.1);
+}
+.sound-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 26px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.sound-range::-webkit-slider-runnable-track {
+  height: 12px;
+  border-radius: 999px;
+  background:
+    linear-gradient(
+      90deg,
+      var(--theme-primary) 0%,
+      var(--theme-primary) var(--sound-fill, 85%),
+      color-mix(in srgb, var(--surface-3) 72%, var(--surface)) var(--sound-fill, 85%)
+    );
+  box-shadow:
+    inset 0 2px 4px color-mix(in srgb, #0a1020 22%, transparent),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.5);
+}
+.sound-range::-moz-range-track {
+  height: 12px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface-3) 72%, var(--surface));
+  box-shadow: inset 0 2px 4px color-mix(in srgb, #0a1020 22%, transparent);
+}
+.sound-range::-moz-range-progress {
+  height: 12px;
+  border-radius: 999px;
+  background: var(--theme-primary);
+}
+.sound-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -4px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 68%, #0b1220);
+  background: radial-gradient(
+    circle at 32% 26%,
+    #ffffff,
+    color-mix(in srgb, var(--theme-primary) 78%, #ffffff) 46%,
+    var(--theme-primary-hover)
+  );
+  box-shadow:
+    0 2px 5px color-mix(in srgb, #0a1020 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+.sound-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 68%, #0b1220);
+  background: radial-gradient(
+    circle at 32% 26%,
+    #ffffff,
+    color-mix(in srgb, var(--theme-primary) 78%, #ffffff) 46%,
+    var(--theme-primary-hover)
+  );
+  box-shadow: 0 2px 5px color-mix(in srgb, #0a1020 34%, transparent);
+}
+.sound-range:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+/* RTL: the groove fills from the right, the direction the thumb starts from. */
+[dir='rtl'] .sound-range::-webkit-slider-runnable-track {
+  background:
+    linear-gradient(
+      270deg,
+      var(--theme-primary) 0%,
+      var(--theme-primary) var(--sound-fill, 85%),
+      color-mix(in srgb, var(--surface-3) 72%, var(--surface)) var(--sound-fill, 85%)
+    );
+}
 /*
  * The sound preview is the card's one real button, so it is the dashboard's one
  * genuinely interactive icon: the shared pink 3D tile (`dash-ic--pink` on the
@@ -293,6 +421,21 @@
 .sound-play:hover::after { opacity: 1; }
 .sound-play:active { transform: translateY(0) scale(0.97); }
 .sound-play:active::after { opacity: 1; }
+/* While the ringtone is sounding the plate pulses in its own colour, so the
+   preview has visible feedback on every device, muted speakers included. */
+.sound-play.is-playing { animation: sound-play-pulse 900ms var(--ui-ease) 2; }
+.sound-play:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+@keyframes sound-play-pulse {
+  0%,
+  100% { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.66), var(--btn-depth-1, 0 2px 5px rgba(16, 22, 38, 0.12)); }
+  50% {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      0 0 0 4px color-mix(in srgb, var(--ic-glow, var(--theme-primary)) 42%, transparent),
+      0 8px 18px -6px color-mix(in srgb, var(--ic-glow, var(--theme-primary)) 65%, transparent);
+  }
+}
+@media (prefers-reduced-motion: reduce) { .sound-play.is-playing { animation: none; } }
 
 /* ----------------------------------------------------------- kpi cards */
 

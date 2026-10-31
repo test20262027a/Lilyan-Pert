@@ -23,7 +23,25 @@ const DEFAULT_RANGE = 'today';
 
 /* Notification settings a member may change from the dashboard. */
 const NOTIF_BOOL_KEYS = ['sound_enabled', 'new_order', 'status_changes', 'daily_summary'];
-const SOUND_KEYS = ['classic', 'double', 'soft', 'alert'];
+/* Kept in step with client/src/sound.js: a stored key must always be one the
+   client can actually play. */
+const SOUND_KEYS = [
+  'classic',
+  'double',
+  'triple',
+  'digital',
+  'fast',
+  'loud',
+  'bell',
+  'phone',
+  'alert',
+  'modern',
+  'custom',
+  'power',
+  'soft',
+  'wave',
+  'pulse',
+];
 
 /** Every number on the dashboard is aggregated from this business's records. */
 router.get(
@@ -423,6 +441,11 @@ router.put(
       const key = String(body.sound_key);
       if (!SOUND_KEYS.includes(key)) throw bad('INVALID_SOUND', 'sound_key');
       patch.sound_key = key;
+    }
+    if ('sound_volume' in body) {
+      const level = Number(body.sound_volume);
+      if (!Number.isFinite(level)) throw bad('INVALID_VOLUME', 'sound_volume');
+      patch.sound_volume = Math.min(100, Math.max(0, Math.round(level)));
     }
     if (!Object.keys(patch).length) throw bad('NO_FIELDS');
 

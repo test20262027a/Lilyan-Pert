@@ -19,15 +19,24 @@
 }
 
 /*
- * Business Settings only: on desktop the subtitle reads as one calm line
- * under the title. Smaller screens keep the default wrapping so the copy
- * never collides with the artwork or the action button.
+ * This workspace's header — Business Settings AND its Menu Settings tab — keeps
+ * the subtitle on ONE line from tablet up. The type steps down fluidly with the
+ * viewport (never below a legible floor) so the longest translation still fits
+ * beside the Save action in RTL and LTR alike, and the block is allowed to
+ * shrink instead of pushing the action off the banner.
  */
-@media (min-width: 1024px) {
-  .set-hero:not(.is-menu) .mhero__sub {
+@media (min-width: 768px) {
+  .set-hero .mhero__text { min-width: 0; }
+  .set-hero .mhero__sub {
     max-width: none;
     white-space: nowrap;
+    font-size: clamp(10.8px, calc(9.7px + 0.22vw), 13px);
   }
+}
+/* Phones keep the default wrapping, with a slightly tighter step so the longer
+   translations still breathe inside the compact banner. */
+@media (max-width: 767px) {
+  .set-hero .mhero__sub { font-size: 12px; line-height: 1.5; }
 }
 
 /* Size and rhythm only: the plate itself is the shared 3D action language. */

@@ -163,6 +163,8 @@ export async function seed() {
         }),
         JSON.stringify({
           sound_enabled: true,
+          sound_key: 'classic',
+          sound_volume: 85,
           push_enabled: true,
           new_order: true,
           status_changes: false,

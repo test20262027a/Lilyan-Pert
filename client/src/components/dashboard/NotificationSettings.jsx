@@ -1,8 +1,10 @@
+import { useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import DashIcon from './DashIcon';
 import { Alert, Select, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
-import { playSound, SOUND_OPTIONS, DEFAULT_SOUND } from '../../sound';
+import { fmtDigits } from '../../format';
+import { playSound, soundSupported, SOUND_OPTIONS, DEFAULT_SOUND, DEFAULT_VOLUME } from '../../sound';
 
 /* The app's own address, so "open in a new tab" leaves the preview frame. */
 const appHref = () => (typeof window === 'undefined' ? '#' : window.location.href);
@@ -18,15 +20,45 @@ const appHref = () => (typeof window === 'undefined' ? '#' : window.location.hre
  * alerts and the sound keep working.
  */
 export default function NotificationSettings({ settings = {}, onChange, push, onPushToggle, pushError }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const soundOn = settings.sound_enabled !== false;
   const soundKey = SOUND_OPTIONS.includes(settings.sound_key) ? settings.sound_key : DEFAULT_SOUND;
+  const savedVolume = Number.isFinite(Number(settings.sound_volume))
+    ? Math.min(100, Math.max(0, Math.round(Number(settings.sound_volume))))
+    : DEFAULT_VOLUME;
+
+  /*
+   * The slider keeps its own draft while the thumb moves, so one drag is ONE
+   * saved value instead of a request per pixel; the saved record stays the
+   * source of truth and re-seeds the thumb whenever it changes elsewhere.
+   */
+  const [volume, setVolume] = useState(savedVolume);
+  useEffect(() => setVolume(savedVolume), [savedVolume]);
+
+  // A browser that refused to start audio says so where the sound is chosen,
+  // with the gesture that lifts the restriction.
+  const [blocked, setBlocked] = useState(false);
+  const previewTimer = useRef(null);
+  const [previewing, setPreviewing] = useState(false);
+
+  const preview = async (key, level) => {
+    const status = await playSound(key, level);
+    setBlocked(status === 'blocked');
+    if (status !== 'ok') return;
+    setPreviewing(true);
+    clearTimeout(previewTimer.current);
+    previewTimer.current = setTimeout(() => setPreviewing(false), 1100);
+  };
+  useEffect(() => () => clearTimeout(previewTimer.current), []);
+
+  const commitVolume = () => {
+    if (volume !== savedVolume) onChange({ sound_volume: volume });
+  };
 
   // A browser without the Web Audio API can never make a sound, and one whose
   // permission was denied cannot raise a system notification. Both are said
   // plainly instead of showing a switch that pretends to work.
-  const audioUnavailable =
-    typeof window !== 'undefined' && !(window.AudioContext || window.webkitAudioContext);
+  const audioUnavailable = !soundSupported();
 
   const granted = push.permission === 'granted';
 
@@ -151,20 +183,62 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
             <Select
               className="sound-picker__select"
               value={soundKey}
-              onChange={(next) => onChange({ sound_key: next })}
+              // Picking a ringtone plays it on the same click, so the choice is
+              // heard before it is saved.
+              onChange={(next) => {
+                onChange({ sound_key: next });
+                preview(next, volume);
+              }}
               aria-label={t('dash_sound')}
+              menuMaxHeight={330}
               options={SOUND_OPTIONS.map((key) => ({ value: key, label: t(`dash_sound_${key}`) }))}
             />
             <button
               type="button"
-              className="sound-play dash-ic dash-ic--pink dash-ic--circle"
-              onClick={() => playSound(soundKey)}
+              className={`sound-play dash-ic dash-ic--pink dash-ic--circle ${previewing ? 'is-playing' : ''}`.trim()}
+              onClick={() => preview(soundKey, volume)}
+              disabled={audioUnavailable}
               aria-label={t('dash_sound_preview')}
               title={t('dash_sound_preview')}
             >
               <Icon name="volume" size={19} />
             </button>
           </div>
+
+          <div className="sound-volume">
+            <label className="sound-volume__label" htmlFor="sound-volume-input">
+              {t('dash_sound_volume')}
+            </label>
+            <input
+              id="sound-volume-input"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              className="sound-range"
+              style={{ '--sound-fill': `${volume}%` }}
+              value={volume}
+              onChange={(e) => setVolume(Number(e.target.value))}
+              // One saved value per gesture: release, key press or blur.
+              onPointerUp={commitVolume}
+              onKeyUp={commitVolume}
+              onBlur={commitVolume}
+              aria-label={t('dash_sound_volume')}
+              aria-valuetext={`${fmtDigits(volume, locale)}%`}
+            />
+            <span className="sound-volume__value" aria-hidden="true">{`${fmtDigits(volume, locale)}%`}</span>
+          </div>
+
+          {blocked ? (
+            <div className="notif-note notif-note--warn" role="status">
+              <span className="notif-note__badge" aria-hidden="true">
+                <Icon name="volumeOff" size={16} />
+              </span>
+              <div className="notif-note__main">
+                <p className="notif-note__body">{t('dash_sound_blocked')}</p>
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </section>

@@ -40,8 +40,9 @@ export const NAV = [
     key: 'nav_group_business',
     icon: 'building',
     children: [
+      /* Menu Settings has no sidebar entry of its own: it is the "menu" tab of
+         this Business Settings workspace (and /menu-settings still opens it). */
       { to: '/settings', icon: 'settings', key: 'nav_settings', perm: 'settings.view' },
-      { to: '/menu-settings', icon: 'sliders', key: 'nav_menu_settings', min: 'manager', perm: 'menu_settings.view' },
       { to: '/text-editor', icon: 'type', key: 'nav_text_editor', min: 'manager', perm: 'text_editor.view' },
       { to: '/users', icon: 'users', key: 'nav_users', min: 'manager', perm: 'users.view' },
       { to: '/backups', icon: 'database', key: 'nav_backups', min: 'owner', perm: 'backup.full' },
@@ -60,10 +61,13 @@ export function canSee(item, { isManager, isOwner, can }) {
 
 /** The label key of the entry (group child included) that owns a path. */
 export function titleKeyFor(pathname) {
+  // The legacy /menu-settings destination now lives inside Business Settings,
+  // so it keeps that entry highlighted instead of falling back to the dashboard.
+  const path = pathname === '/menu-settings' ? '/settings' : pathname;
   for (const item of NAV) {
-    if (item.to && (item.exact ? pathname === item.to : pathname.startsWith(item.to))) return item.key;
+    if (item.to && (item.exact ? path === item.to : path.startsWith(item.to))) return item.key;
     for (const child of item.children || []) {
-      if (pathname === child.to || pathname.startsWith(`${child.to}/`)) return child.key;
+      if (path === child.to || path.startsWith(`${child.to}/`)) return child.key;
     }
   }
   return 'nav_dashboard';
