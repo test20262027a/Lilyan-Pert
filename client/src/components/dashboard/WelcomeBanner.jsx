@@ -1,4 +1,3 @@
-import Icon from '../Icon';
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { localized, useI18n } from '../../i18n';
 
@@ -65,10 +64,6 @@ export default function WelcomeBanner({ business }) {
     <section className="welcome">
       <HeaderBackdrop section="dashboard" />
       <div className="welcome__text">
-        <span className="welcome__eyebrow">
-          <Icon name="sparkles" size={13} />
-          {t('dash_subtitle')}
-        </span>
         <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
         <p className="welcome__sub">{t('dash_welcome_sub')}</p>
       </div>

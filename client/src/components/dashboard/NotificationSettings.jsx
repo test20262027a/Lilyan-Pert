@@ -78,7 +78,10 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
           ? t('dash_push_denied')
           : context === 'insecure'
             ? t('dash_push_insecure')
-            : t('dash_enable_push');
+            /* Nothing to add in the ordinary case: the row is the description
+               and its toggle on one line. Only a real restriction, or a live
+               device count, earns a second line. */
+            : undefined;
 
   return (
     <section className="card notif-card">
