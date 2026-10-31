@@ -343,7 +343,11 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.ofilter:hover { background: var(--surface-2); color: var(--text-soft); }
+.ofilter:hover {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 .ofilter.is-active {
   background: var(--mint-deep);
   border-color: var(--mint-deep);
@@ -476,7 +480,7 @@
   cursor: pointer;
   font: inherit;
 }
-.orow-btn:hover { background: var(--surface-2); color: var(--mint-ink); }
+.orow-btn:hover { background: var(--theme-primary-tint-hover); color: var(--mint-ink); }
 
 /* ---------------------------------------------------------- status dropdown */
 
@@ -497,7 +501,11 @@
   cursor: pointer;
   white-space: nowrap;
 }
-.ostatus__btn:hover:not(:disabled) { background: var(--surface-2); }
+.ostatus__btn:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 .ostatus__btn:disabled { cursor: not-allowed; }
 .ostatus__btn.is-locked { background: var(--surface-2); color: var(--muted); }
 .ostatus__caret { color: var(--muted); transition: transform 0.16s ease; }

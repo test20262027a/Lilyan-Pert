@@ -157,7 +157,11 @@
   color: #4b514b;
   box-shadow: 0 3px 10px rgba(23, 26, 43, 0.14);
 }
-.mcmodal__close:hover { background: #ffffff; color: #23281f; }
+.mcmodal__close:hover {
+  background: var(--theme-primary-tint-hover);
+  color: var(--theme-primary-strong);
+  box-shadow: var(--ui-elev-2);
+}
 .mcmodal__close:focus-visible { outline: 2px solid var(--mm-green); outline-offset: 2px; }
 
 /* --------------------------------------------------------- form body */

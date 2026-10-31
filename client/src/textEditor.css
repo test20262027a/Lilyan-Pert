@@ -240,7 +240,7 @@
   text-align: start;
   transition: background 180ms ease;
 }
-.tx-group__toggle:hover { background: var(--surface-2); }
+.tx-group__toggle:hover { background: var(--theme-primary-tint-hover); }
 .tx-group__toggle:focus-visible { outline: 2px solid var(--theme-primary); outline-offset: -2px; }
 .tx-group__icon {
   width: 28px;

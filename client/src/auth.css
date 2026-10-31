@@ -388,7 +388,7 @@
 
 .au-btn:hover:not(:disabled) {
   transform: translateY(-2px);
-  filter: brightness(1.06);
+  filter: saturate(1.06) brightness(0.94);
   box-shadow:
     0 26px 38px -18px color-mix(in srgb, var(--primary) 82%, transparent),
     0 6px 12px -4px color-mix(in srgb, var(--primary) 58%, transparent),

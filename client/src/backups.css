@@ -224,8 +224,8 @@
 }
 
 .bk-btn--ghost:hover:not(:disabled) {
-  background: #f6f8f6;
-  border-color: #d8ded8;
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
 }
 
 .bk-btn--danger {

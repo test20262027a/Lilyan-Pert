@@ -1065,7 +1065,7 @@
   transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
 }
 .cui-prod__add:hover:not(:disabled) {
-  filter: brightness(1.04);
+  filter: saturate(1.06) brightness(0.94);
   box-shadow: 0 13px 26px color-mix(in srgb, var(--primary) 34%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.38);
 }

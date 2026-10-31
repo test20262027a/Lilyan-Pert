@@ -131,6 +131,50 @@
   --shadow-sm: 0 1px 2px rgba(23, 26, 43, 0.05);
   --shadow: 0 6px 20px rgba(23, 26, 43, 0.07);
   --shadow-lg: 0 18px 40px rgba(23, 26, 43, 0.14);
+
+  /*
+   * ------------------------------------------- premium interaction depth --
+   * ONE ramp for every interactive surface in the app (buttons, icon chips,
+   * cards, popups, floating controls). Three ideas only:
+   *   `--ui-highlight` a lit top edge, `--ui-elev-*` a soft contact + cast
+   *   shadow, and one timing curve so nothing ever jumps between pages.
+   * Hover and press never change a box's size — they move it by a sub-pixel
+   * transform and deepen the shadow, so no layout shift is possible.
+   */
+  --ui-dur: 200ms;
+  --ui-dur-fast: 150ms;
+  --ui-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ui-lift: translateY(-1px);
+  --ui-press: translateY(1px) scale(0.988);
+  --ui-highlight: inset 0 1px 0 color-mix(in srgb, #ffffff 52%, transparent);
+  --ui-highlight-strong: inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent);
+  --ui-shade: inset 0 -1px 0 color-mix(in srgb, #10141f 9%, transparent);
+  --ui-elev-1: 0 1px 2px rgba(23, 26, 43, 0.05),
+    0 3px 8px -5px rgba(23, 26, 43, 0.14), var(--ui-highlight);
+  --ui-elev-2: 0 2px 5px rgba(23, 26, 43, 0.06),
+    0 10px 22px -14px rgba(23, 26, 43, 0.28), var(--ui-highlight);
+  --ui-elev-3: 0 4px 10px rgba(23, 26, 43, 0.07),
+    0 22px 44px -24px rgba(23, 26, 43, 0.34), var(--ui-highlight);
+  /* Hover elevation is tinted with the element's own accent, never grey. */
+  --ui-elev-accent: 0 4px 10px -6px color-mix(in srgb, var(--primary) 42%, transparent),
+    0 14px 26px -16px color-mix(in srgb, var(--primary) 70%, transparent);
+  /*
+   * Accent ramps used by every hover in the app. Each one is the same hue as
+   * the element's resting colour, only deeper and richer: hover mixes 12% of
+   * the near-black navy into the accent, active 24%. That is why a blue theme
+   * deepens to blue, a rose theme to rose — never to a foreign colour.
+   */
+  --theme-primary-tint-hover: color-mix(in srgb, var(--primary) 13%, var(--surface));
+  --theme-primary-tint-active: color-mix(in srgb, var(--primary) 20%, var(--surface));
+  --theme-primary-deep: color-mix(in srgb, var(--primary) 64%, #10141f);
+  /* Semantic ramps keep their meaning and their family: only the lightness
+     changes between rest, hover and press. */
+  --success-hover: color-mix(in srgb, var(--success) 84%, #10141f);
+  --success-active: color-mix(in srgb, var(--success) 72%, #10141f);
+  --warning-hover: color-mix(in srgb, var(--warning) 84%, #10141f);
+  --warning-active: color-mix(in srgb, var(--warning) 72%, #10141f);
+  --info: var(--primary);
+  --info-hover: var(--theme-primary-hover);
   --danger: #dc2626;
   --danger-soft: #fee2e2;
   /* Destructive action ramp — darker on hover, deepest when pressed. */
@@ -187,6 +231,26 @@
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   --shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.55);
+  /*
+   * Dark-mode depth: the same ramp, but the lit edge is a whisper instead of a
+   * white line (a 52% white highlight glares on a near-black surface) and the
+   * cast shadows go deeper so elevation still reads without any glow.
+   */
+  --ui-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --ui-highlight-strong: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --ui-shade: inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  --ui-elev-1: 0 1px 2px rgba(0, 0, 0, 0.45),
+    0 4px 10px -6px rgba(0, 0, 0, 0.55), var(--ui-highlight);
+  --ui-elev-2: 0 2px 6px rgba(0, 0, 0, 0.5),
+    0 12px 24px -14px rgba(0, 0, 0, 0.66), var(--ui-highlight);
+  --ui-elev-3: 0 6px 14px rgba(0, 0, 0, 0.5),
+    0 24px 48px -24px rgba(0, 0, 0, 0.72), var(--ui-highlight);
+  --ui-elev-accent: 0 4px 12px -6px rgba(0, 0, 0, 0.5),
+    0 14px 26px -16px color-mix(in srgb, var(--primary) 48%, transparent);
+  /* A dark surface sits closer to the accent, so the tint steps are read as
+     brightness rather than as a wash: same hue, slightly stronger. */
+  --theme-primary-tint-hover: color-mix(in srgb, var(--primary) 22%, var(--surface));
+  --theme-primary-tint-active: color-mix(in srgb, var(--primary) 30%, var(--surface));
   /* Selection popups keep their lift, without the light-mode white highlight. */
   --lysel-bg: color-mix(in srgb, var(--surface) 96%, transparent);
   --lysel-shadow: 0 1px 1px rgba(0, 0, 0, 0.4),
@@ -617,7 +681,12 @@ a { color: var(--primary); }
   font-weight: 650;
   cursor: pointer;
   min-height: 40px;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.05s ease, opacity 0.15s;
+  box-shadow: var(--ui-elev-1);
+  transition: background-color var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -627,15 +696,19 @@ a { color: var(--primary); }
  * darker red on hover instead of the pale neutral fill that made their white
  * label disappear), and focus is always visible for keyboard users.
  */
+/* A neutral button deepens into its own theme tint — same hue as the accent,
+   one step richer than rest — and lifts by a single pixel. */
 .btn:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
-  border-color: color-mix(in srgb, var(--primary) 30%, var(--border-strong));
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
   color: var(--theme-primary-strong);
-  box-shadow: 0 5px 14px -8px color-mix(in srgb, var(--primary) 42%, transparent);
+  transform: var(--ui-lift);
+  box-shadow: var(--ui-elev-2);
 }
 .btn:active:not(:disabled) {
-  transform: translateY(1px);
-  box-shadow: inset 0 2px 4px rgba(16, 22, 38, 0.1);
+  background: var(--theme-primary-tint-active);
+  transform: var(--ui-press);
+  box-shadow: inset 0 2px 5px rgba(16, 22, 38, 0.14);
 }
 .btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
 .btn:disabled {
@@ -647,17 +720,40 @@ a { color: var(--primary); }
   transform: none;
   cursor: not-allowed;
 }
+/* Filled action button: a lit accent plate. The gradient is a very light sheen
+   on the accent itself (never a second colour), the top edge carries the
+   highlight and the shadow sits in the accent's own hue. */
 .btn--primary {
-  background: var(--primary); border-color: var(--primary); color: var(--primary-ink);
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--primary) 28%, transparent);
+  background-color: var(--primary);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 15%, transparent),
+    transparent 64%
+  );
+  border-color: var(--theme-primary-deep);
+  color: var(--primary-ink);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 32%, transparent),
+    0 6px 16px -10px color-mix(in srgb, var(--primary) 90%, transparent),
+    0 2px 4px -2px color-mix(in srgb, var(--primary) 50%, transparent);
 }
+/* Deeper accent on hover — the same hue at a richer saturation, exactly what
+   the theme rules demand — with the shadow and sheen stepped up together. */
 .btn--primary:hover:not(:disabled) {
-  background: var(--theme-primary-hover);
+  background-color: var(--theme-primary-hover);
   border-color: var(--theme-primary-active);
   color: var(--primary-ink);
-  box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--primary) 90%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 38%, transparent),
+    0 10px 24px -12px color-mix(in srgb, var(--primary) 95%, transparent),
+    0 3px 6px -3px color-mix(in srgb, var(--primary) 62%, transparent);
 }
-.btn--primary:active:not(:disabled) { background: var(--theme-primary-active); }
+.btn--primary:active:not(:disabled) {
+  background-color: var(--theme-primary-active);
+  box-shadow:
+    inset 0 2px 6px color-mix(in srgb, #10141f 26%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent);
+}
 .btn--primary:disabled {
   background: color-mix(in srgb, var(--primary) 20%, var(--surface));
   border-color: color-mix(in srgb, var(--primary) 26%, var(--border));
@@ -671,18 +767,32 @@ a { color: var(--primary); }
   border-top-color: currentColor;
 }
 .btn--danger {
-  background: var(--danger);
+  background-color: var(--danger);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 14%, transparent),
+    transparent 64%
+  );
   border-color: color-mix(in srgb, var(--danger) 82%, #10141f);
   color: #fff;
-  box-shadow: 0 6px 16px color-mix(in srgb, var(--danger) 26%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent),
+    0 6px 16px -10px color-mix(in srgb, var(--danger) 80%, transparent);
 }
 .btn--danger:hover:not(:disabled) {
-  background: var(--danger-hover);
+  background-color: var(--danger-hover);
   border-color: var(--danger-active);
   color: #fff;
-  box-shadow: 0 10px 22px -12px color-mix(in srgb, var(--danger) 70%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent),
+    0 10px 24px -12px color-mix(in srgb, var(--danger) 78%, transparent);
 }
-.btn--danger:active:not(:disabled) { background: var(--danger-active); }
+.btn--danger:active:not(:disabled) {
+  background-color: var(--danger-active);
+  box-shadow:
+    inset 0 2px 6px color-mix(in srgb, #10141f 30%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent);
+}
 .btn--danger:focus-visible { outline-color: var(--focus-ring-danger); }
 /* Muted red, not an almost-invisible label. */
 .btn--danger:disabled {
@@ -692,13 +802,19 @@ a { color: var(--primary); }
   box-shadow: none;
 }
 .btn--danger-soft { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+/* Muted destructive plate: hover stays inside the red family and only deepens. */
 .btn--danger-soft:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 18%, var(--surface));
-  border-color: color-mix(in srgb, var(--danger) 26%, transparent);
-  color: color-mix(in srgb, var(--danger) 86%, #10141f);
+  background: color-mix(in srgb, var(--danger) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  color: color-mix(in srgb, var(--danger) 88%, #10141f);
+  box-shadow: 0 6px 14px -10px color-mix(in srgb, var(--danger) 55%, transparent);
 }
 .btn--ghost { background: transparent; border-color: transparent; color: var(--text-soft); }
-.btn--ghost:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.btn--ghost:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: transparent;
+  color: var(--theme-primary-strong);
+}
 .btn--sm { padding: 6px 11px; font-size: 12.5px; min-height: 34px; }
 .btn--icon { padding: 8px; min-width: 38px; min-height: 38px; border-radius: 12px; }
 .btn--block { width: 100%; }
@@ -1059,7 +1175,8 @@ table.data tr:hover td { background: var(--surface-2); }
   border-radius: 10px; width: 36px; height: 36px;
   display: grid; place-items: center; cursor: pointer; color: var(--text-soft);
 }
-.modal__close:hover { background: var(--surface-3); color: var(--text); }
+/* Its hover / press state lives in interaction.css, with every other shared
+   control, so there is exactly one rule for the state. */
 .modal__head {
   position: relative; z-index: 1; flex: none;
   padding: 16px 60px 14px 18px; border-bottom: 1px solid var(--mint-line);
@@ -1144,7 +1261,7 @@ table.data tr:hover td { background: var(--surface-2); }
   min-width: 0; text-align: start;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
-.select-card:hover { border-color: var(--border-strong); }
+/* Hover and press states are defined once, in interaction.css. */
 .select-card.is-selected {
   border-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 10%, var(--surface));
@@ -1302,7 +1419,7 @@ table.data tr:hover td { background: var(--surface-2); }
   border: none; background: var(--surface); color: var(--text); width: 34px; height: 34px;
   display: grid; place-items: center; cursor: pointer; font-size: 16px;
 }
-.qty button:hover { background: var(--surface-3); }
+/* Hover / press states are defined once, in interaction.css. */
 .qty span { min-width: 28px; text-align: center; font-weight: 700; font-size: 13px; }
 
 .totals { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }

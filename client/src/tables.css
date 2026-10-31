@@ -75,8 +75,11 @@
   transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 .tadd:hover:not(:disabled) {
-  filter: brightness(1.04);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--tp-green) 34%, transparent);
+  background: var(--theme-primary-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 8px 20px color-mix(in srgb, var(--tp-green) 34%, transparent);
 }
 .tadd:active:not(:disabled) { transform: translateY(1px); }
 .tadd:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
@@ -281,7 +284,11 @@
   cursor: pointer;
   transition: background 0.15s ease;
 }
-.tcard__act:hover:not(:disabled) { background: var(--surface-3); }
+.tcard__act:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 .tcard__act:disabled { opacity: 0.55; cursor: not-allowed; }
 .tcard__act--icon { width: 46px; flex: none; }
 .tcard__act--edit { flex: 1 1 auto; min-width: 0; }

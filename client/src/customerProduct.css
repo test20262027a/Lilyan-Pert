@@ -57,7 +57,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
     0 8px 16px -8px color-mix(in srgb, var(--primary) 85%, transparent);
 }
-.cui-qc__btn--plus:hover:not(:disabled) { filter: brightness(1.05); }
+/* A gradient accent deepens by dimming its own stops, never by brightening. */
+.cui-qc__btn--plus:hover:not(:disabled) { filter: saturate(1.06) brightness(0.94); }
 .cui-qc__btn--minus {
   color: var(--text);
   background: color-mix(in srgb, var(--surface-3) 86%, var(--surface));
@@ -311,7 +312,10 @@
     0 12px 24px -12px color-mix(in srgb, var(--primary) 85%, transparent);
   transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
 }
-.cui-pd__add:hover:not(:disabled) { filter: brightness(1.04); transform: translateY(-1px); }
+.cui-pd__add:hover:not(:disabled) {
+  filter: saturate(1.06) brightness(0.94);
+  transform: translateY(-1px);
+}
 .cui-pd__add:active:not(:disabled) { transform: translateY(1px); }
 .cui-pd__add:focus-visible {
   outline: none;

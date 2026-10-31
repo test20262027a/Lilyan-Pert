@@ -269,7 +269,11 @@
   cursor: pointer;
   transition: border-color 180ms ease, background 180ms ease, color 180ms ease, box-shadow 180ms ease;
 }
-.set-choice:hover:not(.is-active) { border-color: #c8d5c9; background: var(--surface-2); }
+.set-choice:hover:not(.is-active) {
+  border-color: var(--theme-primary-border);
+  background: var(--theme-primary-tint-hover);
+  box-shadow: var(--ui-elev-1);
+}
 .set-choice.is-active {
   border-color: var(--theme-selected-border);
   background: var(--theme-primary-soft);
@@ -641,7 +645,11 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, color 180ms ease;
 }
-.set-theme:hover:not(.is-active) { transform: translateY(-1px); border-color: #c8d5c9; }
+.set-theme:hover:not(.is-active) {
+  transform: translateY(-1px);
+  border-color: var(--theme-primary-border);
+  box-shadow: var(--ui-elev-2);
+}
 .set-theme.is-active {
   border-color: var(--theme-primary);
   color: var(--theme-primary-strong);
@@ -927,7 +935,10 @@
     box-shadow 180ms ease,
     transform 180ms ease;
 }
-.ms-mode:hover:not(.is-active) { border-color: #c8d5c9; background: var(--surface-2); }
+.ms-mode:hover:not(.is-active) {
+  border-color: var(--theme-primary-border);
+  background: var(--theme-primary-tint-hover);
+}
 .ms-mode input { position: absolute; opacity: 0; width: 1px; height: 1px; }
 .ms-mode__dot {
   flex: none;

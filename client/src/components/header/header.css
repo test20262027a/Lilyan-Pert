@@ -249,7 +249,7 @@
   text-align: start; cursor: pointer;
 }
 .hdr-menu__row + .hdr-menu__row { border-top: 1px solid var(--border); }
-.hdr-menu__row:hover { background: var(--surface-2); }
+.hdr-menu__row:hover { background: var(--theme-primary-tint-hover); }
 .hdr-menu__caret { margin-inline-start: auto; color: var(--muted); }
 .hdr-menu__row:hover .hdr-menu__caret { color: var(--mint-ink); }
 
@@ -653,7 +653,7 @@
   cursor: pointer;
   transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
-.notif-item:hover { background: var(--surface-2); border-color: var(--border); }
+.notif-item:hover { background: var(--theme-primary-tint-hover); border-color: var(--theme-primary-border); }
 .notif-item.is-unread { background: color-mix(in srgb, var(--mint) 6%, transparent); }
 .notif-item__icon {
   width: 32px; height: 32px; flex: none; border-radius: 10px;

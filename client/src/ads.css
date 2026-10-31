@@ -104,9 +104,14 @@
   box-shadow: 0 8px 18px color-mix(in srgb, var(--ad-green) 32%, transparent);
   transition: filter 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
+/* Deeper accent, not a brighter one: hover darkens inside the theme's own
+   colour family and lifts the shadow with it. */
 .ad-add:hover:not(:disabled) {
-  filter: brightness(1.04);
-  box-shadow: 0 10px 22px color-mix(in srgb, var(--ad-green) 38%, transparent);
+  background: var(--theme-primary-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 10px 22px color-mix(in srgb, var(--ad-green) 38%, transparent);
 }
 .ad-add:active:not(:disabled) { transform: translateY(1px); }
 .ad-add:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
@@ -332,7 +337,11 @@
 .ad2-btn--preview { background: var(--ad-green-soft); border-color: var(--ad-green-line); color: var(--ad-green-ink); }
 .ad2-btn--preview:hover { filter: brightness(0.985); }
 .ad2-btn--edit { background: var(--surface); border-color: var(--border-strong); color: var(--ad-ink); }
-.ad2-btn--edit:hover { background: var(--surface-2); }
+.ad2-btn--edit:hover {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 .ad2-btn--delete { background: var(--ad-red-soft); border-color: var(--ad-red-line); color: var(--ad-red); }
 .ad2-btn--delete:hover { filter: brightness(0.985); }
 
@@ -595,7 +604,11 @@
   font-weight: 700;
   cursor: pointer;
 }
-.ad-mini:hover:not(:disabled) { background: var(--surface-2); }
+.ad-mini:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 .ad-mini--danger { border-color: var(--ad-red-line); background: var(--ad-red-soft); color: var(--ad-red); }
 .ad-mini:disabled { opacity: 0.55; cursor: not-allowed; }
 
@@ -785,7 +798,13 @@
   cursor: pointer;
   box-shadow: 0 6px 14px color-mix(in srgb, var(--ad-green) 30%, transparent);
 }
-.ad-save:hover:not(:disabled) { filter: brightness(1.04); }
+.ad-save:hover:not(:disabled) {
+  background: var(--theme-primary-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 10px 22px -12px color-mix(in srgb, var(--ad-green) 90%, transparent);
+}
 .ad-save:disabled { opacity: 0.62; cursor: not-allowed; box-shadow: none; }
 .ad-cancel {
   height: 42px;
@@ -799,7 +818,11 @@
   font-weight: 700;
   cursor: pointer;
 }
-.ad-cancel:hover:not(:disabled) { background: var(--surface-2); }
+.ad-cancel:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 .ad-cancel:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* unsaved-changes guard, inside the dialog */
@@ -885,7 +908,11 @@
   color: var(--ad-muted);
   cursor: pointer;
 }
-.adp__close:hover { background: var(--surface-2); }
+.adp__close:hover {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
 
 .adp__body {
   flex: 1 1 auto;
