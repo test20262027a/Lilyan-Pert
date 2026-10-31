@@ -47,14 +47,6 @@
 
 /* -------------------------------------------------------- page banner */
 
-.promos-page .mhero__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--theme-primary-soft);
-  border: 1px solid var(--theme-primary-line);
-  color: var(--theme-primary-strong);
-}
 .promos-page .mhero__title { color: var(--pr-ink); }
 .promos-page .mhero__sub { color: var(--pr-muted); }
 

@@ -129,11 +129,11 @@ export default function BackupCard({
       <footer className="bk-card__foot">
         <button type="button" className="bk-btn bk-btn--green" onClick={onRestore} disabled={busy}>
           <Icon name="refresh" size={14} />
-          {t('backup_restore')}
+          <span className="bk-btn__label">{t('backup_restore')}</span>
         </button>
         <button type="button" className="bk-btn bk-btn--ghost" onClick={onDownload} disabled={busy}>
           <Icon name="download" size={14} />
-          {t('action_download')}
+          <span className="bk-btn__label">{t('action_download')}</span>
         </button>
       </footer>
     </article>

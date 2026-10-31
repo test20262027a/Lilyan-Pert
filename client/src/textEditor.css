@@ -17,23 +17,7 @@
     0 1px 2px rgba(23, 26, 43, 0.05),
     0 14px 30px rgba(23, 26, 43, 0.06);
 }
-.tx-hero .mhero__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--theme-primary-soft);
-  color: var(--theme-primary-strong);
-  border: 1px solid var(--theme-primary-line);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-primary) 16%, transparent), inset 0 1px 0 #ffffff;
-}
-.tx-hero .mhero__title { font-size: clamp(21px, 2.4vw, 27px); }
 .tx-hero .tx-art { max-width: 540px; }
-
-[data-theme='dark'] .tx-hero .mhero__icon {
-  background: color-mix(in srgb, var(--theme-primary) 20%, transparent);
-  color: var(--theme-primary-strong);
-  border-color: color-mix(in srgb, var(--theme-primary) 32%, transparent);
-}
 
 .tx-unsaved {
   display: inline-flex;

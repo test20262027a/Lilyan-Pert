@@ -65,15 +65,17 @@ export default function WelcomeBanner({ business }) {
     <section className="welcome">
       <HeaderBackdrop section="dashboard" />
       <div className="welcome__text">
+        {/* The tile and the whole text group (title + subtitle) share one
+            centred row, so the icon is centred against both lines together. */}
         <div className="welcome__head">
-          {/* Premium raised tile on the theme accent; it follows the global
-              preset, and sits on the inline-start side in both RTL and LTR. */}
           <span className="welcome__badge" aria-hidden="true">
             <Icon name="dashboard" size={22} />
           </span>
-          <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
+          <div className="welcome__titles">
+            <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
+            <p className="welcome__sub">{t('dash_welcome_sub')}</p>
+          </div>
         </div>
-        <p className="welcome__sub">{t('dash_welcome_sub')}</p>
       </div>
       <CafeScene />
     </section>

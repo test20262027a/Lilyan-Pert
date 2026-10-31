@@ -35,26 +35,9 @@
   min-width: 0;
   flex: 0 1 auto;
 }
-.obanner__icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  background: var(--pastel-blue);
-  color: var(--pastel-blue-ink);
-  border: 1px solid var(--pastel-blue-line);
-}
 .obanner__text { min-width: 0; }
-.obanner__title {
-  font-size: clamp(20px, 2.6vw, 27px);
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-.obanner__sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.obanner__title { color: var(--text); white-space: nowrap; }
+.obanner__sub { color: var(--muted); }
 
 .obanner__art {
   flex: 1 1 auto;
@@ -89,10 +72,6 @@
 [data-theme='dark'] .obanner__title { color: #f0e9d8; }
 [data-theme='dark'] .obanner__sub { color: var(--muted); }
 [data-theme='dark'] .obanner__art { opacity: 0.92; }
-[data-theme='dark'] .obanner__icon {
-  background: color-mix(in srgb, var(--pastel-blue-ink) 20%, transparent);
-  border-color: var(--pastel-blue-line);
-}
 
 /* --------------------------------------------------------- date controls */
 

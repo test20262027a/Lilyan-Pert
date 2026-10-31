@@ -38,27 +38,9 @@
     0 14px 30px rgba(122, 96, 32, 0.05);
 }
 
-.bk-page .mhero__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--theme-primary-soft);
-  color: var(--theme-primary-strong);
-  border: 1px solid var(--theme-primary-line);
-  box-shadow:
-    inset 0 1px 0 #ffffff,
-    0 4px 12px color-mix(in srgb, var(--theme-primary) 14%, transparent);
-}
+.bk-page .mhero__title { color: var(--text); }
 
-.bk-page .mhero__title {
-  font-size: clamp(21px, 2.4vw, 26px);
-  color: var(--text);
-}
-
-.bk-page .mhero__sub {
-  font-size: 12.5px;
-  color: var(--muted);
-}
+.bk-page .mhero__sub { color: var(--muted); }
 
 .bk-page .mart {
   max-height: 116px;
@@ -934,28 +916,87 @@
   color: #97a097;
 }
 
+/* The two actions form one compact group anchored to the card's start corner —
+   bottom-right in RTL, bottom-left in LTR — so the group never stretches across
+   the card and every backup card keeps the exact same geometry. */
 .bk-card__foot {
   display: flex;
   align-items: center;
-  gap: 7px;
+  justify-content: flex-start;
+  gap: 8px;
   margin-top: auto;
-  padding: 0 11px 11px;
+  padding: 2px 12px 12px;
 }
 
-/* Both actions keep the shared height on one baseline: Restore flexes, Download
-   stays compact, and neither can grow taller than the other. */
+/* Identical 120 × 40 chips: fixed size, no grow, no shrink, no wrap. */
 .bk-card__foot .bk-btn {
+  flex: none;
+  width: 120px;
+  min-width: 120px;
   height: 40px;
   min-height: 40px;
-  padding: 0 13px;
+  padding: 0 10px;
+  gap: 6px;
+  border-radius: 10px;
+  box-shadow: var(--ui-elev-1);
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
 }
 
+/* A long label clips inside its own chip instead of widening the group. */
+.bk-card__foot .bk-btn__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Restore — solid accent with a lit top edge; it rises a hair on hover and the
+   accent deepens one step instead of changing hue. */
 .bk-card__foot .bk-btn--green {
-  flex: 1 1 auto;
+  background: var(--bk-primary);
+  box-shadow:
+    var(--ui-elev-1),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 24%, transparent);
 }
 
+.bk-card__foot .bk-btn--green:hover:not(:disabled) {
+  background: var(--theme-primary-hover);
+  box-shadow:
+    var(--ui-elev-2),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent);
+  transform: translateY(-1px);
+}
+
+.bk-card__foot .bk-btn--green:active:not(:disabled) {
+  background: var(--theme-primary-active);
+  box-shadow: var(--ui-elev-1);
+  transform: translateY(0);
+}
+
+/* Download — theme-tinted outline that warms toward the accent on hover. */
 .bk-card__foot .bk-btn--ghost {
-  flex: 0 0 auto;
+  background: var(--surface);
+  color: var(--bk-text);
+  border-color: var(--theme-primary-line);
+  box-shadow: var(--ui-elev-1);
+}
+
+.bk-card__foot .bk-btn--ghost:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  box-shadow: var(--ui-elev-2);
+  transform: translateY(-1px);
+}
+
+.bk-card__foot .bk-btn--ghost:active:not(:disabled) {
+  background: var(--theme-primary-tint-active);
+  box-shadow: var(--ui-elev-1);
+  transform: translateY(0);
 }
 
 /* ------------------------------------------------------------ empty states */
@@ -1281,9 +1322,6 @@
     min-height: 0;
     padding: 14px;
   }
-  .bk-page .mhero__title {
-    font-size: 19px;
-  }
   .bk-page .mart {
     max-height: 92px;
   }
@@ -1309,13 +1347,19 @@
     font-size: 12px;
     padding: 0 11px;
   }
+  /* The pair stays side by side on the narrowest screen — only the chip inside
+     the card gives up a few pixels, never its 120 × 40 footprint. */
   .bk-card__foot {
-    flex-wrap: wrap;
+    gap: 6px;
+    padding: 2px 10px 10px;
   }
   .bk-card__foot .bk-btn {
-    flex: 1 1 130px;
+    width: 120px;
+    min-width: 120px;
     height: 40px;
     min-height: 40px;
+    font-size: 12px;
+    padding: 0 8px;
   }
 }
 
@@ -1407,6 +1451,12 @@
   background: #232b24;
   border-color: #38443a;
   color: #c2ccc2;
+}
+
+[data-theme='dark'] .bk-card__foot .bk-btn--ghost {
+  background: #232b24;
+  border-color: #38443a;
+  color: #d9e4d9;
 }
 
 [data-theme='dark'] .bk-empty {

@@ -40,20 +40,11 @@
 
 /* -------------------------------------------------------- page banner */
 
-/* Same illustrated banner as the other management pages, tinted teal-mint:
-   title and subtitle on the reading edge, Add Table on the other. */
-.tables-page .mhero__icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  background: var(--tp-mint);
-  border: 1px solid var(--tp-mint-line);
-  color: var(--tp-teal);
-}
+/* Same illustrated banner as the other management pages: title and subtitle on
+   the reading edge, Add Table on the other. */
 .tables-page .mhero__title { color: var(--tp-ink); }
 .tables-page .mhero__sub { color: var(--tp-muted); }
 
-[data-theme='dark'] .tables-page .mhero__icon { border-color: var(--border); }
 [data-theme='dark'] .tables-page .mhero__title { color: var(--text); }
 [data-theme='dark'] .tables-page .mhero__sub { color: var(--muted); }
 
@@ -352,13 +343,6 @@
   width: auto;
   min-width: 100%;
 }
-.tform .mcmodal__glyph {
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-}
-.tform .mcmodal__title { font-size: 16.5px; }
-
 /* The small gray supporting label under the section heading. */
 .tform__hint {
   margin-top: -3px;

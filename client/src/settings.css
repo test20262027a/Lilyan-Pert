@@ -17,21 +17,6 @@
     0 1px 2px rgba(23, 26, 43, 0.05),
     0 14px 30px rgba(23, 26, 43, 0.06);
 }
-.set-hero .mhero__icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-  background: var(--theme-primary-soft);
-  color: var(--theme-primary-strong);
-  border: 1px solid var(--theme-primary-line);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--primary) 16%, transparent), inset 0 1px 0 #ffffff;
-}
-[data-theme='dark'] .set-hero .mhero__icon {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
-  color: color-mix(in srgb, var(--primary) 45%, #ffffff);
-  border-color: color-mix(in srgb, var(--primary) 32%, transparent);
-}
-.set-hero .mhero__title { font-size: clamp(20px, 2.4vw, 26px); }
 
 .set-save {
   display: inline-flex;
@@ -745,20 +730,6 @@
 /* ========================================================================
    Menu Settings tab — illustrated header, feature matrices, table modes
    ======================================================================== */
-
-/* The menu section keeps the workspace hero but with its own blue sliders
-   badge, matching the reference's pale-blue settings icon. */
-.set-hero.is-menu .mhero__icon {
-  background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
-  color: var(--theme-primary-strong);
-  border-color: var(--theme-primary-line);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-primary) 16%, transparent), inset 0 1px 0 #ffffff;
-}
-[data-theme='dark'] .set-hero.is-menu .mhero__icon {
-  background: color-mix(in srgb, var(--theme-primary) 20%, transparent);
-  color: var(--theme-primary-strong);
-  border-color: color-mix(in srgb, var(--theme-primary) 32%, transparent);
-}
 
 .ms-art { width: 100%; max-width: 520px; height: auto; max-height: 132px; display: block; }
 

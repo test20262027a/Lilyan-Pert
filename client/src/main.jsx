@@ -11,6 +11,10 @@ import './scrollbars.css';
 // Shared interactive states (hover / press / focus depth). Imported last so the
 // shared vocabulary wins over page skins at equal specificity.
 import './interaction.css';
+// The one header design system: self-hosted header faces, then the shared
+// 3D icon tile, alignment and typography every section header uses.
+import './headers/headerFonts.css';
+import './headers/headerSystem.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
