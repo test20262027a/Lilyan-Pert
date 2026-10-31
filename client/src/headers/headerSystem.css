@@ -46,39 +46,27 @@
   --hd-sub-line: 1.55;
 
   /*
-   * The reading scrim over an illustrated header: a warm ivory page surface
-   * with a little of the theme accent, kept low enough that the picture stays
-   * colourful and sharp behind the copy — a hint of shade, never white fog.
+   * The ONE layer over an illustrated header: a narrow reading scrim confined
+   * to the copy's edge, so a long title stays legible without tinting, hazing
+   * or dimming the picture itself. It is the plain theme surface (white in
+   * light mode, near-black in dark), never a warm or pastel filter, and it is
+   * fully transparent by the middle of the header — everything away from the
+   * copy is the untouched original artwork.
    */
-  --hd-scrim: color-mix(in srgb, #fff7ea 60%, var(--primary));
-  --hd-scrim-start: 26%;
+  --hd-scrim: var(--surface);
+  --hd-scrim-start: 22%;
   --hd-scrim-mid: 6%;
-  /* Tint laid over the illustration itself. */
-  --hd-tint: color-mix(in srgb, var(--primary) 9%, transparent);
-  --hd-tint-soft: color-mix(in srgb, var(--primary) 5%, transparent);
 
-  /*
-   * The sunlight of every illustrated header: a golden flare in the corner
-   * away from the copy, a soft beam crossing the top, and a warm bounce along
-   * the bottom edge. Warm, never white — the picture keeps its saturation.
-   */
-  --hd-sun: rgba(255, 202, 118, 0.4);
-  --hd-sun-mid: rgba(255, 190, 100, 0.15);
-  --hd-ray: rgba(255, 243, 210, 0.14);
-  --hd-bounce: rgba(255, 226, 174, 0.12);
+  /* Width at which the reading scrim has faded out completely. */
+  --hd-scrim-end: 44%;
 }
 
 [data-theme='dark'] {
-  --hd-scrim: color-mix(in srgb, #0a0f15 84%, var(--primary));
-  --hd-scrim-start: 68%;
-  --hd-scrim-mid: 38%;
-  --hd-tint: color-mix(in srgb, var(--primary) 14%, transparent);
-  --hd-tint-soft: color-mix(in srgb, var(--primary) 8%, transparent);
-  /* Night keeps a restrained golden lamp-light instead of a bright sun. */
-  --hd-sun: rgba(255, 196, 112, 0.26);
-  --hd-sun-mid: rgba(255, 178, 92, 0.11);
-  --hd-ray: rgba(255, 226, 172, 0.09);
-  --hd-bounce: rgba(255, 206, 140, 0.08);
+  /* White copy needs a deeper shade at its edge; the picture keeps the rest. */
+  --hd-scrim: #070c0a;
+  --hd-scrim-start: 46%;
+  --hd-scrim-mid: 12%;
+  --hd-scrim-end: 52%;
 }
 
 /* ------------------------------------------- 1. icon + text, one centred row */
@@ -256,11 +244,9 @@
 .obanner__title,
 .welcome__title {
   font-size: var(--hd-title-size);
-  /* A warm halo instead of a grey film: the copy stays crisp over a sunlit
-     picture without dimming it. */
-  text-shadow:
-    0 0 14px color-mix(in srgb, #fffdf7 88%, transparent),
-    0 1px 1px color-mix(in srgb, #fffdf7 62%, transparent);
+  /* No glow, no halo: the ink is dark on the pale illustrations, and a white
+     halo only paints fog between the letters. */
+  text-shadow: none;
 }
 .sh-head__title,
 .cui-sheet__title,
@@ -291,9 +277,8 @@
      with the controls or the artwork beside them. */
   overflow-wrap: break-word;
   text-wrap: pretty;
-  text-shadow:
-    0 0 12px color-mix(in srgb, #fffdf7 82%, transparent),
-    0 1px 1px color-mix(in srgb, #fffdf7 55%, transparent);
+  /* Same rule as the title: crisp type on the artwork, no white halo. */
+  text-shadow: none;
 }
 
 /* A dialog head that is not a flex column (the date-range sheet) gets the same

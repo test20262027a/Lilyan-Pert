@@ -103,10 +103,13 @@
   inset: 0;
   pointer-events: none;
 }
-[dir='rtl'] .mcmodal__head::after {
+/* The drawn-art scrim is for the illustration behind it; over the section
+   picture (94% of the header) it would white the artwork out, so it steps
+   aside whenever a `.sh-bg` picture is present. */
+[dir='rtl'] .mcmodal__head:not(:has(> .sh-bg))::after {
   background: linear-gradient(to left, var(--mm-scrim-a), var(--mm-scrim-b) 70%);
 }
-[dir='ltr'] .mcmodal__head::after {
+[dir='ltr'] .mcmodal__head:not(:has(> .sh-bg))::after {
   background: linear-gradient(to right, var(--mm-scrim-a), var(--mm-scrim-b) 70%);
 }
 

@@ -466,10 +466,13 @@
   inset: 0;
   pointer-events: none;
 }
-[dir='rtl'] .um-modal__head::after {
+/* The drawn-art scrim belongs to the illustration it was painted for. Once the
+   section picture fills the header it would be a 94%-white veil over it, so it
+   only applies when there is no picture. */
+[dir='rtl'] .um-modal__head:not(:has(> .sh-bg))::after {
   background: linear-gradient(to left, rgba(255, 253, 245, 0.94), rgba(255, 253, 245, 0) 70%);
 }
-[dir='ltr'] .um-modal__head::after {
+[dir='ltr'] .um-modal__head:not(:has(> .sh-bg))::after {
   background: linear-gradient(to right, rgba(255, 253, 245, 0.94), rgba(255, 253, 245, 0) 70%);
 }
 

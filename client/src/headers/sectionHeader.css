@@ -1,9 +1,11 @@
 /*
- * Section header system. Each header shows its picture complete, centred, at
- * its own aspect ratio, over a blurred full-bleed copy of the same picture, so
- * nothing is cropped and no area is left empty; a theme-aware scrim keeps text
- * readable. Light mode keeps the picture bright; dark mode dims it and deepens
- * the scrim.
+ * Section header system. Each header paints its own picture complete and at
+ * its own aspect ratio (contain), at full opacity, with ONE narrow reading
+ * scrim on the copy's edge; a blurred copy of the same picture fills the
+ * margin behind it. There is no theme tint, painted sunlight, beam, bounce or
+ * full-width veil over the artwork, so the illustration keeps the colours and
+ * detail of the original file. Light mode shows it as-is; dark mode dims it
+ * just enough for light copy to stay readable.
  */
 .sh-host, .mhero, .obanner, .welcome, .modal__head, .mcmodal__head, .cui-sheet__art, .dcd,
 .dash-modal__head, .adp__head { isolation: isolate; }
@@ -18,74 +20,55 @@
   background-image: var(--sh-img), var(--sh-alt, linear-gradient(transparent, transparent));
   background-repeat: no-repeat;
 }
-/* A blurred, full-bleed copy of the same picture fills the leftover space, so
-   the header is never flat empty behind the artwork that does not match its
-   shape. It always covers: no gaps, no repeat. */
+/* A blurred full-bleed copy of the same picture fills the leftover space
+   around the artwork, so a header wider or taller than the picture is never
+   flat empty. It sits BEHIND the picture, never over it, and carries just
+   enough saturation to continue the illustration's colours, not a grey glow. */
 .sh-bg__wash {
   position: absolute; inset: -8%;
   background-size: cover;
   background-position: center;
-  filter: blur(26px) saturate(1.44) brightness(1.08);
-  opacity: 0.94;
+  filter: blur(20px) saturate(1.18);
+  opacity: 1;
   transition: filter 0.2s ease;
 }
-/* The picture itself: ONE rule for every illustrated header. The whole
-   artwork is painted across the header box edge to edge (100% x 100%), never
-   cropped, never zoomed — the picture's own shape is stretched to the header's
-   shape, exactly as the design calls for. */
+/* The picture itself: ONE rule for every illustrated header. `contain` keeps
+   the artwork's own aspect ratio — complete, never cropped, never squeezed —
+   at every viewport, and the wash above fills whatever margin is left. */
 .sh-bg__art {
   position: absolute; inset: 0;
-  background-size: 100% 100%;
+  background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  /* Sunlit, not faded: the illustrations gain clarity and richness. The
-     pictures are pale cream artwork, so a small brightness reduction keeps
-     them from bleaching into white (measured: no clipped highlights), while
-     the saturation and contrast lift restores the colour and the line detail. */
-  filter: saturate(1.55) contrast(1.25) brightness(0.92);
+  /* Natural, not processed: the original file with only a whisper of extra
+     saturation and contrast. No brightness lift (the artwork is already
+     luminous — raising it clips the cream highlights into white) and no heavy
+     filtering, so the line work and colours stay true to the source. */
+  filter: saturate(1.15) contrast(1.06);
   transition: filter 0.2s ease;
 }
 /*
- * Over the picture, three families of layer (the header design system owns
- * their colours, see headerSystem.css):
- *   - the sunlight: a golden flare in the corner away from the copy, a soft
- *     beam across the top and a warm bounce along the bottom, so the picture
- *     looks lit rather than painted flat;
- *   - a theme tint from the top-end and bottom-start corners, so the artwork
- *     picks up the active preset instead of a white film;
- *   - the reading scrim, which fades out from the text side, so the title and
- *     subtitle stay legible while the illustration keeps its full colour.
+ * ONE layer, and only where the copy sits: a soft surface fade at the reading
+ * edge, fully gone by the middle of the box. The rest of the artwork — the
+ * whole illustration — is never covered by anything.
  */
 .sh-bg::after {
   content: ''; position: absolute; inset: 0;
-  background:
-    radial-gradient(58% 132% at 92% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
-    linear-gradient(112deg, var(--hd-ray) 0%, color-mix(in srgb, var(--hd-ray) 32%, transparent) 24%, transparent 46%),
-    radial-gradient(78% 122% at 50% 122%, var(--hd-bounce) 0%, transparent 72%),
-    radial-gradient(120% 150% at 88% 2%, var(--hd-tint) 0%, transparent 58%),
-    radial-gradient(115% 145% at 6% 100%, var(--hd-tint-soft) 0%, transparent 60%),
-    linear-gradient(to right,
-      color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-start), transparent) 0%,
-      color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 54%,
-      transparent 100%);
+  background: linear-gradient(to right,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-start), transparent) 0%,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 26%,
+    transparent var(--hd-scrim-end));
 }
-/* Right-to-left mirrors the whole lighting rig: the copy sits on the right, so
-   the sun rises on the left and the beam sweeps the other way. */
+/* RTL mirrors the copy to the right, so the fade starts on that edge. */
 [dir='rtl'] .sh-bg::after {
-  background:
-    radial-gradient(58% 132% at 8% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
-    linear-gradient(248deg, var(--hd-ray) 0%, color-mix(in srgb, var(--hd-ray) 32%, transparent) 24%, transparent 46%),
-    radial-gradient(78% 122% at 50% 122%, var(--hd-bounce) 0%, transparent 72%),
-    radial-gradient(120% 150% at 12% 2%, var(--hd-tint) 0%, transparent 58%),
-    radial-gradient(115% 145% at 94% 100%, var(--hd-tint-soft) 0%, transparent 60%),
-    linear-gradient(to left,
-      color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-start), transparent) 0%,
-      color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 54%,
-      transparent 100%);
+  background: linear-gradient(to left,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-start), transparent) 0%,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 26%,
+    transparent var(--hd-scrim-end));
 }
 /* Night: the same rig at candle power, so the picture stays warm, not muddy. */
-[data-theme='dark'] .sh-bg__wash { filter: blur(26px) brightness(0.5) saturate(1.16); }
-[data-theme='dark'] .sh-bg__art { filter: brightness(0.88) saturate(1.18) contrast(1.12); }
+[data-theme='dark'] .sh-bg__wash { filter: blur(20px) brightness(0.52) saturate(1.12); }
+[data-theme='dark'] .sh-bg__art { filter: brightness(0.9) saturate(1.1) contrast(1.05); }
 
 /* Page banners: the old drawn artwork gives way to the section picture. */
 .mhero:has(> .sh-bg) > .mhero__art,
@@ -122,25 +105,17 @@
 .sh-head__sub { color: var(--text-soft); }
 
 /* Confirmation dialogs: a soft banner fades out behind the top of the card. */
-.sh-bg--dcd { inset: 0 0 auto 0; height: 92px; border-radius: 19px 19px 0 0; opacity: 0.9;
-  -webkit-mask-image: linear-gradient(#000 45%, transparent); mask-image: linear-gradient(#000 45%, transparent); }
+.sh-bg--dcd { inset: 0 0 auto 0; height: 92px; border-radius: 19px 19px 0 0; opacity: 1;
+  -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent); }
 
 /* Customer cart / review sheets: the same full-bleed rule, raised above the
    sheet's own painted background so the artwork is actually visible. */
 .sh-bg--cart { z-index: 0; }
-/* The sheet header carries white copy of its own, so it keeps the sunlight but
-   swaps the horizontal reading scrim for a fade into the sheet below. */
+/* The cart / review sheet carries white copy of its own, and its art bar paints
+   the local shade behind that copy, so the picture adds nothing but a gentle
+   fade into the sheet below — no flare, no beam, no horizontal veil. */
 .sh-bg--cart::after {
-  background:
-    radial-gradient(58% 132% at 92% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
-    linear-gradient(112deg, var(--hd-ray) 0%, transparent 46%),
-    linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent));
-}
-[dir='rtl'] .sh-bg--cart::after {
-  background:
-    radial-gradient(58% 132% at 8% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
-    linear-gradient(248deg, var(--hd-ray) 0%, transparent 46%),
-    linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent));
+  background: linear-gradient(to bottom, transparent 48%, color-mix(in srgb, var(--surface) 22%, transparent));
 }
 .cui-sheet__art:has(> .sh-bg) > .cui-art { display: none; }
 .cui-sheet__art:has(> .sh-bg) .cui-sheet__artbar { z-index: 1; }
