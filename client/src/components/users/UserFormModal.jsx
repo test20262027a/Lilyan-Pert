@@ -27,17 +27,13 @@ import {
  */
 
 /*
- * The login identifier is composed from a username and the business's suffix —
- * `rebar@lilyanpert.app`. These mirror the server's own rules (lib/identity.js)
- * so a typo is reported before the request instead of after it.
+ * The login identifier is composed from a username the administrator types and
+ * the business's own suffix — `rebar@lilyanpert.app`. Only the username is
+ * editable: the suffix is generated from the brand name in the Business
+ * Profile and locked here and on the server (lib/identity.js). The rule below
+ * mirrors the server's so a typo is reported before the request.
  */
 const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]{0,62})$/;
-const SUFFIX_RE = /^@[a-z0-9](?:[a-z0-9.-]{0,61}[a-z0-9])$/;
-
-const normalizeSuffixInput = (raw) => {
-  const value = String(raw ?? '').trim().toLowerCase().replace(/^@+/, '');
-  return value ? `@${value}` : '';
-};
 
 function Section({ title, children, aside }) {
   return (
@@ -171,10 +167,16 @@ export default function UserFormModal({
   const titleId = useId();
 
   const [fullName, setFullName] = useState(user?.full_name || '');
-  // The identifier is edited as its two parts; an existing account keeps the
-  // suffix it was created with until the owner changes it.
+  /*
+   * Only the username is state. The suffix is read from business configuration
+   * — an existing account keeps the suffix it was created with, a new one gets
+   * the business's current brand suffix — and is never editable.
+   */
   const [username, setUsername] = useState(user?.username || '');
-  const [suffix, setSuffix] = useState(user?.suffix || loginSuffix || '');
+  const suffix = user?.suffix || loginSuffix || '';
+  // An account created before the brand was renamed keeps its own suffix, so
+  // its live sign-in is never changed behind anyone's back.
+  const suffixKept = Boolean(user?.suffix && loginSuffix && user.suffix !== loginSuffix);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState(user?.role || 'staff');
@@ -205,8 +207,7 @@ export default function UserFormModal({
   const currentMandatory = mandatory[role] || [];
 
   const cleanUsername = username.trim().toLowerCase();
-  const cleanSuffix = normalizeSuffixInput(suffix);
-  const identifier = cleanUsername && cleanSuffix ? `${cleanUsername}${cleanSuffix}` : '';
+  const identifier = cleanUsername && suffix ? `${cleanUsername}${suffix}` : '';
 
   /*
    * Required information, checked in one place so the asterisks, the inline
@@ -221,15 +222,13 @@ export default function UserFormModal({
     if (!fullName.trim()) found.fullName = t('user_name_required');
     if (!cleanUsername) found.username = t('user_required_field');
     else if (!USERNAME_RE.test(cleanUsername)) found.username = t('user_invalid_username');
-    if (!cleanSuffix) found.suffix = t('user_required_field');
-    else if (!SUFFIX_RE.test(cleanSuffix)) found.suffix = t('user_invalid_suffix');
     if (passwordNeeded && !password) found.password = t('user_required_field');
     else if (password && password.length < 8) found.password = t('auth_weak_password');
     if (confirmNeeded && !confirmPassword) found.confirm = t('user_confirm_required');
     else if (confirmNeeded && confirmPassword !== password) found.confirm = t('user_password_mismatch');
     if (!role) found.role = t('user_required_field');
     return found;
-  }, [fullName, cleanUsername, cleanSuffix, password, confirmPassword, passwordNeeded, confirmNeeded, role, t]);
+  }, [fullName, cleanUsername, password, confirmPassword, passwordNeeded, confirmNeeded, role, t]);
 
   const hasErrors = Object.keys(errors).length > 0;
   const touch = (field) => setTouched((current) => ({ ...current, [field]: true }));
@@ -239,7 +238,6 @@ export default function UserFormModal({
   const dirty =
     fullName !== (user?.full_name || '')
     || cleanUsername !== (user?.username || '')
-    || cleanSuffix !== (user?.suffix || '')
     || password.length > 0
     || role !== (user?.role || 'staff')
     || active !== (user ? user.status === 'active' : true)
@@ -317,10 +315,10 @@ export default function UserFormModal({
     }
     if (uploading) return setError(t('user_photo_wait'));
     setError(null);
+    // Only the username is sent: the server appends the locked business suffix.
     return onSubmit({
       full_name: fullName.trim(),
       username: cleanUsername,
-      login_suffix: cleanSuffix,
       password: password || undefined,
       role,
       status: active ? 'active' : 'disabled',
@@ -406,24 +404,31 @@ export default function UserFormModal({
                   />
                   <FieldError id="um-username-error" message={errorFor('username')} />
                 </label>
-                <label className="um-field">
-                  <FieldLabel label={t('user_login_suffix')} required />
-                  <input
-                    className={`um-input ${errorFor('suffix') ? 'is-invalid' : ''}`}
-                    dir="ltr"
-                    value={suffix}
-                    onChange={(e) => setSuffix(e.target.value)}
-                    onBlur={() => touch('suffix')}
-                    placeholder={loginSuffix || '@lilyanpert.app'}
-                    autoComplete="off"
-                    spellCheck={false}
-                    required
-                    aria-required="true"
-                    aria-invalid={errorFor('suffix') ? 'true' : undefined}
-                    aria-describedby={errorFor('suffix') ? 'um-suffix-error' : undefined}
-                  />
-                  <FieldError id="um-suffix-error" message={errorFor('suffix')} />
-                </label>
+                {/* Business-owned suffix: shown, never editable or clearable. */}
+                <div className="um-field">
+                  <FieldLabel label={t('user_login_suffix')} />
+                  <span className="um-field__wrap um-field__wrap--locked">
+                    <input
+                      className="um-input um-input--locked"
+                      dir="ltr"
+                      value={suffix}
+                      placeholder={loginSuffix || '@lilyanpert.app'}
+                      readOnly
+                      tabIndex={-1}
+                      aria-readonly="true"
+                      aria-describedby="um-suffix-locked"
+                      autoComplete="off"
+                      spellCheck={false}
+                    />
+                    <span className="um-field__lock" aria-hidden="true">
+                      <Icon name="lock" size={13} />
+                    </span>
+                  </span>
+                  <span className="um-field__hint" id="um-suffix-locked">
+                    <Icon name="lock" size={11} />
+                    {t(suffixKept ? 'user_suffix_kept' : 'user_suffix_locked')}
+                  </span>
+                </div>
               </div>
               {/* The identifier the person will actually sign in with. */}
               <div className="um-preview" dir="ltr">

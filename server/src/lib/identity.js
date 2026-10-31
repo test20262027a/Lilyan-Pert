@@ -51,64 +51,64 @@ export function splitIdentifier(identifier) {
 export const isIdentifier = (value) => IDENTIFIER_RE.test(String(value ?? '').trim().toLowerCase());
 
 /**
- * The suffix suggested from the business's own slug ("Lilyan Pert" →
- * `@lilyanpert.app`). It is only a suggestion: the owner approves or edits it,
- * because the application cannot know whether the domain is registered.
+ * The business's login suffix, derived from its own brand name ("Lilyan Pert"
+ * → `@lilyanpert.app`) and never from a request: the suffix is business
+ * configuration, so no user and no administrator can type, change or clear it.
+ *
+ * The name is normalized into a clean domain identifier — accents folded,
+ * lowercased, spaces and punctuation dropped. A brand written only in a
+ * non-Latin script falls back to the slug, which is always ASCII.
  */
-export function suggestedSuffix(business) {
-  const fromSlug = String(business?.slug || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-  const fromName = String(business?.name_en || business?.name || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9]/g, '');
-  const base = fromSlug || fromName;
-  return base ? `@${base}.app` : '@work.app';
+export function brandSuffix(business) {
+  for (const candidate of [business?.name_en, business?.name, business?.slug]) {
+    const base = String(candidate ?? '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '')
+      .slice(0, 48);
+    if (base) return `@${base}.app`;
+  }
+  return '@work.app';
 }
 
 /**
- * Resolves what a user-creation request asks for: either an explicit
- * username + suffix, or a complete identifier in `email` (the shape older
- * clients and the edit form send). Returns nulls for values the caller omitted
- * so an update can keep what is stored.
+ * A suffix sent by a client is never applied. It is accepted only when it is
+ * exactly the business's locked suffix, so an edited form that still posts the
+ * field it displays keeps working, while any attempt to type or clear a
+ * different one is refused instead of silently logging someone in elsewhere.
  */
-export function resolveIdentity(body, fallbackSuffix) {
+export function suffixLocked(body, lockedSuffix) {
+  const raw = body?.login_suffix ?? body?.suffix;
+  if (raw === undefined || raw === null || String(raw).trim() === '') return false;
+  return normalizeSuffix(raw) !== lockedSuffix;
+}
+
+/**
+ * Resolves what a user request asks for: a username, which is always composed
+ * with the suffix passed in — the account's own suffix on an update, the
+ * business's brand suffix on a creation. A complete identifier in `email` is
+ * accepted only when it already carries that same locked suffix; it is never
+ * renamed here. Returns nulls when the caller sent no identity at all, so an
+ * update can keep what is stored.
+ */
+export function resolveIdentity(body, lockedSuffix) {
+  const suffix = normalizeSuffix(lockedSuffix);
+  if (!suffix) return { error: 'INVALID_SUFFIX' };
+
   const rawUsername = body?.username;
-  const rawSuffix = body?.login_suffix ?? body?.suffix;
-  const rawEmail = body?.email;
-
-  const explicitUsername = rawUsername === undefined || rawUsername === null || rawUsername === ''
-    ? null
-    : normalizeUsername(rawUsername);
-
-  const explicitSuffix = rawSuffix === undefined || rawSuffix === null || rawSuffix === ''
-    ? null
-    : normalizeSuffix(rawSuffix);
-
-  const emailWasSent = rawEmail !== undefined && rawEmail !== null && String(rawEmail).trim() !== '';
-
-  if (explicitUsername !== null || explicitSuffix !== null) {
-    if (rawUsername !== undefined && String(rawUsername ?? '').trim() !== '' && explicitUsername === null) {
-      return { error: 'INVALID_USERNAME' };
-    }
-    if (explicitSuffix === null && rawSuffix !== undefined && String(rawSuffix ?? '').trim() !== '') {
-      return { error: 'INVALID_SUFFIX' };
-    }
-    // A username without a suffix falls back to the business's saved/suggested
-    // one; a suffix alone is only meaningful together with a username.
-    const suffix = explicitSuffix ?? fallbackSuffix ?? '';
-    if (!explicitUsername) return { error: 'INVALID_USERNAME' };
-    if (!suffix) return { error: 'INVALID_SUFFIX' };
-    const identifier = composeIdentifier(explicitUsername, suffix);
+  if (rawUsername !== undefined && rawUsername !== null && String(rawUsername).trim() !== '') {
+    const username = normalizeUsername(rawUsername);
+    if (!username) return { error: 'INVALID_USERNAME' };
+    const identifier = composeIdentifier(username, suffix);
     if (!isIdentifier(identifier)) return { error: 'INVALID_IDENTIFIER' };
-    return { username: explicitUsername, suffix, identifier };
+    return { username, suffix, identifier };
   }
 
-  if (emailWasSent) {
-    const identifier = String(rawEmail).trim().toLowerCase();
-    if (!isIdentifier(identifier)) return { error: 'INVALID_EMAIL' };
-    return { ...splitIdentifier(identifier), identifier };
-  }
-
-  return { username: null, suffix: null, identifier: null };
+  const rawEmail = String(body?.email ?? '').trim().toLowerCase();
+  if (!rawEmail) return { username: null, suffix: null, identifier: null };
+  if (!isIdentifier(rawEmail)) return { error: 'INVALID_EMAIL' };
+  const parts = splitIdentifier(rawEmail);
+  if (parts.suffix !== suffix) return { error: 'INVALID_IDENTIFIER' };
+  return { ...parts, identifier: rawEmail };
 }

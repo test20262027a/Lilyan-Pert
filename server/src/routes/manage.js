@@ -12,7 +12,12 @@ import {
 } from '../lib/permissions.js';
 import { ah, bad, conflict, forbidden, isUuid, notFound } from '../lib/http.js';
 import { normalizeAvatarType, normalizeProfileImageUrl } from '../lib/profile.js';
-import { normalizeSuffix, resolveIdentity, splitIdentifier, suggestedSuffix } from '../lib/identity.js';
+import {
+  brandSuffix,
+  resolveIdentity,
+  splitIdentifier,
+  suffixLocked,
+} from '../lib/identity.js';
 import { recordActivity } from '../lib/activity.js';
 import { getVapidKeys } from '../lib/push.js';
 
@@ -983,14 +988,16 @@ async function mayManageCreator(req) {
   return Boolean(primary) && req.role === 'owner' && req.businessId === primary;
 }
 
-/** The identifier a new account is composed with when the caller sends none. */
-async function defaultSuffix(businessId) {
+/**
+ * The business's own login suffix, generated from the brand name in the
+ * Business Profile. It is read-only everywhere: a request can never supply it.
+ */
+async function businessSuffix(businessId) {
   const { rows } = await q(
-    'SELECT slug, name, name_en, login_suffix FROM businesses WHERE id = $1',
+    'SELECT slug, name, name_en FROM businesses WHERE id = $1',
     [businessId],
   );
-  const business = rows[0] || {};
-  return business.login_suffix || suggestedSuffix(business);
+  return brandSuffix(rows[0] || {});
 }
 
 /** An optional recovery address; an internal login name is not a mailbox. */
@@ -1088,6 +1095,7 @@ router.get(
 
     const creator = await creatorRecord();
     const businessRow = business.rows[0] || null;
+    const suffix = brandSuffix(businessRow || {});
 
     res.json({
       users,
@@ -1098,11 +1106,12 @@ router.get(
       presets: rolePresets(),
       mandatory: MANDATORY,
       business: businessRow,
-      // Everything the Account Settings card needs: the saved suffix, the one
-      // suggested from the business, and the Creator record's state.
+      // Everything the Account Settings card needs: the business's locked
+      // suffix (generated from its brand name) and the Creator record's state.
       account: {
-        login_suffix: businessRow?.login_suffix || '',
-        suggested_suffix: suggestedSuffix(businessRow || {}),
+        login_suffix: suffix,
+        suggested_suffix: suffix,
+        suffix_locked: true,
         creator: creator
           ? {
             email: creator.email,
@@ -1127,9 +1136,12 @@ router.post(
     const role = ASSIGNABLE_ROLES.includes(req.body?.role) ? req.body.role : 'staff';
     const status = req.body?.status === 'disabled' ? 'disabled' : 'active';
 
-    // The login identifier is composed here, on the server: username + the
-    // business's chosen suffix (or the one sent with this request).
-    const identity = resolveIdentity(req.body || {}, await defaultSuffix(req.businessId));
+    // The login identifier is composed here, on the server: the username the
+    // administrator typed plus the business's own suffix, generated from its
+    // brand name. A client can never supply or override that suffix.
+    const suffix = await businessSuffix(req.businessId);
+    if (suffixLocked(req.body, suffix)) throw bad('SUFFIX_LOCKED');
+    const identity = resolveIdentity(req.body || {}, suffix);
     if (identity.error) throw bad(identity.error);
     if (!identity.identifier) throw bad('INVALID_EMAIL');
     const email = identity.identifier;
@@ -1242,12 +1254,17 @@ router.patch(
     let nextIdentifier = null;
     if (b.username !== undefined || b.login_suffix !== undefined || b.suffix !== undefined) {
       const current = splitIdentifier(membership.email);
+      /*
+       * The suffix is protected. An existing account keeps the suffix it was
+       * created with, so renaming the brand never changes a live credential;
+       * only an account stored without one picks up the business's current
+       * suffix. A request that tries to send a different suffix is refused.
+       */
+      const suffix = current.suffix || await businessSuffix(req.businessId);
+      if (suffixLocked(b, suffix)) throw bad('SUFFIX_LOCKED');
       const identity = resolveIdentity(
-        {
-          username: b.username === undefined ? current.username : b.username,
-          login_suffix: b.login_suffix !== undefined ? b.login_suffix : b.suffix,
-        },
-        await defaultSuffix(req.businessId),
+        { username: b.username === undefined ? current.username : b.username },
+        suffix,
       );
       if (identity.error) throw bad(identity.error);
       if (identity.identifier && identity.identifier !== membership.email) {
@@ -1384,32 +1401,19 @@ router.post(
 );
 
 /**
- * The business's default login suffix. It is only a default: identifiers that
- * were already generated keep their own suffix on the account record.
+ * The business's login suffix is generated from its brand name and protected:
+ * this endpoint reports it and refuses any attempt to replace it with a
+ * different one. The brand name in the Business Profile is the only way to
+ * change it, and accounts that already exist keep their own suffix.
  */
 router.put(
   '/account-settings',
   withBusiness('manager'),
   perm('users.edit'),
   ah(async (req, res) => {
-    const raw = String(req.body?.login_suffix ?? '').trim();
-    const suffix = raw === '' ? null : normalizeSuffix(raw);
-    if (suffix === null && raw !== '') throw bad('INVALID_SUFFIX');
-
-    await q('UPDATE businesses SET login_suffix = $2, updated_at = now() WHERE id = $1', [
-      req.businessId,
-      suffix,
-    ]);
-    await recordActivity({
-      businessId: req.businessId,
-      actorId: req.user.id,
-      actorName: req.user.full_name || req.user.email,
-      entity: 'settings',
-      action: 'updated',
-      entityLabel: suffix ? `Login suffix ${suffix}` : 'Login suffix cleared',
-      path: req.path,
-    });
-    res.json({ ok: true, login_suffix: suffix || '' });
+    const suffix = await businessSuffix(req.businessId);
+    if (suffixLocked(req.body, suffix)) throw bad('SUFFIX_LOCKED');
+    res.json({ ok: true, login_suffix: suffix, locked: true });
   }),
 );
 

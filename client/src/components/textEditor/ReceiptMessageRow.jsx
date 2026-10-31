@@ -78,43 +78,50 @@ export default function ReceiptMessageRow({
         </button>
       </h3>
 
-      {open ? (
-        <div className="tx-row__body" id={`tx-message-${number}`}>
-          <div className="tx-langs">
-            <LanguageFieldsGrid count={languages.length} variant="text">
-              {languages.map((code) => (
-                <label className="tx-lang" key={code}>
-                  <span className="tx-lang__label">
-                    <LanguageFlag code={code} />
-                    {t(`menu_lang_name_${code}`)}
-                  </span>
-                  <textarea
-                    ref={(el) => {
-                      if (el) refs.current[code] = el;
-                    }}
-                    className="tx-lang__input"
-                    dir={isRtl(code) ? 'rtl' : 'ltr'}
-                    lang={code}
-                    rows={3}
-                    maxLength={MAX_LENGTH}
-                    value={values?.[code] || ''}
-                    disabled={!canManage}
-                    placeholder={t('text_editor_field_placeholder')}
-                    onChange={(event) => onChange(code, event.target.value)}
-                  />
-                </label>
-              ))}
-            </LanguageFieldsGrid>
+      {/*
+        The body stays mounted so the collapse can animate its height instead of
+        popping in and out. A closed panel is `inert`, so its fields never take
+        focus or a tab stop while it is out of sight.
+      */}
+      <div className={`tx-row__collapse ${open ? 'is-open' : ''}`} id={`tx-message-${number}`}>
+        <div className="tx-row__collapse__inner" inert={open ? undefined : ''}>
+          <div className="tx-row__body">
+            <div className="tx-langs">
+              <LanguageFieldsGrid count={languages.length} variant="text">
+                {languages.map((code) => (
+                  <label className="tx-lang" key={code}>
+                    <span className="tx-lang__label">
+                      <LanguageFlag code={code} />
+                      {t(`menu_lang_name_${code}`)}
+                    </span>
+                    <textarea
+                      ref={(el) => {
+                        if (el) refs.current[code] = el;
+                      }}
+                      className="tx-lang__input"
+                      dir={isRtl(code) ? 'rtl' : 'ltr'}
+                      lang={code}
+                      rows={3}
+                      maxLength={MAX_LENGTH}
+                      value={values?.[code] || ''}
+                      disabled={!canManage}
+                      placeholder={t('text_editor_field_placeholder')}
+                      onChange={(event) => onChange(code, event.target.value)}
+                    />
+                  </label>
+                ))}
+              </LanguageFieldsGrid>
+            </div>
+
+            {hasPlaceholder ? <p className="tx-placeholders">{t('text_editor_placeholders_hint')}</p> : null}
+
+            <button type="button" className="tx-translate" onClick={onTranslate} disabled={!canManage || translating}>
+              {translating ? <span className="spinner" /> : <Icon name="globe" size={15} />}
+              {t('text_editor_translate')}
+            </button>
           </div>
-
-          {hasPlaceholder ? <p className="tx-placeholders">{t('text_editor_placeholders_hint')}</p> : null}
-
-          <button type="button" className="tx-translate" onClick={onTranslate} disabled={!canManage || translating}>
-            {translating ? <span className="spinner" /> : <Icon name="globe" size={15} />}
-            {t('text_editor_translate')}
-          </button>
         </div>
-      ) : null}
+      </div>
     </article>
   );
 }

@@ -49,6 +49,7 @@ const ERROR_KEYS = {
   INVALID_USERNAME: 'user_invalid_username',
   INVALID_SUFFIX: 'user_invalid_suffix',
   INVALID_IDENTIFIER: 'user_invalid_suffix',
+  SUFFIX_LOCKED: 'user_suffix_locked_error',
   EMAIL_TAKEN: 'user_email_taken',
   NAME_REQUIRED: 'user_name_required',
 };
@@ -135,7 +136,6 @@ export default function Users() {
         await patch(`/manage/users/${modal.user.membership_id}`, {
           full_name: values.full_name,
           username: values.username,
-          login_suffix: values.login_suffix,
           role: values.role,
           status: values.status,
           permissions: values.permissions,

@@ -47,7 +47,9 @@ export default function TextEditor() {
 
   const baseline = useMemo(() => draftFrom(business), [business]);
   const [draft, setDraft] = useState(() => draftFrom(business));
-  const [openKeys, setOpenKeys] = useState(() => new Set([ROWS[0].key]));
+  // One accordion id for all fifteen messages: every row collapses on load and
+  // opening one always closes the previous one.
+  const [activeAccordionId, setActiveAccordionId] = useState(null);
   const [groupOpen, setGroupOpen] = useState(true);
   const [query, setQuery] = useState('');
   const [search, setSearch] = useState('');
@@ -109,12 +111,7 @@ export default function TextEditor() {
   }, [search, draft, business, t]);
 
   const toggleRow = useCallback((key) => {
-    setOpenKeys((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    setActiveAccordionId((current) => (current === key ? null : key));
   }, []);
 
   const setValue = useCallback((key, code, value) => {
@@ -295,7 +292,7 @@ export default function TextEditor() {
                   <ReceiptMessageRow
                     key={row.key}
                     number={row.number}
-                    open={openKeys.has(row.key)}
+                    open={activeAccordionId === row.key}
                     onToggle={() => toggleRow(row.key)}
                     values={draft?.[row.key] || EMPTY}
                     custom={isCustomMessage(business, row.key)}

@@ -614,6 +614,44 @@
 }
 .um-input:disabled { background: #f4f6f2; color: #6f766c; cursor: not-allowed; }
 
+/* The business-owned login suffix: readable, copyable, but never writable —
+   the mint surface and the lock plate are the visible promise of that. */
+.um-input--locked {
+  background: var(--um-mint);
+  border-color: var(--um-mint-line);
+  color: var(--um-green-ink);
+  font-weight: 650;
+  cursor: default;
+}
+.um-input--locked:focus {
+  border-color: var(--um-mint-line);
+  box-shadow: none;
+}
+.um-field__lock {
+  position: absolute;
+  inset-inline-end: 6px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--um-card);
+  border: 1px solid var(--um-mint-line);
+  color: var(--um-green-ink);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.07);
+  pointer-events: none;
+}
+.um-field__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--um-muted);
+}
+.um-field__hint svg { flex: none; opacity: 0.85; }
+
 /* The composed login identifier, shown as the account will actually use it. */
 .um-preview {
   display: flex;
@@ -893,6 +931,17 @@
 [data-theme='dark'] .um-permcard__title { color: var(--text); }
 [data-theme='dark'] .um-permcard { background: var(--surface-2); border-color: var(--border); }
 [data-theme='dark'] .um-input { background: var(--surface-2); color: var(--text); }
+[data-theme='dark'] .um-input--locked {
+  background: color-mix(in srgb, var(--theme-primary) 16%, var(--surface-2));
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--border));
+  color: var(--text);
+}
+[data-theme='dark'] .um-field__lock {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--border));
+  color: color-mix(in srgb, var(--theme-primary) 60%, #ffffff);
+  box-shadow: none;
+}
 [data-theme='dark'] .um-check__box { background: var(--surface); border-color: var(--border); }
 [data-theme='dark'] .um-modal__head { background: linear-gradient(180deg, #1d1f1a, #191c18); }
 [data-theme='dark'] .um-modal__head::after { background: none; }
