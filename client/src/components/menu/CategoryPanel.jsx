@@ -2,6 +2,7 @@ import Icon from '../Icon';
 import { useI18n, localized } from '../../i18n';
 import { appearanceOf } from './categoryIcons';
 import CategoryIdentityIcon from './CategoryIdentityIcon';
+import { fmtNumber } from '../../format';
 
 /*
  * The category management panel: heading, the three compact statistic cards and
@@ -64,7 +65,7 @@ export default function CategoryPanel({
             <Icon name="layers" size={14} />
           </span>
           <span className="mcstat__body">
-            <span className="mcstat__value">{stats.total}</span>
+            <span className="mcstat__value">{fmtNumber(stats.total, locale)}</span>
             <span className="mcstat__label">{t('menu_total_categories')}</span>
           </span>
         </div>
@@ -73,7 +74,7 @@ export default function CategoryPanel({
             <Icon name="checkCircle" size={14} />
           </span>
           <span className="mcstat__body">
-            <span className="mcstat__value">{stats.active}</span>
+            <span className="mcstat__value">{fmtNumber(stats.active, locale)}</span>
             <span className="mcstat__label">{t('menu_active_categories')}</span>
           </span>
         </div>
@@ -82,7 +83,7 @@ export default function CategoryPanel({
             <Icon name="xCircle" size={14} />
           </span>
           <span className="mcstat__body">
-            <span className="mcstat__value">{stats.inactive}</span>
+            <span className="mcstat__value">{fmtNumber(stats.inactive, locale)}</span>
             <span className="mcstat__label">{t('menu_inactive_categories')}</span>
           </span>
         </div>

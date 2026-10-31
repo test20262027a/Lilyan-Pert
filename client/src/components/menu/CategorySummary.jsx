@@ -1,6 +1,7 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import CategoryIdentityIcon from './CategoryIdentityIcon';
+import { fmtNumber } from '../../format';
 
 /*
  * The single wide header card above the product grid: the selected category on
@@ -13,7 +14,7 @@ import CategoryIdentityIcon from './CategoryIdentityIcon';
  * numbers stay whole and fully visible.
  */
 export default function CategorySummary({ icon, color, title, subtitle, stats }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const counters = [
     ['total', 'layers', stats.total, 'menu_total_products', 'menu_total_products_short'],
@@ -35,7 +36,7 @@ export default function CategorySummary({ icon, color, title, subtitle, stats })
         {counters.map(([kind, glyph, value, longKey, shortKey]) => (
           <span key={kind} className={`mpill mpill--${kind}`}>
             <Icon name={glyph} size={13} className="mpill__icon" />
-            <span className="mpill__num">{value}</span>
+            <span className="mpill__num">{fmtNumber(value, locale)}</span>
             <span className="mpill__label mpill__label--full">{t(longKey)}</span>
             <span className="mpill__label mpill__label--short">{t(shortKey)}</span>
           </span>

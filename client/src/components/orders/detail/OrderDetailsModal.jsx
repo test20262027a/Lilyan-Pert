@@ -13,7 +13,7 @@ import { localized, useI18n } from '../../../i18n';
 import { useAuth } from '../../../context/AuthContext';
 import { useBusiness } from '../../../context/BusinessContext';
 import { get, patch, post, put } from '../../../api';
-import { fmtDateTime, zoneFor } from '../../../format';
+import { fmtDateTime, fmtDigits, zoneFor } from '../../../format';
 import './orderDetails.css';
 
 /*
@@ -312,7 +312,7 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
               <h2 className="odm__title">
                 {editing && !locked && canEdit ? t('od_edit') : t('od_title')}
               </h2>
-              {order ? <p className="odm__subtitle">#{order.order_number}</p> : null}
+              {order ? <p className="odm__subtitle">#{fmtDigits(order.order_number, locale)}</p> : null}
             </div>
           </div>
           <button
@@ -352,7 +352,7 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
               <div className="odm-identity">
                 <div className="odm-identity__main">
                   <span className="odm-identity__label">{t('order_number')}</span>
-                  <strong className="odm-identity__no">#{order.order_number}</strong>
+                  <strong className="odm-identity__no">#{fmtDigits(order.order_number, locale)}</strong>
                 </div>
                 <StatusBadge status={order.status} />
               </div>

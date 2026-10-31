@@ -1,5 +1,6 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
+import { fmtNumber } from '../../format';
 
 /*
  * The one quantity stepper of the customer menu: a raised plus, the bold count
@@ -23,7 +24,7 @@ export default function ProductQuantityControl({
 }) {
   const { t, locale } = useI18n();
   const value = Number(quantity) || 0;
-  const count = new Intl.NumberFormat(locale === 'en' ? 'en' : locale).format(value);
+  const count = fmtNumber(value, locale);
 
   return (
     <div

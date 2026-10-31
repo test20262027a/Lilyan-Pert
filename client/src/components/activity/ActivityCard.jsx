@@ -1,7 +1,7 @@
 import Icon from '../Icon';
 import { StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtDate, fmtTime } from '../../format';
+import { fmtDate, fmtDigits, fmtTime } from '../../format';
 import { ENTITY_KEYS, activityVisual, badgeTone, entityLabelText } from './activityMeta';
 
 /*
@@ -49,7 +49,7 @@ export default function ActivityCard({ row, locale, timeZone, canManage, busy, o
           </span>
         ) : row.kind === 'print' ? (
           row.order_number ? (
-            <span className="av-ref">{t('act_order_ref', { number: row.order_number })}</span>
+            <span className="av-ref">{t('act_order_ref', { number: fmtDigits(row.order_number, locale) })}</span>
           ) : null
         ) : row.entity_label ? (
           <p className="av-card__desc">{entityLabelText(t, row)}</p>
@@ -69,7 +69,7 @@ export default function ActivityCard({ row, locale, timeZone, canManage, busy, o
             {fmtTime(row.at, locale, timeZone)}
           </span>
           {row.kind === 'order_status' && row.order_number ? (
-            <span className="av-ref">{t('act_order_ref', { number: row.order_number })}</span>
+            <span className="av-ref">{t('act_order_ref', { number: fmtDigits(row.order_number, locale) })}</span>
           ) : null}
         </div>
       </div>

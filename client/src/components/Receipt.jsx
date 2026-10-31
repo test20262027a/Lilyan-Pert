@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from './Icon';
-import { fmtDate, fmtDateNumeric, fmtMoney, fmtNumber, fmtTime, zoneFor } from '../format';
+import { fmtDate, fmtDateNumeric, fmtDigits, fmtMoney, fmtNumber, fmtTime, zoneFor } from '../format';
 import { isRtl } from '../i18n';
 import { pickReceiptFooter, receiptLabel, receiptMessageText } from '../receiptMessages';
 import '../receipt.css';
@@ -317,7 +317,7 @@ export function ReceiptPaper({ data, locale, footerPick: givenPick = null }) {
                 <span className="rc-ordertop__icon" aria-hidden="true">
                   <Icon name="receipt" size={14} />
                 </span>
-                <span className="rc-ordertop__number rc-num">#{order?.order_number}</span>
+                <span className="rc-ordertop__number rc-num">#{fmtDigits(order?.order_number, locale)}</span>
                 {hasOrderType ? (
                   <span className="rc-ordertop__badge">{msg(orderType)}</span>
                 ) : null}

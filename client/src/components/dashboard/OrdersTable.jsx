@@ -1,6 +1,6 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { fmtDate, fmtMoney, fmtTime } from '../../format';
+import { fmtDate, fmtDigits, fmtMoney, fmtTime } from '../../format';
 
 const COLUMNS = 6;
 
@@ -71,7 +71,7 @@ export default function OrdersTable({
                       open(o);
                     }}
                   >
-                    #{o.order_number}
+                    #{fmtDigits(o.order_number, locale)}
                   </button>
                 </td>
                 <td className="orders-table__when">

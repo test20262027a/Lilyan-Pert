@@ -11,6 +11,8 @@
  * colour follows the highest-priority category that still has unread rows.
  */
 
+import { fmtDateTime, fmtDigits } from './format';
+
 /**
  * Category of a stored notification type. Read from the event type itself, so
  * a translation or a title can never move a row between tabs:
@@ -42,7 +44,14 @@ export function compactCount(total) {
   return total > 99 ? '99+' : String(total);
 }
 
-const INTL_LOCALE = { en: 'en-GB', ku: 'ckb', fa: 'fa', ar: 'ar' };
+/* The numbering system is part of the tag, so a relative time is printed in the
+   digits of the language that is showing it (Latin everywhere but Persian). */
+const INTL_LOCALE = {
+  en: 'en-GB',
+  ku: 'ckb',
+  fa: 'fa-IR-u-nu-arabext',
+  ar: 'ar-IQ-u-nu-latn',
+};
 
 /** The translation key for one relative-time unit. */
 const RELATIVE_KEYS = {
@@ -75,7 +84,7 @@ export function relativeTime(value, locale, formatter, t) {
           : abs < 604800
             ? [Math.round(seconds / 86400), 'day']
             : null;
-  if (!pick) return formatter ? formatter(date) : date.toLocaleDateString();
+  if (!pick) return formatter ? formatter(date) : fmtDateTime(date, locale);
   let text = '';
   try {
     text = new Intl.RelativeTimeFormat(INTL_LOCALE[locale] || 'en-GB', { numeric: 'auto' }).format(
@@ -87,8 +96,8 @@ export function relativeTime(value, locale, formatter, t) {
   }
   const missingData = !text || (locale !== 'en' && /[A-Za-z]/.test(text));
   if (missingData) {
-    if (t) return t(RELATIVE_KEYS[pick[1]], { count: Math.abs(pick[0]) });
-    return formatter ? formatter(date) : date.toLocaleString();
+    if (t) return t(RELATIVE_KEYS[pick[1]], { count: fmtDigits(Math.abs(pick[0]), locale) });
+    return formatter ? formatter(date) : fmtDateTime(date, locale);
   }
   return text;
 }

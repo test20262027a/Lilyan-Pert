@@ -1,6 +1,6 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { fmtNumber } from '../../format';
+import { fmtDigits, fmtNumber } from '../../format';
 import RatingStars from './RatingStars';
 
 /**
@@ -20,7 +20,7 @@ export default function RatingOverview({ summary, locale }) {
   return (
     <section className="rv-overview" aria-label={t('review_title')}>
       <div className="rv-summary">
-        <div className="rv-summary__value">{total ? average.toFixed(1) : '0.0'}</div>
+        <div className="rv-summary__value">{fmtDigits(total ? average.toFixed(1) : '0.0', locale)}</div>
         <RatingStars value={total ? average : 0} size={17} />
         <div className="rv-summary__count">
           {fmtNumber(total, locale)} {t(total === 1 ? 'review_count_one' : 'review_count')}
@@ -35,7 +35,7 @@ export default function RatingOverview({ summary, locale }) {
             <div className="rv-row" key={star}>
               <span className="rv-row__label">
                 <Icon name="star" size={13} />
-                <span>{star}</span>
+                <span>{fmtDigits(star, locale)}</span>
               </span>
               <span
                 className="rv-row__track"

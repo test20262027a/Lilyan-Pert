@@ -1,7 +1,7 @@
 import Icon from '../Icon';
 import { Money, StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtDate, fmtTime } from '../../format';
+import { fmtDate, fmtDigits, fmtTime } from '../../format';
 import StatusMenu from './StatusMenu';
 import OrderTableLabel from './OrderTableLabel';
 
@@ -18,7 +18,7 @@ export default function OrdersCards({ orders, currency, timeZone, busyId, onView
       {orders.map((order) => (
         <article className="ocard" key={order.id}>
           <div className="ocard__top">
-            <span className="ocard__no">#{order.order_number}</span>
+            <span className="ocard__no">#{fmtDigits(order.order_number, locale)}</span>
             <StatusBadge status={order.status} />
             <span className="ocard__amount">
               <Money value={order.total} currency={currency} />

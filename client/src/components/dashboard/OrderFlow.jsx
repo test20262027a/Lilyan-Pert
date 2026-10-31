@@ -1,23 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 import { EmptyState, SectionCard } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtDate, fmtMonth, fmtNumber } from '../../format';
+import { fmtDate, fmtDigits, fmtMonth, fmtNumber } from '../../format';
 
 const HEIGHT = 200;
 const PAD = { top: 14, right: 12, bottom: 26, left: 30 };
 
 const labelFor = (point, unit, locale, timeZone) => {
-  if (unit === 'hour') return point.t;
-  if (unit === 'year') return String(point.t).slice(0, 4);
+  if (unit === 'hour') return fmtDigits(point.t, locale);
+  if (unit === 'year') return fmtDigits(String(point.t).slice(0, 4), locale);
   if (unit === 'month') return fmtMonth(point.t, locale, timeZone);
-  return String(Number(String(point.t).slice(8, 10)));
+  return fmtDigits(String(Number(String(point.t).slice(8, 10))), locale);
 };
 
 const tipFor = (point, unit, locale, timeZone) => {
-  if (unit === 'hour') return `${point.t}:00`;
-  if (unit === 'year') return String(point.t).slice(0, 4);
-  if (unit === 'month') return `${fmtMonth(point.t, locale, timeZone)} ${String(point.t).slice(0, 4)}`;
-  return fmtDate(point.t, locale, timeZone, { short: true });
+  if (unit === 'hour') return fmtDigits(`${point.t}:00`, locale);
+  if (unit === 'year') return fmtDigits(String(point.t).slice(0, 4), locale);
+  if (unit === 'month') return `${fmtMonth(point.t, locale, timeZone)}/${fmtDigits(String(point.t).slice(0, 4), locale)}`;
+  return fmtDate(point.t, locale, timeZone);
 };
 
 /** Catmull-Rom smoothing; control points are clamped to the plot area so a

@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { Spinner } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtDateTime } from '../../format';
+import { fmtDateTime, fmtDigits } from '../../format';
 import { CATEGORY_TABS, categoryOf, compactCount, relativeTime } from '../../notifications';
 import { ENTITY_KEYS, entityLabelText } from '../activity/activityMeta';
 
@@ -40,15 +40,15 @@ const STATUS_KEYS = {
 };
 
 /** The stored order number, as a chip that stays left-to-right in every language. */
-const numberOf = (item) => {
-  if (item.order_number) return `#${item.order_number}`;
-  return /^#\d+/.exec(item.title || '')?.[0] || '';
+const numberOf = (item, locale) => {
+  if (item.order_number) return `#${fmtDigits(item.order_number, locale)}`;
+  return fmtDigits(/^#\d+/.exec(item.title || '')?.[0] || '', locale);
 };
 
 /** Title, badges and description of one notification, in the reader's language. */
-function describe(item, t) {
+function describe(item, t, locale) {
   const category = categoryOf(item.type);
-  const number = numberOf(item);
+  const number = numberOf(item, locale);
 
   // An order status change: order number, previous → new status, and who did it.
   if (item.type === 'status_change') {
@@ -248,7 +248,7 @@ export default function NotificationPanel({
           visible.map((item) => {
             const category = categoryOf(item.type);
             const visual = { ...TONE_ICON[category], icon: iconOf(item) };
-            const { title, number, status, customer, description } = describe(item, t);
+            const { title, number, status, customer, description } = describe(item, t, locale);
             const allowed = canOpen(item);
             return (
               <button

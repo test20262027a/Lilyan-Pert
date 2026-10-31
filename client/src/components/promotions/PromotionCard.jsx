@@ -1,7 +1,7 @@
 import Icon from '../Icon';
 import { Money } from '../ui';
 import { localized, useI18n } from '../../i18n';
-import { fmtDate } from '../../format';
+import { fmtDate, fmtDigits } from '../../format';
 
 /*
  * One promotion card, in the order the design asks for it: status badge,
@@ -45,7 +45,7 @@ export default function PromotionCard({ promotion, currency, locale, timeZone, c
             {code}
           </div>
           <div className="promo-card__value">
-            {isPercent ? `${Number(promotion.discount_value)}%` : <Money value={promotion.discount_value} currency={currency} />}
+            {isPercent ? `${fmtDigits(Number(promotion.discount_value), locale)}%` : <Money value={promotion.discount_value} currency={currency} />}
           </div>
         </div>
 
@@ -61,7 +61,11 @@ export default function PromotionCard({ promotion, currency, locale, timeZone, c
             <Icon name="users" size={14} />
             {t('disc_used_of')}
           </span>
-          <strong>{limit === null ? `${used} / ${t('disc_unlimited')}` : `${used} / ${limit}`}</strong>
+          <strong>
+            {limit === null
+              ? `${fmtDigits(used, locale)} / ${t('disc_unlimited')}`
+              : `${fmtDigits(used, locale)} / ${fmtDigits(limit, locale)}`}
+          </strong>
         </div>
 
         {limit === null ? null : (
@@ -75,7 +79,7 @@ export default function PromotionCard({ promotion, currency, locale, timeZone, c
             <Icon name="clock" size={14} />
             {t('disc_remaining')}
           </span>
-          <strong>{remaining === null ? t('disc_unlimited') : remaining}</strong>
+          <strong>{remaining === null ? t('disc_unlimited') : fmtDigits(remaining, locale)}</strong>
         </div>
       </div>
 

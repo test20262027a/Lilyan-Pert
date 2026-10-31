@@ -6,6 +6,7 @@ import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
+import { fmtDigits } from '../format';
 import TextEditorArtwork from '../components/textEditor/TextEditorArtwork';
 import ReceiptMessageRow from '../components/textEditor/ReceiptMessageRow';
 import TranslationReviewModal from '../components/textEditor/TranslationReviewModal';
@@ -39,7 +40,7 @@ function draftFrom(business) {
 const EMPTY = Object.fromEntries(MESSAGE_LOCALES.map((code) => [code, '']));
 
 export default function TextEditor() {
-  const { t, enabledLanguages } = useI18n();
+  const { t, locale, enabledLanguages } = useI18n();
   const { business, loading, save, reload } = useBusiness();
   const { isManager } = useAuth();
   const toast = useToast();
@@ -280,7 +281,7 @@ export default function TextEditor() {
                 <Icon name="receipt" size={16} />
               </span>
               <span className="tx-group__title">{t('text_editor_group')}</span>
-              <span className="tx-group__count">{t('text_editor_count', { count: total })}</span>
+              <span className="tx-group__count">{t('text_editor_count', { count: fmtDigits(total, locale) })}</span>
               <span className={`tx-group__chevron ${groupOpen ? 'is-open' : ''}`} aria-hidden="true">
                 <Icon name="chevronDown" size={16} />
               </span>

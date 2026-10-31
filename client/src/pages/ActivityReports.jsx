@@ -11,7 +11,7 @@ import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get } from '../api';
-import { fmtNumber, zoneFor } from '../format';
+import { fmtDigits, fmtNumber, zoneFor } from '../format';
 import '../menu.css';
 import '../activity.css';
 
@@ -238,7 +238,7 @@ export default function ActivityReports() {
           entityName={
             entityLabelText(t, pending) ||
             (pending.order_number
-              ? t('act_order_ref', { number: pending.order_number })
+              ? t('act_order_ref', { number: fmtDigits(pending.order_number, locale) })
               : `#${String(pending.id).slice(0, 8)}`)
           }
           entitySubtitle={`${ENTITY_KEYS[pending.entity] ? t(ENTITY_KEYS[pending.entity]) : t('act_title')} · ${

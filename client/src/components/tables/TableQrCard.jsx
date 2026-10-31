@@ -5,6 +5,7 @@ import QrCode from '../QrCode';
 import { useToast } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { copyText, qrFileName } from './menuUrl';
+import { fmtDigits } from '../../format';
 
 /*
  * One table, one QR code.
@@ -103,7 +104,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
         {label}
       </div>
       <div className="tcard__seats">
-        {Number.isFinite(seats) && seats > 0 ? `${seats} ${t('table_seats')}` : t('label_none')}
+        {Number.isFinite(seats) && seats > 0 ? `${fmtDigits(seats, locale)} ${t('table_seats')}` : t('label_none')}
       </div>
 
       <div className="tcard__rule" />

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Money } from '../ui';
 import { useI18n } from '../../i18n';
+import { fmtDigits } from '../../format';
 import Emoji3D, { ORDER_EMOJI_IDS } from './Emoji3D';
 import './orderSuccess.css';
 
@@ -63,7 +64,7 @@ function takeEmoji() {
 }
 
 export default function OrderSuccessModal({ order, currency, onClose }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [emoji] = useState(takeEmoji);
   const [paused, setPaused] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -153,7 +154,7 @@ export default function OrderSuccessModal({ order, currency, onClose }) {
           <span className="osx-number">
             <span className="osx-number__label">{t('customer_menu_order_number')}</span>
             <strong className="osx-number__value" dir="ltr">
-              #{order?.order_number}
+              #{fmtDigits(order?.order_number, locale)}
             </strong>
           </span>
           <span className={`osx-status osx-status--${status}`}>{t(`status_${status}`)}</span>

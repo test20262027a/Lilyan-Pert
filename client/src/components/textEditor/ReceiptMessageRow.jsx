@@ -4,6 +4,7 @@ import LanguageFlag from '../header/LanguageFlag';
 import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 import { isRtl, useI18n } from '../../i18n';
 import { MESSAGE_LOCALES } from '../../receiptMessages';
+import { fmtDigits } from '../../format';
 
 /*
  * One receipt message: a compact accordion header plus one field per enabled
@@ -33,7 +34,7 @@ export default function ReceiptMessageRow({
   onTranslate,
   translating,
 }) {
-  const { t, enabledLanguages } = useI18n();
+  const { t, locale, enabledLanguages } = useI18n();
   const refs = useRef({});
   const label = String(number).padStart(2, '0');
   const languages = enabledLanguages.length ? enabledLanguages : ['ku'];
@@ -63,9 +64,9 @@ export default function ReceiptMessageRow({
           onClick={onToggle}
         >
           <span className="tx-row__label">
-            <span className="tx-row__num">#{label}</span>
+            <span className="tx-row__num">#{fmtDigits(label, locale)}</span>
             <span className="tx-row__sep" aria-hidden="true">—</span>
-            <span className="tx-row__title">{t('text_editor_message_title', { n: label })}</span>
+            <span className="tx-row__title">{t('text_editor_message_title', { n: fmtDigits(label, locale) })}</span>
             {custom ? <span className="tx-row__badge">{t('text_editor_custom')}</span> : null}
             {dirty ? (
               <span className="tx-row__dot" title={t('settings_unsaved')} aria-label={t('settings_unsaved')} />

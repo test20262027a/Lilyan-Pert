@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get, patch, post } from '../api';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
+import { fmtNumber } from '../format';
 import UsersArtwork from '../components/users/UsersArtwork';
 import UserFormModal from '../components/users/UserFormModal';
 import ChangePasswordModal from '../components/users/ChangePasswordModal';
@@ -53,7 +54,7 @@ const ERROR_KEYS = {
 };
 
 export default function Users() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { business } = useBusiness();
   const { user: me, can, role: myRole, isSuperAdmin, updateProfile, refresh } = useAuth();
   const toast = useToast();
@@ -253,15 +254,15 @@ export default function Users() {
       {data.counts ? (
         <div className="um-stats">
           <div className="um-stat">
-            <span className="um-stat__value">{data.counts.total}</span>
+            <span className="um-stat__value">{fmtNumber(data.counts.total, locale)}</span>
             <span className="um-stat__label">{t('user_count_total')}</span>
           </div>
           <div className="um-stat um-stat--active">
-            <span className="um-stat__value">{data.counts.active}</span>
+            <span className="um-stat__value">{fmtNumber(data.counts.active, locale)}</span>
             <span className="um-stat__label">{t('user_active')}</span>
           </div>
           <div className="um-stat um-stat--off">
-            <span className="um-stat__value">{data.counts.disabled}</span>
+            <span className="um-stat__value">{fmtNumber(data.counts.disabled, locale)}</span>
             <span className="um-stat__label">{t('user_inactive')}</span>
           </div>
         </div>

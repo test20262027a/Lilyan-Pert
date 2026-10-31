@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { addDaysToDay } from '../../format';
+import { addDaysToDay, fmtWeekday } from '../../format';
 
 /*
  * The Orders calendar.
@@ -16,7 +16,14 @@ import { addDaysToDay } from '../../format';
  * no second calendar system is stored anywhere.
  */
 
-const INTL = { en: 'en-GB', ku: 'ckb-IQ', fa: 'fa-IR-u-ca-persian', ar: 'ar-IQ' };
+/* Latin digits everywhere but Persian, and the Persian calendar for Persian —
+   the same numbering rules the shared formatters apply. */
+const INTL = {
+  en: 'en-GB',
+  ku: 'ckb-IQ',
+  fa: 'fa-IR-u-ca-persian-nu-arabext',
+  ar: 'ar-IQ-u-nu-latn',
+};
 const FALLBACK = 'en-GB';
 
 function safeLocale(locale) {
@@ -97,20 +104,21 @@ export default function DatePickerPopover({ anchorEl, value, today, timeZone, on
   const first = weekStart(tag, locale);
   const leading = (noon(grid.start).getUTCDay() - first + 7) % 7;
 
+  // Numeric month, never a written one: 2026/10 — ۱۴۰۵/۰۸ in Persian.
   const heading = useMemo(
     () =>
-      new Intl.DateTimeFormat(tag, { timeZone, month: 'long', year: 'numeric' }).format(noon(grid.start)),
+      new Intl.DateTimeFormat(tag, { timeZone, month: '2-digit', year: 'numeric' }).format(noon(grid.start)),
     [tag, timeZone, grid.start],
   );
+  /* Weekday names come from the shared formatter, which knows the app's own
+     Kurdish names — the browser has no `ckb` data and would answer in English. */
   const weekdayLabels = useMemo(() => {
     const labels = [];
     for (let i = 0; i < 7; i += 1) {
-      labels.push(
-        new Intl.DateTimeFormat(tag, { weekday: 'short', timeZone }).format(noon(addDaysToDay('2024-01-07', i))),
-      );
+      labels.push(fmtWeekday(noon(addDaysToDay('2024-01-07', i)), locale, timeZone));
     }
     return labels.slice(first).concat(labels.slice(0, first));
-  }, [tag, timeZone, first]);
+  }, [locale, timeZone, first]);
   const dayLabel = useCallback(
     (ymd) => new Intl.DateTimeFormat(tag, { timeZone, day: 'numeric' }).format(noon(ymd)),
     [tag, timeZone],

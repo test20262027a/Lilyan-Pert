@@ -1,7 +1,7 @@
 import Icon from '../Icon';
 import { Money, StatusBadge } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtDate, fmtTime } from '../../format';
+import { fmtDate, fmtDigits, fmtTime } from '../../format';
 import StatusMenu from './StatusMenu';
 import OrderTableLabel from './OrderTableLabel';
 
@@ -34,7 +34,7 @@ export default function OrdersTable({ orders, currency, timeZone, busyId, onView
         <tbody>
           {orders.map((order) => (
             <tr key={order.id}>
-              <td className="otable__no">#{order.order_number}</td>
+              <td className="otable__no">#{fmtDigits(order.order_number, locale)}</td>
               <td className="otable__when">
                 <span>{fmtDate(order.created_at, locale, timeZone, { short: true })}</span>
                 <span>{fmtTime(order.created_at, locale, timeZone)}</span>

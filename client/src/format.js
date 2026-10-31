@@ -1,92 +1,48 @@
-/* Date/time/number formatting. Persian uses the Solar Hijri calendar + Iran time. */
+/* Date/time/number formatting shared by every screen.
+ *
+ * Two rules drive every value the interface prints:
+ *
+ *  - Kurdish, Arabic and English always show Latin digits (0-9); Persian shows
+ *    Persian digits (۰-۹). The numbering system is passed to Intl explicitly, so
+ *    a browser's own locale data can never bring Arabic-Indic digits back.
+ *  - Every date is numeric — 2026/10/31 — and every time is numeric — 14:35.
+ *    No written month names anywhere. Persian keeps the Solar Hijri calendar,
+ *    every other language keeps the Gregorian one.
+ *
+ * Digits are a display concern only: stored values, API payloads and inputs stay
+ * canonical, which is why the helpers return strings and never mutate input.
+ */
 
 import ku from './i18n/ku';
 
-const INTL_LOCALE = {
-  en: 'en-GB',
-  ku: 'ckb-IQ',
-  fa: 'fa-IR-u-ca-persian',
-  ar: 'ar-IQ',
-};
+/* Persian calendar for Persian; Gregorian for the rest. */
+const calendarFor = (locale) => (locale === 'fa' ? 'persian' : 'gregory');
 
-/*
- * Kurdish (Sorani) calendar and digit data.
- *
- * Most browsers ship no `ckb` data at all: `new Intl.DateTimeFormat('ckb')`
- * does not throw, it silently answers in the browser's own language, so the
- * Kurdish interface would print "Thursday, 29 October 2026" and Latin digits.
- * The names therefore live in the translation dictionary, and the helpers below
- * format them directly whenever the browser cannot.
+/* Latin digits everywhere except Persian, which is the only language that
+ * prints Persian digits. */
+const numberTag = (locale) => (locale === 'fa' ? 'fa-IR-u-nu-arabext' : 'en-US-u-nu-latn');
+
+/* Numeric calendar fields are always read in Latin digits, then mapped to the
+ * language's own digits when they are assembled. */
+const fieldsTag = (locale) => `en-US-u-ca-${calendarFor(locale)}-nu-latn`;
+
+const FA_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+
+/**
+ * The language's digits for a ready-made string of numbers — chart axis labels,
+ * a month number, a year. Persian maps to ۰-۹; every other language is left
+ * exactly as it is.
  */
-const KU_MONTHS = Array.from({ length: 12 }, (_, i) => ku[`date_month_${i + 1}`]);
+export function fmtDigits(text, locale) {
+  const value = String(text ?? '');
+  return locale === 'fa' ? value.replace(/[0-9]/g, (d) => FA_DIGITS[Number(d)]) : value;
+}
+
+/* Kurdish weekday names — the browser usually ships no `ckb` data, so a Kurdish
+ * weekday is read from the app's own dictionary. Weekday names are the only
+ * names left in a date; months are always numeric. */
 const KU_WEEKDAYS = Array.from({ length: 7 }, (_, i) => ku[`date_weekday_${i}`]);
-const KU_DIGITS = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-
-const inKurdishDigits = (value) =>
-  String(value)
-    .replace(/\d/g, (d) => KU_DIGITS[Number(d)])
-    .replace(/,/g, '٬')
-    .replace(/\./g, '٫');
-
-/** Whether the browser really holds data for a tag, or only falls back to English. */
-const PROBE = new Date(Date.UTC(2026, 9, 29, 12));
-const EN_PROBE = new Intl.DateTimeFormat('en-US', { month: 'long', timeZone: 'UTC' }).format(PROBE);
-const SUPPORT = new Map();
-function hasIntlData(tag) {
-  if (tag.startsWith('en')) return true;
-  if (SUPPORT.has(tag)) return SUPPORT.get(tag);
-  let ok = false;
-  try {
-    ok = new Intl.DateTimeFormat(tag, { month: 'long', timeZone: 'UTC' }).format(PROBE) !== EN_PROBE;
-  } catch {
-    ok = false;
-  }
-  SUPPORT.set(tag, ok);
-  return ok;
-}
-
-/** True when a locale must be formatted from the app's own Kurdish data. */
-const isKurdishOnly = (locale) => locale === 'ku' && !hasIntlData(INTL_LOCALE.ku);
-
-/** The zoned calendar fields of one instant, in Latin digits, for manual formatting. */
-function zonedFields(d, timeZone) {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: timeZone || undefined,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    weekday: 'short',
-    hour12: false,
-  }).formatToParts(d);
-  const at = Object.fromEntries(parts.map((p) => [p.type, p.value]));
-  const hour = at.hour === '24' ? '00' : at.hour;
-  return {
-    year: at.year,
-    month: Number(at.month),
-    day: Number(at.day),
-    hour,
-    minute: at.minute,
-    // Sunday-first index, read from the same zoned calendar day.
-    weekday: new Date(Date.UTC(Number(at.year), Number(at.month) - 1, Number(at.day))).getUTCDay(),
-  };
-}
-
-function safeLocale(locale) {
-  const candidate = INTL_LOCALE[locale] || 'en-GB';
-  try {
-    new Intl.DateTimeFormat(candidate);
-    return candidate;
-  } catch {
-    return 'en-GB';
-  }
-}
-
-/** Persian is displayed in Iran-local time; everything else uses the business timezone. */
-export function zoneFor(locale, businessTimeZone) {
-  return locale === 'fa' ? 'Asia/Tehran' : businessTimeZone || 'Asia/Baghdad';
-}
+const WEEKDAY_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
 function toDate(value) {
   if (!value) return null;
@@ -94,122 +50,98 @@ function toDate(value) {
   return Number.isNaN(d.getTime()) ? null : d;
 }
 
-export function fmtDate(value, locale, timeZone, { weekday = false, short = false } = {}) {
-  const d = toDate(value);
-  if (!d) return '—';
-  if (isKurdishOnly(locale)) {
-    const f = zonedFields(d, timeZone);
-    // Kurdish has no abbreviated month names, so `short` uses the same names.
-    const day = `${inKurdishDigits(f.day)}ی ${KU_MONTHS[f.month - 1]}ی ${inKurdishDigits(f.year)}`;
-    return weekday ? `${KU_WEEKDAYS[f.weekday]}، ${day}` : day;
-  }
-  const options = short
-    ? { year: 'numeric', month: 'short', day: 'numeric' }
-    : { year: 'numeric', month: 'long', day: 'numeric' };
-  if (weekday) options.weekday = 'long';
-  return new Intl.DateTimeFormat(safeLocale(locale), { ...options, timeZone }).format(d);
-}
-
-/**
- * A calendar date as plain numbers — «29/03/2024» — for the thermal receipt,
- * where a written month costs a line and prints unevenly. Kurdish digits, the
- * Persian calendar and the business timezone keep their own numbering.
- */
-export function fmtDateNumeric(value, locale, timeZone) {
-  const d = toDate(value);
-  if (!d) return '—';
-  if (isKurdishOnly(locale)) {
-    const f = zonedFields(d, timeZone);
-    return inKurdishDigits(
-      `${String(f.day).padStart(2, '0')}/${String(f.month).padStart(2, '0')}/${f.year}`,
-    );
-  }
-  return new Intl.DateTimeFormat(safeLocale(locale), {
+/** The zoned calendar fields of one instant, in Latin digits. */
+function zonedFields(d, locale, timeZone) {
+  const parts = new Intl.DateTimeFormat(fieldsTag(locale), {
+    timeZone: timeZone || undefined,
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
-    timeZone,
-  }).format(d);
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(d);
+  const at = Object.fromEntries(parts.map((p) => [p.type, p.value]));
+  return {
+    year: at.year,
+    month: String(at.month).padStart(2, '0'),
+    day: String(at.day).padStart(2, '0'),
+    hour: at.hour === '24' ? '00' : at.hour,
+    minute: at.minute,
+  };
 }
 
-/**
- * Full calendar date with the weekday in front: «پنجشنبه، ۳۰ مهر ۱۴۰۵» /
- * «Thursday, 22 October 2026». Built from two formatters because the CLDR
- * Persian order puts the weekday last, which reads backwards in this card.
- */
-export function fmtWeekdayDate(value, locale, timeZone) {
+/** Sunday-first weekday index of an instant on the business clock. */
+function zonedWeekday(d, timeZone) {
+  const short = new Intl.DateTimeFormat('en-US', { timeZone: timeZone || undefined, weekday: 'short' }).format(d);
+  return WEEKDAY_INDEX[short] ?? 0;
+}
+
+/** yyyy/mm/dd in the language's own digits and calendar. */
+const numericDate = (locale, f) => fmtDigits(`${f.year}/${f.month}/${f.day}`, locale);
+
+export function zoneFor(locale, businessTimeZone) {
+  return locale === 'fa' ? 'Asia/Tehran' : businessTimeZone || 'Asia/Baghdad';
+}
+
+/** A calendar date as numbers only: `2026/10/31`, `۱۴۰۵/۰۸/۰۹`. */
+export function fmtDate(value, locale, timeZone, { weekday = false } = {}) {
   const d = toDate(value);
   if (!d) return '—';
-  const weekday = fmtWeekday(d, locale, timeZone, { long: true });
-  return `${weekday}${locale === 'en' ? ',' : '،'} ${fmtDate(d, locale, timeZone)}`;
+  const date = numericDate(locale, zonedFields(d, locale, timeZone));
+  if (!weekday) return date;
+  return `${fmtWeekday(d, locale, timeZone, { long: true })}${locale === 'en' ? ', ' : '، '}${date}`;
 }
 
+/** The same numeric date, kept as its own name for the thermal receipt. */
+export const fmtDateNumeric = (value, locale, timeZone) => fmtDate(value, locale, timeZone);
+
+/** Weekday in front of the numeric date: «شەممە، 2026/10/31». */
+export function fmtWeekdayDate(value, locale, timeZone) {
+  return fmtDate(value, locale, timeZone, { weekday: true });
+}
+
+/** 24-hour clock in the language's digits: `14:35`, `۱۴:۳۵`. */
 export function fmtTime(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '—';
-  if (isKurdishOnly(locale)) {
-    const f = zonedFields(d, timeZone);
-    return inKurdishDigits(`${f.hour}:${f.minute}`);
-  }
-  return new Intl.DateTimeFormat(safeLocale(locale), {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone,
-  }).format(d);
+  const f = zonedFields(d, locale, timeZone);
+  return fmtDigits(`${f.hour}:${f.minute}`, locale);
 }
 
-/**
- * Wall-clock time for the dashboard clock: 24-hour, in the business timezone,
- * with the digits of the active language (۰۹:۴۷ / ٠٩:٤٧ / 09:47).
- */
+/** The dashboard clock — the same numeric time, defaulting to now. */
 export function fmtClock(value, locale, timeZone) {
-  const d = toDate(value) || new Date();
-  if (isKurdishOnly(locale)) {
-    const f = zonedFields(d, timeZone);
-    return inKurdishDigits(`${f.hour}:${f.minute}`);
-  }
-  return new Intl.DateTimeFormat(safeLocale(locale), {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    timeZone,
-  }).format(d);
+  return fmtTime(toDate(value) || new Date(), locale, timeZone);
 }
 
 export function fmtDateTime(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '—';
-  return `${fmtDate(d, locale, timeZone, { short: true })} · ${fmtTime(d, locale, timeZone)}`;
+  return `${fmtDate(d, locale, timeZone)} · ${fmtTime(d, locale, timeZone)}`;
 }
 
-/**
- * Weekday label: short for the dashboard charts, `long` for the working-hours
- * card and anything else that shows the day on its own.
- */
+/** Weekday on its own — the only written name left in a date. */
 export function fmtWeekday(value, locale, timeZone, { long = false } = {}) {
   const d = toDate(value);
   if (!d) return '';
-  if (isKurdishOnly(locale)) return KU_WEEKDAYS[zonedFields(d, timeZone).weekday];
-  return new Intl.DateTimeFormat(safeLocale(locale), {
+  if (locale === 'ku') return KU_WEEKDAYS[zonedWeekday(d, timeZone)];
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : safeLocale(locale), {
     weekday: long ? 'long' : 'short',
-    timeZone,
+    timeZone: timeZone || undefined,
   }).format(d);
 }
 
-/** Short month label for month-bucketed charts. */
+/** Month bucket of a chart, as numbers: `10`, `۱۰`. */
 export function fmtMonth(value, locale, timeZone) {
   const d = toDate(value);
   if (!d) return '';
-  if (isKurdishOnly(locale)) return KU_MONTHS[zonedFields(d, timeZone).month - 1];
-  return new Intl.DateTimeFormat(safeLocale(locale), { month: 'short', timeZone }).format(d);
+  return fmtDigits(zonedFields(d, locale, timeZone).month, locale);
 }
 
 export function fmtNumber(value, locale) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return '0';
-  if (isKurdishOnly(locale)) return inKurdishDigits(new Intl.NumberFormat('en-US').format(n));
-  return new Intl.NumberFormat(safeLocale(locale)).format(n);
+  if (!Number.isFinite(n)) return fmtDigits('0', locale);
+  return new Intl.NumberFormat(numberTag(locale)).format(n);
 }
 
 /** Currencies Intl does not know are formatted with the label the guest reads. */
@@ -221,56 +153,59 @@ export function localizedCurrencyLabel(currency, locale) {
   return currency || '';
 }
 
+/** Whole-number currencies of the region, plus every currency Intl cannot name. */
+const ZERO_DECIMAL = ['IQD', 'IRR'];
+
 export function fmtMoney(value, currency, locale) {
   const n = Number(value) || 0;
-  const label = CURRENCY_LABEL[currency];
-  if (label) {
-    // Toman is a whole-number currency in every language; the label is written
-    // in the guest's own script, never as IRR/ریال.
+  if (CURRENCY_LABEL[currency]) {
     return `${fmtNumber(n, locale)} ${localizedCurrencyLabel(currency, locale)}`;
   }
-  const zeroDecimal = ['IQD', 'IRR'].includes(currency);
-  if (isKurdishOnly(locale)) return `${fmtNumber(n, locale)} ${currency || ''}`.trim();
-  try {
-    return new Intl.NumberFormat(safeLocale(locale), {
-      style: 'currency',
-      currency: currency || 'IQD',
-      maximumFractionDigits: zeroDecimal ? 0 : 2,
-      minimumFractionDigits: 0,
-    }).format(n);
-  } catch {
-    return `${fmtNumber(n, locale)} ${currency || ''}`.trim();
+  if (locale === 'en') {
+    try {
+      return new Intl.NumberFormat(numberTag(locale), {
+        style: 'currency',
+        currency: currency || 'IQD',
+        maximumFractionDigits: ZERO_DECIMAL.includes(currency) ? 0 : 2,
+        minimumFractionDigits: 0,
+      }).format(n);
+    } catch {
+      /* falls through to the plain code form */
+    }
   }
+  // The amount in the language's digits, the code untouched beside it — a code
+  // is machine-readable and is never mirrored or re-scripted.
+  return `${fmtNumber(n, locale)} ${currency || ''}`.trim();
 }
 
 /**
- * The same money formatting as `fmtMoney`, split into its number and its
- * localized currency label — the product cards show the amount large and the
- * currency small beside it without changing how either is formatted.
+ * The same money split into amount and label, for cards that show the amount
+ * large and the currency small beside it.
  */
 export function fmtMoneyParts(value, currency, locale) {
   const n = Number(value) || 0;
   if (CURRENCY_LABEL[currency]) {
     return { number: fmtNumber(n, locale), symbol: localizedCurrencyLabel(currency, locale) };
   }
-  const zeroDecimal = ['IQD', 'IRR'].includes(currency);
-  if (isKurdishOnly(locale)) return { number: fmtNumber(n, locale), symbol: currency || '' };
-  try {
-    const parts = new Intl.NumberFormat(safeLocale(locale), {
-      style: 'currency',
-      currency: currency || 'IQD',
-      maximumFractionDigits: zeroDecimal ? 0 : 2,
-      minimumFractionDigits: 0,
-    }).formatToParts(n);
-    const number = parts
-      .filter((p) => ['integer', 'group', 'decimal', 'fraction', 'minusSign'].includes(p.type))
-      .map((p) => p.value)
-      .join('');
-    const symbol = (parts.find((p) => p.type === 'currency')?.value || currency || '').trim();
-    return { number, symbol };
-  } catch {
-    return { number: fmtNumber(n, locale), symbol: currency || '' };
+  if (locale === 'en') {
+    try {
+      const parts = new Intl.NumberFormat(numberTag(locale), {
+        style: 'currency',
+        currency: currency || 'IQD',
+        maximumFractionDigits: ZERO_DECIMAL.includes(currency) ? 0 : 2,
+        minimumFractionDigits: 0,
+      }).formatToParts(n);
+      const number = parts
+        .filter((p) => ['integer', 'group', 'decimal', 'fraction', 'minusSign'].includes(p.type))
+        .map((p) => p.value)
+        .join('');
+      const symbol = (parts.find((p) => p.type === 'currency')?.value || currency || '').trim();
+      return { number, symbol };
+    } catch {
+      /* falls through to the plain code form */
+    }
   }
+  return { number: fmtNumber(n, locale), symbol: currency || '' };
 }
 
 export function fmtBytes(bytes, locale) {
@@ -283,13 +218,12 @@ export function fmtBytes(bytes, locale) {
 /** yyyy-mm-dd in the given zone, for date inputs and filters. */
 export function isoDay(value, timeZone) {
   const d = toDate(value) || new Date();
-  const parts = new Intl.DateTimeFormat('en-CA', {
+  return new Intl.DateTimeFormat('en-CA', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     timeZone: timeZone || 'UTC',
   }).format(d);
-  return parts;
 }
 
 /** Midnight-free anchor for a `yyyy-mm-dd` calendar day (noon UTC keeps it stable). */
@@ -299,25 +233,11 @@ function dayToDate(ymd) {
   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12));
 }
 
-/**
- * A calendar day (`yyyy-mm-dd`) in the active language: `numeric` gives the
- * compact pill form (09/27/2026, ۲۷/۰۹/۲۰۲۶ …), the default the long one.
- */
-export function fmtDay(ymd, locale, timeZone, { weekday = false, numeric = false } = {}) {
+/** A `yyyy-mm-dd` calendar day as numbers: `2026/10/31`, `۱۴۰۵/۰۸/۰۹`. */
+export function fmtDay(ymd, locale, timeZone, { weekday = false } = {}) {
   const d = dayToDate(ymd);
   if (!d) return '—';
-  if (isKurdishOnly(locale)) {
-    const f = zonedFields(d, timeZone);
-    const body = numeric
-      ? `${inKurdishDigits(f.day)}/${inKurdishDigits(String(f.month).padStart(2, '0'))}/${inKurdishDigits(f.year)}`
-      : `${inKurdishDigits(f.day)}ی ${KU_MONTHS[f.month - 1]}ی ${inKurdishDigits(f.year)}`;
-    return weekday ? `${KU_WEEKDAYS[f.weekday]}، ${body}` : body;
-  }
-  const options = numeric
-    ? { year: 'numeric', month: '2-digit', day: '2-digit' }
-    : { year: 'numeric', month: 'long', day: 'numeric' };
-  if (weekday) options.weekday = 'long';
-  return new Intl.DateTimeFormat(safeLocale(locale), { ...options, timeZone }).format(d);
+  return fmtDate(d, locale, timeZone, { weekday });
 }
 
 /** Steps a `yyyy-mm-dd` day by whole days — plain date maths, no zone shifts. */
@@ -346,4 +266,15 @@ export function toZonedInput(value, timeZone) {
   }).formatToParts(d);
   const at = Object.fromEntries(parts.map((p) => [p.type, p.value]));
   return `${at.year}-${at.month}-${at.day}T${at.hour === '24' ? '00' : at.hour}:${at.minute}`;
+}
+
+/** The Intl tag used where a component needs locale data itself (calendar grids). */
+export function safeLocale(locale) {
+  const candidate = { en: 'en-GB', ku: 'ckb-IQ', fa: 'fa-IR', ar: 'ar-IQ' }[locale] || 'en-GB';
+  try {
+    new Intl.DateTimeFormat(candidate);
+    return candidate;
+  } catch {
+    return 'en-GB';
+  }
 }

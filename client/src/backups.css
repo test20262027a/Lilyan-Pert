@@ -169,12 +169,16 @@
 
 /* ----------------------------------------------------------------- buttons */
 
+/* One shared button height for the whole backup page — a restore action and its
+   download sit in the same footer, so they can never differ by a pixel. */
 .bk-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  height: 38px;
+  height: 40px;
+  min-height: 40px;
+  line-height: 1;
   padding: 0 14px;
   border-radius: 10px;
   border: 1px solid transparent;
@@ -928,13 +932,18 @@
 
 .bk-card__foot {
   display: flex;
+  align-items: center;
   gap: 7px;
   margin-top: auto;
   padding: 0 11px 11px;
 }
 
+/* Both actions keep the shared height on one baseline: Restore flexes, Download
+   stays compact, and neither can grow taller than the other. */
 .bk-card__foot .bk-btn {
-  height: 34px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0 13px;
 }
 
 .bk-card__foot .bk-btn--green {
@@ -1293,7 +1302,6 @@
 
 @media (max-width: 430px) {
   .bk-btn {
-    height: 36px;
     font-size: 12px;
     padding: 0 11px;
   }
@@ -1302,6 +1310,8 @@
   }
   .bk-card__foot .bk-btn {
     flex: 1 1 130px;
+    height: 40px;
+    min-height: 40px;
   }
 }
 

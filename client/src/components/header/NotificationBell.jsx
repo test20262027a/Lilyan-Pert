@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { useToast } from '../ui';
 import { useI18n } from '../../i18n';
+import { fmtDigits } from '../../format';
 import { useBusiness } from '../../context/BusinessContext';
 import { useAuth } from '../../context/AuthContext';
 import { get, post } from '../../api';
@@ -156,7 +157,7 @@ export default function NotificationBell() {
         <Icon name="bell" size={18} />
         {priority.total > 0 ? (
           <span className={`hdr-bell__badge hdr-bell__badge--${priority.tone}`} aria-hidden="true">
-            {compactCount(priority.total)}
+            {fmtDigits(compactCount(priority.total), locale)}
           </span>
         ) : null}
       </button>
