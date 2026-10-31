@@ -321,6 +321,8 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
             onClick={requestClose}
             aria-label={t('action_close')}
             title={t('action_close')}
+            data-tip-hover-only
+            data-tip-side="top"
           >
             <Icon name="close" size={17} />
           </button>

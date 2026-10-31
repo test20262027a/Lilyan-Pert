@@ -14,6 +14,12 @@
  * flips to whichever side still has room, stays inside the viewport, mirrors
  * for RTL and mirrors its preferred side for `data-tip-side="inline-start"` /
  * `"inline-end"`.
+ *
+ * A dialog's close X is pointer-hover only (`data-tip-hover-only`): opening a
+ * dialog focuses that button, so a focus-triggered bubble would appear on its
+ * own, and a touch screen has no hover to explain. Such a bubble waits
+ * `CLOSE_DELAY` and disappears the moment the pointer leaves. `data-tip-delay`
+ * overrides the hover delay for a single control.
  */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -23,6 +29,7 @@ const GAP = 10; // distance between the bubble and its target
 const EDGE = 8; // keep-out margin from the viewport edges
 const ARROW_INSET = 16; // the arrow never reaches the rounded corners
 const SHOW_DELAY = 120; // hover delay, so passing over a row never flickers
+const CLOSE_DELAY = 300; // a close X waits a beat before it explains itself
 const TOUCH_LINGER = 2200; // how long a tapped tooltip stays on a touch screen
 const SIDES = ['top', 'bottom', 'right', 'left'];
 const OPPOSITE = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' };
@@ -79,6 +86,19 @@ function coordinates(side, rect, size, vw, vh) {
   return { x, y, arrowX, arrowY };
 }
 
+/**
+ * A control whose bubble is explained by the mouse alone — the close X of a
+ * dialog: focus must never open it, and a touch tap must never open it either.
+ */
+const isHoverOnly = (el) => el.dataset.tipHoverOnly !== undefined;
+
+/** How long the pointer must rest on `el` before its bubble appears. */
+function delayFor(el) {
+  const own = Number(el.dataset.tipDelay);
+  if (own > 0) return own;
+  return isHoverOnly(el) ? CLOSE_DELAY : SHOW_DELAY;
+}
+
 /** The nearest element that owns a tooltip, if any. */
 function tipHost(node) {
   if (!(node instanceof Element)) return null;
@@ -131,7 +151,7 @@ export default function TooltipLayer() {
     targetRef.current = el;
     const preferred = resolveSide(el.dataset.tipSide) || 'top';
     if (immediate) setTip({ text, preferred });
-    else timerRef.current = setTimeout(() => setTip({ text, preferred }), SHOW_DELAY);
+    else timerRef.current = setTimeout(() => setTip({ text, preferred }), delayFor(el));
   }, [releaseTitles]);
 
   useEffect(() => {
@@ -155,7 +175,11 @@ export default function TooltipLayer() {
 
     const onFocusIn = (e) => {
       const el = tipHost(e.target);
-      if (el) show(el, true);
+      if (!el || isHoverOnly(el)) return;
+      // Only a keyboard focus earns a bubble: a dialog that focuses its own
+      // first control on open must never pop one up by itself.
+      if (!el.matches(':focus-visible')) return;
+      show(el, true);
     };
 
     const onFocusOut = (e) => {
@@ -172,7 +196,7 @@ export default function TooltipLayer() {
         return;
       }
       const el = tipHost(e.target);
-      if (!el) return;
+      if (!el || isHoverOnly(el)) return;
       show(el, true);
       clearTimeout(timerRef.current);
       timerRef.current = setTimeout(hide, TOUCH_LINGER);

@@ -88,7 +88,14 @@ export function Modal({ title, subtitle, onClose, children, footer, wide = false
     >
       <div className={`modal ${wide ? 'modal--wide' : ''} ${className}`.trim()} role="dialog" aria-modal="true" aria-label={title}>
         {/* Exactly one close control per modal, positioned per the language rule. */}
-        <button className="modal__close" onClick={onClose} aria-label={t('action_close')} title={t('action_close')}>
+        <button
+          className="modal__close"
+          onClick={onClose}
+          aria-label={t('action_close')}
+          title={t('action_close')}
+          data-tip-hover-only
+          data-tip-side="top"
+        >
           <Icon name="close" size={17} />
         </button>
         <SectionHeader section={section} icon={icon} title={title} subtitle={subtitle} />

@@ -126,6 +126,8 @@ export function ConfirmSurface({
           disabled={busy}
           aria-label={t('action_close')}
           title={t('action_close')}
+          data-tip-hover-only
+          data-tip-side="top"
         >
           <Icon name="close" size={15} />
         </button>

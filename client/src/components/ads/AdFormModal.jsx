@@ -152,6 +152,8 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
             onClick={requestClose}
             aria-label={t('action_close')}
             title={t('action_close')}
+            data-tip-hover-only
+            data-tip-side="top"
           >
             <Icon name="close" size={16} />
           </button>

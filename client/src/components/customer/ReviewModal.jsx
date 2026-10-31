@@ -99,6 +99,8 @@ export default function ReviewModal({ busy, onClose, onSubmit }) {
             onClick={onClose}
             aria-label={t('action_close')}
             title={t('action_close')}
+            data-tip-hover-only
+            data-tip-side="top"
           >
             <Icon name="close" size={16} />
           </button>
