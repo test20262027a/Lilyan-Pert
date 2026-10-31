@@ -33,17 +33,21 @@ export default function Dashboard() {
   const [pushError, setPushError] = useState('');
   const [range, setRange] = useState('today');
   const [custom, setCustom] = useState({ from: '', to: '' });
+  // Status filter of the Recent Orders section — a real backend filter over the
+  // business's whole order history, "all" meaning every status.
+  const [recentStatus, setRecentStatus] = useState('all');
   // The order the shared details modal is open on — dashboard rows never
   // navigate away from the page any more.
   const [openOrderId, setOpenOrderId] = useState(null);
 
-  const query =
+  const rangeQuery =
     range === 'custom' && custom.from && custom.to
       ? `range=custom&from=${custom.from}&to=${custom.to}`
       : `range=${range}`;
+  const query = recentStatus === 'all' ? rangeQuery : `${rangeQuery}&recent_status=${recentStatus}`;
 
   /* The last range the API actually answered for — what the cards show. */
-  const applied = useRef({ query: `range=${range}`, range, custom });
+  const applied = useRef({ query: `range=${range}`, range, custom, recentStatus });
 
   /*
    * The financial window is a real backend filter: the API recomputes every
@@ -57,7 +61,7 @@ export default function Dashboard() {
         const res = await get(`/dashboard?${query}`);
         setData(res);
         setFailed(false);
-        applied.current = { query, range, custom };
+        applied.current = { query, range, custom, recentStatus };
         return res;
       } catch {
         setFailed(true);
@@ -66,13 +70,14 @@ export default function Dashboard() {
         if (applied.current.query !== query) {
           setRange(applied.current.range);
           setCustom(applied.current.custom);
+          setRecentStatus(applied.current.recentStatus);
         }
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [query, range, custom],
+    [query, range, custom, recentStatus],
   );
 
   useEffect(() => {
@@ -199,6 +204,8 @@ export default function Dashboard() {
       {show('show_recent_orders') ? (
         <NewOrders
           orders={data.new_orders}
+          status={recentStatus}
+          onStatusChange={setRecentStatus}
           currency={currency}
           locale={locale}
           timeZone={timeZone}

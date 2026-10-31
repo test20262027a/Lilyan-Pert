@@ -19,6 +19,8 @@ const router = express.Router();
 router.use(requireAuth);
 
 const RANGE_KEYS = ['today', 'week', 'month', 'year', 'all', 'custom'];
+/* The application's authoritative order statuses — never a second list. */
+const ORDER_STATUSES = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
 const DEFAULT_RANGE = 'today';
 
 /* Notification settings a member may change from the dashboard. */
@@ -108,6 +110,22 @@ router.get(
     const windowParams = win.from ? [b, timezone, win.from, win.to] : [b];
     const hourParams = win.from ? [b, timezone, win.from, win.to] : [b, timezone];
 
+    /*
+     * The recent-orders list can be narrowed to one authoritative status. The
+     * filter runs in SQL over the business's whole order history, so picking
+     * "completed" finds an older completed order even when the newest rows are
+     * all still pending. An unknown value means "every status".
+     */
+    const recentStatus = ORDER_STATUSES.includes(String(req.query.recent_status))
+      ? String(req.query.recent_status)
+      : 'all';
+    const recentParams = [b];
+    const recentWhere = ['o.business_id = $1'];
+    if (recentStatus !== 'all') {
+      recentParams.push(recentStatus);
+      recentWhere.push(`o.status = $${recentParams.length}`);
+    }
+
     const [flow, bestSelling, newOrders, kpiRow, financeRow, viewsRow, firstRow, topProductRow, peakHourRow] = await Promise.all([
       q(`SELECT status, count(*)::int AS c FROM orders WHERE business_id = $1 GROUP BY status`, [b]),
       q(
@@ -118,19 +136,18 @@ router.get(
         [b],
       ),
       /*
-       * "New orders" are the ones still in the kitchen pipeline: pending,
-       * preparing and ready. A finished or cancelled order is history, so it
-       * never appears as new — the same three statuses mark a table as busy in
-       * the tables route, so both screens agree on what "active" means.
+       * The newest orders of the requested status (every status when none is
+       * chosen), always newest first. The same six-column shape the dashboard
+       * table draws — no second status system and no client-side filtering.
        */
       q(
         `SELECT o.id, o.order_number, o.status, o.total, o.created_at, o.customer_name,
                 t.name AS table_name,
                 (SELECT coalesce(sum(i.quantity), 0)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
            FROM orders o LEFT JOIN tables t ON t.id = o.table_id
-          WHERE o.business_id = $1 AND o.status IN ('pending', 'preparing', 'ready')
+          WHERE ${recentWhere.join(' AND ')}
           ORDER BY o.created_at DESC, o.id DESC LIMIT 6`,
-        [b],
+        recentParams,
       ),
       q(
         `SELECT count(*)::int AS total_orders,

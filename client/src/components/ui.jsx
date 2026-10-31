@@ -34,9 +34,10 @@ export function SectionCard({
   children,
   footer,
   plain = false,
+  className = '',
 }) {
   return (
-    <section className="card">
+    <section className={`card ${className}`.trim()}>
       <header className={`card__head ${plain ? 'card__head--plain' : ''}`}>
         {/* A category tone renders the multicolor 3D tile; without one the card
             keeps its neutral themed badge, so other pages are untouched. */}

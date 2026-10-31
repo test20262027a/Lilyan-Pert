@@ -18,6 +18,7 @@ export default function OrdersTable({
   failed = false,
   onRetry,
   onOpenOrder,
+  empty = null,
 }) {
   const { t } = useI18n();
   const open = (order) => onOpenOrder?.(order.id);
@@ -53,10 +54,12 @@ export default function OrdersTable({
           ) : orders.length === 0 ? (
             <tr>
               <td colSpan={COLUMNS} className="orders-table__state">
-                <span className="orders-table__state-inner">
-                  <Icon name="receipt" size={18} style={{ color: 'var(--dashic-blue-ink)' }} />
-                  <span>{t('dash_no_data')}</span>
-                </span>
+                {empty || (
+                  <span className="orders-table__state-inner">
+                    <Icon name="receipt" size={18} style={{ color: 'var(--dashic-blue-ink)' }} />
+                    <span>{t('dash_no_data')}</span>
+                  </span>
+                )}
               </td>
             </tr>
           ) : (

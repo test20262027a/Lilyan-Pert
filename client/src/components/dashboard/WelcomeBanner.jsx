@@ -60,19 +60,23 @@ function CafeScene() {
 /**
  * Wide, shallow welcome banner.
  *
- * Both halves of the greeting are live data: the brand name comes from the
- * business profile in the reader's language, and the person's name comes from
- * the signed-in account's own `full_name`. The name is never derived from the
- * username, the email or the role, and when the profile has no full name the
- * greeting drops the name entirely instead of inventing one.
+ * Both halves of the greeting are live data, in this order: the signed-in
+ * person's own `full_name`, then the business brand in the reader's language
+ * ("دانا بەخێربێیت بە لیلیان پیرت"). A name is never derived from the username,
+ * the email or the role — a profile that never got a real name (registration
+ * fills it with the email's local part) falls back to the localized greeting
+ * without a name instead of showing a login id.
  */
 export default function WelcomeBanner({ business }) {
   const { t, locale } = useI18n();
   const { user } = useAuth();
   const brand = localized(business, 'name', locale) || business?.name || t('app_name');
-  const fullName = String(user?.full_name || '').trim();
+  const savedName = String(user?.full_name || '').trim();
+  // The email's local part is an account identifier, never the person's name.
+  const loginId = String(user?.email || '').split('@')[0].trim().toLowerCase();
+  const fullName = savedName && savedName.toLowerCase() !== loginId ? savedName : '';
   const title = fullName
-    ? t('dash_welcome', { brand, name: fullName })
+    ? t('dash_welcome', { name: fullName, brand })
     : t('dash_welcome_generic', { brand });
 
   return (
