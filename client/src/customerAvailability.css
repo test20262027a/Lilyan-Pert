@@ -18,19 +18,25 @@
   --nc: #e05252;
   position: relative;
   isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-  margin-top: 14px;
-  padding: 16px 18px 13px;
-  border-radius: 20px;
-  border: 1px solid color-mix(in srgb, var(--nc) 26%, var(--cui-line));
+  /* Narrower than the content column and centred in it, compact by design. */
+  width: min(100%, 760px);
+  /* The page body already spaces its children (~18px), so the card only brings
+     its own top gap and never doubles up the gap above the search field. */
+  margin: 16px auto 0;
+  padding: 13px 16px 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--nc) 24%, var(--cui-line));
   background:
-    radial-gradient(120% 130% at 0% 0%, color-mix(in srgb, var(--nc) 12%, transparent), transparent 68%),
+    radial-gradient(120% 130% at 0% 0%, color-mix(in srgb, var(--nc) 11%, transparent), transparent 68%),
     color-mix(in srgb, var(--surface) 96%, var(--nc));
-  box-shadow: var(--cui-shadow-2), var(--cui-inset);
+  /* One soft lift only, so it never stacks with the search field's shadow. */
+  box-shadow:
+    0 1px 2px rgba(16, 32, 26, 0.05),
+    0 14px 28px -18px color-mix(in srgb, var(--nc) 45%, transparent),
+    var(--cui-inset);
   overflow: hidden;
 }
+
 .cui-closed--soon { --nc: #e08a1e; }
 .cui-closed--holiday { --nc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
 
@@ -48,112 +54,164 @@
   z-index: -1;
 }
 
-.cui-closed__main { display: flex; align-items: flex-start; gap: 13px; min-width: 0; }
+/* The search field lifts half onto the banner with a negative top margin. That
+   lift belongs to the banner only: when the notice sits in between, the field
+   keeps its normal position so the two never collide or stack their shadows. */
+.cui-closed + .cui-head .cui-search { margin-top: 0; }
 
+.cui-closed__main { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+/* The header mark: a polished rounded-square tile with a theme-tinted gradient,
+   a lit top edge and two soft shadows, so it reads as raised glass. */
 .cui-closed__icon {
-  width: 46px;
-  height: 46px;
+  position: relative;
+  width: 48px;
+  height: 48px;
   flex: none;
   display: grid;
   place-items: center;
   border-radius: 15px;
-  color: color-mix(in srgb, var(--nc) 82%, #17110c);
-  background: color-mix(in srgb, var(--nc) 15%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--nc) 28%, transparent);
+  color: #ffffff;
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--nc) 62%, #ffffff) 0%,
+      color-mix(in srgb, var(--nc) 96%, #ffffff) 52%,
+      color-mix(in srgb, var(--nc) 78%, #2a1c14) 100%
+    );
   box-shadow:
-    0 10px 20px color-mix(in srgb, var(--nc) 20%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 5px color-mix(in srgb, var(--nc) 55%, #000000),
+    0 10px 18px -10px color-mix(in srgb, var(--nc) 70%, transparent),
+    0 2px 4px rgba(16, 32, 26, 0.14);
 }
-[data-theme='dark'] .cui-closed__icon { color: color-mix(in srgb, var(--nc) 70%, #ffffff); }
+/* A single sheen across the top of the tile, no extra box. */
+.cui-closed__icon::before {
+  content: '';
+  position: absolute;
+  inset: 2px 2px auto;
+  height: 45%;
+  border-radius: 13px 13px 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.cui-closed__icon svg { position: relative; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); }
 
-.cui-closed__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.cui-closed__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 
-.cui-closed__pill {
-  align-self: flex-start;
+/* --------------------------------------------------- status badges group -- */
+
+/*
+ * The day, the closed state and the paused ordering sit in one horizontal group
+ * under the message. Each badge owns a `--bc` colour and the same pill geometry,
+ * so the three read as one family while staying distinguishable at a glance.
+ */
+.cui-closed__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.cui-closed__badge {
+  --bc: var(--primary);
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 3px 10px;
+  max-width: 100%;
+  min-height: 27px;
+  padding: 3px 11px 3px 4px;
   border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--bc) 76%, #17110c);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bc) 13%, var(--surface)),
+    color-mix(in srgb, var(--bc) 7%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--bc) 26%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 5px 10px -8px color-mix(in srgb, var(--bc) 70%, transparent);
+}
+[dir='rtl'] .cui-closed__badge { padding: 3px 4px 3px 11px; }
+
+.cui-closed__badge-icon {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  color: #ffffff;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--bc) 58%, #ffffff),
+    color-mix(in srgb, var(--bc) 92%, #2a1c14)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 4px -2px color-mix(in srgb, var(--bc) 75%, transparent);
+}
+.cui-closed__badge-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)); }
+
+.cui-closed__badge-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cui-closed__badge-time {
   font-size: 10.5px;
   font-weight: 800;
-  letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--nc) 84%, #17110c);
-  background: color-mix(in srgb, var(--nc) 14%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--nc) 26%, transparent);
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--bc) 55%, var(--muted));
+  padding-inline-start: 2px;
 }
-[data-theme='dark'] .cui-closed__pill { color: color-mix(in srgb, var(--nc) 62%, #ffffff); }
 
-/* The status dot keeps the badge readable without the shouty all-caps: the
-   colour and the pulse already carry the paused state. */
-.cui-closed__dot {
-  width: 5px;
-  height: 5px;
-  flex: none;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 18%, transparent);
-}
+/* Day: the theme-based blue. Closed: a soft amber. Paused: an elegant coral. */
+.cui-closed__badge--day { --bc: color-mix(in srgb, #3b7bf0 80%, var(--primary)); }
+.cui-closed__badge--closed { --bc: #e0952b; }
+.cui-closed__badge--paused { --bc: #ec6a5c; }
+
+[data-theme='dark'] .cui-closed__badge { color: color-mix(in srgb, var(--bc) 58%, #ffffff); }
+[data-theme='dark'] .cui-closed__badge-time { color: color-mix(in srgb, var(--bc) 42%, var(--muted)); }
 
 .cui-closed__title {
   margin: 0;
-  font-size: clamp(15px, 1.5vw, 17px);
+  font-size: clamp(15px, 1.15vw, 17px);
   font-weight: 850;
-  line-height: 1.4;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
   color: var(--text);
-  text-wrap: balance;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 .cui-closed__hint {
   margin: 0;
   font-size: 13px;
-  font-weight: 600;
-  line-height: 1.6;
-  color: var(--muted);
-  max-width: 62ch;
-}
-
-.cui-closed__meta { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 2px; }
-.cui-closed__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 100%;
-  padding: 5px 10px;
-  border-radius: 999px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: color-mix(in srgb, var(--text) 88%, var(--nc));
-  background: color-mix(in srgb, var(--surface) 80%, var(--nc));
-  border: 1px solid color-mix(in srgb, var(--nc) 18%, transparent);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cui-closed__chip--time { font-variant-numeric: tabular-nums; }
-
-/* The footer note reads as the card's own closing line: a hairline rule under
-   the text column instead of a loose label floating at the edge. */
-.cui-closed__note {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0;
-  margin-inline-start: 59px;
-  padding-top: 10px;
-  border-top: 1px dashed color-mix(in srgb, var(--nc) 22%, var(--cui-line));
-  font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.5;
-  color: color-mix(in srgb, var(--muted) 88%, var(--nc));
+  color: color-mix(in srgb, var(--muted) 92%, var(--text));
+  max-width: 62ch;
+  text-wrap: pretty;
 }
-.cui-closed__note svg { flex: none; }
+
+@media (max-width: 900px) {
+  .cui-closed { width: min(100%, 660px); }
+}
 
 @media (max-width: 720px) {
-  .cui-closed { padding: 14px 15px 12px; gap: 10px; }
-  .cui-closed__main { gap: 11px; }
-  .cui-closed__icon { width: 42px; height: 42px; border-radius: 14px; }
-  .cui-closed__note { margin-inline-start: 0; }
+  .cui-closed { width: 100%; padding: 12px 13px 13px; margin: 14px auto 0; }
+  .cui-closed__main { gap: 11px; align-items: flex-start; }
+  .cui-closed__icon { width: 42px; height: 42px; border-radius: 13px; }
+  .cui-closed__badges { gap: 6px; margin-top: 7px; }
+  .cui-closed__badge { font-size: 11px; }
   .cui-closed__hint { max-width: none; }
+}
+
+@media (max-width: 420px) {
+  .cui-closed__main { gap: 10px; }
+  .cui-closed__badge { padding-inline-end: 9px; }
+  .cui-closed__badge-time { display: none; }
 }
 
 /* ------------------------------------------------------ working hours card -- */

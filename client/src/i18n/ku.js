@@ -1376,8 +1376,7 @@ export default {
   customer_closed_after_hint:
     'داواکردن تا کاتی کردنەوەی داهاتوو ڕاگیراوە. هەموو مێنیۆکە بۆ بینین کراوەیە.',
   customer_closed_holiday_title: 'ئەمڕۆ پشووە',
-  customer_closed_holiday_hint:
-    'ئەمڕۆ داخراوین. لە ڕۆژی کاری داهاتوو بگەڕێوە — مێنیۆ هەر کاتێک بیت لەبەردەستدایە.',
+  customer_closed_holiday_hint: 'ئەمڕۆ داخراوین. لە ڕۆژی کاری داهاتوو بگەڕێوە',
   customer_closed_schedule_title: 'کاتژمێری کارکردن نوێ دەکرێتەوە',
   customer_closed_schedule_hint:
     'هەر کاتێک کاتژمێری کارکردن بڵاوکرایەوە، داواکردن دەگەڕێتەوە. هێشتا دەتوانیت سەیری هەموو مێنیۆ بکەیت.',

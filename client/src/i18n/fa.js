@@ -1375,8 +1375,7 @@ export default {
   customer_closed_after_hint:
     'ثبت سفارش تا زمان باز شدن بعدی متوقف است. همه منو برای دیدن در دسترس است.',
   customer_closed_holiday_title: 'امروز روز تعطیل ماست',
-  customer_closed_holiday_hint:
-    'امروز بسته‌ایم. در روز کاری بعدی بازگردید — منو همیشه در دسترس شماست.',
+  customer_closed_holiday_hint: 'امروز بسته‌ایم. در روز کاری بعدی بازگردید',
   customer_closed_schedule_title: 'ساعت کاری در حال به‌روزرسانی است',
   customer_closed_schedule_hint:
     'به‌محض ثبت ساعت کاری، سفارش‌دهی دوباره فعال می‌شود. دیدن منو همچنان ممکن است.',

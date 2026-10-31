@@ -3,13 +3,13 @@ import { useI18n } from '../../i18n';
 import '../../customerAvailability.css';
 
 /*
- * Why ordering is paused, shown as one calm glass card at the top of the menu.
+ * Why ordering is paused, shown as one compact glass card at the top of the menu.
  *
  * The wording comes from the state the opening helper resolved, never from a
  * guess: before the saved opening time, after the closing time, an off day, or a
- * day with no usable schedule. Every line — badge, title, hint, chips and the
- * footer note — is read from the translation dictionaries, so the paused state
- * speaks the guest's language exactly like the rest of the menu.
+ * day with no usable schedule. Every line — title, hint and the three status
+ * badges — is read from the translation dictionaries, so the paused state speaks
+ * the guest's language exactly like the rest of the menu.
  *
  * The day is named from the same dictionary keys the Working Hours editor uses
  * (`settings_day_*`), so a language whose calendar data a browser lacks still
@@ -58,39 +58,43 @@ export default function CustomerClosedNotice({ status, timeZone }) {
         </span>
 
         <div className="cui-closed__text">
-          <span className="cui-closed__pill">
-            <i className="cui-closed__dot" aria-hidden="true" />
-            {t('customer_closed_ordering_paused')}
-          </span>
           <h2 className="cui-closed__title">{t(copy.title)}</h2>
           <p className="cui-closed__hint">{t(copy.hint)}</p>
 
-          <div className="cui-closed__meta">
-            <span className="cui-closed__chip">
-              <Icon name="calendar" size={13} />
-              {t('customer_closed_today')}
-              {day ? ` · ${t(`settings_day_${day}`)}` : ''}
+          <div className="cui-closed__badges">
+            <span className="cui-closed__badge cui-closed__badge--day">
+              <i className="cui-closed__badge-icon" aria-hidden="true">
+                <Icon name="calendar" size={13} />
+              </i>
+              <span className="cui-closed__badge-text">
+                {t('customer_closed_today')}
+                {day ? ` · ${t(`settings_day_${day}`)}` : ''}
+              </span>
+              {hours ? (
+                <span className="cui-closed__badge-time" dir="ltr">
+                  {hours.open} – {hours.close}
+                </span>
+              ) : null}
             </span>
-            {hours ? (
-              <span className="cui-closed__chip cui-closed__chip--time" dir="ltr">
-                <Icon name="clock" size={13} />
-                {hours.open} – {hours.close}
-              </span>
-            ) : null}
-            {copy.tone === 'holiday' ? (
-              <span className="cui-closed__chip">
+
+            <span className="cui-closed__badge cui-closed__badge--closed">
+              <i className="cui-closed__badge-icon" aria-hidden="true">
                 <Icon name="lock" size={13} />
-                {t('customer_menu_closed_today')}
+              </i>
+              <span className="cui-closed__badge-text">
+                {copy.tone === 'soon' ? t('customer_hours_before') : t('customer_menu_closed_today')}
               </span>
-            ) : null}
+            </span>
+
+            <span className="cui-closed__badge cui-closed__badge--paused">
+              <i className="cui-closed__badge-icon" aria-hidden="true">
+                <Icon name="clock" size={13} />
+              </i>
+              <span className="cui-closed__badge-text">{t('customer_closed_ordering_paused')}</span>
+            </span>
           </div>
         </div>
       </div>
-
-      <p className="cui-closed__note">
-        <Icon name="book" size={13} />
-        {t('customer_closed_browse')}
-      </p>
     </section>
   );
 }

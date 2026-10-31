@@ -1373,8 +1373,7 @@ export default {
   customer_closed_after_title: 'مغلقون الآن',
   customer_closed_after_hint: 'الطلب متوقف حتى موعد الافتتاح القادم. القائمة كاملة متاحة للتصفح.',
   customer_closed_holiday_title: 'اليوم عطلة لدينا',
-  customer_closed_holiday_hint:
-    'نحن مغلقون اليوم. عد إلينا في يوم العمل القادم — القائمة في متناولك دائماً.',
+  customer_closed_holiday_hint: 'نحن مغلقون اليوم. عد إلينا في يوم العمل القادم',
   customer_closed_schedule_title: 'يتم تحديث ساعات العمل',
   customer_closed_schedule_hint:
     'يعود الطلب فور نشر ساعات العمل. ويمكنك تصفّح القائمة كاملة في الوقت الحالي.',

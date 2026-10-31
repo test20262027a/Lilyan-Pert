@@ -1377,8 +1377,7 @@ export default {
   customer_closed_after_hint:
     'Ordering is paused until our next opening time. The whole menu stays available to browse.',
   customer_closed_holiday_title: "It's our day off today",
-  customer_closed_holiday_hint:
-    'We are closed today. Come back on our next working day — the menu is here whenever you are.',
+  customer_closed_holiday_hint: "We're closed today. Come back on our next working day",
   customer_closed_schedule_title: 'Opening hours are being updated',
   customer_closed_schedule_hint:
     'Ordering returns as soon as our schedule is published. You can still browse everything on the menu.',
