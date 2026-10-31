@@ -1,0 +1,141 @@
+/*
+ * Responsive language grid.
+ *
+ * Every form that repeats fields per language renders its cards inside
+ * LanguageFieldsGrid, which carries the number of *enabled* languages in
+ * `data-langs`. The columns therefore always match what is actually shown —
+ * no leftover empty column when a language is switched off.
+ */
+
+.lang-grid-host {
+  width: 100%;
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.lang-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+/* Grid items must be allowed to shrink, or a long word widens the column. */
+.lang-grid > * {
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------ card fields */
+
+.lang-grid-host[data-variant='cards'][data-langs='2'] .lang-grid,
+.lang-grid-host[data-variant='cards'][data-langs='3'] .lang-grid,
+.lang-grid-host[data-variant='cards'][data-langs='4'] .lang-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* Three cards only get three columns when the form genuinely has the room. */
+@container (min-width: 780px) {
+  .lang-grid-host[data-variant='cards'][data-langs='3'] .lang-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Otherwise the third card takes the whole second row instead of half of it. */
+@container (max-width: 779.98px) {
+  .lang-grid-host[data-variant='cards'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* A narrow phone stacks everything: one card per row, full width. */
+@container (max-width: 400px) {
+  .lang-grid-host[data-variant='cards'][data-langs='2'] .lang-grid,
+  .lang-grid-host[data-variant='cards'][data-langs='3'] .lang-grid,
+  .lang-grid-host[data-variant='cards'][data-langs='4'] .lang-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lang-grid-host[data-variant='cards'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
+/* --------------------------------------------------------- compact fields */
+/* Short inputs (prices, single-line values) fit more per row. */
+
+.lang-grid-host[data-variant='compact'] .lang-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lang-grid-host[data-variant='compact'][data-langs='3'] .lang-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lang-grid-host[data-variant='compact'][data-langs='4'] .lang-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@container (max-width: 620px) {
+  .lang-grid-host[data-variant='compact'][data-langs='3'] .lang-grid,
+  .lang-grid-host[data-variant='compact'][data-langs='4'] .lang-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lang-grid-host[data-variant='compact'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 320px) {
+  .lang-grid-host[data-variant='compact'] .lang-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lang-grid-host[data-variant='compact'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
+/* ------------------------------------------------------- long-form fields */
+/* Multi-line text (receipt messages): one column per enabled language while
+   there is room, two columns on a tablet and one full-width field on a phone. */
+
+.lang-grid-host[data-variant='text'][data-langs='2'] .lang-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.lang-grid-host[data-variant='text'][data-langs='4'] .lang-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+@container (max-width: 900px) {
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid,
+  .lang-grid-host[data-variant='text'][data-langs='4'] .lang-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+}
+
+@container (max-width: 560px) {
+  .lang-grid-host[data-variant='text'][data-langs='2'] .lang-grid,
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid,
+  .lang-grid-host[data-variant='text'][data-langs='4'] .lang-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lang-grid-host[data-variant='text'][data-langs='3'] .lang-grid > *:nth-child(3) {
+    grid-column: auto;
+  }
+}
+
+/* Form-specific rhythm, without touching the column logic. */
+.ad-langs .lang-grid { gap: 10px; }
+.tx-langs .lang-grid { gap: 10px; }
+.lang-grid-fieldset .lang-grid { gap: 14px; }

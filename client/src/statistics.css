@@ -1,0 +1,584 @@
+/* ==========================================================================
+   Statistics — illustrated banner, four compact KPI cards, the visits/orders
+   column chart, the five-product ranking and the full-width revenue summary.
+
+   Layout and surface styling only: the palette lives on local tokens so the
+   app-wide light/dark/custom theme keeps working. The semantic series colours
+   (green visits, mint orders, the five ranking tones) stay fixed on purpose.
+   ========================================================================== */
+
+.stats-page {
+  --stats-bg: #fafcfa;
+  --stats-surface: #ffffff;
+  --stats-mint: #f3fbf5;
+  --stats-primary: var(--theme-primary);
+  --stats-purple: var(--theme-primary);
+  --stats-blue: #4f8df7;
+  --stats-orange: #f2a12b;
+  --stats-ink: #242824;
+  --stats-muted: #898f89;
+  --stats-border: rgba(220, 230, 222, 0.75);
+  --stats-radius: 17px;
+  --stats-shadow:
+    0 3px 10px rgba(27, 53, 35, 0.035),
+    0 12px 28px rgba(27, 53, 35, 0.04);
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+[data-theme='dark'] .stats-page {
+  --stats-bg: transparent;
+  --stats-surface: var(--surface);
+  --stats-mint: color-mix(in srgb, var(--theme-primary) 10%, transparent);
+  --stats-ink: var(--text);
+  --stats-muted: var(--muted);
+  --stats-border: var(--border);
+  --stats-shadow: var(--shadow-sm);
+}
+
+.stats-page .stats-card-surface,
+.stats-page .stats-kpi,
+.stats-page .stat-panel {
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.98), rgba(249, 253, 250, 0.94));
+  border: 1px solid var(--stats-border);
+  box-shadow:
+    0 3px 10px rgba(25, 50, 35, 0.035),
+    0 12px 28px rgba(25, 50, 35, 0.045),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+[data-theme='dark'] .stats-page .stats-kpi,
+[data-theme='dark'] .stats-page .stat-panel {
+  background: linear-gradient(145deg, rgba(23, 26, 36, 0.98), rgba(23, 26, 36, 0.94));
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+/* Dark mode keeps the shared KPI surface, only the 3D tiles repaint. */
+
+/* ------------------------------------------------------------- the banner */
+
+.stats-page .mhero {
+  min-height: 150px;
+  padding: 14px 22px;
+  border-radius: 20px;
+  border-color: var(--theme-primary-line);
+  background:
+    radial-gradient(90% 150% at 24% 6%, var(--theme-primary-soft) 0%, transparent 62%),
+    radial-gradient(80% 140% at 88% 98%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+}
+
+.stats-page .mhero__title { color: var(--text); }
+.stats-page .mhero__sub { color: var(--muted); }
+
+.stats-page .start {
+  display: block;
+  width: 100%;
+  max-width: 560px;
+  max-height: 122px;
+  height: auto;
+}
+
+[data-theme='dark'] .stats-page .mhero {
+  border-color: var(--mint-line);
+}
+[data-theme='dark'] .stats-page .mhero__title { color: var(--text); }
+[data-theme='dark'] .stats-page .mhero__sub { color: var(--muted); }
+
+/* ---------------------------------------------------------- the KPI cards */
+
+.stats-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.stats-kpi {
+  /*
+   * Everything inside a KPI is centred on both axes: the icon and its title sit
+   * side by side as one group, the figure sits directly below that group, and
+   * the whole block stays vertically centred so every card shares one number
+   * baseline regardless of label length.
+   */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 11px;
+  min-height: 132px;
+  padding: 20px 18px;
+  border-radius: 18px;
+  min-width: 0;
+  text-align: center;
+  transition: box-shadow 200ms ease, transform 200ms ease, border-color 200ms ease;
+}
+.stats-kpi:hover {
+  transform: translateY(-3px);
+  border-color: var(--theme-primary-line);
+  box-shadow:
+    0 8px 18px rgba(25, 50, 35, 0.06),
+    0 22px 40px rgba(25, 50, 35, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95);
+}
+
+.stats-kpi__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.stats-kpi__label {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--stats-muted);
+  min-width: 0;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stats-kpi__value {
+  font-size: clamp(23px, 2.2vw, 30px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+  color: var(--stats-ink);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+[data-theme='dark'] .stats-kpi:hover {
+  border-color: var(--border-strong);
+}
+
+/* -------------------------------------------------------- analytics grid */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.stat-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: var(--stats-radius);
+  overflow: hidden;
+}
+
+.stats-grid > .stat-panel {
+  min-height: 372px;
+}
+
+.stat-panel__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(226, 236, 228, 0.9);
+  background: linear-gradient(180deg, var(--stats-mint), rgba(255, 255, 255, 0.96));
+  min-width: 0;
+}
+
+.stat-panel__title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--stats-ink);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stat-panel__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+  padding: 14px 16px 16px;
+}
+
+[data-theme='dark'] .stat-panel__head {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--theme-primary) 10%, transparent), rgba(23, 26, 36, 0.96));
+  border-bottom-color: var(--border);
+}
+/* ------------------------------------------------- visits & orders chart */
+
+.stat-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+}
+
+.stat-chart__legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--stats-muted);
+}
+
+.stat-chart__key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stat-chart__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex: none;
+  display: inline-block;
+}
+
+.stat-chart__plot {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.stat-chart__svg {
+  display: block;
+  overflow: visible;
+}
+
+.stat-chart__grid {
+  stroke: #edf1ed;
+  stroke-width: 1;
+  stroke-dasharray: 3 5;
+}
+.stat-chart__axis {
+  stroke: #e2e9e3;
+  stroke-width: 1;
+}
+.stat-chart__x,
+.stat-chart__y {
+  font-size: 10.5px;
+  fill: #98a098;
+}
+.stat-chart__x {
+  text-anchor: middle;
+}
+.stat-chart__hit {
+  fill: transparent;
+  cursor: pointer;
+}
+.stat-chart__hit:focus-visible {
+  outline: none;
+  stroke: var(--theme-primary);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+}
+
+.stat-chart__tip {
+  position: absolute;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 128px;
+  padding: 8px 10px;
+  border-radius: 11px;
+  border: 1px solid rgba(221, 231, 222, 0.95);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 24px rgba(25, 50, 35, 0.12);
+  pointer-events: none;
+  font-size: 11.5px;
+  color: var(--stats-muted);
+}
+.stat-chart__tip-day {
+  font-weight: 750;
+  color: var(--stats-ink);
+  font-size: 12px;
+}
+.stat-chart__tip-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-chart__tip-row strong {
+  margin-inline-start: auto;
+  color: var(--stats-ink);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='dark'] .stat-chart__tip {
+  background: rgba(29, 32, 41, 0.98);
+  border-color: var(--border);
+}
+[data-theme='dark'] .stat-chart__grid { stroke: #272b37; }
+[data-theme='dark'] .stat-chart__axis { stroke: #2f3442; }
+
+/* ------------------------------------------------- most-ordered products */
+
+.stats-top {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.stats-top__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.stats-top__name {
+  flex: 0 0 66%;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--stats-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* A Latin product name inside an RTL row keeps its own reading direction, so
+     a long name is truncated at its end rather than at its first word. */
+  unicode-bidi: plaintext;
+}
+
+.stats-top__track {
+  flex: 1 1 auto;
+  min-width: 40px;
+  height: 9px;
+  border-radius: 999px;
+  background: #f1f4f1;
+  overflow: hidden;
+}
+
+.stats-top__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  transition: width 350ms ease;
+}
+
+.stats-top__value {
+  flex: none;
+  min-width: 20px;
+  text-align: end;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--stats-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='dark'] .stats-top__track { background: var(--surface-3); }
+
+/* ------------------------------------------------------ revenue summary */
+
+.stat-panel--revenue .stat-panel__body {
+  padding: 18px 16px 20px;
+}
+
+.stats-revenue {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.stats-revenue__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 2px 12px;
+  min-width: 0;
+  border-inline-start: 1px solid rgba(226, 236, 228, 0.9);
+}
+.stats-revenue__item:first-child {
+  border-inline-start: 0;
+}
+
+.stats-revenue__label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--stats-muted);
+}
+
+.stats-revenue__value {
+  font-size: clamp(17px, 1.6vw, 20px);
+  font-weight: 800;
+  color: var(--stats-ink);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+[data-theme='dark'] .stats-revenue__item { border-inline-start-color: var(--border); }
+
+/* ------------------------------------------------------- menu counters */
+
+/*
+ * The menu summary is its own six-card section: one row of six on desktop,
+ * three per row on tablets and two per row on phones. Only the column count
+ * is scoped here — the tiles keep the shared .fstat surface, pastel tones,
+ * rounding and depth, and every row keeps one common height so the cards
+ * never end up staggered or oversized.
+ */
+.stats-page .fstat-row--six {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+}
+
+.stats-page .fstat-row--six .fstat {
+  min-height: 148px;
+  padding: 18px 10px 16px;
+}
+
+/* A longer label wraps inside its own tile instead of widening the card. */
+.stats-page .fstat-row--six .fstat__label {
+  font-size: 12px;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ responsive */
+
+/* Tablet: two full rows, icon + title still side by side. */
+@media (max-width: 1100px) {
+  .stats-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .stats-kpi {
+    min-height: 124px;
+    padding: 18px 16px;
+  }
+  /* Tablet: three cards per row, so the six counters fill two even rows. */
+  .stats-page .fstat-row--six {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .stats-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+  .stats-grid > .stat-panel {
+    min-height: 0;
+  }
+  .stats-page .start {
+    max-height: 118px;
+  }
+}
+
+@media (max-width: 640px) {
+  .stats-page {
+    gap: 12px;
+  }
+  /* Phone: one full-width card per row, icon → title → figure, all centred. */
+  .stats-kpis {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 10px;
+  }
+  .stats-kpi {
+    min-height: 0;
+    padding: 18px 14px;
+    gap: 9px;
+  }
+  .stats-kpi__top {
+    flex-direction: column;
+    gap: 8px;
+  }
+  .stats-page .mhero {
+    min-height: 0;
+    padding: 14px;
+    flex-wrap: wrap;
+    row-gap: 10px;
+  }
+  .stats-page .mhero__identity {
+    flex: 1 1 auto;
+  }
+  .stats-page .mhero__art {
+    /* The shared mobile rules hide the artwork; this page keeps its compact
+       illustrated header instead of the plain identity-only banner. */
+    display: grid;
+    order: 3;
+    flex-basis: 100%;
+    padding-inline: 0;
+  }
+  .stats-page .start {
+    max-height: 92px;
+  }
+  .stats-page .mhero__title {
+    white-space: normal;
+  }
+  .stat-panel__body {
+    padding: 12px 12px 14px;
+  }
+  .stat-panel__head {
+    padding: 12px 13px;
+  }
+  /* Phone: two counters per row — three even rows, never a single stretched card. */
+  .stats-page .fstat-row--six {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .stats-page .fstat-row--six .fstat {
+    min-height: 136px;
+    padding: 16px 10px 14px;
+  }
+  .stats-revenue {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stats-revenue__item {
+    padding: 12px 4px;
+    border-inline-start: 0;
+    border-block-start: 1px solid rgba(226, 236, 228, 0.9);
+  }
+  .stats-revenue__item:first-child {
+    border-block-start: 0;
+    padding-block-start: 2px;
+  }
+  .stats-revenue__item:last-child {
+    padding-block-end: 2px;
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-kpi {
+    padding: 16px 12px;
+  }
+  .stats-kpi__label {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-kpi,
+  .stats-top__fill {
+    transition: none;
+  }
+  .stats-kpi:hover {
+    transform: none;
+  }
+}

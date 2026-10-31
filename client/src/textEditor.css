@@ -1,0 +1,537 @@
+/* ==========================================================================
+   Lilyan Pert — Text Editor (receipt automatic messages)
+   Cream / mint illustrated hero, one search field, one accordion group and a
+   four-column language editor. Built on the existing design tokens so dark
+   mode and the RTL layouts keep working unchanged.
+   ========================================================================== */
+
+.tx-page { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+
+/* ------------------------------------------------------------------ hero */
+
+.tx-hero .mhero {
+  min-height: 148px;
+  border-radius: 20px;
+  border-color: var(--theme-primary-line);
+  box-shadow:
+    0 1px 2px rgba(23, 26, 43, 0.05),
+    0 14px 30px rgba(23, 26, 43, 0.06);
+}
+.tx-hero .tx-art { max-width: 540px; }
+
+.tx-unsaved {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: var(--theme-primary-soft);
+  border: 1px solid var(--theme-primary-line);
+  color: var(--theme-primary-strong);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+[data-theme='dark'] .tx-unsaved {
+  background: rgba(217, 119, 6, 0.18);
+  border-color: rgba(217, 119, 6, 0.4);
+  color: var(--theme-primary);
+}
+
+/* ------------------------------------------------------- hero save plate */
+
+/*
+ * The hero Save action wears the panel's primary 3D plate — the same object as
+ * the save actions in Settings, Promotions and Tables: the selected theme's
+ * accent fill, a glossy top sheen, a lit upper edge, a cast shadow in the
+ * button's own hue and the shared radius. Every value comes from the shared
+ * `--btn-*` tokens (see buttons.css), so a theme switch and dark mode repaint
+ * it with no extra rule and a hover can only deepen its own colour.
+ *
+ * The fill is a real gradient, painted by the `.tx-page .tx-save` rule below.
+ */
+.tx-save {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0 22px;
+  border: 1px solid var(--btn-line);
+  border-radius: var(--btn-radius);
+  background-color: var(--btn-fill);
+  background-image: var(--btn-sheen);
+  color: var(--btn-ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: var(--btn-shadow);
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+}
+
+/*
+ * The plate's gradient: a gloss falling from the lit top edge and a shade
+ * gathering along the underside, both layered over the theme accent. The
+ * washes are translucent, so hover and press only change `background-color` —
+ * the theme's richer, then darker, shade cross-fades in place instead of
+ * swapping one gradient for another, and the plate never flashes. The
+ * two-class selector outranks the shared plate rule in buttons.css, which is
+ * loaded after this file, without touching any other page's button.
+ *
+ * It is kept in a custom property so the disabled plate below can wear the
+ * very same gloss instead of falling back to a flat fill.
+ */
+.tx-page .tx-save {
+  --tx-save-gloss:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 22%, transparent) 0%,
+      color-mix(in srgb, #ffffff 7%, transparent) 40%,
+      transparent 58%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, #10141f 24%, transparent) 0%,
+      color-mix(in srgb, #10141f 7%, transparent) 28%,
+      transparent 54%
+    );
+  background-image: var(--tx-save-gloss);
+}
+
+/* One centred row: the icon keeps its own box, the label can never shift.
+   A hairline shadow under the label keeps the ink crisp where the gloss rises
+   at the top of the plate, without touching the plate's size. */
+.tx-save > :is(svg, .icon, .spinner) { flex: none; }
+.tx-save__label {
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow: 0 1px 1px color-mix(in srgb, #10141f 24%, transparent);
+}
+.tx-save:disabled .tx-save__label { text-shadow: none; }
+
+/* Hover: the same accent one step richer, a glow in its own hue, one lift. */
+.tx-save:hover:not(:disabled) {
+  background-color: var(--btn-fill-hover);
+  border-color: var(--btn-line-hover);
+  color: var(--btn-ink-hover);
+  box-shadow: var(--btn-shadow-hover);
+  transform: var(--ui-lift);
+}
+
+/* Pressed: the plate sinks into the page — inset shadow, no cast. */
+.tx-save:active:not(:disabled) {
+  background-color: var(--btn-fill-active);
+  box-shadow: var(--btn-depth-press);
+  transform: var(--ui-press);
+}
+
+.tx-save:focus-visible {
+  outline: 2px solid var(--btn-ring);
+  outline-offset: 2px;
+}
+
+/*
+ * "Nothing to save yet" stays the same raised plate, exactly like the header
+ * Save in Settings: still the theme's accent (eased back one step), still the
+ * gloss and the accent depth — only the lift is withheld. The shared rule in
+ * buttons.css (`:is(…):disabled`) flattens every plate to a pale, shadow-less
+ * fill on load, which is why this button used to read as washed out before a
+ * single edit was made. The three-class selector outranks that shared rule
+ * regardless of which stylesheet the bundler emits last.
+ */
+.tx-page .tx-save:disabled {
+  background-color: color-mix(in srgb, var(--primary) 86%, var(--surface));
+  background-image: var(--tx-save-gloss);
+  border-color: color-mix(in srgb, var(--primary) 58%, var(--border));
+  color: color-mix(in srgb, var(--primary-ink) 84%, var(--primary));
+  box-shadow: var(--btn-accent-depth);
+  transform: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* While saving the plate keeps its size and its disabled tone, but the pointer
+   must read "working", not "unavailable" — same weight as the disabled rule
+   so it wins by order. */
+.tx-page .tx-save[aria-busy='true'] { cursor: progress; }
+
+.tx-save .spinner {
+  width: 15px;
+  height: 15px;
+  border-width: 2px;
+  border-color: rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .tx-save { height: 40px; min-height: 40px; padding: 0 16px; font-size: 13.5px; }
+}
+
+/* ---------------------------------------------------------------- notices */
+
+.tx-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 9px 13px;
+  border-radius: 12px;
+  background: var(--pastel-amber);
+  border: 1px solid var(--pastel-amber-line);
+  color: var(--pastel-amber-ink);
+  font-size: 12.5px;
+}
+
+.tx-conflict {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--pastel-amber);
+  border: 1px solid var(--pastel-amber-line);
+  color: var(--pastel-amber-ink);
+}
+.tx-conflict__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 12.5px; }
+.tx-conflict .btn { margin-inline-start: auto; flex: none; }
+
+/* ---------------------------------------------------------------- search */
+
+/* The surface and the focus ring come from the shared `.lilyan-search`. */
+.tx-search {
+  padding: 0 14px;
+  min-height: 44px;
+}
+.tx-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+.tx-search__input::placeholder { color: var(--muted); }
+
+/* ----------------------------------------------------------- group card */
+
+.tx-group {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05), 0 8px 22px rgba(23, 26, 43, 0.04);
+  overflow: hidden;
+}
+.tx-group__head { border-bottom: 1px solid var(--border); }
+.tx-group__toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 50px;
+  padding: 10px 14px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+  transition: background 180ms ease;
+}
+.tx-group__toggle:hover { background: var(--theme-primary-tint-hover); }
+.tx-group__toggle:focus-visible { outline: 2px solid var(--theme-primary); outline-offset: -2px; }
+.tx-group__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+}
+.tx-group__title { font-size: 13.5px; font-weight: 750; letter-spacing: -0.01em; }
+.tx-group__count {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.tx-group__chevron { margin-inline-start: auto; color: var(--muted); display: grid; place-items: center; transition: transform 220ms ease; }
+.tx-group__chevron.is-open { transform: rotate(180deg); }
+
+.tx-group__body {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+}
+
+/* ------------------------------------------------------------- one row */
+
+.tx-row {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+  transition: border-color 180ms ease, box-shadow 200ms ease, background 180ms ease;
+}
+.tx-row:hover { border-color: var(--border-strong); }
+.tx-row.is-open {
+  border-color: var(--theme-primary-border);
+  box-shadow: 0 6px 18px rgba(23, 26, 43, 0.06);
+}
+.tx-row.is-dirty { border-color: #ead9b0; }
+.tx-row.is-dirty.is-open { border-color: var(--theme-primary-border); }
+
+.tx-row__heading { margin: 0; font: inherit; }
+.tx-row__head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 44px;
+  padding: 9px 13px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  text-align: start;
+  transition: background 180ms ease;
+}
+.tx-row__head:hover { background: var(--surface-2); }
+.tx-row__head:focus-visible { outline: 2px solid var(--theme-primary); outline-offset: -2px; }
+.tx-row__label { display: flex; align-items: center; gap: 7px; min-width: 0; flex-wrap: wrap; }
+.tx-row__num { font-size: 12.5px; font-weight: 750; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
+.tx-row__sep { color: var(--border-strong); font-size: 12px; }
+.tx-row__title { font-size: 13px; font-weight: 650; }
+.tx-row__badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--theme-primary-soft);
+  border: 1px solid var(--theme-primary-line);
+  color: var(--theme-primary-strong);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+[data-theme='dark'] .tx-row__badge {
+  background: color-mix(in srgb, var(--theme-primary) 18%, transparent);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
+.tx-row__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e0a327;
+  box-shadow: 0 0 0 3px rgba(224, 163, 39, 0.16);
+}
+.tx-row__chevron {
+  flex: none;
+  color: var(--muted);
+  display: grid;
+  place-items: center;
+  transition: transform 220ms ease;
+}
+.tx-row.is-open .tx-row__chevron { transform: rotate(180deg); }
+.tx-row.is-open .tx-row__head { background: var(--surface-2); }
+
+/*
+ * Collapse: the body is always mounted, its wrapper animates from a zero row to
+ * the content's natural height. Only one row is ever open (the page owns a
+ * single activeAccordionId), so the panel grows and shrinks in place with no
+ * jump, no flicker and no layout shift.
+ */
+.tx-row__collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 300ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+.tx-row__collapse.is-open { grid-template-rows: 1fr; }
+
+.tx-row__collapse__inner {
+  min-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition:
+    opacity 180ms ease,
+    transform 240ms cubic-bezier(0.32, 0.72, 0.24, 1);
+}
+.tx-row__collapse.is-open .tx-row__collapse__inner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tx-row__collapse,
+  .tx-row__collapse__inner { transition: none; }
+}
+
+.tx-row__body { padding: 2px 13px 13px; }
+
+/* ------------------------------------------------------ language fields */
+
+/*
+ * One field per enabled language. The columns come from LanguageFieldsGrid
+ * (`variant="text"`), which plans the grid from the number of languages the
+ * owner actually enabled — so switching one off widens the others instead of
+ * leaving an empty slot behind.
+ */
+.tx-langs {
+  padding-top: 11px;
+  border-top: 1px dashed var(--border);
+}
+.tx-lang { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.tx-lang__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.tx-lang__label .lang-flag { box-shadow: 0 1px 2px rgba(23, 26, 43, 0.16); }
+.tx-lang__input {
+  width: 100%;
+  min-height: 88px;
+  padding: 9px 10px;
+  border-radius: 11px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.65;
+  resize: vertical;
+  overflow: auto;
+  box-shadow: inset 0 1px 2px rgba(23, 26, 43, 0.03);
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+.tx-lang__input::placeholder { color: var(--muted); }
+.tx-lang__input:focus {
+  outline: none;
+  border-color: var(--theme-primary-border);
+  box-shadow: 0 0 0 3px var(--theme-primary-glow);
+}
+.tx-lang__input:disabled { background: var(--surface-2); color: var(--text-soft); }
+
+.tx-placeholders {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+/* ---------------------------------------------------- translate action */
+
+.tx-translate {
+  width: 100%;
+  margin-top: 11px;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
+}
+.tx-translate:hover:not(:disabled) {
+  border-color: var(--theme-primary-border);
+  background: var(--theme-primary-light);
+  color: var(--theme-primary-strong);
+}
+.tx-translate:disabled { cursor: default; opacity: 0.6; }
+[data-theme='dark'] .tx-translate:hover:not(:disabled) { background: var(--mint-soft); }
+
+/* ------------------------------------------------------ translation review */
+
+.tx-review { display: flex; flex-direction: column; gap: 10px; }
+.tx-review__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.tx-review__item.is-replace { border-color: var(--theme-primary-line); background: var(--theme-primary-soft); }
+.tx-review__head { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 650; }
+.tx-review__lang { font-weight: 750; }
+.tx-review__warn { margin-inline-start: auto; font-size: 10.5px; font-weight: 700; color: var(--theme-primary-strong); }
+.tx-review__text {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 12.5px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+[data-theme='dark'] .tx-review__item.is-replace { background: rgba(217, 119, 6, 0.12); }
+[data-theme='dark'] .tx-review__warn { color: var(--theme-primary); }
+
+/* -------------------------------------------------------------- skeleton */
+
+.tx-skeleton__head,
+.tx-skeleton__row {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: tx-shimmer 1.4s ease infinite;
+}
+.tx-skeleton__head { height: 50px; border-radius: 0; }
+.tx-skeleton__row { height: 44px; margin: 9px 12px; }
+.tx-skeleton__row:last-child { margin-bottom: 12px; }
+
+@keyframes tx-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tx-skeleton__head,
+  .tx-skeleton__row { animation: none; }
+}
+
+/* ----------------------------------------------------------- responsive */
+
+@media (max-width: 860px) {
+  .tx-hero .tx-art { max-width: 420px; }
+  .tx-conflict { flex-wrap: wrap; }
+  .tx-conflict .btn { margin-inline-start: 0; }
+}
+
+@media (max-width: 640px) {
+  .tx-lang__input { min-height: 82px; }
+  .tx-row__label { gap: 5px; }
+  .tx-search { padding: 0 11px; }
+  .tx-hero .tx-art { max-width: 100%; }
+}

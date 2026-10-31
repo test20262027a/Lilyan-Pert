@@ -1,0 +1,320 @@
+/* ==========================================================================
+   My Account & Change Password dialogs.
+
+   Both sit under the shared section header (picture, glass icon tile, title),
+   so the card feels like the section it belongs to. Inside, a soft grid of
+   raised panels holds the fields: theme-aware tints, hairline borders, a gentle
+   top light and a soft accent shadow give the light 3D depth without noise.
+
+   Everything is written with logical properties, so Kurdish / Persian / Arabic
+   mirror perfectly and English keeps the same rhythm.
+   ========================================================================== */
+
+/* Two classes so the width always wins over the shared `.modal` default,
+   whatever order the page stylesheets are injected in. */
+.modal.modal--account { max-width: 760px; }
+.modal.modal--password { max-width: 500px; }
+
+/* A faint theme wash behind the form keeps the body from reading as flat. */
+.modal--account .modal__body,
+.modal--password .modal__body {
+  background:
+    radial-gradient(120% 90% at 100% 0%, var(--theme-primary-soft) 0%, transparent 55%),
+    var(--surface);
+}
+/* ------------------------------------------------ illustrated header
+   The same header as the Add / Edit User dialog: the users artwork fills the
+   whole header box (100% x 100%, see .sh-bg__art), a glass icon tile, the
+   title with its subtitle, and the close control floating on the opposite
+   side. `isolation` keeps the -1 backdrop inside the header — without it the
+   picture paints behind the dialog's own surface and the header reads white. */
+.modal.modal--account .sh-head,
+.modal.modal--password .sh-head {
+  isolation: isolate;
+  min-height: var(--hd-modal-h);
+  padding-block: 14px;
+  padding-inline: 18px 58px;
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary-line) 60%, var(--border));
+}
+
+/* The header icon tile and type come from the shared header design system. */
+.modal.modal--account .sh-head__title,
+.modal.modal--password .sh-head__title { color: var(--text); }
+.modal.modal--account .sh-head__sub,
+.modal.modal--password .sh-head__sub { color: var(--text-soft); }
+
+/* The close control matches the dialog's glass chrome and keeps its corner. */
+.modal.modal--account .modal__close,
+.modal.modal--password .modal__close {
+  top: 10px;
+  inset-inline-end: 10px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid var(--border);
+  color: var(--text-soft);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    0 3px 10px rgba(23, 26, 43, 0.16),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: background-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.modal.modal--account .modal__close:hover,
+.modal.modal--password .modal__close:hover {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow:
+    0 6px 16px rgba(23, 26, 43, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+/* ------------------------------------------------------------------ layout */
+
+.amodal {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+.amodal .alert { border-radius: 14px; }
+
+.amodal__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.amodal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+/* --------------------------------------------------------------- sections */
+
+.amodal__section {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  box-shadow:
+    0 1px 2px rgba(16, 22, 38, 0.05),
+    0 14px 28px -24px color-mix(in srgb, var(--primary) 70%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.amodal__head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.amodal__icon {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--theme-primary-strong);
+  background: var(--theme-primary-soft);
+  border: 1px solid var(--theme-primary-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.amodal__title {
+  flex: none;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+/* A hairline running to the far edge, so the group head reads as a quiet rule. */
+.amodal__rule {
+  flex: 1 1 auto;
+  height: 1px;
+  border-radius: 1px;
+  background: linear-gradient(to right, var(--border), transparent);
+}
+[dir='rtl'] .amodal__rule { background: linear-gradient(to left, var(--border), transparent); }
+
+/* The photo panel is already its own card; inside a section it flattens so the
+   two never read as a card in a card. */
+.amodal__section .uphoto--account {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+/* A slightly larger portrait than the Add / Edit User form: this is the
+   person's own account, so the preview leads the card. */
+.uphoto--account .uphoto__frame .uavatar { width: 112px; height: 112px; }
+
+/* ------------------------------------------------------------------- field */
+
+.am-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.am-field__label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+}
+
+.am-field__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 13px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 2px rgba(16, 22, 38, 0.05),
+    0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+.am-field__control:hover { border-color: color-mix(in srgb, var(--primary) 26%, var(--border-strong)); }
+.am-field__control:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 58%, var(--border-strong));
+  box-shadow:
+    0 0 0 3px var(--theme-focus-ring),
+    0 8px 18px -14px color-mix(in srgb, var(--primary) 75%, transparent);
+}
+
+.am-field__icon {
+  position: absolute;
+  inset-inline-start: 12px;
+  color: var(--muted);
+  pointer-events: none;
+  transition: color 0.18s ease;
+}
+.am-field__control:focus-within .am-field__icon { color: var(--theme-primary-strong); }
+
+.am-field__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  min-height: 42px;
+  padding: 11px 14px;
+  padding-inline-start: 38px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+.am-field__input::placeholder { color: var(--muted); }
+.am-field__input:disabled,
+.am-field__input:read-only { cursor: default; }
+.am-field__input:disabled { -webkit-text-fill-color: var(--text-soft); opacity: 1; }
+
+.am-field__hint {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* Facts that come from the saved record: quiet, dashed and clearly not typed. */
+.am-field.is-readonly .am-field__control {
+  background: var(--surface-3);
+  border-style: dashed;
+  border-color: var(--border);
+  box-shadow: none;
+}
+.am-field.is-readonly .am-field__icon { color: var(--theme-primary-strong); opacity: 0.75; }
+
+/* ------------------------------------------------------------------ notice */
+
+.amodal__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: 14px;
+  background: var(--theme-primary-soft);
+  border: 1px solid var(--theme-primary-line);
+  color: var(--theme-primary-strong);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+.amodal__notice-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: -1px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+/* -------------------------------------------------------------------- dark */
+
+[data-theme='dark'] .amodal__section {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 14px 28px -24px color-mix(in srgb, var(--primary) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+[data-theme='dark'] .am-field__control {
+  background: var(--surface-2);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.32);
+}
+[data-theme='dark'] .am-field__control:focus-within { background: var(--surface); }
+[data-theme='dark'] .amodal__icon,
+[data-theme='dark'] .amodal__notice-icon { box-shadow: none; }
+[data-theme='dark'] .modal.modal--account .modal__close,
+[data-theme='dark'] .modal.modal--password .modal__close {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ------------------------------------------------------------- responsive */
+
+@media (max-width: 860px) {
+  .modal.modal--account .sh-head,
+  .modal.modal--password .sh-head { min-height: var(--hd-modal-h-sm); padding-block: 12px; }
+}
+
+@media (max-width: 640px) {
+  .amodal__grid { grid-template-columns: 1fr; }
+  .amodal__section { padding: 12px; border-radius: 16px; gap: 11px; }
+  /* Compact header: the picture still fills it, the title, icon and close
+     control stay visible and the subtitle never grows into the illustration. */
+  .modal.modal--account .sh-head,
+  .modal.modal--password .sh-head {
+    min-height: 84px;
+    padding-block: 12px;
+    padding-inline: 14px 52px;
+    gap: 10px;
+  }
+  .modal.modal--account .modal__close,
+  .modal.modal--password .modal__close {
+    top: 8px;
+    inset-inline-end: 8px;
+    width: 34px;
+    height: 34px;
+  }
+  .uphoto--account .uphoto__frame .uavatar { width: 96px; height: 96px; }
+  .amodal__notice { font-size: 11.5px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .am-field__control,
+  .am-field__icon { transition: none; }
+}

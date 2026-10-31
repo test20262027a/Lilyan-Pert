@@ -1,0 +1,294 @@
+/* ==========================================================================
+   AnimatedBackToTop — a perfectly circular glass control with three
+   dimensional chevrons that light up one → two → three and chase upward.
+   Every colour is derived from the active business theme (`--primary` plus the
+   surface/border tokens), so a theme or light/dark switch recolours the plate,
+   the chevrons, the border and the glow with no extra rules.
+   Arrow order in the DOM is top → middle → bottom; the stack reads bottom-up:
+   one large chevron, then two, then three.
+   ========================================================================== */
+
+.btt {
+  /* Chevron ink, gloss and relief, all theme-derived. */
+  --btt-ink: color-mix(in srgb, var(--primary) 58%, var(--text));
+  --btt-gloss: rgba(255, 255, 255, 0.66);
+  --btt-shade: color-mix(in srgb, var(--primary) 52%, rgba(12, 22, 16, 0.55));
+  --btt-glow: color-mix(in srgb, var(--primary) 72%, transparent);
+  /* Resting and lit chevron filters: the lit one carries the LED glow. */
+  --btt-lift:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
+    drop-shadow(0 2px 4px color-mix(in srgb, var(--primary) 30%, transparent));
+  --btt-lift-lit:
+    drop-shadow(0 0 7px var(--btt-glow))
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.6))
+    drop-shadow(0 2px 5px color-mix(in srgb, var(--primary) 40%, transparent));
+
+  position: fixed;
+  inset-block-end: calc(18px + env(safe-area-inset-bottom, 0px));
+  inset-inline-end: 16px;
+  z-index: 45;
+  /* Equal width and height with a full radius: a true circle at every size. */
+  box-sizing: border-box;
+  width: 38px;
+  height: 38px;
+  aspect-ratio: 1 / 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--primary) 26%, var(--border));
+  color: var(--btt-ink);
+  background:
+    radial-gradient(120% 82% at 50% -6%, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0) 60%),
+    radial-gradient(90% 70% at 50% 118%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 72%),
+    linear-gradient(
+      158deg,
+      color-mix(in srgb, var(--surface) 94%, #ffffff),
+      color-mix(in srgb, var(--primary) 14%, var(--surface))
+    );
+  box-shadow:
+    0 10px 20px -9px color-mix(in srgb, var(--primary) 58%, transparent),
+    0 3px 7px -4px rgba(14, 22, 18, 0.22),
+    0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent),
+    inset 0 1.5px 1.5px -1px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 10px -5px color-mix(in srgb, var(--primary) 28%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+  backdrop-filter: blur(14px) saturate(150%);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition:
+    opacity 260ms ease,
+    transform 320ms cubic-bezier(0.22, 0.9, 0.3, 1.15),
+    box-shadow 260ms ease,
+    border-color 260ms ease,
+    color 220ms ease,
+    visibility 260ms;
+}
+
+/* A 44px invisible hit area centred on the plate: the visible control stays
+   compact while the accessible touch target keeps its minimum size. */
+.btt::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.btt.is-visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  /* Gentle idle float; it moves with the `translate` property so the hover
+     transform below stays free and the box keeps its exact size. */
+  animation: btt-float 3.6s ease-in-out 520ms infinite;
+}
+
+@keyframes btt-float {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -2px; }
+}
+
+/* Dark mode: the tokens darken the plate; the ink, gloss and inner highlight
+   are retuned so the chevrons keep their contrast on a dark glass surface. */
+[data-theme='dark'] .btt {
+  --btt-ink: color-mix(in srgb, var(--primary) 46%, #ffffff);
+  --btt-gloss: rgba(255, 255, 255, 0.42);
+  --btt-shade: color-mix(in srgb, #050806 55%, var(--primary));
+  --btt-lift:
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12))
+    drop-shadow(0 2px 6px color-mix(in srgb, var(--primary) 44%, transparent));
+  --btt-lift-lit:
+    drop-shadow(0 0 9px color-mix(in srgb, var(--primary) 78%, transparent))
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.16))
+    drop-shadow(0 2px 7px color-mix(in srgb, var(--primary) 52%, transparent));
+
+  background:
+    radial-gradient(120% 82% at 50% -6%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 62%),
+    radial-gradient(90% 70% at 50% 118%, color-mix(in srgb, var(--primary) 34%, transparent), transparent 74%),
+    linear-gradient(
+      158deg,
+      color-mix(in srgb, var(--surface-2) 90%, #ffffff),
+      color-mix(in srgb, var(--primary) 24%, var(--surface))
+    );
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+  box-shadow:
+    0 10px 22px -9px rgba(0, 0, 0, 0.66),
+    0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 0 16px -7px color-mix(in srgb, var(--primary) 58%, transparent),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -6px 11px -6px color-mix(in srgb, var(--primary) 40%, transparent);
+}
+
+/* Hover lifts the plate and brightens the ring — never resizes it. */
+.btt.is-visible:hover {
+  transform: translateY(-2px);
+  color: color-mix(in srgb, var(--primary) 44%, var(--text));
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--border));
+  box-shadow:
+    0 15px 26px -10px color-mix(in srgb, var(--primary) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--primary) 26%, transparent),
+    0 0 17px -7px color-mix(in srgb, var(--primary) 58%, transparent),
+    0 4px 9px -5px rgba(14, 22, 18, 0.24),
+    inset 0 1.5px 2px -1px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 10px -5px color-mix(in srgb, var(--primary) 32%, transparent);
+}
+[data-theme='dark'] .btt.is-visible:hover {
+  color: color-mix(in srgb, var(--primary) 34%, #ffffff);
+  border-color: color-mix(in srgb, var(--primary) 58%, transparent);
+  box-shadow:
+    0 15px 28px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in srgb, var(--primary) 46%, transparent),
+    0 0 20px -6px color-mix(in srgb, var(--primary) 66%, transparent),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22);
+}
+.btt.is-visible:active { transform: translateY(-1px); }
+
+.btt:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  box-shadow:
+    0 0 0 6px var(--theme-focus-ring),
+    0 10px 20px -9px color-mix(in srgb, var(--primary) 58%, transparent);
+}
+
+/* ------------------------------------------------------------- chevrons --- */
+
+/* A perfect column: every chevron is centred on the button's own axis. */
+.btt__arrows {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.btt__arrow {
+  display: block;
+  height: auto;
+  aspect-ratio: 2 / 1;
+  overflow: visible;
+  filter: var(--btt-lift);
+}
+
+/* Three stacked strokes per chevron: a soft shade below the body and a gloss
+   along its top edge, so each reads as a milled 3D ridge rather than a line. */
+.btt__arrow-shade,
+.btt__arrow-body,
+.btt__arrow-gloss {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.btt__arrow-shade {
+  stroke: var(--btt-shade);
+  transform: translateY(1.05px);
+}
+.btt__arrow-body { stroke: currentColor; }
+.btt__arrow-gloss {
+  stroke: var(--btt-gloss);
+  transform: translateY(-0.95px);
+}
+
+/* Bottom LARGE — middle MEDIUM — top SMALL. */
+.btt__arrow--bottom { width: 15.5px; }
+.btt__arrow--middle { width: 12px; }
+.btt__arrow--top { width: 8.5px; }
+
+/*
+ * One → two → three, on a 3s loop. The bottom chevron stands alone and lights
+ * up first, the middle one rises in and lights, then the small top one — the
+ * glow travels upward, holds for a beat, and the upper two fade back out so
+ * the loop restarts on a single arrow. Only animates while on screen.
+ */
+.btt__arrow {
+  animation-duration: 3s;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-iteration-count: infinite;
+  animation-play-state: paused;
+}
+.btt.is-visible .btt__arrow { animation-play-state: running; }
+
+.btt__arrow--bottom { animation-name: btt-chase-bottom; }
+.btt__arrow--middle { animation-name: btt-chase-middle; }
+.btt__arrow--top { animation-name: btt-chase-top; }
+
+@keyframes btt-chase-bottom {
+  0% { filter: var(--btt-lift-lit); transform: scale(1.03); }
+  16%, 86% { filter: var(--btt-lift); transform: scale(1); }
+  100% { filter: var(--btt-lift-lit); transform: scale(1.03); }
+}
+
+@keyframes btt-chase-middle {
+  0%, 18% { opacity: 0; transform: translateY(4px) scale(0.68); }
+  30% { opacity: 1; transform: translateY(0) scale(1.05); filter: var(--btt-lift-lit); }
+  44%, 86% { opacity: 1; transform: translateY(0) scale(1); filter: var(--btt-lift); }
+  96%, 100% { opacity: 0; transform: translateY(3px) scale(0.72); }
+}
+
+@keyframes btt-chase-top {
+  0%, 40% { opacity: 0; transform: translateY(4px) scale(0.64); }
+  52% { opacity: 1; transform: translateY(0) scale(1.06); filter: var(--btt-lift-lit); }
+  64%, 88% { opacity: 1; transform: translateY(0) scale(1); filter: var(--btt-lift); }
+  98%, 100% { opacity: 0; transform: translateY(3px) scale(0.68); }
+}
+
+/* ------------------------------------------------------- avoidance rules --- */
+
+/* The guest cart bar owns the bottom edge; the control lifts above it instead
+   of sitting on the checkout button. */
+.customer-shell:has(.cart-bar) .btt { inset-block-end: calc(88px + env(safe-area-inset-bottom, 0px)); }
+
+/* A dialog owns the screen; the control must not sit in its footer. */
+body:has(.modal-backdrop) .btt,
+body:has(.cui-overlay) .btt { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* ----------------------------------------------------------- responsive --- */
+
+@media (max-width: 1024px) {
+  .btt { width: 36px; height: 36px; }
+  .btt__arrow--bottom { width: 14.5px; }
+  .btt__arrow--middle { width: 11px; }
+  .btt__arrow--top { width: 8px; }
+}
+
+@media (max-width: 640px) {
+  .btt {
+    width: 34px;
+    height: 34px;
+    inset-inline-end: 12px;
+    inset-block-end: calc(14px + env(safe-area-inset-bottom, 0px));
+  }
+  .btt__arrow--bottom { width: 13.5px; }
+  .btt__arrow--middle { width: 10.5px; }
+  .btt__arrow--top { width: 7.5px; }
+  .customer-shell:has(.cart-bar) .btt { inset-block-end: calc(80px + env(safe-area-inset-bottom, 0px)); }
+}
+
+/* ------------------------------------------------- reduced motion support --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .btt {
+    transition: opacity 200ms ease, visibility 200ms;
+    transform: none;
+    animation: none;
+  }
+  .btt.is-visible { transform: none; translate: none; animation: none; }
+  .btt.is-visible:hover,
+  .btt.is-visible:active { transform: none; }
+  /* All three chevrons, held still and fully lit. */
+  .btt__arrow {
+    animation: none;
+    opacity: 1;
+    transform: none;
+    filter: var(--btt-lift);
+  }
+}

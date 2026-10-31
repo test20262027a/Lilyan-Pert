@@ -1,0 +1,121 @@
+/*
+ * Section header system. Each header paints its own picture stretched to the
+ * header's exact box (100% x 100%), at full opacity, with ONE narrow reading
+ * scrim on the copy's edge. No blurred margin fill, theme tint, painted
+ * sunlight, beam, bounce or full-width veil sits over the artwork, so the
+ * illustration keeps the colours and detail of the original file and no seam,
+ * blur boundary or empty strip can appear around it. Light mode shows it
+ * as-is; dark mode dims it just enough for light copy to stay readable.
+ */
+.sh-host, .mhero, .obanner, .welcome, .modal__head, .mcmodal__head, .cui-sheet__art, .dcd,
+.dash-modal__head, .adp__head { isolation: isolate; }
+
+.sh-bg {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+  border-radius: inherit;
+}
+/* The picture paints the section's own file over its fallback (see
+   HeaderBackdrop): an absent file is not painted, so the fallback shows. */
+.sh-bg__art {
+  background-image: var(--sh-img), var(--sh-alt, linear-gradient(transparent, transparent));
+  background-repeat: no-repeat;
+}
+/* The picture itself: ONE rule for every illustrated header, page banner and
+   dialog alike. `100% 100%` stretches the whole artwork edge to edge and top
+   to bottom of the header's CURRENT box at every viewport — the complete
+   image, both ends and all four corners visible, never cropped, never
+   letterboxed, with no blurred margin fill behind it to expose a seam. */
+.sh-bg__art {
+  position: absolute; inset: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+  /* Natural, not processed: the original file with only a whisper of extra
+     saturation and contrast. No brightness lift (the artwork is already
+     luminous — raising it clips the cream highlights into white) and no heavy
+     filtering, so the line work and colours stay true to the source. */
+  filter: saturate(1.15) contrast(1.06);
+  transition: filter 0.2s ease;
+}
+/*
+ * ONE layer, and only where the copy sits: a soft surface fade at the reading
+ * edge, fully gone by the middle of the box. The rest of the artwork — the
+ * whole illustration — is never covered by anything.
+ */
+.sh-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(to right,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-start), transparent) 0%,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 26%,
+    transparent var(--hd-scrim-end));
+}
+/* RTL mirrors the copy to the right, so the fade starts on that edge. */
+[dir='rtl'] .sh-bg::after {
+  background: linear-gradient(to left,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-start), transparent) 0%,
+    color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 26%,
+    transparent var(--hd-scrim-end));
+}
+/* Night: the same rig at candle power, so the picture stays warm, not muddy. */
+[data-theme='dark'] .sh-bg__art { filter: brightness(0.9) saturate(1.1) contrast(1.05); }
+
+/* Page banners: the old drawn artwork gives way to the section picture. */
+.mhero:has(> .sh-bg) > .mhero__art,
+.obanner:has(> .sh-bg) > .obanner__art,
+.welcome:has(> .sh-bg) > :not(.sh-bg):not(.welcome__text) { display: none; }
+.mhero:has(> .sh-bg) > .mhero__controls,
+.obanner:has(> .sh-bg) > .obanner__controls { margin-inline-start: auto; }
+.mhero:has(> .sh-bg), .obanner:has(> .sh-bg), .welcome:has(> .sh-bg) { background-image: none; }
+.mhero:has(> .sh-bg) .mhero__title, .obanner:has(> .sh-bg) .obanner__title, .welcome:has(> .sh-bg) .welcome__title { color: var(--text); }
+.mhero:has(> .sh-bg) .mhero__sub, .obanner:has(> .sh-bg) .obanner__sub, .welcome:has(> .sh-bg) .welcome__sub { color: var(--text-soft); }
+
+/* Light bars that now carry the section picture. */
+.dash-modal__head, .adp__head { position: relative; overflow: hidden; background-image: none; }
+.dash-modal__head { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.adp__head { border-radius: 18px 18px 0 0; }
+/* Content blocks sit above the picture. The close control is chrome, not copy:
+   it keeps the dialog's own absolute corner placement instead of dropping into
+   the text flow below the title. */
+.dash-modal__head > *:not(.sh-bg):not(.dash-modal__close),
+.adp__head > *:not(.sh-bg) { position: relative; z-index: 1; }
+.dash-modal__head > .dash-modal__close { position: absolute; z-index: 2; }
+
+/* Modal / drawer header. The icon tile, the centred icon+text row and the type
+   come from the header design system (headerSystem.css); only the bar itself
+   is laid out here. */
+.sh-head {
+  position: relative; flex: none; min-height: var(--hd-modal-h);
+  padding: 14px 58px 14px 18px; overflow: hidden;
+  border-bottom: 1px solid var(--mint-line);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+[dir='rtl'] .sh-head { padding: 14px 18px 14px 58px; }
+.sh-head__title { color: var(--text); }
+.sh-head__sub { color: var(--text-soft); }
+
+/* Confirmation dialogs: a soft banner fades out behind the top of the card. */
+.sh-bg--dcd { inset: 0 0 auto 0; height: var(--hd-modal-h); border-radius: 19px 19px 0 0; opacity: 1;
+  -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent); }
+
+/* Customer cart / review sheets: the same full-bleed rule, raised above the
+   sheet's own painted background so the artwork is actually visible. */
+.sh-bg--cart { z-index: 0; }
+/* The cart / review sheet carries white copy of its own, and its art bar paints
+   the local shade behind that copy, so the picture adds nothing but a gentle
+   fade into the sheet below — no flare, no beam, no horizontal veil. */
+.sh-bg--cart::after {
+  background: linear-gradient(to bottom, transparent 48%, color-mix(in srgb, var(--surface) 22%, transparent));
+}
+.cui-sheet__art:has(> .sh-bg) > .cui-art { display: none; }
+.cui-sheet__art:has(> .sh-bg) .cui-sheet__artbar { z-index: 1; }
+.cui-sheet__art:has(> .sh-bg) .cui-sheet__close { z-index: 2; }
+@media (max-width: 560px) { .sh-head { min-height: var(--hd-modal-h-sm); padding-block: 12px; } }
+
+/* Section-specific modal headers share the same picture; their drawn art yields. */
+.um-modal__head, .promo-modal__head, .ad-modal__head, .odm__head { isolation: isolate; }
+.um-modal__head:has(> .sh-bg) > .um-modal__art,
+.promo-modal__head:has(> .sh-bg) > .promo-modal__art-wrap,
+.ad-modal__head:has(> .sh-bg) > .ad-modal__artwrap,
+.odm__head:has(> .sh-bg) > .odm__art,
+.cui-sheet__art:has(> .sh-bg) > svg { display: none; }
+.um-modal__head:has(> .sh-bg), .promo-modal__head:has(> .sh-bg), .ad-modal__head:has(> .sh-bg), .odm__head:has(> .sh-bg) { background-image: none; }

@@ -1,0 +1,327 @@
+/* ==========================================================================
+   Admin action plate — ONE premium 3D button language for the whole panel.
+
+   The shared `Button` component (`.btn`) already carries this physical model
+   in styles.css. This file gives every page-level action class the same
+   model: radius, sheen, lit top edge, shaded underside and a soft cast
+   shadow, all read from the `--btn-*` tokens.
+
+   A family only declares the three things that carry meaning — fill, ink and
+   glow — through custom properties, so:
+     · every button is the same object with the same geometry and motion;
+     · a theme switch repaints all of them at once;
+     · a hover can only deepen the button's own colour, never a foreign one;
+     · semantic actions (delete = red, warning = amber, success = green)
+       stay inside their own family.
+
+   Loaded last (see main.jsx) so it fills in the states page skins were
+   missing without repeating any page's layout.
+   ========================================================================== */
+
+/* ------------------------------------------------------------- families --- */
+
+/* Secondary: a solid neutral plate that warms toward the accent on hover. */
+:is(.ma-btn--secondary, .dcd__btn--cancel, .tcard__act, .ad-cancel,
+    .ad2-btn, .ad-mini, .promo-edit, .promo-cancel, .um-btn, .um-mini,
+    .bk-btn, .tx-translate, .rv-more, .rs-btn, .dash-modal__btn,
+    .mform__mini, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .mrow__btn, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn) {
+  --btn-fill: var(--surface);
+  --btn-fill-hover: var(--theme-primary-tint-hover);
+  --btn-fill-active: var(--theme-primary-tint-active);
+  --btn-ink: var(--text);
+  --btn-ink-hover: var(--theme-primary-strong);
+  --btn-line: color-mix(in srgb, var(--primary) 14%, var(--border-strong));
+  --btn-line-hover: var(--theme-primary-line);
+  --btn-shadow: var(--btn-depth-1);
+  --btn-shadow-hover: var(--btn-depth-2),
+    0 0 0 1px color-mix(in srgb, var(--primary) 14%, transparent);
+  --btn-disabled-fill: var(--surface-2);
+  --btn-disabled-line: var(--border);
+  --btn-disabled-ink: var(--muted);
+  --btn-ring: var(--focus-ring);
+}
+
+/* Primary: the business accent, filled, white ink. */
+:is(.ma-btn--primary, .mbtn, .mbtn--green, .mcard__btn--edit, .tadd, .ad-add,
+    .ad-save, .promo-add, .promo-save, .um-add, .um-btn--primary,
+    .bk-btn--green, .tx-save, .set-save, .dash-modal__btn--apply,
+    .rs-btn--green, .ccpick__apply, .odm__foot-btn--primary) {
+  --btn-fill: var(--primary);
+  --btn-fill-hover: var(--theme-primary-hover);
+  --btn-fill-active: var(--theme-primary-active);
+  --btn-ink: var(--primary-ink);
+  --btn-ink-hover: var(--primary-ink);
+  --btn-line: color-mix(in srgb, var(--primary) 74%, #10141f);
+  --btn-line-hover: var(--theme-primary-active);
+  --btn-shadow: var(--btn-accent-depth);
+  --btn-shadow-hover: var(--btn-accent-depth-hover);
+  --btn-disabled-fill: color-mix(in srgb, var(--primary) 20%, var(--surface));
+  --btn-disabled-line: color-mix(in srgb, var(--primary) 26%, var(--border));
+  --btn-disabled-ink: color-mix(in srgb, var(--primary) 58%, var(--text));
+  --btn-ring: var(--focus-ring);
+}
+
+/* Soft accent: a tinted plate for the "safe" action beside a primary one. */
+.ad2-btn.ad2-btn--preview,
+.odate__pop-today {
+  --btn-fill: color-mix(in srgb, var(--primary) 11%, var(--surface));
+  --btn-fill-hover: color-mix(in srgb, var(--primary) 18%, var(--surface));
+  --btn-fill-active: color-mix(in srgb, var(--primary) 24%, var(--surface));
+  --btn-ink: var(--theme-primary-strong);
+  --btn-ink-hover: var(--theme-primary-strong);
+  --btn-line: var(--theme-primary-line);
+  --btn-line-hover: var(--theme-primary-border);
+  --btn-shadow: var(--btn-edge),
+    0 1px 2px rgba(23, 26, 43, 0.08),
+    0 8px 16px -10px color-mix(in srgb, var(--primary) 42%, transparent);
+  --btn-shadow-hover: var(--btn-edge),
+    0 2px 4px rgba(23, 26, 43, 0.1),
+    0 14px 24px -12px color-mix(in srgb, var(--primary) 52%, transparent);
+  --btn-disabled-fill: var(--surface-2);
+  --btn-disabled-line: var(--border);
+  --btn-disabled-ink: var(--muted);
+  --btn-ring: var(--focus-ring);
+}
+
+/* Destructive: always red, in every theme. */
+:is(.mcard__btn--delete, .tdel__btn, .ma-btn--danger, .dcd__btn--danger,
+    .bk-btn--danger, .rs-btn--danger) {
+  --btn-fill: var(--danger);
+  --btn-fill-hover: var(--danger-hover);
+  --btn-fill-active: var(--danger-active);
+  --btn-ink: #ffffff;
+  --btn-ink-hover: #ffffff;
+  --btn-line: color-mix(in srgb, var(--danger) 80%, #10141f);
+  --btn-line-hover: var(--danger-active);
+  --btn-shadow: var(--btn-danger-depth);
+  --btn-shadow-hover: var(--btn-danger-depth-hover);
+  --btn-disabled-fill: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  --btn-disabled-line: color-mix(in srgb, var(--danger) 30%, var(--border));
+  --btn-disabled-ink: color-mix(in srgb, var(--danger) 72%, var(--text));
+  --btn-ring: var(--focus-ring-danger);
+}
+
+/* Soft destructive: the icon-only delete that sits in a row or a card. It is
+   tinted so it never shouts across the page, but it is still a raised plate. */
+:is(.promo-delete, .tcard__act--del, .rv-card__del, .av-del,
+    .mrow__btn--danger) {
+  --btn-fill: color-mix(in srgb, var(--danger) 11%, var(--surface));
+  --btn-fill-hover: color-mix(in srgb, var(--danger) 19%, var(--surface));
+  --btn-fill-active: color-mix(in srgb, var(--danger) 26%, var(--surface));
+  --btn-ink: color-mix(in srgb, var(--danger) 86%, #10141f);
+  --btn-ink-hover: color-mix(in srgb, var(--danger) 94%, #10141f);
+  --btn-line: color-mix(in srgb, var(--danger) 26%, transparent);
+  --btn-line-hover: color-mix(in srgb, var(--danger) 42%, transparent);
+  --btn-shadow: var(--btn-edge),
+    0 1px 2px rgba(120, 16, 16, 0.1),
+    0 8px 16px -10px color-mix(in srgb, var(--danger) 45%, transparent);
+  --btn-shadow-hover: var(--btn-edge),
+    0 2px 4px rgba(120, 16, 16, 0.14),
+    0 14px 24px -12px color-mix(in srgb, var(--danger) 58%, transparent);
+  --btn-disabled-fill: var(--surface-2);
+  --btn-disabled-line: var(--border);
+  --btn-disabled-ink: var(--muted);
+  --btn-ring: var(--focus-ring-danger);
+}
+/* A tinted family member that also carries the neutral base class. */
+.ad2-btn.ad2-btn--delete,
+.ad-mini.ad-mini--danger {
+  --btn-fill: color-mix(in srgb, var(--danger) 11%, var(--surface));
+  --btn-fill-hover: color-mix(in srgb, var(--danger) 19%, var(--surface));
+  --btn-fill-active: color-mix(in srgb, var(--danger) 26%, var(--surface));
+  --btn-ink: color-mix(in srgb, var(--danger) 86%, #10141f);
+  --btn-ink-hover: color-mix(in srgb, var(--danger) 94%, #10141f);
+  --btn-line: color-mix(in srgb, var(--danger) 26%, transparent);
+  --btn-line-hover: color-mix(in srgb, var(--danger) 42%, transparent);
+  --btn-disabled-fill: var(--surface-2);
+  --btn-disabled-ink: var(--muted);
+  --btn-ring: var(--focus-ring-danger);
+}
+
+/* ---------------------------------------------------------------- plate --- */
+
+/*
+ * Geometry, sheen, depth and motion — identical for every family. Nothing here
+ * changes a button's size: heights, padding and layout stay exactly as each
+ * page declared them, and hover/press only move the plate by a sub-pixel.
+ */
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn) {
+  border-radius: var(--btn-radius);
+  background-color: var(--btn-fill);
+  background-image: var(--btn-sheen);
+  border-color: var(--btn-line);
+  color: var(--btn-ink);
+  box-shadow: var(--btn-shadow);
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    background-image var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+}
+
+/* Hover: the same colour one step richer, a deeper cast, a one-pixel lift. */
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn):hover:not(:disabled) {
+  background-color: var(--btn-fill-hover);
+  border-color: var(--btn-line-hover);
+  color: var(--btn-ink-hover);
+  box-shadow: var(--btn-shadow-hover);
+  transform: var(--ui-lift);
+}
+
+/* Pressed: the plate sinks into the page — inset shadow, no cast. */
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn):active:not(:disabled) {
+  background-color: var(--btn-fill-active);
+  box-shadow: var(--btn-depth-press);
+  transform: var(--ui-press);
+}
+
+/* Focus: a clear theme-coloured ring, always outside the plate. */
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn):focus-visible {
+  outline: 2px solid var(--btn-ring);
+  outline-offset: 2px;
+}
+
+/* Disabled: muted but readable, flat, and never lifting under the pointer. */
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn):disabled {
+  background-color: var(--btn-disabled-fill, var(--surface-2));
+  background-image: none;
+  border-color: var(--btn-disabled-line, var(--border));
+  color: var(--btn-disabled-ink, var(--muted));
+  box-shadow: none;
+  transform: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------- loading --- */
+
+/* A busy plate keeps its exact size: the spinner takes the icon's box and the
+   plate stops lifting, so nothing reflows while the action is in flight. */
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn) .spinner {
+  flex: none;
+}
+:is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+    .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+    .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+    .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+    .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+    .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+    .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn):has(> .spinner) {
+  cursor: progress;
+  transform: none;
+}
+
+/* ------------------------------------------------------ sidebar actions --- */
+
+/*
+ * The one button inside the navy rail sits on dark glass, so it keeps its own
+ * surface but takes the same sheen, lit edge and press as every other plate.
+ */
+.sidebar .btn {
+  background-color: rgba(255, 255, 255, 0.08);
+  background-image: var(--btn-sheen);
+  border-color: var(--navy-line);
+  color: var(--navy-ink);
+  border-radius: var(--btn-radius);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.32),
+    0 2px 6px -3px rgba(0, 0, 0, 0.45);
+}
+.sidebar .btn:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.24);
+  color: #ffffff;
+  transform: var(--ui-lift);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.34),
+    0 10px 18px -10px rgba(0, 0, 0, 0.6);
+}
+.sidebar .btn:active:not(:disabled) {
+  transform: var(--ui-press);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ------------------------------------------------------- touch / motion --- */
+
+@media (hover: none) {
+  :is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+      .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+      .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+      .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+      .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+      .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+      .av-more, .av-del, .taddr__copy, .av-clear, .odate__pop-today, .hdr-btn):active:not(:disabled) {
+    transform: scale(0.985);
+    box-shadow: inset 0 2px 6px color-mix(in srgb, #10141f 22%, transparent);
+  }
+}
+
+/* Colour still changes; only movement is removed. */
+@media (prefers-reduced-motion: reduce) {
+  :is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+      .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+      .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+      .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+      .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+      .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+      .av-more, .av-del, .hdr-btn, .sidebar .btn) {
+    transition: none !important;
+  }
+  :is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+      .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+      .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+      .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+      .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+      .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+      .av-more, .av-del, .hdr-btn, .sidebar .btn):hover:not(:disabled),
+  :is(.ma-btn, .dcd__btn, .mbtn, .mcard__btn, .mrow__btn, .tadd, .tcard__act,
+      .tdel__btn, .ad-add, .ad2-btn, .ad-save, .ad-cancel, .ad-mini,
+      .promo-add, .promo-save, .promo-edit, .promo-cancel, .promo-delete,
+      .um-add, .um-btn, .um-mini, .bk-btn, .tx-save, .tx-translate, .rv-more,
+      .rv-card__del, .rs-btn, .set-save, .dash-modal__btn, .mform__mini,
+      .ccpick__apply, .odm__foot-btn, .orow-btn, .ostatus__btn, .odate__btn,
+      .av-more, .av-del, .hdr-btn, .sidebar .btn):active:not(:disabled) {
+    transform: none !important;
+  }
+}

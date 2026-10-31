@@ -1,0 +1,2015 @@
+/* ==========================================================================
+   Lilyan Pert — design system
+   Theme-aware tokens, RTL-safe layout, mobile-first responsive rules.
+   ========================================================================== */
+
+:root {
+  --primary: #7c67e4;
+  --primary-ink: #ffffff;
+  /*
+   * Decorative accent aliases. They used to be a fixed green / amber / blue /
+   * purple palette, which is why some cards stayed green or purple after a
+   * theme switch. They now derive from `--primary`, keeping a light-to-strong
+   * ramp so neighbouring icon containers still read apart — but inside the
+   * selected theme's hue, never a foreign one.
+   */
+  --accent-green: var(--primary);
+  --accent-amber: color-mix(in srgb, var(--primary) 58%, var(--text));
+  --accent-blue: var(--theme-primary-strong);
+  --accent-coral: color-mix(in srgb, var(--primary) 76%, var(--text));
+  --accent-purple: var(--primary);
+  --accent-teal: color-mix(in srgb, var(--primary) 68%, var(--text));
+  --accent-indigo: color-mix(in srgb, var(--primary) 86%, var(--text));
+  --accent-pink: color-mix(in srgb, var(--primary) 48%, var(--text));
+  --accent-slate: var(--muted);
+
+  /* Order status colours are meaning, not decoration: they never follow the
+     business theme, and they stay identical in light and dark mode. */
+  --status-pending: #2563eb;
+  --status-preparing: #d97706;
+  --status-ready: #7c3aed;
+  --status-completed: #16a34a;
+  --status-cancelled: #dc2626;
+
+  /*
+   * ---------------------------------------------------------------- theme --
+   * `--primary` (and `--primary-ink`) are written on :root by the active
+   * business theme (see theme.js). Everything below is derived from them, so
+   * one saved appearance recolours buttons, focus rings, selections, chart
+   * strokes, icon containers and glass tints everywhere — no page defines its
+   * own accent. Only semantic status colours and brand media stay fixed.
+   */
+  --theme-primary: var(--primary);
+  /* Readable variant of the accent for text/icons on a light surface. Mixed
+     with `--text`, so it darkens in light mode and lightens in dark mode. */
+  --theme-primary-strong: color-mix(in srgb, var(--primary) 74%, var(--text));
+  --theme-primary-hover: color-mix(in srgb, var(--primary) 88%, #10141f);
+  --theme-primary-active: color-mix(in srgb, var(--primary) 76%, #10141f);
+  /* Short aliases for the three roles components ask for by name: a light
+     tint, a hairline border and a soft outer glow. They point at the derived
+     tokens above, so a component never has to invent a colour of its own. */
+  --theme-primary-light: var(--theme-primary-soft);
+  --theme-primary-border: var(--theme-primary-line);
+  --theme-primary-glow: var(--theme-focus-ring);
+  --theme-primary-foreground: var(--primary-ink);
+  --theme-primary-soft: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  --theme-primary-line: color-mix(in srgb, var(--primary) 26%, var(--border));
+  --theme-focus-ring: color-mix(in srgb, var(--primary) 20%, transparent);
+  --theme-focus-surface: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  --theme-selected-bg: color-mix(in srgb, var(--primary) 13%, var(--surface));
+  --theme-selected-border: color-mix(in srgb, var(--primary) 45%, var(--border-strong));
+  --theme-icon-bg: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  --theme-header-gradient: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--primary) 15%, var(--surface)),
+    var(--surface)
+  );
+  --theme-glass: color-mix(in srgb, var(--surface) 88%, var(--primary));
+  --theme-shadow: 0 12px 28px -16px color-mix(in srgb, var(--primary) 45%, transparent);
+  --surface-primary: var(--surface);
+  --surface-secondary: var(--surface-2);
+  --border-default: var(--border-strong);
+  --shadow-soft: var(--shadow-sm);
+  --shadow-elevated: var(--shadow);
+
+  /*
+   * Fixed shell chrome: a dark navy sidebar and mint (soft green) tints.
+   * These stay the same whatever brand colour the business picks, so the
+   * layout never shifts — only `--primary` follows the business theme.
+   */
+  --navy: #0d1b29;
+  --navy-2: #112232;
+  --navy-line: #263747;
+  --navy-ink: #e1e7eb;
+  --navy-muted: #aeb9c2;
+  --navy-active: color-mix(in srgb, var(--primary) 30%, var(--navy));
+  --navy-scroll: #344857;
+  /*
+   * The accent alias the whole stylesheet already shares. It used to be a fixed
+   * green; it now mirrors the active theme, so every surface written against
+   * `--mint*` follows the selected appearance without touching the pages.
+   */
+  --mint: var(--theme-primary);
+  --mint-deep: var(--theme-primary-strong);
+  --mint-ink: var(--theme-primary-strong);
+  --mint-soft: var(--theme-primary-soft);
+  --mint-line: var(--theme-primary-line);
+
+  /*
+   * Pastel surfaces: KPI tiles, category glyphs, contextual icon containers.
+   * Each one is a different strength of the SAME theme primary, so the family
+   * stays varied without ever carrying a leftover green / blue / pink accent.
+   * They are mixed with `--surface`, so light and dark mode follow for free.
+   */
+  --pastel-blue: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  --pastel-blue-ink: var(--theme-primary-strong);
+  --pastel-blue-line: color-mix(in srgb, var(--primary) 20%, var(--border));
+  --pastel-amber: color-mix(in srgb, var(--primary) 5%, var(--surface));
+  --pastel-amber-ink: color-mix(in srgb, var(--primary) 62%, var(--text));
+  --pastel-amber-line: color-mix(in srgb, var(--primary) 14%, var(--border));
+  --pastel-green: color-mix(in srgb, var(--primary) 12%, var(--surface));
+  --pastel-green-ink: var(--theme-primary-strong);
+  --pastel-green-line: color-mix(in srgb, var(--primary) 24%, var(--border));
+  --pastel-pink: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  --pastel-pink-ink: color-mix(in srgb, var(--primary) 80%, var(--text));
+  --pastel-pink-line: color-mix(in srgb, var(--primary) 17%, var(--border));
+  --pastel-lavender: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  --pastel-lavender-ink: var(--theme-primary-strong);
+  --pastel-lavender-line: color-mix(in srgb, var(--primary) 27%, var(--border));
+
+  --bg: #fafbf9;
+  --bg-soft: #f3f5f3;
+  --surface: #ffffff;
+  --surface-2: #f8faf8;
+  --surface-3: #f0f3f0;
+  --text: #202522;
+  --text-soft: #4b514b;
+  /* Slightly darker than the reference grey so small labels stay readable. */
+  --muted: #737a73;
+  --border: #e9eee9;
+  --border-strong: #dbe2db;
+  --shadow-sm: 0 1px 2px rgba(23, 26, 43, 0.05);
+  --shadow: 0 6px 20px rgba(23, 26, 43, 0.07);
+  --shadow-lg: 0 18px 40px rgba(23, 26, 43, 0.14);
+
+  /*
+   * ------------------------------------------- premium interaction depth --
+   * ONE ramp for every interactive surface in the app (buttons, icon chips,
+   * cards, popups, floating controls). Three ideas only:
+   *   `--ui-highlight` a lit top edge, `--ui-elev-*` a soft contact + cast
+   *   shadow, and one timing curve so nothing ever jumps between pages.
+   * Hover and press never change a box's size — they move it by a sub-pixel
+   * transform and deepen the shadow, so no layout shift is possible.
+   */
+  --ui-dur: 200ms;
+  --ui-dur-fast: 150ms;
+  --ui-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ui-lift: translateY(-1px);
+  --ui-press: translateY(1px) scale(0.988);
+  --ui-highlight: inset 0 1px 0 color-mix(in srgb, #ffffff 52%, transparent);
+  --ui-highlight-strong: inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent);
+  --ui-shade: inset 0 -1px 0 color-mix(in srgb, #10141f 9%, transparent);
+  --ui-elev-1: 0 1px 2px rgba(23, 26, 43, 0.05),
+    0 3px 8px -5px rgba(23, 26, 43, 0.14), var(--ui-highlight);
+  --ui-elev-2: 0 2px 5px rgba(23, 26, 43, 0.06),
+    0 10px 22px -14px rgba(23, 26, 43, 0.28), var(--ui-highlight);
+  --ui-elev-3: 0 4px 10px rgba(23, 26, 43, 0.07),
+    0 22px 44px -24px rgba(23, 26, 43, 0.34), var(--ui-highlight);
+  /* Hover elevation is tinted with the element's own accent, never grey. */
+  --ui-elev-accent: 0 4px 10px -6px color-mix(in srgb, var(--primary) 42%, transparent),
+    0 14px 26px -16px color-mix(in srgb, var(--primary) 70%, transparent);
+
+  /*
+   * ------------------------------------------------ premium action plate --
+   * ONE physical model for every button in the admin panel: the shared
+   * `Button` (see `.btn` below) and every page-level action class (see
+   * buttons.css) draw their geometry, sheen and depth from these tokens, so a
+   * save button in Settings and a create button in Tables are the same object.
+   *
+   *   geometry  a rounded rectangle, never a pill, one radius for the panel
+   *   sheen     a light wash falling from the top edge of the fill
+   *   edge      a lit top hairline; the underside darkens into the cast
+   *   depth     a tight contact shadow plus a wide, soft cast shadow
+   *
+   * Families (primary / secondary / destructive …) only swap fill, ink and
+   * glow, so a theme switch repaints every button at once and a hover can
+   * only ever deepen the button's own colour.
+   */
+  --btn-radius: 12px;
+  --btn-radius-sm: 10px;
+  --btn-sheen: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 30%, transparent),
+    color-mix(in srgb, #ffffff 8%, transparent) 46%,
+    transparent 74%
+  );
+  /* Filled plates keep a stronger top light so the raised edge still reads. */
+  --btn-sheen-strong: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 34%, transparent),
+    color-mix(in srgb, #ffffff 9%, transparent) 52%,
+    color-mix(in srgb, #10141f 6%, transparent) 100%
+  );
+  --btn-edge: inset 0 1px 0 color-mix(in srgb, #ffffff 60%, transparent);
+  --btn-under: inset 0 -2px 3px color-mix(in srgb, #10141f 9%, transparent);
+  --btn-depth-1: var(--btn-edge), var(--btn-under),
+    0 1px 2px rgba(23, 26, 43, 0.1),
+    0 5px 12px -7px rgba(23, 26, 43, 0.3);
+  --btn-depth-2: var(--btn-edge), var(--btn-under),
+    0 2px 4px rgba(23, 26, 43, 0.12),
+    0 12px 22px -12px rgba(23, 26, 43, 0.34);
+  --btn-depth-press: inset 0 2px 6px color-mix(in srgb, #10141f 26%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 18%, transparent);
+  /* A filled accent plate casts its shadow in its own hue, never in grey. */
+  --btn-accent-depth: inset 0 1px 0 color-mix(in srgb, #ffffff 42%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 22%, transparent),
+    0 2px 4px -1px color-mix(in srgb, var(--primary) 45%, transparent),
+    0 12px 24px -12px color-mix(in srgb, var(--primary) 88%, transparent);
+  --btn-accent-depth-hover: inset 0 1px 0 color-mix(in srgb, #ffffff 50%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 26%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--primary) 48%, transparent),
+    0 18px 32px -14px color-mix(in srgb, var(--primary) 92%, transparent),
+    0 0 22px -6px color-mix(in srgb, var(--primary) 52%, transparent);
+  --btn-danger-depth: inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 24%, transparent),
+    0 2px 4px -1px color-mix(in srgb, var(--danger) 45%, transparent),
+    0 12px 24px -12px color-mix(in srgb, var(--danger) 82%, transparent);
+  --btn-danger-depth-hover: inset 0 1px 0 color-mix(in srgb, #ffffff 48%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 28%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--danger) 48%, transparent),
+    0 18px 32px -14px color-mix(in srgb, var(--danger) 86%, transparent),
+    0 0 22px -6px color-mix(in srgb, var(--danger) 46%, transparent);
+  --btn-halo: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
+  --btn-halo-danger: 0 0 0 3px color-mix(in srgb, var(--danger) 28%, transparent);
+  /*
+   * Accent ramps used by every hover in the app. Each one is the same hue as
+   * the element's resting colour, only deeper and richer: hover mixes 12% of
+   * the near-black navy into the accent, active 24%. That is why a blue theme
+   * deepens to blue, a rose theme to rose — never to a foreign colour.
+   */
+  --theme-primary-tint-hover: color-mix(in srgb, var(--primary) 13%, var(--surface));
+  --theme-primary-tint-active: color-mix(in srgb, var(--primary) 20%, var(--surface));
+  --theme-primary-deep: color-mix(in srgb, var(--primary) 64%, #10141f);
+  /* Semantic ramps keep their meaning and their family: only the lightness
+     changes between rest, hover and press. */
+  --success-hover: color-mix(in srgb, var(--success) 84%, #10141f);
+  --success-active: color-mix(in srgb, var(--success) 72%, #10141f);
+  --warning-hover: color-mix(in srgb, var(--warning) 84%, #10141f);
+  --warning-active: color-mix(in srgb, var(--warning) 72%, #10141f);
+  --info: var(--primary);
+  --info-hover: var(--theme-primary-hover);
+  --danger: #dc2626;
+  --danger-soft: #fee2e2;
+  /* Destructive action ramp — darker on hover, deepest when pressed. */
+  --danger-hover: color-mix(in srgb, var(--danger) 84%, #10141f);
+  --danger-active: color-mix(in srgb, var(--danger) 72%, #10141f);
+  /* Focus rings need to be seen, so they are far stronger than --theme-focus-ring. */
+  --focus-ring: color-mix(in srgb, var(--primary) 55%, transparent);
+  --focus-ring-danger: color-mix(in srgb, var(--danger) 55%, transparent);
+  --success: #16a34a;
+  --success-soft: #dcfce7;
+  --warning: #d97706;
+  --warning-soft: #fef3c7;
+
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 12px;
+  --radius-pill: 999px;
+  /*
+   * ------------------------------------------------- selection dropdowns --
+   * One popup surface shared by every Select / listbox in the admin panel
+   * (see components/select/select.css). Radius, glass surface, floating
+   * shadow and row states live here so no page defines its own dropdown skin;
+   * the tints derive from `--primary`, so all themes follow automatically.
+   */
+  --lysel-radius: 18px;
+  --lysel-row-radius: 11px;
+  --lysel-row-height: 44px;
+  --lysel-bg: color-mix(in srgb, var(--surface) 93%, transparent);
+  --lysel-border: color-mix(in srgb, var(--primary) 16%, var(--border));
+  --lysel-shadow: 0 1px 1px color-mix(in srgb, var(--primary) 12%, transparent),
+    0 8px 18px -10px color-mix(in srgb, var(--primary) 32%, rgba(20, 24, 32, 0.2)),
+    0 26px 48px -24px color-mix(in srgb, var(--primary) 26%, rgba(20, 24, 32, 0.32)),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  --lysel-row-hover: var(--theme-focus-surface);
+  --lysel-row-selected: var(--theme-selected-bg);
+  --lysel-row-selected-hover: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  --gap: 16px;
+  --page-max: 1240px;
+  --font: 'Segoe UI', 'Noto Kufi Arabic', 'Noto Naskh Arabic', Tahoma, system-ui,
+    -apple-system, 'Helvetica Neue', Arial, sans-serif;
+}
+
+[data-theme='dark'] {
+  --bg: #0e1017;
+  --bg-soft: #12141d;
+  --surface: #171a24;
+  --surface-2: #1d2029;
+  --surface-3: #232732;
+  --text: #eef0f7;
+  --text-soft: #c3c7d6;
+  --muted: #949ab0;
+  --border: #272b37;
+  --border-strong: #333849;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 20px 44px rgba(0, 0, 0, 0.55);
+  /*
+   * Dark-mode depth: the same ramp, but the lit edge is a whisper instead of a
+   * white line (a 52% white highlight glares on a near-black surface) and the
+   * cast shadows go deeper so elevation still reads without any glow.
+   */
+  --ui-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --ui-highlight-strong: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  --ui-shade: inset 0 -1px 0 rgba(0, 0, 0, 0.45);
+  --ui-elev-1: 0 1px 2px rgba(0, 0, 0, 0.45),
+    0 4px 10px -6px rgba(0, 0, 0, 0.55), var(--ui-highlight);
+  --ui-elev-2: 0 2px 6px rgba(0, 0, 0, 0.5),
+    0 12px 24px -14px rgba(0, 0, 0, 0.66), var(--ui-highlight);
+  --ui-elev-3: 0 6px 14px rgba(0, 0, 0, 0.5),
+    0 24px 48px -24px rgba(0, 0, 0, 0.72), var(--ui-highlight);
+  --ui-elev-accent: 0 4px 12px -6px rgba(0, 0, 0, 0.5),
+    0 14px 26px -16px color-mix(in srgb, var(--primary) 48%, transparent);
+  /* On a near-black canvas a 60% white hairline glares, so the plate keeps a
+     quiet rim and pushes the cast shadow deeper — same geometry, same lift. */
+  --btn-edge: inset 0 1px 0 color-mix(in srgb, #ffffff 22%, transparent);
+  --btn-under: inset 0 -2px 3px rgba(0, 0, 0, 0.42);
+  --btn-depth-1: var(--btn-edge), var(--btn-under),
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 6px 14px -8px rgba(0, 0, 0, 0.6);
+  --btn-depth-2: var(--btn-edge), var(--btn-under),
+    0 2px 5px rgba(0, 0, 0, 0.55),
+    0 14px 26px -14px rgba(0, 0, 0, 0.7);
+  --btn-depth-press: inset 0 2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 12%, transparent);
+  /* A dark surface sits closer to the accent, so the tint steps are read as
+     brightness rather than as a wash: same hue, slightly stronger. */
+  --theme-primary-tint-hover: color-mix(in srgb, var(--primary) 22%, var(--surface));
+  --theme-primary-tint-active: color-mix(in srgb, var(--primary) 30%, var(--surface));
+  /* Selection popups keep their lift, without the light-mode white highlight. */
+  --lysel-bg: color-mix(in srgb, var(--surface) 96%, transparent);
+  --lysel-shadow: 0 1px 1px rgba(0, 0, 0, 0.4),
+    0 10px 22px -10px color-mix(in srgb, var(--primary) 34%, transparent),
+    0 28px 52px -24px rgba(0, 0, 0, 0.62),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --danger-soft: #3b1417;
+  --success-soft: #10331f;
+  --warning-soft: #3a2a0d;
+
+  /* Sidebar keeps its navy chrome; mint and the pastel tones deepen. */
+  --navy: #0d1b29;
+  --navy-2: #112232;
+  --navy-line: #263747;
+  /* The accent stays theme-derived in dark mode too: `--theme-primary-*`
+     already adapts through `--surface` and `--text`. */
+  --mint: color-mix(in srgb, var(--primary) 92%, #ffffff);
+  --mint-deep: color-mix(in srgb, var(--primary) 72%, #ffffff);
+  --mint-ink: color-mix(in srgb, var(--primary) 62%, #ffffff);
+  --mint-soft: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  --mint-line: color-mix(in srgb, var(--primary) 26%, var(--surface));
+  /*
+   * The pastel tones need no dark values of their own: they are mixed from
+   * `--primary` and `--surface`, and the surface turns dark with the mode.
+   */
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.5;
+  overflow-x: hidden;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+p { margin: 0; }
+button { font-family: inherit; }
+a { color: var(--primary); }
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Icons: neutral icons never mirror; directional ones do. */
+.icon { flex: none; display: block; }
+[dir='rtl'] .icon--dir { transform: scaleX(-1); }
+
+/* ------------------------------------------------------------------ shell */
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  min-height: 100dvh;
+  align-items: stretch;
+  padding-inline-start: var(--admin-sidebar-width, 280px);
+  transition: padding-inline-start 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/*
+ * Dark navy navigation column — a fixed, full-viewport rail: top edge to
+ * bottom edge, no outer margin or corner rounding. It sits on the physical
+ * right in RTL and the physical left in LTR through logical insets.
+ * The wrapper stays unclipped so the collapse control can straddle the edge.
+ */
+.sidebar-shell {
+  position: fixed;
+  inset-block-start: 0;
+  inset-block-end: 0;
+  inset-inline-start: 0;
+  width: var(--admin-sidebar-width, 280px);
+  height: 100vh;
+  height: 100dvh;
+  z-index: 50;
+  transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s ease;
+}
+
+.sidebar {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  background: var(--navy);
+  border-inline-end: 1px solid var(--navy-line);
+  color: var(--navy-ink);
+  border-radius: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* Branding stays pinned at the top while the tree below it scrolls. */
+.sidebar .brand {
+  flex: none;
+  padding: 14px 14px 11px;
+  border-bottom: 1px solid var(--navy-line);
+  background: var(--navy);
+}
+
+/*
+ * The only scrolling region: the navigation tree itself. Spacing is compact so
+ * the whole tree fits an ordinary desktop height without scrolling, and the
+ * scrollbar is never drawn — on a genuinely short viewport the tree still
+ * scrolls with the wheel, touch or keyboard, it just does it invisibly.
+ */
+.sidebar__nav {
+  /* Horizontal inset of every row. The active plate cancels it on the outer
+     side, so the highlight can reach the rail's edge and bend into it. */
+  --nav-gutter: 10px;
+  --plate-curve: 12px;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 8px var(--nav-gutter) calc(12px + env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.sidebar__nav::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 16px;
+  min-width: 0;
+}
+.sidebar .brand__mark {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--mint), color-mix(in srgb, var(--mint) 60%, #ffffff));
+  color: #ffffff;
+  display: grid; place-items: center;
+  font-weight: 800; font-size: 16px;
+  flex: none;
+}
+.brand__text { min-width: 0; }
+.sidebar .brand__name { color: #ffffff; }
+.sidebar .brand__sub { color: var(--navy-muted); }
+.brand__name { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.brand__sub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.nav-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-soft);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  min-width: 0;
+}
+.nav-link span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav-link:hover { background: var(--surface-2); color: var(--text); }
+.nav-link.is-active {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+/* Navy rail overrides: muted labels, theme-accented active plate. */
+.sidebar .nav-link {
+  position: relative;
+  color: var(--navy-muted);
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease,
+    box-shadow 0.16s ease, border-radius 0.16s ease,
+    padding 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+/*
+ * Active rail item: ONE continuous, full-width plate.
+ *
+ * It keeps its sibling's exact box — same margin, padding and rounded corners
+ * on all four sides — so selecting a destination never widens the row, leaves
+ * a notch, or clips a shape into the rail. The selection reads purely from a
+ * raised theme gradient, an inner light line and a soft halo underneath; every
+ * colour is mixed from `--primary`, so a new appearance repaints it instantly.
+ */
+.sidebar .nav-link.is-active {
+  border-radius: 10px;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 18%, transparent) 0%,
+      color-mix(in srgb, #ffffff 3%, transparent) 46%,
+      transparent 64%
+    ),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--primary) 54%, var(--navy)) 0%,
+      color-mix(in srgb, var(--primary) 36%, var(--navy)) 55%,
+      color-mix(in srgb, var(--primary) 24%, var(--navy)) 100%
+    );
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  font-weight: 700;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26),
+    inset 0 0 16px color-mix(in srgb, var(--primary) 20%, transparent),
+    0 10px 20px -16px color-mix(in srgb, var(--primary) 90%, transparent),
+    0 2px 6px -4px rgba(0, 0, 0, 0.5);
+}
+/* The label sits on a lit plate: full-strength ink with a whisper of shadow so
+   it stays crisp against every preset. */
+.sidebar .nav-link.is-active .nav-link__label {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(3, 8, 14, 0.45);
+}
+/* No concave shoulders, corner cut-outs or notches: the plate is a plain
+   rounded rectangle, so nothing is ever painted over the rail's own edge. */
+/* Hover and keyboard focus brighten the same plate without moving it. */
+.sidebar .nav-link.is-active:hover,
+.sidebar .nav-link.is-active:focus-visible {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 26%, transparent) 0%,
+      color-mix(in srgb, #ffffff 7%, transparent) 44%,
+      transparent 64%
+    ),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--primary) 66%, var(--navy)) 0%,
+      color-mix(in srgb, var(--primary) 46%, var(--navy)) 54%,
+      color-mix(in srgb, var(--primary) 30%, var(--navy)) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #ffffff 18%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 46%, transparent),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    inset 0 0 22px color-mix(in srgb, var(--primary) 34%, transparent),
+    0 18px 30px -20px color-mix(in srgb, var(--primary) 100%, transparent),
+    0 2px 7px -4px rgba(0, 0, 0, 0.55);
+}
+.sidebar .nav-link.is-active .icon {
+  color: #ffffff;
+  filter: drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
+}
+/*
+ * A submenu row that is the current page.
+ *
+ * The bent plate above belongs to the rail's own top-level destinations: inside
+ * a submenu its negative margin, extra padding, heavier weight and wide glow
+ * made the selected row wider and heavier than the rows around it. The active
+ * submenu row therefore keeps its sibling's exact box — same margin, padding,
+ * radius and font weight — and says "you are here" with a small theme bar, a
+ * faint tint and a hairline ring instead.
+ */
+.sidebar .nav-children .nav-link.is-active {
+  margin-inline-end: 0;
+  padding-inline-end: 10px;
+  border-radius: 10px;
+  font-weight: 600;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 20%, transparent),
+    color-mix(in srgb, var(--primary) 11%, transparent)
+  );
+  border-color: color-mix(in srgb, var(--primary) 28%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+/* The rail's concave shoulders never apply here: the row keeps its own rounded
+   shape. Its `::before` becomes the thin accent bar instead of a corner cut. */
+.sidebar:not(.is-collapsed) .nav-children .nav-link.is-active::before {
+  content: '';
+  position: absolute;
+  inset-block: 9px;
+  inset-inline: 10px auto;
+  inline-size: 2px;
+  block-size: auto;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--primary) 62%, #ffffff);
+  pointer-events: none;
+}
+.sidebar:not(.is-collapsed) .nav-children .nav-link.is-active::after {
+  content: none;
+}
+/* Hovering an active submenu row only warms the tint — nothing moves or grows. */
+.sidebar .nav-children .nav-link.is-active:hover,
+.sidebar .nav-children .nav-link.is-active:focus-visible {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 26%, transparent),
+    color-mix(in srgb, var(--primary) 15%, transparent)
+  );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+/* Crisp white ink on the light tint, without the plate's heavy text shadow. */
+.sidebar .nav-children .nav-link.is-active .nav-link__label {
+  color: #ffffff;
+  text-shadow: none;
+}
+.sidebar .nav-children .nav-link.is-active .icon {
+  color: color-mix(in srgb, #ffffff 90%, var(--primary));
+  filter: none;
+}
+.nav-children .nav-link.is-active .nav-child-icon { opacity: 1; }
+
+/* Labels fade out instead of popping while the rail narrows. */
+.sidebar .nav-link__label,
+.sidebar .brand__text {
+  transition: opacity 0.14s ease, max-width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar .btn {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--navy-line);
+  color: var(--navy-ink);
+}
+.sidebar .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+.sidebar .btn--primary { background: var(--mint); border-color: var(--mint); color: var(--primary-ink); }
+.sidebar__user {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--navy-muted);
+  padding: 9px 14px calc(11px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--navy-line);
+  background: var(--navy-2);
+}
+
+.sidebar__spacer { flex: 1 1 auto; min-height: 12px; }
+
+.main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The shared application header lives in components/header/header.css. */
+
+/*
+ * Admin page canvas. Every admin screen fills all the space left beside the
+ * rail: no centred max-width container, only a small equal inline margin that
+ * shrinks with the viewport. `min-width: 0` lets flex children and grids
+ * shrink instead of forcing the shell sideways. The public customer menu keeps
+ * its own centred `--page-max` column (see .customer-* rules below).
+ */
+.page {
+  padding-block: 18px calc(28px + env(safe-area-inset-bottom));
+  padding-inline: clamp(10px, 1.15vw, 20px);
+  width: 100%;
+  max-width: none;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.page-head { display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.page-head__text { min-width: 0; flex: 1 1 220px; }
+.page-head h1 { font-size: clamp(18px, 2.4vw, 23px); }
+.page-head p { color: var(--muted); font-size: 13.5px; margin-top: 3px; }
+.page-head__actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ------------------------------------------------------------------ cards */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+.card--pad { padding: 18px; }
+
+.card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid var(--mint-line);
+  background: linear-gradient(180deg, var(--mint-soft), var(--surface));
+  min-width: 0;
+}
+.card__head--plain { background: var(--surface); }
+.card__icon {
+  width: 36px; height: 36px; border-radius: 11px;
+  display: grid; place-items: center; flex: none;
+  background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.card__titles { min-width: 0; flex: 1 1 auto; }
+.card__title { font-size: 14.5px; font-weight: 800; }
+.card__subtitle { font-size: 12px; color: var(--muted); }
+.card__body { padding: 16px 18px; }
+.card__foot { padding: 12px 18px; border-top: 1px solid var(--border); background: var(--surface-2); }
+
+.ic-green { color: var(--accent-green); }
+.ic-amber { color: var(--accent-amber); }
+.ic-blue { color: var(--accent-blue); }
+.ic-coral { color: var(--accent-coral); }
+.ic-purple { color: var(--accent-purple); }
+.ic-teal { color: var(--accent-teal); }
+.ic-indigo { color: var(--accent-indigo); }
+.ic-pink { color: var(--accent-pink); }
+.ic-slate { color: var(--accent-slate); }
+
+.grid { display: grid; gap: var(--gap); }
+.grid--2 { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid--3 { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+.grid--4 { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+
+/* ---------------------------------------------------------------- buttons */
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: var(--btn-radius);
+  border: 1px solid var(--border-strong);
+  background-color: var(--surface);
+  background-image: var(--btn-sheen);
+  color: var(--text);
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  cursor: pointer;
+  min-height: 40px;
+  box-shadow: var(--btn-depth-1);
+  transition: background-color var(--ui-dur) var(--ui-ease),
+    background-image var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+  text-decoration: none;
+  white-space: nowrap;
+}
+/* Icons and labels share one centred row, so an icon can never push the label
+   off-centre and an RTL label keeps the same optical middle as an LTR one. */
+.btn > :is(svg, .icon, .spinner) { flex: none; }
+/*
+ * States are explicit rather than an opacity fade: a disabled button keeps a
+ * legible label on a muted surface, destructive buttons stay red (and get a
+ * darker red on hover instead of the pale neutral fill that made their white
+ * label disappear), and focus is always visible for keyboard users.
+ */
+/* A neutral button deepens into its own theme tint — same hue as the accent,
+   one step richer than rest — and lifts by a single pixel. */
+.btn:hover:not(:disabled) {
+  background-color: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+  transform: var(--ui-lift);
+  box-shadow: var(--btn-depth-2),
+    0 0 0 1px color-mix(in srgb, var(--primary) 14%, transparent);
+}
+.btn:active:not(:disabled) {
+  background-color: var(--theme-primary-tint-active);
+  transform: var(--ui-press);
+  box-shadow: var(--btn-depth-press);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: var(--btn-depth-1), var(--btn-halo);
+}
+.btn:disabled {
+  opacity: 1;
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--muted);
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
+}
+/* Filled action button: a lit accent plate. The gradient is a very light sheen
+   on the accent itself (never a second colour), the top edge carries the
+   highlight and the shadow sits in the accent's own hue. */
+.btn--primary {
+  background-color: var(--primary);
+  background-image: var(--btn-sheen-strong);
+  border-color: color-mix(in srgb, var(--primary) 74%, #10141f);
+  color: var(--primary-ink);
+  box-shadow: var(--btn-accent-depth);
+}
+/* Deeper accent on hover — the same hue at a richer saturation, exactly what
+   the theme rules demand — with the shadow and sheen stepped up together. */
+.btn--primary:hover:not(:disabled) {
+  background-color: var(--theme-primary-hover);
+  border-color: var(--theme-primary-active);
+  color: var(--primary-ink);
+  box-shadow: var(--btn-accent-depth-hover);
+  transform: var(--ui-lift);
+}
+.btn--primary:active:not(:disabled) {
+  background-color: var(--theme-primary-active);
+  background-image: var(--btn-sheen-strong);
+  box-shadow: var(--btn-depth-press);
+  transform: var(--ui-press);
+}
+.btn--primary:disabled {
+  background: color-mix(in srgb, var(--primary) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--border));
+  color: color-mix(in srgb, var(--primary) 58%, var(--text));
+  box-shadow: none;
+}
+/* A primary button's spinner follows its own ink, so it stays visible on the
+   accent fill instead of taking the accent-tinted ring used on neutral ground. */
+.btn--primary .spinner {
+  border-color: color-mix(in srgb, currentColor 35%, transparent);
+  border-top-color: currentColor;
+}
+.btn--danger {
+  background-color: var(--danger);
+  background-image: var(--btn-sheen-strong);
+  border-color: color-mix(in srgb, var(--danger) 82%, #10141f);
+  color: #fff;
+  box-shadow: var(--btn-danger-depth);
+}
+.btn--danger:hover:not(:disabled) {
+  background-color: var(--danger-hover);
+  border-color: var(--danger-active);
+  color: #fff;
+  box-shadow: var(--btn-danger-depth-hover);
+  transform: var(--ui-lift);
+}
+.btn--danger:active:not(:disabled) {
+  background-color: var(--danger-active);
+  box-shadow: var(--btn-depth-press);
+  transform: var(--ui-press);
+}
+.btn--danger:focus-visible { outline-color: var(--focus-ring-danger); }
+/* Muted red, not an almost-invisible label. */
+.btn--danger:disabled {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+  color: color-mix(in srgb, var(--danger) 72%, var(--text));
+  box-shadow: none;
+}
+.btn--danger-soft {
+  background-color: var(--danger-soft);
+  background-image: var(--btn-sheen);
+  border-color: color-mix(in srgb, var(--danger) 26%, transparent);
+  color: color-mix(in srgb, var(--danger) 88%, #10141f);
+  box-shadow:
+    var(--btn-edge),
+    0 1px 2px rgba(120, 16, 16, 0.12),
+    0 8px 16px -10px color-mix(in srgb, var(--danger) 48%, transparent);
+}
+/* Muted destructive plate: hover stays inside the red family and only deepens. */
+.btn--danger-soft:hover:not(:disabled) {
+  background-color: color-mix(in srgb, var(--danger) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 36%, transparent);
+  color: color-mix(in srgb, var(--danger) 88%, #10141f);
+  box-shadow:
+    var(--btn-edge),
+    0 2px 4px rgba(120, 16, 16, 0.14),
+    0 14px 24px -12px color-mix(in srgb, var(--danger) 58%, transparent);
+  transform: var(--ui-lift);
+}
+.btn--danger-soft:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--danger) 26%, var(--surface));
+  box-shadow: inset 0 2px 6px color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.btn--danger-soft:focus-visible { outline-color: var(--focus-ring-danger); }
+.btn--ghost {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  color: var(--text-soft);
+  box-shadow: none;
+}
+.btn--ghost:hover:not(:disabled) {
+  background-color: var(--theme-primary-tint-hover);
+  border-color: transparent;
+  color: var(--theme-primary-strong);
+  box-shadow: none;
+  transform: none;
+}
+.btn--sm { padding: 6px 12px; font-size: 12.5px; min-height: 34px; border-radius: var(--btn-radius-sm); }
+/* Icon-only keeps the same plate and depth, squared off so the glyph sits in
+   the optical centre of a rounded rectangle instead of a stretched pill. */
+.btn--icon {
+  padding: 8px;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: var(--btn-radius-sm);
+  gap: 0;
+}
+.btn--block { width: 100%; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* --------------------------------------------------------------------------
+   Icon ink inside filled action buttons — one rule, every button family.
+
+   A filled button already carries the readable foreground for its own surface
+   in `--primary-ink` (white on a saturated blue / purple / green / coral,
+   near-black on a pale gold). Its glyphs therefore draw in that same ink
+   instead of a brand-coloured icon, and the circular glyph chip some create
+   buttons show is a translucent disc of the button's own ink — never a white
+   plate that re-colours the icon to the accent.
+
+   Outlined, ghost, soft and white buttons opt out: they inherit their own
+   text colour, so their icons stay readable rather than turning white on
+   white.
+   -------------------------------------------------------------------------- */
+
+:is(.btn--primary, .btn--danger, .mbtn, .mcard__btn, .mcmodal__btn, .mform__mini,
+    .tadd, .ad-add, .ad-save, .ad2-btn, .promo-add, .promo-save, .um-add,
+    .um-btn--primary, .bk-btn, .dash-modal__btn, .tx-translate, .rv-more)
+  :is(svg, .icon) {
+  color: inherit;
+}
+
+/* A glyph chip inside a solid button: tinted from the button's ink, so the
+   icon and the disc can never disagree about which colour they are. */
+:is(.mbtn, .tadd, .ad-add, .promo-add, .um-add)
+  > :is(.mbtn__plus, .tadd__dot, .ad-add__dot, .promo-add__dot, .um-add__plus) {
+  background: color-mix(in srgb, currentColor 22%, transparent);
+  color: inherit;
+  border: 1px solid color-mix(in srgb, currentColor 38%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, currentColor 22%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Labelled action buttons — the icon sits at the LOGICAL END of the label.
+
+   RTL (Kurdish / Persian / Arabic): label on the right, icon on the left.
+   LTR (English):                    label on the left, icon on the right.
+
+   The button inherits the document direction and lays its children out in a
+   plain row, so the visual order follows the active language on its own —
+   no per-language margins and no manual swapping. Markup that still lists the
+   icon first is normalised with a flex `order` bump.
+
+   Deliberately NOT affected: icon-only controls, calendar/carousel arrows,
+   dropdown chevrons, input icons, category glyphs and the semantic
+   back/forward controls, which opt out with `.btn--dir-icon`.
+   -------------------------------------------------------------------------- */
+.app-action-button {
+  display: inline-flex;
+  flex-direction: row;
+  direction: inherit;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  white-space: nowrap;
+}
+.app-action-button .button-label { min-width: 0; }
+.app-action-button .button-icon { flex: none; }
+
+:where(.btn:not(.btn--icon), .mbtn, .mcard__btn, .mcmodal__btn, .mform__mini,
+    .bk-btn, .ad-save, .ad-cancel, .ad-add, .ad2-btn, .promo-save, .promo-edit,
+    .promo-cancel, .promo-add, .um-btn, .um-add, .tadd, .tx-translate, .rv-more,
+    .dash-modal__btn, .tcard__act, .av-more, .app-action-button) {
+  direction: inherit;
+}
+
+/* A leading icon moves behind the label: first in reading order, last on the
+   physical line. A lone icon (icon-only button) is unaffected. */
+:where(.btn:not(.btn--icon), .mbtn, .mcard__btn, .mcmodal__btn, .mform__mini,
+    .bk-btn, .ad-save, .ad-cancel, .ad-add, .ad2-btn, .promo-save, .promo-edit,
+    .promo-cancel, .promo-add, .um-btn, .um-add, .tadd, .tx-translate, .rv-more,
+    .dash-modal__btn, .tcard__act, .av-more, .app-action-button) > svg:first-child,
+:where(.btn:not(.btn--icon), .mbtn, .mcard__btn, .mcmodal__btn, .mform__mini,
+    .bk-btn, .ad-save, .ad-cancel, .ad-add, .ad2-btn, .promo-save, .promo-edit,
+    .promo-cancel, .promo-add, .um-btn, .um-add, .tadd, .tx-translate, .rv-more,
+    .dash-modal__btn, .tcard__act, .av-more, .app-action-button)
+  > span:first-child:has(> svg) {
+  order: 2;
+}
+
+/* Semantic navigation keeps its arrow on the leading edge.
+   `:where()` above keeps this override winning at a lower specificity. */
+.btn--dir-icon > svg:first-child,
+.btn--dir-icon > span:first-child:has(> svg) { order: 0; }
+
+/* ----------------------------------------------------------------- inputs */
+
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field__label { font-size: 12.5px; font-weight: 700; color: var(--text-soft); }
+.field__hint { font-size: 11.5px; color: var(--muted); }
+.field__error { font-size: 11.5px; color: var(--danger); font-weight: 600; }
+
+.input, .select, .textarea {
+  width: 100%;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14px;
+  color: var(--text);
+  font-family: inherit;
+  min-height: 42px;
+}
+.input:focus, .select:focus, .textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+  background: var(--surface);
+}
+.textarea { min-height: 84px; resize: vertical; }
+.select { appearance: none; background-image: none; }
+
+.form-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+.form-grid--wide { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.form-grid .span-2 { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ------------------------------------------------------ shared search field */
+
+/*
+ * One search surface for Orders, Menu and the Text Editor. Each page keeps its
+ * own query logic and layout; only the skin is shared. The highlight lives on
+ * the wrapper's :focus-within, never on the inner input, so the icon, the field
+ * and the clear button glow as a single control instead of the field alone
+ * showing a detached outline inside it.
+ */
+.lilyan-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    background-color 200ms ease,
+    transform 200ms ease;
+}
+.lilyan-search:hover {
+  border-color: var(--theme-selected-border);
+}
+/* The whole container — border, tint, ring and icon — follows the active
+   theme. The inner input keeps no ring of its own, so there is never a second
+   competing outline inside the container. */
+.lilyan-search:focus-within {
+  border-color: var(--theme-primary);
+  background: var(--theme-focus-surface);
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 3px var(--theme-focus-ring),
+    var(--theme-shadow);
+}
+.lilyan-search:has(input:disabled) { opacity: 0.6; }
+
+.lilyan-search__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: var(--surface-2);
+  color: var(--muted);
+  transition: background 200ms ease, color 200ms ease;
+}
+.lilyan-search:focus-within .lilyan-search__icon {
+  background: var(--theme-icon-bg);
+  color: var(--theme-primary-strong);
+}
+
+/* The field itself stays flat: the wrapper owns the border and the glow. */
+.lilyan-search input,
+.lilyan-search__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text);
+  font-family: inherit;
+}
+.lilyan-search input:focus,
+.lilyan-search input:focus-visible,
+.lilyan-search__input:focus {
+  outline: none;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Toggle is a real switch: label + input, keyboard reachable. */
+.switch { position: relative; display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
+/* The checkbox is the hit target: it covers the whole switch, so a mouse or
+   touch anywhere on the pill flips it (a 1px input was only reachable by tab). */
+.switch input {
+  position: absolute; inset: 0; z-index: 1;
+  width: 100%; height: 100%; margin: 0;
+  opacity: 0; cursor: pointer;
+}
+.switch input:disabled { cursor: not-allowed; }
+.switch__track {
+  width: 44px; height: 25px; border-radius: var(--radius-pill);
+  background: var(--border-strong); position: relative; flex: none; transition: background 0.18s;
+}
+.switch__track::after {
+  content: ''; position: absolute; top: 3px; inset-inline-start: 3px;
+  width: 19px; height: 19px; border-radius: 50%; background: #fff;
+  box-shadow: var(--shadow-sm); transition: transform 0.18s;
+}
+.switch input:checked + .switch__track { background: var(--primary); }
+.switch input:checked + .switch__track::after {
+  transform: translateX(19px);
+}
+[dir='rtl'] .switch input:checked + .switch__track::after { transform: translateX(-19px); }
+.switch input:focus-visible + .switch__track { outline: 2px solid var(--primary); outline-offset: 2px; }
+.switch__label { font-size: 13.5px; font-weight: 600; }
+.switch--disabled { opacity: 0.55; cursor: not-allowed; }
+
+.switch-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.switch-row:last-child { border-bottom: none; }
+.switch-row__text { min-width: 0; flex: 1 1 200px; }
+.switch-row__title { font-size: 13.5px; font-weight: 650; }
+.switch-row__hint { font-size: 11.5px; color: var(--muted); }
+
+/* ----------------------------------------------------------------- badges */
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px; border-radius: var(--radius-pill);
+  font-size: 11.5px; font-weight: 700;
+  background: var(--surface-3); color: var(--text-soft);
+  border: 1px solid transparent; white-space: nowrap;
+}
+.badge--pending { background: var(--warning-soft); color: var(--warning); }
+.badge--preparing { background: color-mix(in srgb, var(--status-preparing) 16%, transparent); color: var(--status-preparing); }
+.badge--ready { background: color-mix(in srgb, var(--status-ready) 16%, transparent); color: var(--status-ready); }
+.badge--completed { background: var(--success-soft); color: var(--success); }
+.badge--cancelled { background: var(--danger-soft); color: var(--danger); }
+.badge--active { background: var(--success-soft); color: var(--success); }
+.badge--inactive { background: var(--surface-3); color: var(--muted); }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: var(--radius-pill);
+  background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 600; color: var(--text-soft);
+}
+
+.stat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  min-width: 0;
+}
+.stat__label { font-size: 11.5px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.stat__value { font-size: 20px; font-weight: 800; margin-top: 4px; }
+
+.stat-row { display: flex; gap: 10px; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 2px; }
+.stat-row .stat { flex: 1 1 0; min-width: 118px; }
+
+/* ------------------------------------------------------------------ table */
+
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+table.data { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 560px; background: var(--surface); }
+table.data th {
+  text-align: start; padding: 10px 12px; font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: 0.03em; color: var(--muted); background: var(--surface-2);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+table.data td { padding: 11px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.data tr:last-child td { border-bottom: none; }
+table.data tr:hover td { background: var(--surface-2); }
+
+/* ------------------------------------------------------ products & cards */
+
+.product-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+
+.product-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 10px;
+  min-width: 0;
+  box-shadow: var(--shadow-sm);
+}
+.product-card__top { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.product-card__thumb {
+  width: 46px; height: 46px; border-radius: 12px; flex: none;
+  background: var(--surface-3); display: grid; place-items: center; overflow: hidden; color: var(--muted);
+}
+.product-card__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.product-card__info { min-width: 0; flex: 1 1 auto; }
+
+/*
+ * Product names must stay on ONE line, never truncated with an ellipsis.
+ * The font scales with the viewport and the row lets the name keep its width.
+ */
+.product-name {
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  font-weight: 700;
+  font-size: clamp(12px, 3.4vw, 14.5px);
+  line-height: 1.35;
+}
+.product-card__meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.product-card__price { font-weight: 800; color: var(--primary); white-space: nowrap; flex: none; }
+.product-card__actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; }
+
+.image-preview {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 8px;
+  background: var(--surface-2);
+  display: grid; place-items: center;
+  min-height: 96px;
+}
+.image-preview img { max-width: 100%; height: auto; display: block; border-radius: 10px; }
+.image-preview--contain img { width: auto; max-height: 240px; }
+
+/* --------------------------------------------------------------- modal */
+
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(12, 14, 22, 0.55);
+  display: grid; place-items: center; padding: 16px; z-index: 80; overflow-y: auto;
+}
+.modal {
+  background: var(--surface); border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  width: 100%; max-width: 620px; position: relative;
+  box-shadow: var(--shadow-lg);
+  max-height: 92dvh; display: flex; flex-direction: column;
+}
+.modal--wide { max-width: 880px; }
+/*
+ * Close-button rule: physically top-left for RTL languages and top-right for
+ * English. inset-inline-end gives exactly that in both directions.
+ */
+.modal__close {
+  position: absolute; top: 12px; inset-inline-end: 12px;
+  z-index: 2;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 10px; width: 36px; height: 36px;
+  display: grid; place-items: center; cursor: pointer; color: var(--text-soft);
+}
+/* Its hover / press state lives in interaction.css, with every other shared
+   control, so there is exactly one rule for the state. */
+.modal__head {
+  position: relative; z-index: 1; flex: none;
+  padding: 16px 60px 14px 18px; border-bottom: 1px solid var(--mint-line);
+  background: linear-gradient(180deg, var(--mint-soft), var(--surface));
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+[dir='rtl'] .modal__head { padding: 16px 18px 14px 60px; }
+.modal__title { font-size: 16px; font-weight: 800; }
+.modal__subtitle { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+/* Only the body scrolls: the head and foot are fixed siblings of it, so a
+   long form can never carry the title or the actions away. */
+.modal__body {
+  flex: 1 1 auto; min-height: 0; padding: 18px;
+  overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable;
+}
+.modal__foot {
+  position: relative; z-index: 1; flex: none;
+  padding: 13px 18px; border-top: 1px solid var(--border);
+  display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  background: var(--surface-2); border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+}
+
+/* -------------------------------------------------------------- feedback */
+
+.empty {
+  text-align: center; padding: 34px 18px; color: var(--muted);
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.empty__icon {
+  width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--muted);
+}
+.empty__title { font-weight: 700; color: var(--text-soft); font-size: 14px; }
+
+.spinner {
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 2.4px solid color-mix(in srgb, var(--primary) 25%, transparent);
+  border-top-color: var(--primary);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-block { display: grid; place-items: center; padding: 40px; gap: 12px; color: var(--muted); }
+
+.alert {
+  display: flex; gap: 10px; align-items: flex-start;
+  padding: 12px 14px; border-radius: var(--radius);
+  background: var(--surface-2); border: 1px solid var(--border);
+  font-size: 13px;
+}
+.alert--error { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+.alert--success { background: var(--success-soft); border-color: transparent; color: var(--success); }
+.alert--warning { background: var(--warning-soft); border-color: transparent; color: var(--warning); }
+
+.toast-stack {
+  position: fixed; inset-block-end: calc(16px + env(safe-area-inset-bottom));
+  inset-inline-end: 16px; z-index: 120; display: flex; flex-direction: column; gap: 8px;
+  max-width: min(360px, calc(100vw - 32px));
+}
+.toast {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-lg);
+  padding: 11px 14px; font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 9px;
+  animation: toast-in 0.2s ease;
+}
+.toast--success { border-inline-start: 3px solid var(--success); }
+.toast--error { border-inline-start: 3px solid var(--danger); }
+.toast--info { border-inline-start: 3px solid var(--primary); }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* Header popovers (notifications, profile) are styled in header.css. */
+
+/* ------------------------------------------------------------ selection */
+
+.select-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 12px;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 8px;
+  min-width: 0; text-align: start;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+/* Hover and press states are defined once, in interaction.css. */
+.select-card.is-selected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 10%, var(--surface));
+  box-shadow: 0 0 0 1px var(--primary) inset;
+}
+.select-card.is-danger { border-color: color-mix(in srgb, var(--danger) 35%, var(--border)); }
+.select-card.is-danger.is-selected {
+  border-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 14%, var(--surface));
+  box-shadow: 0 0 0 1px var(--danger) inset;
+}
+.select-card__row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.select-card__name { font-weight: 700; font-size: 13.5px; min-width: 0; }
+
+/* Custom rounded selection marker — never a default checkbox. */
+.marker {
+  width: 22px; height: 22px; border-radius: 8px; flex: none;
+  border: 2px solid var(--border-strong); background: var(--surface);
+  display: grid; place-items: center; color: transparent;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.marker.is-on { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+.marker.is-danger.is-on { background: var(--danger); border-color: var(--danger); color: #fff; }
+
+/* --------------------------------------------------------- customer menu */
+
+.customer-shell { min-height: 100dvh; background: var(--bg); display: flex; flex-direction: column; }
+
+.customer-header {
+  background: linear-gradient(135deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #101322));
+  color: #fff;
+  padding: 14px 14px 16px;
+  padding-top: calc(14px + env(safe-area-inset-top));
+}
+.customer-header__row { display: flex; align-items: center; gap: 12px; max-width: var(--page-max); margin: 0 auto; }
+.customer-header__brand { display: flex; align-items: center; gap: 11px; min-width: 0; flex: 1 1 auto; }
+.customer-header__logo {
+  width: 44px; height: 44px; border-radius: 13px; flex: none; overflow: hidden;
+  background: rgba(255, 255, 255, 0.22); display: grid; place-items: center; font-weight: 800;
+}
+.customer-header__logo img { width: 100%; height: 100%; object-fit: cover; }
+.customer-header__text { min-width: 0; }
+.customer-header__title {
+  font-size: clamp(14px, 4vw, 20px); font-weight: 800;
+  white-space: nowrap; overflow: visible; text-overflow: clip;
+}
+.customer-header__sub { font-size: 12px; opacity: 0.92; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.customer-header__actions { display: flex; align-items: center; gap: 8px; flex: none; }
+.ghost-btn {
+  background: rgba(255, 255, 255, 0.18); border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff; border-radius: var(--radius-pill); min-height: 40px; padding: 8px 12px;
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-weight: 650; font-size: 13px;
+}
+.ghost-btn:hover { background: rgba(255, 255, 255, 0.28); }
+
+/*
+ * Sticky category navigation: it sits in the normal flow right below the
+ * header, then sticks to the top once the header scrolls away. It never
+ * overlays product content because it keeps its own space in the flow.
+ */
+.category-bar {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+  transition: box-shadow 0.18s ease, padding 0.18s ease;
+}
+.category-bar.is-stuck { box-shadow: var(--shadow); }
+.category-bar__scroll {
+  display: flex; gap: 8px; overflow-x: auto; padding: 9px 12px;
+  scrollbar-width: none; max-width: var(--page-max); margin: 0 auto;
+}
+.category-bar.is-stuck .category-bar__scroll { padding: 6px 12px; }
+.category-bar__scroll::-webkit-scrollbar { display: none; }
+.cat-pill {
+  border: 1px solid var(--border-strong); background: var(--surface);
+  color: var(--text-soft); border-radius: var(--radius-pill);
+  padding: 7px 13px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; flex: none;
+  min-height: 36px;
+}
+.category-bar.is-stuck .cat-pill { min-height: 32px; padding: 5px 11px; font-size: 12px; }
+.cat-pill.is-active { background: var(--primary); border-color: var(--primary); color: var(--primary-ink); }
+
+.customer-body {
+  padding: 14px 12px calc(96px + env(safe-area-inset-bottom));
+  max-width: var(--page-max); margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 18px;
+}
+.menu-section { scroll-margin-top: 64px; }
+
+.menu-item-grid { display: grid; gap: 11px; grid-template-columns: 1fr; }
+@media (min-width: 520px) { .menu-item-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 900px) { .menu-item-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.menu-item {
+  display: flex; gap: 12px; align-items: center;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 11px; min-width: 0;
+  box-shadow: var(--shadow-sm);
+}
+.menu-item__thumb {
+  width: 68px; height: 68px; border-radius: 12px; flex: none; overflow: hidden;
+  background: var(--surface-3); display: grid; place-items: center; color: var(--muted);
+}
+.menu-item__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.menu-item__info { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; }
+.menu-item__foot { display: flex; align-items: center; gap: 10px; justify-content: space-between; min-width: 0; }
+.menu-item__desc { font-size: 12px; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.price-tag { font-weight: 800; color: var(--primary); white-space: nowrap; }
+.price-tag--old { text-decoration: line-through; color: var(--muted); font-weight: 600; font-size: 12px; }
+
+.add-btn {
+  border: none; background: var(--primary); color: var(--primary-ink);
+  border-radius: var(--radius-pill); width: 40px; height: 40px;
+  display: grid; place-items: center; cursor: pointer; flex: none;
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+.add-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.ads-grid { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .ads-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1000px) { .ads-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.ad-card {
+  border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border);
+  background: var(--surface); position: relative; min-height: 150px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+}
+.ad-card__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ad-card__scrim {
+  position: relative; padding: 14px;
+  background: linear-gradient(0deg, rgba(10, 12, 20, 0.82), rgba(10, 12, 20, 0.05));
+  color: #fff;
+}
+.ad-card__title { font-weight: 800; font-size: 15px; }
+.ad-card__sub { font-size: 12.5px; opacity: 0.94; }
+
+.cart-bar {
+  position: fixed; inset-block-end: 0; inset-inline: 0; z-index: 40;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--border);
+}
+.cart-bar__inner { max-width: var(--page-max); margin: 0 auto; display: flex; align-items: center; gap: 10px; }
+
+.cart-line { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.cart-line:last-of-type { border-bottom: none; }
+.qty {
+  display: inline-flex; align-items: center; gap: 2px;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-pill); overflow: hidden;
+}
+.qty button {
+  border: none; background: var(--surface); color: var(--text); width: 34px; height: 34px;
+  display: grid; place-items: center; cursor: pointer; font-size: 16px;
+}
+/* Hover / press states are defined once, in interaction.css. */
+.qty span { min-width: 28px; text-align: center; font-weight: 700; font-size: 13px; }
+
+.totals { display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; }
+.totals__row { display: flex; justify-content: space-between; gap: 10px; }
+.totals__row--grand { font-weight: 800; font-size: 15.5px; border-top: 1px dashed var(--border-strong); padding-top: 8px; }
+
+/* ------------------------------------------------------------ data viz */
+
+.bars { display: flex; align-items: flex-end; gap: 8px; min-height: 130px; }
+.bar-col { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+.bar-col__bars { display: flex; align-items: flex-end; gap: 3px; height: 104px; }
+.bar {
+  width: 13px; border-radius: 6px 6px 3px 3px;
+  background: color-mix(in srgb, var(--primary) 75%, transparent);
+  min-height: 3px; transition: height 0.3s ease;
+}
+.bar--alt { background: color-mix(in srgb, var(--accent-teal) 70%, transparent); }
+.bar-col__label { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+
+.progress { height: 8px; border-radius: var(--radius-pill); background: var(--surface-3); overflow: hidden; }
+.progress__fill { height: 100%; background: var(--primary); border-radius: var(--radius-pill); }
+
+.rank-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); min-width: 0; }
+.rank-row:last-child { border-bottom: none; }
+.rank-row__num {
+  width: 24px; height: 24px; border-radius: 8px; flex: none; display: grid; place-items: center;
+  background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary);
+  font-size: 11.5px; font-weight: 800;
+}
+.rank-row__name { flex: 1 1 auto; min-width: 0; font-size: 13.5px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rank-row__value { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+
+.review-text { font-size: 13.5px; color: var(--text-soft); white-space: pre-wrap; word-break: break-word; }
+.review-text.is-clamped {
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.hours-row {
+  display: flex; align-items: center; gap: 12px; justify-content: space-between;
+  padding: 9px 0; border-bottom: 1px solid var(--border); flex-wrap: nowrap;
+}
+.hours-row:last-child { border-bottom: none; }
+.hours-row__day { font-weight: 650; font-size: 13.5px; min-width: 0; flex: 1 1 auto; }
+.hours-row__times { display: flex; align-items: center; gap: 8px; flex: none; }
+.hours-row input[type='time'] {
+  background: var(--surface-2); border: 1px solid var(--border-strong);
+  border-radius: 8px; padding: 6px 8px; color: var(--text); font-size: 13px; min-height: 38px;
+  width: 118px; max-width: 34vw;
+}
+
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); display: inline-block; }
+.live-dot--off { background: var(--muted); }
+
+.social-list { display: flex; gap: 10px; flex-wrap: wrap; }
+.social-link {
+  width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center;
+  color: #fff; text-decoration: none; flex: none;
+}
+.social-link--instagram { background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af); }
+.social-link--facebook { background: #1877f2; }
+.social-link--tiktok { background: #010101; }
+.social-link--whatsapp { background: #25d366; }
+.social-link--youtube { background: #ff0000; }
+.social-link--x { background: #111; }
+.social-link--website { background: var(--accent-slate); }
+
+/* ------------------------------------------- sidebar groups & collapsed rail */
+
+/*
+ * Compact rows. Everything below is sized so a normal desktop viewport shows
+ * the whole tree — three direct links, three group headers and one open
+ * submenu — without ever reaching for a scrollbar, while staying readable.
+ */
+.sidebar .nav-link {
+  padding: 8px 10px;
+  gap: 10px;
+  font-size: 13.5px;
+  min-height: 36px;
+  border-radius: 10px;
+}
+.sidebar .nav-link__label { flex: 1 1 auto; max-width: 100%; }
+
+/* Expandable navigation groups: the group itself is the button, the children
+   are plain links so every destination stays a real, bookmarkable route. */
+.nav-item { position: relative; }
+.nav-group {
+  width: 100%;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: start;
+}
+.nav-group__caret {
+  margin-inline-start: auto;
+  flex: none;
+  opacity: 0.7;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.16s ease;
+}
+/* Closed points down, open points up — a state arrow, not a direction arrow,
+   so it is never mirrored by the layout direction. */
+.nav-group__caret.is-open { transform: rotate(180deg); opacity: 1; }
+.nav-group.is-current { color: #ffffff; }
+/*
+ * Group emphasis, in two steps below the active plate: a closed group that
+ * holds the current page keeps a faint accent, and an open group keeps a
+ * slightly warmer accent wash — same bent shape and inner lift as the active
+ * item, so the tree reads as one family of plates, just quieter.
+ */
+.sidebar .nav-group.is-current:not(.is-open) {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 16%, transparent),
+    color-mix(in srgb, var(--primary) 9%, transparent)
+  );
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--primary) 26%, transparent);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.sidebar .nav-group.is-open {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 12%, var(--navy)),
+    color-mix(in srgb, var(--primary) 7%, var(--navy))
+  );
+  color: #ffffff;
+  border-color: color-mix(in srgb, var(--primary) 20%, transparent);
+  border-radius: 10px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 14px -12px color-mix(in srgb, var(--primary) 85%, transparent);
+}
+
+@keyframes nav-submenu-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.nav-children {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 0 4px;
+  animation: nav-submenu-in 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.nav-children .nav-link {
+  padding-inline-start: 26px;
+  font-size: 12.8px;
+  min-height: 32px;
+}
+.nav-children .nav-dot {
+  width: 5px; height: 5px; border-radius: 50%; flex: none;
+  background: currentColor; opacity: 0.5;
+}
+/* A submenu entry that carries its own small outlined mark instead of the dot. */
+.nav-children .nav-child-icon { flex: none; opacity: 0.6; }
+/* A destructive destination (sample-data reset) is marked, never hidden. */
+.nav-children .nav-danger,
+.nav-flyout .nav-danger {
+  width: 6px; height: 6px; border-radius: 50%; flex: none;
+  margin-inline-start: auto;
+  background: #f27b7b;
+}
+
+/*
+ * Floating collapse control. It straddles the rail's outer edge, stays above
+ * the page content and follows the theme accent, so the whole rail reads as
+ * one surface in every preset.
+ */
+.nav-collapse {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  flex: none;
+  display: none;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  color: #ffffff;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--primary) 82%, #ffffff),
+    var(--primary)
+  );
+  border: 1px solid color-mix(in srgb, #ffffff 38%, transparent);
+  box-shadow: 0 8px 18px -8px color-mix(in srgb, var(--primary) 85%, transparent),
+    0 2px 6px rgba(4, 10, 18, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.2s ease;
+}
+.nav-collapse:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px -8px color-mix(in srgb, var(--primary) 90%, transparent),
+    0 3px 8px rgba(4, 10, 18, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.nav-collapse:active { transform: translateY(0) scale(0.95); }
+.nav-collapse__chev { transition: transform 0.24s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/*
+ * The arrow always points at the edge the rail will move toward: on the LTR
+ * rail (physical left) it points left while expanded and right while collapsed,
+ * and the RTL rail (physical right) mirrors exactly that.
+ */
+.nav-collapse__chev { transform: scaleX(1); }
+.sidebar-shell.is-collapsed .nav-collapse__chev { transform: scaleX(-1); }
+[dir='rtl'] .nav-collapse__chev { transform: scaleX(-1); }
+[dir='rtl'] .sidebar-shell.is-collapsed .nav-collapse__chev { transform: scaleX(1); }
+
+/* The rail collapses on desktop only — on mobile it stays a full drawer. */
+@media (min-width: 1001px) {
+  /* Straddles the outer edge of the rail, never clipped by it. */
+  .nav-collapse {
+    display: grid;
+    position: absolute;
+    inset-inline-end: -18px;
+    inset-block-start: 74px;
+    z-index: 3;
+  }
+
+  .sidebar-shell.is-collapsed { width: 72px; }
+
+  /* A compact icon rail: brand mark, centred icons, no labels. The shell stops
+     clipping so tooltips and group flyouts can sit outside it. */
+  .sidebar.is-collapsed { overflow: visible; }
+  .sidebar.is-collapsed .sidebar__nav {
+    overflow: visible;
+    padding-inline: 8px;
+  }
+  .sidebar.is-collapsed .brand { justify-content: center; padding-inline: 0; }
+  .sidebar.is-collapsed .brand__text { display: none; }
+  /* The footer stays pinned at the bottom — icon only, no clipped label. */
+  .sidebar.is-collapsed .sidebar__user {
+    text-align: center;
+    padding-inline: 0;
+    display: grid;
+    place-items: center;
+  }
+  .sidebar.is-collapsed .nav-link__label {
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .sidebar.is-collapsed .nav-group__caret { display: none; }
+  .sidebar.is-collapsed .nav-link,
+  .sidebar.is-collapsed .nav-group {
+    justify-content: center;
+    padding-inline: 0;
+    gap: 0;
+  }
+  /* Every rail row is a square target so the icons line up vertically. */
+  .sidebar.is-collapsed .nav-link {
+    width: 44px;
+    height: 38px;
+    min-height: 38px;
+    margin-inline: auto;
+  }
+  /* The icon rail has no outer edge to bend into: the active tile keeps a
+     compact rounded square and drops the shoulders, but keeps the lit ring and
+     accent halo so the selection still reads as a raised plate. */
+  .sidebar.is-collapsed .nav-link.is-active {
+    border-radius: 13px;
+    padding-inline: 0;
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, #ffffff 14%, transparent),
+      inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+      inset 0 0 16px color-mix(in srgb, var(--primary) 30%, transparent),
+      0 12px 20px -14px color-mix(in srgb, var(--primary) 100%, transparent);
+  }
+
+  /* Tooltips for the icon-only rail come from the global TooltipLayer (see
+     components/tooltip/tooltip.css): `data-tip` marks the row and
+     `data-tip-side="inline-end"` puts the bubble outside the rail, mirrored
+     automatically in RTL. No local pseudo-element bubble here anymore. */
+
+  /* Collapsed group flyout: keeps submenu destinations reachable and keyboard
+     focusable without widening the rail. */
+  .nav-flyout {
+    position: absolute;
+    inset-inline-start: calc(100% + 10px);
+    inset-block-start: -4px;
+    z-index: 5;
+    min-width: 196px;
+    max-height: 70dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 8px;
+    border-radius: 14px;
+    background: var(--navy-2);
+    border: 1px solid var(--navy-line);
+    box-shadow: 0 20px 44px -20px rgba(3, 8, 14, 0.9);
+    animation: nav-submenu-in 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .nav-flyout::-webkit-scrollbar { width: 0; height: 0; display: none; }
+  .nav-flyout__head {
+    padding: 4px 8px 8px;
+    margin-bottom: 4px;
+    border-bottom: 1px solid var(--navy-line);
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+  .nav-flyout__link {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 9px;
+    border-radius: 9px;
+    border: 1px solid transparent;
+    color: var(--navy-muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+  }
+  .nav-flyout__link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
+  /* The same quiet treatment as an expanded submenu row: a faint tint and a
+     hairline ring, never a heavier or larger shape than its siblings. */
+  .nav-flyout__link.is-active {
+    background: color-mix(in srgb, var(--primary) 18%, var(--navy-2));
+    border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+    color: #ffffff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-shell,
+  .app-shell,
+  .sidebar .nav-link,
+  .sidebar .nav-link__label,
+  .sidebar .brand__text,
+  .nav-group__caret,
+  .nav-collapse,
+  .nav-collapse__chev,
+  .nav-children,
+  .nav-flyout {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ------------------------------------------------------------ responsive */
+
+/*
+ * Mobile / tablet drawer toggle. A mint "pillow" button that sits in the same
+ * control family as the rest of the header, with an unmistakable open state:
+ * the accent fill plus a pressed inner shadow while the drawer covers the page.
+ */
+.sidebar-mobile-toggle {
+  display: none;
+  color: var(--theme-primary-strong);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--theme-primary-soft) 100%);
+  border-color: var(--theme-primary-line);
+  box-shadow:
+    0 2px 6px color-mix(in srgb, var(--theme-primary) 12%, rgba(23, 26, 43, 0.06)),
+    inset 0 1px 0 #ffffff;
+}
+.sidebar-mobile-toggle:hover:not(:disabled) {
+  color: var(--theme-primary-strong);
+  background: linear-gradient(180deg, var(--surface) 0%, color-mix(in srgb, var(--primary) 16%, var(--surface)) 100%);
+  border-color: color-mix(in srgb, var(--primary) 44%, var(--border-strong));
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--theme-primary) 20%, rgba(23, 26, 43, 0.06)),
+    inset 0 1px 0 #ffffff;
+}
+.sidebar-mobile-toggle:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+.sidebar-mobile-toggle.is-open {
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--theme-primary) 0%, var(--theme-primary-active) 100%);
+  border-color: var(--theme-primary-active);
+  box-shadow:
+    0 3px 10px color-mix(in srgb, var(--theme-primary) 38%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.16);
+}
+[data-theme='dark'] .sidebar-mobile-toggle {
+  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
+  border-color: var(--theme-primary-line);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+[data-theme='dark'] .sidebar-mobile-toggle.is-open {
+  color: var(--primary-ink);
+  box-shadow:
+    0 3px 12px color-mix(in srgb, var(--theme-primary) 42%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 5px rgba(0, 0, 0, 0.24);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-mobile-toggle { transition: none; }
+}
+
+@media (max-width: 1000px) {
+  .app-shell { flex-direction: column; padding-inline-start: 0; transition: none; }
+  /* Full-height sliding drawer, still edge to edge — never sized to content. */
+  .sidebar-shell {
+    width: min(84vw, 288px);
+    z-index: 70;
+    transform: translateX(-102%);
+    transition: transform 0.22s ease;
+  }
+  [dir='rtl'] .sidebar-shell { transform: translateX(102%); }
+  .sidebar-shell.is-open { transform: translateX(0); box-shadow: var(--shadow-lg); }
+  .sidebar-mobile-toggle { display: grid; }
+  .sidebar-scrim { position: fixed; inset: 0; background: rgba(10, 12, 20, 0.5); z-index: 65; }
+}
+
+body.nav-drawer-open { overflow: hidden; }
+
+@media (max-width: 720px) {
+  .page { padding: 13px; gap: 13px; }
+  .card__head { padding: 12px 13px; }
+  .card__body { padding: 13px; }
+  .form-grid, .form-grid--wide { grid-template-columns: 1fr; }
+  .modal { max-height: 94dvh; }
+  table.data { min-width: 520px; }
+  .stat-row { gap: 8px; }
+  .stat-row .stat { min-width: 104px; padding: 10px 11px; }
+  .stat__value { font-size: 17px; }
+}
+
+@media (max-width: 420px) {
+  .product-grid { grid-template-columns: 1fr; }
+  .menu-item__thumb { width: 58px; height: 58px; }
+  .hours-row input[type='time'] { width: 106px; }
+}
+
+/* ------------------------------------------------------- auth & special */
+
+.auth-wrap {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  padding-top: calc(20px + env(safe-area-inset-top));
+  background: linear-gradient(160deg, var(--bg), color-mix(in srgb, var(--primary) 12%, var(--bg)));
+}
+.auth-card { width: 100%; max-width: 440px; }
+
+.md-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+
+.bk-grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 700px) { .bk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1060px) { .bk-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/*
+ * Working hours: the day name and its open/closed control stay on one row on
+ * mobile, and every toggle lines up in the same column on tablet/desktop no
+ * matter how long the translated day name is.
+ */
+.hours-grid { display: flex; flex-direction: column; }
+.hours-grid__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 60px;
+  grid-template-areas: 'day toggle' 'times times';
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.hours-grid__row:last-child { border-bottom: none; }
+.hours-grid__row > .hours-row__day { grid-area: day; }
+.hours-grid__row > .switch { grid-area: toggle; justify-self: end; }
+.hours-grid__row > .hours-row__times { grid-area: times; justify-self: end; }
+@media (min-width: 640px) {
+  .hours-grid__row {
+    grid-template-columns: minmax(0, 1fr) 60px auto;
+    grid-template-areas: 'day toggle times';
+  }
+}
+
+/* ------------------------------------------------------------- printing */
+
+@media print {
+  html, body { background: #fff !important; }
+  /* One continuous receipt: nothing else is in the printed flow. The receipt
+     itself is styled in receipt.css, next to the component that renders it. */
+  body > *:not(#print-root) { display: none !important; }
+  #print-root { display: block !important; }
+  .no-print { display: none !important; }
+}
+
+/* Fallback page, replaced per print by ReceiptPrintStyle with the paper and the
+   length the owner's settings produce. The receipt carries its own margins. */
+@page { margin: 0; }

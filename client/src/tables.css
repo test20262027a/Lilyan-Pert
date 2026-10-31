@@ -1,0 +1,442 @@
+/* ==========================================================================
+   Tables & QR management — the illustrated banner, the Main Ordering Menu
+   Address card and the responsive grid of table QR cards.
+   Layout only: the reference palette lives in local tokens on .tables-page, so
+   the app-wide light/dark theme and the business primary colour keep working.
+   ========================================================================== */
+
+.tables-page {
+  --tp-green: var(--theme-primary);
+  --tp-green-ink: var(--theme-primary-strong);
+  --tp-teal: var(--theme-primary-strong);
+  --tp-ink: #242724;
+  --tp-muted: #898c87;
+  --tp-line: #e9ede9;
+  --tp-mint: var(--theme-primary-soft);
+  --tp-mint-line: var(--theme-primary-line);
+  --tp-red: #ef4444;
+  --tp-red-soft: #fff2f2;
+  --tp-red-line: #fadada;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+[data-theme='dark'] .tables-page {
+  --tp-green: var(--mint);
+  --tp-green-ink: var(--mint-ink);
+  --tp-teal: var(--theme-primary-strong);
+  --tp-ink: var(--text);
+  --tp-muted: var(--muted);
+  --tp-line: var(--border);
+  --tp-mint: var(--mint-soft);
+  --tp-mint-line: var(--border);
+  --tp-red: #f27b7b;
+  --tp-red-soft: rgba(239, 68, 68, 0.14);
+  --tp-red-line: rgba(239, 68, 68, 0.3);
+}
+
+/* -------------------------------------------------------- page banner */
+
+/* Same illustrated banner as the other management pages: title and subtitle on
+   the reading edge, Add Table on the other. */
+.tables-page .mhero__title { color: var(--tp-ink); }
+.tables-page .mhero__sub { color: var(--tp-muted); }
+
+[data-theme='dark'] .tables-page .mhero__title { color: var(--text); }
+[data-theme='dark'] .tables-page .mhero__sub { color: var(--muted); }
+
+.tadd {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 48px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 15px;
+  background: var(--tp-green);
+  color: #ffffff;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--tp-green) 28%, transparent);
+  transition: filter 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.tadd:hover:not(:disabled) {
+  background: var(--theme-primary-hover);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 8px 20px color-mix(in srgb, var(--tp-green) 34%, transparent);
+}
+.tadd:active:not(:disabled) { transform: translateY(1px); }
+.tadd:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
+.tadd__dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  color: var(--tp-green-ink);
+}
+.tadd__label { white-space: nowrap; }
+
+/* -------------------------------------- main ordering menu address card */
+
+/* This is the business's main ordering menu, NOT a table: address and Copy only.
+   No QR, no download and no share control may appear inside it. */
+.taddr {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 135px;
+  padding: 18px 20px 20px;
+  border: 1px solid var(--tp-mint-line);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, var(--tp-green) 7%, transparent) 0%, transparent 58%),
+    var(--surface);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+}
+.taddr__title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--tp-ink);
+}
+.taddr__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.taddr__field {
+  flex: 1 1 260px;
+  min-width: 0;
+  height: 55px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: var(--surface);
+  border: 1px solid var(--tp-line);
+  border-radius: 14px;
+}
+.taddr__icon { display: grid; place-items: center; color: var(--tp-muted); flex: none; }
+.taddr__url {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: ltr;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--tp-ink);
+}
+.taddr__copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid var(--tp-mint-line);
+  background: var(--tp-mint);
+  color: var(--tp-green-ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.taddr__copy:hover:not(:disabled) { background: color-mix(in srgb, var(--tp-mint) 80%, var(--tp-green)); }
+.taddr__copy:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ------------------------------------------------------ loading / empty */
+
+.tloading {
+  display: grid;
+  place-items: center;
+  padding: 34px;
+  border: 1px solid var(--tp-line);
+  border-radius: 22px;
+  background: var(--surface);
+}
+
+/* -------------------------------------------------------- table card grid */
+
+.tgrid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(232px, 1fr));
+  align-items: stretch;
+}
+
+/* Four equal columns on a desktop, and never a stretched single card. */
+@media (min-width: 1360px) {
+  .tgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+.tcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 16px 16px;
+  background: var(--surface);
+  border: 1px solid var(--tp-line);
+  border-radius: 22px;
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.05);
+  min-width: 0;
+}
+.tcard__icon {
+  width: 47px;
+  height: 47px;
+  border-radius: 15px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: var(--tp-mint);
+  border: 1px solid var(--tp-mint-line);
+  color: var(--tp-green);
+}
+.tcard__share {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--tp-muted);
+  cursor: pointer;
+}
+.tcard__share:hover { background: var(--tp-mint); color: var(--tp-green-ink); }
+
+/* The QR keeps its own black-on-white world in every theme — never inverted. */
+.tcard__qr {
+  display: block;
+  padding: 8px;
+  border: 1px solid var(--tp-line);
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 3px 10px rgba(23, 26, 43, 0.06);
+  line-height: 0;
+}
+.tcard__qr img { display: block; border-radius: 8px; }
+
+.tcard__name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  color: var(--tp-ink);
+}
+.tcard__seats { font-size: 13px; color: var(--tp-muted); text-align: center; }
+
+.tcard__rule {
+  width: 100%;
+  height: 1px;
+  margin-top: auto;
+  background: var(--tp-line);
+}
+
+.tcard__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.tcard__act {
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--tp-line);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--tp-ink);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.tcard__act:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
+.tcard__act:disabled { opacity: 0.55; cursor: not-allowed; }
+.tcard__act--icon { width: 46px; flex: none; }
+.tcard__act--edit { flex: 1 1 auto; min-width: 0; }
+.tcard__act--del {
+  width: 46px;
+  flex: none;
+  background: var(--tp-red-soft);
+  border-color: var(--tp-red-line);
+  color: var(--tp-red);
+}
+.tcard__act--del:hover:not(:disabled) { background: color-mix(in srgb, var(--tp-red) 14%, var(--surface)); }
+
+/* ------------------------------------------------------- delete dialog */
+
+.tdel__note { font-size: 13.5px; color: var(--tp-muted); }
+.tdel__btn { background: var(--tp-red); box-shadow: 0 6px 16px color-mix(in srgb, var(--tp-red) 26%, transparent); }
+.tdel__btn:hover:not(:disabled) { background: color-mix(in srgb, var(--tp-red) 88%, #000); }
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 900px) {
+  .tgrid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .tgrid { gap: 12px; grid-template-columns: repeat(auto-fill, minmax(206px, 1fr)); }
+  .tcard { padding: 16px 14px 14px; border-radius: 18px; }
+  .tcard__name { font-size: 18px; }
+  .taddr { min-height: 0; padding: 16px; border-radius: 18px; }
+  .taddr__field { height: 50px; flex-basis: 100%; }
+  .taddr__copy { width: 100%; justify-content: center; }
+}
+
+/* One full-width column when two QR cards would no longer be readable. */
+@media (max-width: 460px) {
+  .tgrid { grid-template-columns: minmax(0, 1fr); }
+  .tadd { width: 100%; justify-content: center; }
+}
+
+/* ==========================================================================
+   Add / Edit Table dialog — the café-table banner, the four language cards,
+   the table-number / seating pair, the display order field and the VIP card.
+   The shell, the language-card shape and the tokens are the Menu module's
+   (.mcmodal); everything here only sizes them to this reference and adds the
+   two pieces it does not have. Dark theme remaps the surfaces above.
+   ========================================================================== */
+
+/* The reference's narrow, compact dialog. */
+.tform.mcmodal { max-width: 452px; }
+
+/* The page's own café illustration fills a taller banner: it is scaled to the
+   banner's height and cropped at the sides, so the round table and its two
+   chairs stay centred behind the heading instead of shrinking into a strip. */
+.tform .mcmodal__head {
+  min-height: var(--hd-modal-h);
+  padding: 14px 18px;
+  padding-inline-end: 58px;
+}
+.tform .mcmodal__art .mart {
+  height: 100%;
+  width: auto;
+  min-width: 100%;
+}
+/* The small gray supporting label under the section heading. */
+.tform__hint {
+  margin-top: -3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--mm-muted);
+  text-align: start;
+}
+
+/* Language inputs are a little taller here than in the other module dialogs. */
+.tform .mcmodal__lang { padding: 10px 11px 11px; }
+.tform .mcmodal__lang .mcmodal__input { height: 43px; border-radius: 11px; }
+
+/* ------------------------------------ table number / seating capacity */
+
+.tform__pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.tform__field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.tform__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--mm-ink);
+}
+
+/* Numbers read naturally in every language and never show browser spinners. */
+.tform__num {
+  height: 44px;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.tform__num::-webkit-outer-spin-button,
+.tform__num::-webkit-inner-spin-button { appearance: none; margin: 0; }
+
+/* -------------------------------------------------------- VIP setting */
+
+.tform__vip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 65px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--mm-card);
+  border: 1px solid var(--mm-line);
+  box-shadow: 0 1px 2px rgba(23, 26, 43, 0.04);
+}
+.tform__vip-info { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.tform__crown {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: #fdf3d7;
+  border: 1px solid #f2dd9e;
+  color: #c9922a;
+}
+[data-theme='dark'] .tform__crown {
+  background: rgba(201, 146, 42, 0.18);
+  border-color: rgba(242, 221, 158, 0.35);
+  color: #f0c163;
+}
+.tform__vip-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tform__vip-title { font-size: 13.5px; font-weight: 800; color: var(--mm-ink); }
+.tform__vip-desc { font-size: 11.5px; line-height: 1.4; color: var(--mm-muted); }
+
+/* The VIP switch keeps the module's green, whatever the business theme is. */
+.tform__vip .switch { flex: none; position: relative; }
+/* A switch is a control, not a 1px hit target: its own checkbox covers the
+   whole pill, so a tap anywhere on it toggles VIP. */
+.tform__vip .switch input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.tform__vip .switch__track { background: #d3d8d3; }
+.tform__vip .switch input:checked + .switch__track { background: var(--mm-green); }
+
+/* The name cards' columns come from LanguageFieldsGrid (see languageGrid.css). */
+
+@media (max-width: 560px) {
+  .tform .mcmodal__head { min-height: var(--hd-modal-h-sm); padding: 12px 14px; padding-inline-end: 52px; }
+}

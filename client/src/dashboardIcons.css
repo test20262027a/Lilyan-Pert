@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Dashboard icon system — multicolor premium 3D tiles.
+
+   One tile, many meanings. Every dashboard glyph sits in the same rounded
+   container (`.dash-ic`) whose skin comes from a per-tone token table below,
+   so each category keeps ONE colour across the whole dashboard:
+
+     orders / carts .... blue      revenue ......... emerald
+     visitors / views .. purple    completed ....... teal
+     cancelled ......... red       new orders ...... orange
+     pending ........... amber     preparing ....... violet
+     ready ............. cyan      notification .... pink
+     hours / calendar .. indigo    analytics ....... turquoise
+     best sellers ...... gold      growth .......... green
+
+   A tile is three painted layers, never a flat fill:
+     1. a soft radial highlight in the upper-left (the light source),
+     2. a diagonal two-stop gradient of the category hue,
+     3. an inset top edge and an inset bottom shade for real thickness,
+   plus a low, colour-matched cast shadow so it sits above the card.
+
+   `.dash-tone-*` paints the CARD pastels of the metric tiles with the same
+   category hue, so an icon and its surface belong together while every
+   category stays visually distinct. Both tables adapt to Light/Dark.
+
+   Loaded by `.dash-ic`'s own component (dashboard/DashIcon.jsx).
+   ========================================================================== */
+
+/* Bare (untiled) inline dashboard glyphs read this ink. */
+:root {
+  --dashic-blue-ink: #1d4ed8;
+  --dashic-emerald-ink: #047857;
+  --dashic-purple-ink: #6d28d9;
+  --dashic-teal-ink: #0f766e;
+  --dashic-red-ink: #b91c1c;
+  --dashic-orange-ink: #c2410c;
+  --dashic-amber-ink: #b45309;
+  --dashic-violet-ink: #7c3aed;
+  --dashic-cyan-ink: #0e7490;
+  --dashic-pink-ink: #be185d;
+  --dashic-indigo-ink: #4338ca;
+  --dashic-turquoise-ink: #0f8f97;
+  --dashic-gold-ink: #8a5a06;
+  --dashic-green-ink: #15803d;
+}
+
+[data-theme='dark'] {
+  --dashic-blue-ink: #9dbcff;
+  --dashic-emerald-ink: #6fd6a7;
+  --dashic-purple-ink: #c0a4ff;
+  --dashic-teal-ink: #5fd3c4;
+  --dashic-red-ink: #f7a1a8;
+  --dashic-orange-ink: #ffb083;
+  --dashic-amber-ink: #f5c86a;
+  --dashic-violet-ink: #c9a6ff;
+  --dashic-cyan-ink: #62cfe4;
+  --dashic-pink-ink: #f79bc4;
+  --dashic-indigo-ink: #a5afff;
+  --dashic-turquoise-ink: #5fd8d0;
+  --dashic-gold-ink: #e8c66a;
+  --dashic-green-ink: #74dd95;
+}
+
+/* ------------------------------------------------------------- the tile */
+
+.dash-ic {
+  --ic-size: 40px;
+  --ic-ink: #ffffff;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--ic-size);
+  height: var(--ic-size);
+  color: var(--ic-ink);
+  background:
+    radial-gradient(115% 95% at 34% 6%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 60%),
+    linear-gradient(158deg, var(--ic-a) 0%, var(--ic-b) 100%);
+  border: 1px solid color-mix(in srgb, var(--ic-b) 58%, #0b0f1a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -2px 5px color-mix(in srgb, var(--ic-b) 55%, #0b0f1a),
+    0 2px 4px rgba(16, 22, 38, 0.1),
+    0 8px 18px -8px color-mix(in srgb, var(--ic-glow) 52%, transparent);
+  transition:
+    transform 220ms var(--ui-ease, ease),
+    box-shadow 220ms var(--ui-ease, ease),
+    border-color 220ms var(--ui-ease, ease);
+}
+.dash-ic--squircle { border-radius: 32%; }
+.dash-ic--circle { border-radius: 50%; }
+
+/* The glyph stays in front of the hover shade and keeps one weight everywhere. */
+.dash-ic > .icon {
+  position: relative;
+  z-index: 1;
+  stroke-width: 1.85;
+  filter: drop-shadow(0 1px 1px rgba(11, 15, 26, 0.28));
+}
+
+/*
+ * Hover shade. Paint only — the tile's own hue, one step deeper — so an
+ * interactive icon never jumps to an unrelated colour.
+ */
+.dash-ic::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: rgba(0, 0, 0, 0.16);
+  opacity: 0;
+  transition: opacity 220ms var(--ui-ease, ease);
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------- tone table */
+
+.dash-ic--blue { --ic-a: #6aa4ff; --ic-b: #2563eb; --ic-glow: #2563eb; --ic-a-dark: #4f8cf7; --ic-b-dark: #1e40af; }
+.dash-ic--emerald { --ic-a: #45d6a0; --ic-b: #059669; --ic-glow: #059669; --ic-a-dark: #34c98f; --ic-b-dark: #04724f; }
+.dash-ic--purple { --ic-a: #b291fa; --ic-b: #7c3aed; --ic-glow: #7c3aed; --ic-a-dark: #9d7bf5; --ic-b-dark: #6d28d9; }
+.dash-ic--teal { --ic-a: #3fd3c2; --ic-b: #0d9488; --ic-glow: #0d9488; --ic-a-dark: #2ec4b4; --ic-b-dark: #0f766e; }
+.dash-ic--red { --ic-a: #fb7f8f; --ic-b: #dc2626; --ic-glow: #dc2626; --ic-a-dark: #ef6b7c; --ic-b-dark: #b91c1c; }
+.dash-ic--orange { --ic-a: #ffa061; --ic-b: #ea580c; --ic-glow: #ea580c; --ic-a-dark: #f79052; --ic-b-dark: #c2410c; }
+.dash-ic--violet { --ic-a: #c393fb; --ic-b: #8b5cf6; --ic-glow: #8b5cf6; --ic-a-dark: #b183f5; --ic-b-dark: #7c3aed; }
+.dash-ic--pink { --ic-a: #f88ec0; --ic-b: #db2777; --ic-glow: #db2777; --ic-a-dark: #ef7cb2; --ic-b-dark: #be185d; }
+.dash-ic--indigo { --ic-a: #8f9cfa; --ic-b: #4f46e5; --ic-glow: #4f46e5; --ic-a-dark: #7b8af5; --ic-b-dark: #4338ca; }
+.dash-ic--green { --ic-a: #63df8c; --ic-b: #16a34a; --ic-glow: #16a34a; --ic-a-dark: #4fd07d; --ic-b-dark: #15803d; }
+/* Lighter hues carry a deep glyph so the mark stays legible on the gradient. */
+.dash-ic--amber { --ic-a: #fbc44a; --ic-b: #d97706; --ic-glow: #d97706; --ic-a-dark: #f0b437; --ic-b-dark: #b45309; --ic-ink: #43290a; }
+.dash-ic--gold { --ic-a: #f0c750; --ic-b: #a16207; --ic-glow: #a16207; --ic-a-dark: #e2b73c; --ic-b-dark: #854d0e; --ic-ink: #3d2803; }
+.dash-ic--cyan { --ic-a: #3ad4ec; --ic-b: #0891b2; --ic-glow: #0891b2; --ic-a-dark: #29c1d6; --ic-b-dark: #0e7490; --ic-ink: #04303a; }
+.dash-ic--turquoise { --ic-a: #33ded0; --ic-b: #0d9ea8; --ic-glow: #0d9ea8; --ic-a-dark: #26c9bd; --ic-b-dark: #0f8f97; --ic-ink: #04312f; }
+
+/* Dark mode: the same hues, one step deeper, with a softer highlight. */
+[data-theme='dark'] .dash-ic {
+  background:
+    radial-gradient(115% 95% at 34% 6%, rgba(255, 255, 255, 0.26) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(158deg, var(--ic-a-dark) 0%, var(--ic-b-dark) 100%);
+  border-color: color-mix(in srgb, var(--ic-a-dark) 42%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.42),
+    0 2px 5px rgba(0, 0, 0, 0.4),
+    0 10px 22px -10px color-mix(in srgb, var(--ic-glow) 72%, transparent);
+}
+
+/* --------------------------------------------------------- hover lift */
+
+/*
+ * Only icons that live on a hovered metric card move. The rule lists those
+ * cards explicitly, so nothing else in the app can inherit an accidental lift,
+ * and only the tile's elevation changes — never the box around it.
+ */
+.kpi:hover .dash-ic--hover,
+.fstat:hover .dash-ic--hover,
+.stats-kpi:hover .dash-ic--hover,
+.status-tile:hover .dash-ic--hover,
+.welcome:hover .dash-ic--hover,
+.dash .card:hover .dash-ic--hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.66),
+    inset 0 -2px 5px color-mix(in srgb, var(--ic-b) 58%, #0b0f1a),
+    0 4px 9px rgba(16, 22, 38, 0.13),
+    0 14px 26px -10px color-mix(in srgb, var(--ic-glow) 78%, transparent);
+}
+[data-theme='dark'] .kpi:hover .dash-ic--hover,
+[data-theme='dark'] .fstat:hover .dash-ic--hover,
+[data-theme='dark'] .stats-kpi:hover .dash-ic--hover,
+[data-theme='dark'] .status-tile:hover .dash-ic--hover,
+[data-theme='dark'] .welcome:hover .dash-ic--hover,
+[data-theme='dark'] .dash .card:hover .dash-ic--hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.46),
+    0 4px 10px rgba(0, 0, 0, 0.46),
+    0 16px 30px -12px color-mix(in srgb, var(--ic-glow) 88%, transparent);
+}
+.kpi:hover .dash-ic--hover::after,
+.fstat:hover .dash-ic--hover::after,
+.stats-kpi:hover .dash-ic--hover::after,
+.status-tile:hover .dash-ic--hover::after,
+.welcome:hover .dash-ic--hover::after,
+.dash .card:hover .dash-ic--hover::after {
+  opacity: 1;
+}
+
+/* ------------------------------------------------- card surface pastels */
+
+/*
+ * The metric cards keep their existing geometry and simply take the category
+ * hue for their pastel surface, hairline and figure. Scoped to `.dash` so the
+ * shared `.kpi` / `.fstat` / `.status-tile` defaults never leak elsewhere.
+ */
+.dash .dash-tone-blue { --tone: #eef4ff; --tone-ink: #1d4ed8; --tone-line: #d3e2ff; }
+.dash .dash-tone-emerald { --tone: #e9f9f0; --tone-ink: #047857; --tone-line: #c5ecd8; }
+.dash .dash-tone-purple { --tone: #f4efff; --tone-ink: #6d28d9; --tone-line: #e3d6ff; }
+.dash .dash-tone-teal { --tone: #e6f8f5; --tone-ink: #0f766e; --tone-line: #c2ebe3; }
+.dash .dash-tone-red { --tone: #fdeef0; --tone-ink: #b91c1c; --tone-line: #f8d5d8; }
+.dash .dash-tone-orange { --tone: #fff2e9; --tone-ink: #c2410c; --tone-line: #ffdcc5; }
+.dash .dash-tone-amber { --tone: #fff6e3; --tone-ink: #b45309; --tone-line: #ffe6b9; }
+.dash .dash-tone-violet { --tone: #f6efff; --tone-ink: #7c3aed; --tone-line: #e8d9ff; }
+.dash .dash-tone-cyan { --tone: #e7f8fc; --tone-ink: #0e7490; --tone-line: #c6ebf4; }
+.dash .dash-tone-pink { --tone: #fdeef6; --tone-ink: #be185d; --tone-line: #f9d7e7; }
+.dash .dash-tone-indigo { --tone: #eef0ff; --tone-ink: #4338ca; --tone-line: #d8dcff; }
+.dash .dash-tone-turquoise { --tone: #e6faf6; --tone-ink: #0f8f97; --tone-line: #c5efe9; }
+.dash .dash-tone-gold { --tone: #fdf6e4; --tone-ink: #8a5a06; --tone-line: #f4e5bb; }
+.dash .dash-tone-green { --tone: #ecfcef; --tone-ink: #15803d; --tone-line: #cbefcf; }
+
+[data-theme='dark'] .dash .dash-tone-blue { --tone: #17233a; --tone-ink: #9dbcff; --tone-line: #27395a; }
+[data-theme='dark'] .dash .dash-tone-emerald { --tone: #112a22; --tone-ink: #6fd6a7; --tone-line: #1e4136; }
+[data-theme='dark'] .dash .dash-tone-purple { --tone: #211a35; --tone-ink: #c0a4ff; --tone-line: #332a4f; }
+[data-theme='dark'] .dash .dash-tone-teal { --tone: #0f2a28; --tone-ink: #5fd3c4; --tone-line: #1b403c; }
+[data-theme='dark'] .dash .dash-tone-red { --tone: #33161a; --tone-ink: #f7a1a8; --tone-line: #4b2429; }
+[data-theme='dark'] .dash .dash-tone-orange { --tone: #331f14; --tone-ink: #ffb083; --tone-line: #4a2f21; }
+[data-theme='dark'] .dash .dash-tone-amber { --tone: #32270f; --tone-ink: #f5c86a; --tone-line: #473716; }
+[data-theme='dark'] .dash .dash-tone-violet { --tone: #241a35; --tone-ink: #c9a6ff; --tone-line: #362a4f; }
+[data-theme='dark'] .dash .dash-tone-cyan { --tone: #102a33; --tone-ink: #62cfe4; --tone-line: #1c3f4b; }
+[data-theme='dark'] .dash .dash-tone-pink { --tone: #331826; --tone-ink: #f79bc4; --tone-line: #4a2739; }
+[data-theme='dark'] .dash .dash-tone-indigo { --tone: #1a1e3a; --tone-ink: #a5afff; --tone-line: #2b3157; }
+[data-theme='dark'] .dash .dash-tone-turquoise { --tone: #0e2b2b; --tone-ink: #5fd8d0; --tone-line: #1a4241; }
+[data-theme='dark'] .dash .dash-tone-gold { --tone: #2c230f; --tone-ink: #e8c66a; --tone-line: #443617; }
+[data-theme='dark'] .dash .dash-tone-green { --tone: #122b18; --tone-ink: #74dd95; --tone-line: #1f4127; }
+
+/* ------------------------------------------------------------ motion */
+
+@media (max-width: 720px) {
+  .kpi:hover .dash-ic--hover,
+  .fstat:hover .dash-ic--hover,
+  .stats-kpi:hover .dash-ic--hover,
+  .status-tile:hover .dash-ic--hover { transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-ic,
+  .dash-ic::after { transition: none; }
+  .kpi:hover .dash-ic--hover,
+  .fstat:hover .dash-ic--hover,
+  .stats-kpi:hover .dash-ic--hover,
+  .status-tile:hover .dash-ic--hover,
+  .welcome:hover .dash-ic--hover,
+  .dash .card:hover .dash-ic--hover { transform: none; }
+}

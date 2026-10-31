@@ -1,0 +1,645 @@
+/* ==========================================================================
+   Lilyan Pert — thermal receipt (58 mm / 80 mm)
+
+   One stylesheet for the receipt drawn on screen and the receipt that comes
+   out of the printer. Everything is black ink on white paper: a thermal head
+   cannot render gradients, tints or shadows, so the design carries its
+   hierarchy through weight, size, spacing, rules and real icons instead.
+
+   The paper is a stack of SEVEN independent sections, separated by a dashed
+   rule and never merged:
+
+     identity · order details · products · notes · financial summary, closed by
+     the grand total · one closing message
+
+   Layout rules that keep the paper intact:
+   · no fixed heights — the paper grows with its content, never clips it;
+   · the products block is one real table of FIVE columns (row number, product,
+     quantity, unit price, line total), so the three money values each own a
+     position and a long name wraps without pushing a price off the paper;
+   · amounts are tabular and nowrap, so columns line up and digits never
+     reflow; they are bidi-isolated so an RTL receipt cannot reverse them;
+   · the sheet is exactly the printable width of the paper (the print style
+     subtracts the calibration margins), so nothing prints outside it;
+   · every decorative surface (tinted plate, gray header strip, rounded corner)
+     becomes plain white + a black rule in print.
+   ========================================================================== */
+
+.receipt-paper {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  padding: 10px 10px 9px;
+  background: #ffffff;
+  color: #000000;
+  border: 1px solid #dde2ea;
+  border-radius: 10px;
+  /*
+   * A proportional face that really carries Kurdish, Persian, Arabic and
+   * Latin. A monospace face has no Arabic coverage and falls back per glyph,
+   * which is what produced broken, mismatched lines.
+   *
+   * Typography comes from the print settings as custom properties, written by
+   * ReceiptPaper on this element: the same values therefore style the live
+   * preview and the printed sheet, and a change repaints both at once.
+   */
+  font-family: var(--rc-font, 'Noto Naskh Arabic', 'Segoe UI', Tahoma, 'DejaVu Sans', Arial, sans-serif);
+  font-size: var(--rc-font-size, 12px);
+  line-height: var(--rc-line-height, 1.4);
+  font-weight: var(--rc-weight, 400);
+  font-variant-numeric: tabular-nums;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+
+  /* The one palette of the receipt. Print turns every surface to white and
+     every rule to solid black, so the design costs the least possible ink. */
+  --rc-rule: #dfe4ec;
+  --rc-rule-strong: #c4cbd7;
+  /* The one dashed rule of the paper: every section break uses it, so all the
+     dividers share a width, a weight and a shade. */
+  --rc-rule-dash: #9aa4b3;
+  --rc-tint: #f4f7fb;
+  --rc-tint-strong: #eaeff8;
+  --rc-ink-soft: #4b5563;
+}
+
+.receipt-paper * { color: #000000; }
+
+/*
+ * The sheet: the paper itself. Its width, its calibrated margins (as padding)
+ * and its print scale (as zoom) are written inline by ReceiptSheet from the one
+ * geometry function, and the live preview and the printer mount the same
+ * rectangle — so the receipt inside it is drawn at the same real size in both.
+ */
+.rc-sheet {
+  box-sizing: border-box;
+  margin: 0;
+  background: #ffffff;
+}
+
+/*
+ * On the sheet the paper keeps only the small inset its section cards need: the
+ * sheet already draws the paper's frame, so the receipt never adds a second one.
+ * This is the approved preview inset, and it prints unchanged.
+ */
+.rc-sheet > .receipt-paper {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 7px 8px 8px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/*
+ * Every mark on the paper is a real monochrome SVG from the app's own icon set,
+ * drawn one step heavier than elsewhere: a thermal head prints a hairline as a
+ * faint, broken line, so the receipt uses one consistent, slightly thicker
+ * stroke at a size that stays legible in preview and on paper alike.
+ */
+.receipt-paper .icon {
+  flex: none;
+  vertical-align: middle;
+  stroke-width: 2.2;
+}
+
+/* Numbers, times, phones and prices stay in one direction on an RTL receipt.
+   Only the values that must never reflow (prices) are kept on one line. */
+.rc-num {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ header */
+
+/* Section 1 — the logo, the business name and one icon-led row per contact
+   detail. It carries no card: it is the head of the paper itself. */
+.rc-head {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+.receipt-logo {
+  display: block;
+  max-width: 110px;
+  height: auto;
+  margin: 0 auto 4px;
+  object-fit: contain;
+}
+
+.rc-name {
+  font-size: 1.45em;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+/* Address, phone and email share ONE two-column grid — a narrow icon column and
+   a text column — so the three rows start on the same line instead of each
+   being centred on its own width. The block itself stays centred. */
+.rc-contacts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  justify-content: center;
+  align-items: start;
+  column-gap: 4px;
+  /* The address, the phone and the email sit right under one another: one gap
+     between rows, no extra leading in between. */
+  row-gap: 1px;
+  margin-block-start: 3px;
+  max-width: 100%;
+  font-size: 0.86em;
+  line-height: 1.3;
+  text-align: start;
+}
+
+/* The row wrapper only groups its key: the icon and the text are the two cells
+   of the grid above, which is what aligns every contact row. */
+.rc-contact { display: contents; }
+
+/* The mark keeps its own column and stays centred on the first line of the row
+   it belongs to, so a wrapped address never leaves the pin floating. */
+.rc-contact__icon {
+  display: inline-flex;
+  align-items: center;
+  align-self: start;
+  min-height: 1.3em;
+}
+
+.rc-contact__text {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+/* The owner can start-align the header; centered is the default. */
+.receipt-paper[data-align='start'] .rc-head {
+  justify-items: start;
+  text-align: start;
+}
+.receipt-paper[data-align='start'] .rc-contacts { justify-content: start; }
+
+/* The logo can sit at the start of the column while the identity stays centred. */
+.receipt-paper[data-logo='start'] .receipt-logo {
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
+
+/* --------------------------------------------------------------- sections */
+
+/*
+ * Every section after the identity opens with its own dashed rule, with the
+ * same gap above and below it. The rule belongs to the section, so a hidden
+ * section (no table, no notes, no discount) never leaves an orphan divider.
+ */
+/* The gap sits on both sides of a divider, so half of it on each keeps the
+   section spacing the owner chose while tightening the paper overall. */
+.rc-block { margin-block-start: calc(var(--rc-space, 7px) / 2); }
+
+.receipt-paper[data-dividers='on'] .rc-block {
+  padding-block-start: calc(var(--rc-space, 7px) / 2);
+  border-block-start: 1px dashed var(--rc-rule-dash);
+}
+
+/* One card per section: a light border, soft rounded corners and no fill, so
+   the paper still reads as paper in the preview. */
+.rc-card {
+  border: 1px solid var(--rc-rule);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+/* A section heading strip: one monochrome mark, then the bold localized title. */
+.rc-secthead {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  background: var(--rc-tint);
+  border-block-end: 1px solid var(--rc-rule);
+  border-start-start-radius: 9px;
+  border-start-end-radius: 9px;
+}
+
+.rc-secthead__icon { display: inline-flex; flex: none; }
+
+.rc-secthead__title {
+  font-size: 0.86em;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: break-word;
+}
+
+/* Section captions and their marks carry the reference's softer ink on screen
+   and on paper alike, so the printed sheet keeps the same visual weight. */
+.receipt-paper .rc-secthead__title,
+.receipt-paper .rc-secthead__icon { color: var(--rc-ink-soft); }
+.receipt-paper .rc-field__label { color: var(--rc-ink-soft); }
+
+/* ------------------------------------------------------------ order header */
+
+/* The order number leads: its mark, the number itself, and a rounded badge
+   with the localized word for the document, on the opposite edge. */
+.rc-ordertop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border-block-end: 1px dashed var(--rc-rule-dash);
+}
+
+.rc-ordertop__icon { display: inline-flex; flex: none; }
+
+.rc-ordertop__number {
+  font-size: 1.5em;
+  font-weight: 800;
+  line-height: 1.05;
+  white-space: nowrap;
+}
+
+.rc-ordertop__badge {
+  margin-inline-start: auto;
+  padding: 2px 9px;
+  border-radius: 999px;
+  /* The pale blue-gray pill of the reference; print turns it plain white. */
+  background: var(--rc-tint-strong);
+  font-size: 0.76em;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* The order card is a single column of fact rows, so every row has the whole
+   card width to print on and nothing can be squeezed into a half-width cell. */
+.rc-ordergrid {
+  display: grid;
+  row-gap: 3px;
+  padding: 6px 8px;
+}
+
+/* One fact: a stable two-track grid — caption, then value. The caption keeps
+   the first track (the right-hand one on an RTL receipt, the left-hand one on
+   an LTR receipt, so the two mirror each other) and the value takes the rest,
+   which is what puts a name on the same row as its label. Baseline alignment
+   keeps the icon, the caption and the value on one line. */
+.rc-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  column-gap: 4px;
+  min-width: 0;
+}
+
+.rc-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.8em;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.rc-field__label .icon { flex: none; }
+
+/* The one colon between a caption and its value. */
+.rc-field__label::after { content: ':'; }
+
+/* The value wraps between words first and only breaks a word when it truly
+   cannot fit, so nothing is ever cut off with an ellipsis. */
+.rc-field__value {
+  font-size: 0.95em;
+  line-height: 1.3;
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.rc-field__value--strong { font-weight: 700; }
+
+/* The numeric date and its time side by side, a clear gap between them, and
+   wrapping onto a second line only when the column is genuinely too narrow. */
+.rc-field__dates {
+  display: inline-flex;
+  flex-wrap: wrap;
+  column-gap: 6px;
+}
+
+/* ------------------------------------------------------------------ table */
+
+/*
+ * The products block is ONE real table with a <colgroup> and `table-layout:
+ * fixed`. The five columns of the reference (# · product · quantity · unit
+ * price · line total) are fixed percentages of the paper, so the caption row
+ * and every product row share the exact same tracks: each value owns its
+ * position down the whole receipt and a long name wraps inside the name column
+ * instead of shifting a quantity or a price. On an RTL receipt the columns run
+ * right-to-left on their own, which is the printed order for Kurdish, Persian
+ * and Arabic.
+ */
+.rc-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+
+/* 80 mm proportions: 5 / 46 / 8 / 19 / 22 — the product name owns the widest
+   track so a real name still fits on one line, and each money column is wide
+   enough for a five-digit amount that never breaks. The colgroup that carries
+   these classes is the single place the columns are sized. */
+.rc-w--no { width: 5%; }
+.rc-w--name { width: 46%; }
+.rc-w--qty { width: 8%; }
+.rc-w--unit { width: 19%; }
+.rc-w--total { width: 22%; }
+
+/* Every cell of the table, caption or value. No vertical rules: the columns are
+   held apart by their own tracks and by tabular numerals, so the block stays
+   clean on paper instead of becoming a grid of hairlines. */
+.rc-td,
+.rc-th {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 3px 2px;
+  font-size: 0.94em;
+  line-height: 1.25;
+  vertical-align: middle;
+  text-align: start;
+  overflow-wrap: break-word;
+}
+
+/* Column captions: each one sits over its own values — the number and the
+   prices centred, the product name start-aligned like the names beneath it. */
+.rc-th {
+  padding-block: 4px;
+  font-size: 0.76em;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  background: var(--rc-tint);
+  border-block-end: 1px solid var(--rc-rule);
+}
+
+.rc-th--name { text-align: start; }
+
+.rc-th:first-child { border-start-start-radius: 9px; }
+.rc-th:last-child { border-start-end-radius: 9px; }
+
+.rc-td--no { text-align: center; font-size: 0.88em; }
+.rc-td--name { font-weight: 600; }
+/* Quantity and both prices are centred in their own column, one step smaller
+   than the name so every amount fits on one line and nothing is ever wrapped. */
+.rc-td--qty,
+.rc-td--unit,
+.rc-td--total {
+  text-align: center;
+  white-space: nowrap;
+  font-size: 0.88em;
+}
+.rc-td--total { font-weight: 700; }
+
+.rc-td__name { display: block; }
+
+.rc-td__note {
+  display: block;
+  font-size: 0.86em;
+  font-weight: 400;
+  color: var(--rc-ink-soft);
+}
+
+/* One thin dashed rule between products: readable on a thermal print. */
+.rc-table > tbody > tr.rc-item + tr.rc-item > .rc-td {
+  border-block-start: 1px dashed var(--rc-rule-dash);
+}
+
+/*
+ * 58 mm carries roughly half the characters of 80 mm, so a five-column table
+ * would crush the prices. There each product takes two lines in the SAME three
+ * fixed columns — the number and the full product name on the first line, then
+ * the quantity, the unit price and the line total on the second — never one
+ * merged "2 × 12,000" string, never an overlapping column.
+ */
+.rc-table--compact .rc-w--qty { width: 30%; }
+.rc-table--compact .rc-w--unit { width: 33%; }
+.rc-table--compact .rc-w--total { width: 37%; }
+
+.rc-table--compact .rc-td--name {
+  padding: 5px 3px 2px;
+  font-weight: 700;
+}
+
+/* The row number rides with the product name on its own line. */
+.rc-td__index {
+  display: inline-block;
+  margin-inline-end: 3px;
+  font-weight: 700;
+  opacity: 0.72;
+}
+
+/* The three money fields keep their padding tight so a 58 mm price still fits. */
+.rc-table--compact tbody.rc-item > tr:last-child > .rc-td { padding-block: 3px 4px; }
+
+/* One dashed rule between products, drawn on the product's own first line. */
+.rc-table > tbody.rc-item + tbody.rc-item > tr:first-child > .rc-td {
+  border-block-start: 1px dashed var(--rc-rule-dash);
+}
+
+/* ------------------------------------------------------------------ notes */
+
+/* The note is the body of its own card, beside a speech mark: start-aligned,
+   wrapping inside it, with exactly the same padding as every other card body —
+   never a second box inside the card, never centred, never floating. */
+.rc-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  padding: 6px 8px 7px;
+  font-size: 0.92em;
+  line-height: 1.4;
+  text-align: start;
+}
+
+.rc-note__icon { flex: none; display: inline-flex; margin-block-start: 0.18em; }
+/* The note follows the paper's own direction and starts on the same side as the
+   heading above it — never centred, never on the opposite edge. */
+.rc-note__text {
+  min-width: 0;
+  overflow-wrap: break-word;
+  text-align: start;
+}
+
+/* ---------------------------------------------------------------- summary */
+
+/* Two shared tracks — one label column, one amount column — so every row of
+   the summary has its label on one edge and its amount on the other. */
+.rc-sum {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 3px;
+  margin: 0;
+  padding: 6px 8px 7px;
+}
+
+.rc-sum__row { display: contents; }
+
+.rc-sum__row dt {
+  font-size: 0.94em;
+  line-height: 1.35;
+}
+
+.rc-sum__row dd {
+  margin: 0;
+  font-weight: 700;
+  white-space: nowrap;
+  text-align: end;
+}
+
+/* ------------------------------------------------------------ grand total */
+
+/*
+ * The payable amount closes the summary card: a strong rule above it separates
+ * it from the rows, and on screen it carries the reference's pale blue-gray
+ * highlight with the card's own rounded bottom corners. It is never one more
+ * line of the summary and is kept whole by any page cut.
+ */
+.rc-grand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 7px 8px;
+  background: var(--rc-tint-strong);
+  border-block-start: 1px dashed var(--rc-rule-dash);
+  border-end-start-radius: 9px;
+  border-end-end-radius: 9px;
+  font-size: 1.3em;
+  font-weight: 800;
+  line-height: 1.15;
+  break-inside: avoid;
+}
+
+.rc-grand__label { font-weight: 800; overflow-wrap: anywhere; }
+
+.rc-grand__amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  white-space: nowrap;
+}
+
+.rc-grand__amount b { font-weight: 800; }
+
+.rc-grand__icon { flex: none; }
+
+/* Grand total presentation: boxed (the default), a single rule above, or a
+   plain bold line. All three keep the amount the strongest element on paper. */
+.receipt-paper[data-grand='rule'] .rc-grand {
+  background: transparent;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  padding-inline: 9px;
+  padding-block: 6px 2px;
+  border-block-start: 1px dashed var(--rc-rule-dash);
+}
+
+.receipt-paper[data-grand='plain'] .rc-grand {
+  background: transparent;
+  border-radius: 0;
+  border-block-start: 0;
+  padding-inline: 9px;
+  padding-block: 4px;
+}
+
+/* 58 mm keeps the same total block one step smaller, so the amount and its
+   currency still share one line inside the narrower card. */
+.receipt-paper[data-paper='58'] .rc-grand {
+  font-size: 1.16em;
+  padding: 8px;
+  gap: 6px;
+}
+
+/* 58 mm is narrow: the date and its time step down together so they stay on one
+   line instead of splitting onto two. */
+.receipt-paper[data-paper='58'] .rc-field__dates {
+  column-gap: 4px;
+  font-size: 0.9em;
+}
+.receipt-paper[data-paper='58'] .rc-sum { column-gap: 6px; }
+.receipt-paper[data-paper='58'] .rc-sum__row dd { font-size: 0.94em; }
+
+/* ------------------------------------------------------------------ footer */
+
+/* The one closing message: a small heart above it, centred, with a little air
+   so it never crowds the amount above. */
+.rc-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  break-inside: avoid;
+}
+
+.rc-foot__icon { flex: none; }
+
+.rc-foot__text {
+  margin: 0;
+  font-size: calc(0.94em * var(--rc-foot-scale, 1));
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+/* The closing message keeps its own alignment, independent of the header. */
+.receipt-paper[data-align='start'] .rc-foot,
+.receipt-paper[data-foot-align='start'] .rc-foot {
+  align-items: flex-start;
+  text-align: start;
+}
+
+.receipt-paper[data-foot-align='center'] .rc-foot { align-items: center; text-align: center; }
+
+/* ------------------------------------------------------------------ print */
+
+/*
+ * Printing shows the very same sheet the preview shows — one component, one
+ * stylesheet, one geometry — so the paper cannot drift from what was approved.
+ *
+ * Nothing is restyled for paper here: colours, tints, corner radii, border
+ * weights, dashed dividers, paddings and type sizes all stay exactly as they
+ * are on screen. `print-color-adjust: exact` on the paper keeps the pale
+ * section headers and the highlighted grand total wherever the printer can.
+ */
+@media print {
+  /* No page margin: the calibrated margins are padding of the shared sheet,
+     exactly as the preview draws them, so nothing is inset twice. */
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Screen chrome only — the stage's frame, radius and shadow never print. */
+  .rc-sheet {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  /* Nothing important may straddle a cut: no product row, no order fact, no
+     total and no closing message is ever split by a page break. */
+  #print-root .rc-table thead,
+  #print-root .rc-table tr,
+  #print-root .rc-card,
+  #print-root .rc-ordertop,
+  #print-root .rc-field,
+  #print-root .rc-grand,
+  #print-root .rc-foot,
+  #print-root .rc-head { break-inside: avoid; }
+}

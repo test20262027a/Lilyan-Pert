@@ -1,0 +1,612 @@
+/* ==========================================================================
+   Delete confirmation — one premium, softly three-dimensional surface for
+   every destructive action in the admin panel.
+
+   Theme-aware: the card surface, its border, the Cancel button and the focus
+   ring follow `--primary` / `--surface`, so all appearance presets and dark
+   mode work without overrides. The contextual entity colour (`--dcd-ink`) is
+   fixed per entity, and the destructive button is always red.
+   ========================================================================== */
+
+.dcd-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: center;
+  padding: clamp(14px, 4vw, 28px);
+  overflow-y: auto;
+  background: color-mix(in srgb, #0a0e17 54%, transparent);
+  backdrop-filter: blur(3px) saturate(0.92);
+  -webkit-backdrop-filter: blur(3px) saturate(0.92);
+  animation: dcd-fade 180ms ease-out both;
+}
+
+.dcd {
+  /* Contextual identity — set by the tone class below. */
+  --dcd-ink: #e04c7c;
+  --dcd-soft: color-mix(in srgb, var(--dcd-ink) 10%, var(--surface));
+  --dcd-soft-2: color-mix(in srgb, var(--dcd-ink) 19%, var(--surface));
+  --dcd-line: color-mix(in srgb, var(--dcd-ink) 24%, var(--border));
+  --dcd-glow: color-mix(in srgb, var(--dcd-ink) 32%, transparent);
+
+  position: relative;
+  width: 100%;
+  max-width: 448px;
+  margin: auto;
+  padding: 24px 22px 18px;
+  border-radius: 19px;
+  border: 1px solid color-mix(in srgb, var(--primary) 15%, var(--border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary) 5%, var(--surface)) 0%,
+      var(--surface) 44%
+    );
+  color: var(--text);
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 62%, transparent),
+    0 1px 2px rgba(15, 20, 35, 0.06),
+    0 26px 54px -22px rgba(15, 20, 35, 0.42),
+    0 10px 22px -14px rgba(15, 20, 35, 0.24);
+  animation: dcd-in 190ms cubic-bezier(0.22, 0.78, 0.3, 1) both;
+  max-height: calc(100dvh - 28px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Dark mode: the same layering, on a dark glass surface. */
+[data-theme='dark'] .dcd {
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--border));
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--primary) 9%, var(--surface)) 0%,
+      var(--surface) 46%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 30px 60px -24px rgba(0, 0, 0, 0.72),
+    0 12px 26px -16px rgba(0, 0, 0, 0.6);
+}
+[data-theme='dark'] .dcd-backdrop {
+  background: color-mix(in srgb, #05070d 64%, transparent);
+}
+
+/* Entity tones — meaning, never the business theme. */
+.dcd--tone-pink { --dcd-ink: #e04c7c; }
+.dcd--tone-coral { --dcd-ink: #ef5a5a; }
+.dcd--tone-violet { --dcd-ink: #7c5cf0; }
+.dcd--tone-green { --dcd-ink: #16a34a; }
+.dcd--tone-teal { --dcd-ink: #0d9488; }
+.dcd--tone-cyan { --dcd-ink: #0891b2; }
+.dcd--tone-blue { --dcd-ink: #2563eb; }
+.dcd--tone-amber { --dcd-ink: #d97706; }
+
+/* ---------------------------------------------------------------- close ---
+   Physical upper-left, as in the reference dialogs (both directions). */
+
+.dcd__close {
+  position: absolute;
+  top: 13px;
+  left: 13px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow: 0 2px 5px -1px rgba(16, 22, 38, 0.14);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.dcd__close:hover:not(:disabled) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.dcd__close:active:not(:disabled) { transform: scale(0.96); }
+.dcd__close:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ------------------------------------------------- entity icon + badge ---- */
+
+.dcd__mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  margin: 6px auto 0;
+  border-radius: 50%;
+  color: var(--dcd-ink);
+  background:
+    radial-gradient(circle at 34% 26%, color-mix(in srgb, #ffffff 82%, var(--dcd-soft)) 0%, var(--dcd-soft) 58%, var(--dcd-soft-2) 100%);
+  box-shadow:
+    inset 0 0 0 1px var(--dcd-line),
+    inset 0 7px 12px -8px color-mix(in srgb, #ffffff 90%, transparent),
+    0 12px 20px -12px var(--dcd-glow),
+    0 3px 8px -4px var(--dcd-glow);
+}
+[data-theme='dark'] .dcd__mark {
+  background:
+    radial-gradient(circle at 34% 26%, color-mix(in srgb, var(--dcd-ink) 26%, var(--surface)) 0%, var(--dcd-soft) 62%, var(--dcd-soft-2) 100%);
+  box-shadow:
+    inset 0 0 0 1px var(--dcd-line),
+    0 12px 22px -12px var(--dcd-glow);
+}
+
+.dcd__badge {
+  position: absolute;
+  bottom: -2px;
+  left: -4px;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f05252, #d92828);
+  color: #ffffff;
+  border: 2px solid var(--surface);
+  box-shadow: 0 3px 7px -2px rgba(190, 24, 24, 0.55);
+}
+
+/* --------------------------------------------------- title & description -- */
+
+.dcd__title {
+  margin: 14px 0 0;
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.dcd__desc {
+  margin: 7px 0 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--text-soft);
+  padding: 0 4px;
+}
+
+.dcd__error { margin-top: 14px; text-align: start; }
+.dcd__error .alert { font-size: 12.5px; }
+
+.dcd__body { margin-top: 14px; }
+
+/* ------------------------------------------------------- preview box ------ */
+
+.dcd__preview {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 66px;
+  padding: 11px 13px;
+  margin-top: 15px;
+  border-radius: 13px;
+  text-align: start;
+  background: linear-gradient(180deg, var(--dcd-soft), color-mix(in srgb, var(--dcd-ink) 5%, var(--surface)));
+  border: 1px solid var(--dcd-line);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent),
+    0 3px 8px -6px var(--dcd-glow);
+}
+[data-theme='dark'] .dcd__preview {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.dcd__thumb {
+  flex: none;
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  object-fit: cover;
+  background: var(--surface);
+  box-shadow: 0 2px 6px -3px rgba(16, 22, 38, 0.35);
+}
+.dcd__thumb--icon {
+  display: grid;
+  place-items: center;
+  color: var(--dcd-ink);
+  background: var(--surface);
+  border: 1px solid var(--dcd-line);
+}
+
+.dcd__preview-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.dcd__preview-name {
+  font-size: 13.5px;
+  font-weight: 750;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.dcd__preview-sub {
+  font-size: 11.5px;
+  color: var(--text-soft);
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------------------ warning ----- */
+
+.dcd__warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: 11px;
+  text-align: start;
+  font-size: 11.8px;
+  line-height: 1.7;
+  color: color-mix(in srgb, var(--dcd-ink) 62%, var(--text));
+  background: color-mix(in srgb, var(--dcd-ink) 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--dcd-ink) 18%, var(--border));
+}
+.dcd__warn > svg { flex: none; margin-top: 2px; }
+
+/* ------------------------------------------------------------- actions ---- */
+
+.dcd__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.dcd__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease, background 0.15s ease, transform 0.08s ease, border-color 0.15s ease;
+}
+.dcd__btn > span { min-width: 0; }
+/* Disabled keeps its boundary and a readable label instead of fading away. */
+.dcd__btn:disabled {
+  cursor: not-allowed;
+  opacity: 1;
+  transform: none;
+}
+.dcd__btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+.dcd__btn--danger:focus-visible { outline-color: var(--focus-ring-danger); }
+.dcd__btn--cancel:disabled {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--muted);
+  box-shadow: none;
+}
+
+.dcd__btn--cancel {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(16, 22, 38, 0.06);
+}
+.dcd__btn--cancel:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--primary) 6%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 26%, var(--border-strong));
+}
+.dcd__btn--cancel:active:not(:disabled) { transform: translateY(1px); }
+
+/* Destructive: always red, in every theme — and clearly the dialog's decision.
+   It is a heavier plate than Cancel: a deeper red, a stronger gloss, a lit top
+   edge, a shaded underside and a soft red cast shadow. Hover brightens the
+   gloss and deepens the colour instead of washing it out. */
+.dcd__actions .dcd__btn--danger {
+  --btn-fill: #e02121;
+  --btn-fill-hover: #c81818;
+  --btn-fill-active: #ad1111;
+  --btn-line: #a51414;
+  --btn-line-hover: #8c0f0f;
+  --btn-sheen: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.15) 42%,
+    rgba(255, 255, 255, 0) 68%
+  );
+  --btn-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -3px 0 rgba(120, 10, 10, 0.42),
+    0 3px 6px -3px rgba(190, 20, 20, 0.5),
+    0 14px 26px -12px rgba(190, 22, 22, 0.8);
+  --btn-shadow-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    inset 0 -3px 0 rgba(120, 10, 10, 0.48),
+    0 5px 10px -4px rgba(190, 20, 20, 0.55),
+    0 20px 34px -14px rgba(190, 22, 22, 0.9);
+}
+.dcd__actions .dcd__btn--danger:not(:disabled) {
+  color: #ffffff;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(110, 8, 8, 0.45);
+}
+/*
+ * A blocked destructive action is muted red with a readable label — never a
+ * washed-out pink carrying white text that nobody can read.
+ */
+.dcd__btn--danger:disabled {
+  color: color-mix(in srgb, var(--danger) 72%, var(--text));
+  border-color: color-mix(in srgb, var(--danger) 30%, var(--border));
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  box-shadow: none;
+}
+/* Pressing sinks the plate into the page — the shared `--btn-depth-press` in
+   buttons.css does that for every family, so no red-specific press shadow. */
+.dcd__btn--danger .spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #ffffff;
+}
+
+.dcd__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+}
+
+/* ------------------------------------------ selected modules (bulk reset) -- */
+
+.dcd__modules {
+  list-style: none;
+  margin: 15px 0 0;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 200px;
+  overflow-y: auto;
+  border-radius: 13px;
+  text-align: start;
+  background: linear-gradient(180deg, var(--dcd-soft), color-mix(in srgb, var(--dcd-ink) 5%, var(--surface)));
+  border: 1px solid var(--dcd-line);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent);
+}
+
+.dcd__module {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  font-size: 12.5px;
+}
+.dcd__module-icon {
+  flex: none;
+  width: 25px;
+  height: 25px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--dcd-line);
+  color: var(--dcd-ink);
+}
+.dcd__module-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 700;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.dcd__module-count {
+  flex: none;
+  font-size: 11px;
+  color: var(--text-soft);
+  white-space: nowrap;
+}
+.dcd__module-blocked {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 650;
+  color: #d63a3a;
+  white-space: nowrap;
+}
+
+.dcd__notes {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-radius: 11px;
+  text-align: start;
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: color-mix(in srgb, #b45309 70%, var(--text));
+  background: color-mix(in srgb, #f59e0b 8%, var(--surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 24%, var(--border));
+}
+.dcd__notes li { display: flex; gap: 6px; align-items: flex-start; }
+.dcd__notes .icon { flex: none; margin-top: 2px; }
+
+.dcd__ack {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin-top: 12px;
+  padding: 9px 11px;
+  border-radius: 11px;
+  text-align: start;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  cursor: pointer;
+}
+.dcd__ack input { margin-top: 2px; flex: none; accent-color: var(--primary); }
+.dcd__ack > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dcd__ack strong { font-size: 12.5px; color: var(--text); }
+.dcd__ack em { font-size: 11px; font-style: normal; color: var(--text-soft); line-height: 1.5; }
+
+.dcd__ack-field { margin-top: 12px; text-align: start; }
+
+/* A plain acknowledgements sentence (no title/subtitle stack). */
+.dcd__ack-label {
+  font-size: 12.5px;
+  line-height: 1.65;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Amber consequence warning — deliberately independent of the entity colour,
+   so "this also deletes records" never looks like ordinary context. */
+.dcd__warn--amber {
+  font-size: 12.2px;
+  gap: 8px;
+  padding: 10px 12px;
+  color: color-mix(in srgb, #b45309 74%, var(--text));
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, #f59e0b 34%, var(--border));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 55%, transparent),
+    0 5px 14px -11px rgba(180, 83, 9, 0.75);
+}
+.dcd__warn--amber > svg { color: #d97706; }
+[data-theme='dark'] .dcd__warn--amber {
+  color: color-mix(in srgb, #fbbf24 84%, var(--text));
+  background: color-mix(in srgb, #f59e0b 16%, var(--surface));
+  border-color: color-mix(in srgb, #f59e0b 38%, var(--border));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Deletion impact: what leaves the menu, and how many records in total. */
+.dcd__impact {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: start;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 60%, transparent);
+  font-size: 12px;
+  color: var(--text-soft);
+}
+[data-theme='dark'] .dcd__impact { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05); }
+.dcd__impact-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.dcd__impact-row strong { color: var(--text); font-size: 12.5px; font-weight: 800; }
+.dcd__impact-row--total {
+  margin-top: 2px;
+  padding-top: 7px;
+  border-top: 1px dashed color-mix(in srgb, var(--dcd-ink) 26%, var(--border));
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* ------------------------------------------------------------ motion ------ */
+
+@keyframes dcd-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dcd-in {
+  from { opacity: 0; transform: translateY(8px) scale(0.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dcd-backdrop,
+  .dcd {
+    animation-duration: 1ms;
+    animation-iteration-count: 1;
+  }
+  .dcd__btn,
+  .dcd__close { transition: none; }
+}
+
+/* ----------------------------------------------------------- responsive --- */
+
+@media (max-width: 420px) {
+  .dcd-backdrop { padding: 12px; }
+  .dcd {
+    max-width: 100%;
+    padding: 20px 16px 15px;
+    border-radius: 17px;
+  }
+  .dcd__mark { width: 64px; height: 64px; margin-top: 4px; }
+  .dcd__badge { width: 25px; height: 25px; }
+  .dcd__title { font-size: 17.5px; }
+  .dcd__desc { font-size: 12.5px; }
+  .dcd__actions { gap: 8px; }
+  .dcd__btn { height: 44px; font-size: 13px; padding: 0 10px; }
+}
+
+/* ================================================== unsaved changes ======
+   The discard-confirmation variant. Same card, same buttons — only the warning
+   mark changes: a soft, layered amber medallion instead of an entity colour,
+   so it reads as "careful" in every theme without turning into an error.
+   ======================================================================== */
+
+.dcd--discard {
+  --dcd-ink: #e0862a;
+  max-width: 424px;
+}
+
+.dcd--discard .dcd__mark {
+  width: 78px;
+  height: 78px;
+  margin-top: 10px;
+  color: #b45309;
+  background:
+    radial-gradient(circle at 34% 24%, #fff4e0 0%, #ffdfa8 52%, #f7c56f 100%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #d97706 26%, transparent),
+    inset 0 8px 14px -8px rgba(255, 255, 255, 0.95),
+    0 14px 24px -14px rgba(217, 119, 6, 0.6),
+    0 3px 8px -4px rgba(180, 83, 9, 0.35);
+}
+[data-theme='dark'] .dcd--discard .dcd__mark {
+  color: #fbbf24;
+  background:
+    radial-gradient(circle at 34% 24%, color-mix(in srgb, #fbbf24 34%, var(--surface)) 0%, color-mix(in srgb, #d97706 22%, var(--surface)) 62%, color-mix(in srgb, #b45309 26%, var(--surface)) 100%);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, #f59e0b 34%, transparent),
+    0 14px 26px -16px rgba(245, 158, 11, 0.55);
+}
+
+/* The warning glyph gets a gentle three-dimensional tilt with a soft pulse. */
+.dcd--discard .dcd__mark .icon {
+  filter: drop-shadow(0 2px 3px rgba(146, 64, 14, 0.35));
+  animation: dcd-warn-in 420ms cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+@keyframes dcd-warn-in {
+  from { opacity: 0; transform: scale(0.82) translateY(3px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.dcd--discard .dcd__desc {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-soft);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dcd--discard .dcd__mark .icon { animation: none; }
+}

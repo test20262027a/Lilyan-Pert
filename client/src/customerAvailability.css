@@ -1,0 +1,435 @@
+/*
+ * Business availability for the ordering menus.
+ *
+ * Three things live here, all driven by the saved Working Hours:
+ *   1. the closed / not-yet-open / holiday notice at the top of the menu,
+ *   2. the working-hours card's own state (open, soon, closed, holiday),
+ *   3. the inactive ordering surface — dimmed, desaturated products with blocked
+ *      controls. It is deliberately NOT the out-of-stock style: nothing is sold
+ *      out here, the whole ordering service is paused.
+ *
+ * Everything is scoped to `.customer-shell` and mixed from the active theme, so
+ * the admin panel and the five appearance presets are untouched.
+ */
+
+/* --------------------------------------------------------- closed notice -- */
+
+.cui-closed {
+  --nc: #e05252;
+  position: relative;
+  isolation: isolate;
+  /* Fills the same content column as the search field, so the card and the
+     field below it share one set of left and right edges in every language and
+     at every breakpoint — no narrower, centred variant. */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* The page body already spaces its children (~18px), so the card only brings
+     its own top gap and never doubles up the gap above the search field. */
+  margin: 16px 0 0;
+  padding: 13px 18px 14px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--nc) 24%, var(--cui-line));
+  background:
+    radial-gradient(120% 130% at 0% 0%, color-mix(in srgb, var(--nc) 11%, transparent), transparent 68%),
+    color-mix(in srgb, var(--surface) 96%, var(--nc));
+  /* One soft lift only, so it never stacks with the search field's shadow. */
+  box-shadow:
+    0 1px 2px rgba(16, 32, 26, 0.05),
+    0 14px 28px -18px color-mix(in srgb, var(--nc) 45%, transparent),
+    var(--cui-inset);
+  overflow: hidden;
+}
+
+.cui-closed--soon { --nc: #e08a1e; }
+.cui-closed--holiday { --nc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
+
+/* A single soft glow in the corner gives the card its depth without adding any
+   box, and it stays behind the content in both themes. */
+.cui-closed__aura {
+  position: absolute;
+  inset-block-start: -70px;
+  inset-inline-end: -50px;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--nc) 22%, transparent), transparent 70%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* The search field lifts half onto the banner with a negative top margin. That
+   lift belongs to the banner only: when the notice sits in between, the field
+   keeps its normal position so the two never collide or stack their shadows.
+   The body's own 18px row gap is trimmed to the card's 16px rhythm. */
+.cui-closed + .cui-head { margin-top: -2px; }
+.cui-closed + .cui-head .cui-search { margin-top: 0; }
+
+.cui-closed__main { display: flex; align-items: center; gap: 13px; min-width: 0; }
+
+/* The header mark: a polished rounded-square tile with a theme-tinted gradient,
+   a lit top edge and two soft shadows, so it reads as raised glass. */
+.cui-closed__icon {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  color: #ffffff;
+  background:
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--nc) 62%, #ffffff) 0%,
+      color-mix(in srgb, var(--nc) 96%, #ffffff) 52%,
+      color-mix(in srgb, var(--nc) 78%, #2a1c14) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 5px color-mix(in srgb, var(--nc) 55%, #000000),
+    0 10px 18px -10px color-mix(in srgb, var(--nc) 70%, transparent),
+    0 2px 4px rgba(16, 32, 26, 0.14);
+}
+/* A single sheen across the top of the tile, no extra box. */
+.cui-closed__icon::before {
+  content: '';
+  position: absolute;
+  inset: 2px 2px auto;
+  height: 45%;
+  border-radius: 13px 13px 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.cui-closed__icon svg { position: relative; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); }
+
+.cui-closed__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+/*
+ * Wide screens: the card now spans the whole menu column, so the message and
+ * the three status badges share one line — text at the start, badges at the end
+ * — instead of leaving an empty tail under a short sentence. Grid columns follow
+ * the document direction, so RTL mirrors without extra rules.
+ */
+@media (min-width: 900px) {
+  .cui-closed__text {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title badges'
+      'hint badges';
+    align-content: center;
+    column-gap: 22px;
+    row-gap: 4px;
+  }
+  .cui-closed__title { grid-area: title; }
+  .cui-closed__hint { grid-area: hint; }
+  .cui-closed__badges { grid-area: badges; margin-top: 0; justify-content: flex-end; }
+}
+
+/* --------------------------------------------------- status badges group -- */
+
+/*
+ * The day, the closed state and the paused ordering sit in one horizontal group
+ * under the message. Each badge owns a `--bc` colour and the same pill geometry,
+ * so the three read as one family while staying distinguishable at a glance.
+ */
+.cui-closed__badges {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.cui-closed__badge {
+  --bc: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  min-height: 27px;
+  padding: 3px 11px 3px 4px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--bc) 76%, #17110c);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bc) 13%, var(--surface)),
+    color-mix(in srgb, var(--bc) 7%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--bc) 26%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 5px 10px -8px color-mix(in srgb, var(--bc) 70%, transparent);
+}
+[dir='rtl'] .cui-closed__badge { padding: 3px 4px 3px 11px; }
+
+.cui-closed__badge-icon {
+  width: 21px;
+  height: 21px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  color: #ffffff;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--bc) 58%, #ffffff),
+    color-mix(in srgb, var(--bc) 92%, #2a1c14)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 2px 4px -2px color-mix(in srgb, var(--bc) 75%, transparent);
+}
+.cui-closed__badge-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)); }
+
+.cui-closed__badge-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cui-closed__badge-time {
+  font-size: 10.5px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--bc) 55%, var(--muted));
+  padding-inline-start: 2px;
+}
+
+/* Day: the theme-based blue. Closed: a soft amber. Paused: an elegant coral. */
+.cui-closed__badge--day { --bc: color-mix(in srgb, #3b7bf0 80%, var(--primary)); }
+.cui-closed__badge--closed { --bc: #e0952b; }
+.cui-closed__badge--paused { --bc: #ec6a5c; }
+
+[data-theme='dark'] .cui-closed__badge { color: color-mix(in srgb, var(--bc) 58%, #ffffff); }
+[data-theme='dark'] .cui-closed__badge-time { color: color-mix(in srgb, var(--bc) 42%, var(--muted)); }
+
+.cui-closed__title {
+  margin: 0;
+  font-size: clamp(15px, 1.15vw, 17px);
+  font-weight: 850;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+.cui-closed__hint {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: color-mix(in srgb, var(--muted) 92%, var(--text));
+  max-width: 62ch;
+  text-wrap: pretty;
+}
+
+@media (max-width: 720px) {
+  .cui-closed { width: 100%; padding: 12px 13px 13px; margin: 14px 0 0; }
+  .cui-closed__main { gap: 11px; align-items: flex-start; }
+  .cui-closed__icon { width: 42px; height: 42px; border-radius: 13px; }
+  .cui-closed__badges { gap: 6px; margin-top: 7px; }
+  .cui-closed__badge { font-size: 11px; }
+  .cui-closed__hint { max-width: none; }
+}
+
+@media (max-width: 420px) {
+  .cui-closed__main { gap: 10px; }
+  .cui-closed__badge { padding-inline-end: 9px; }
+  .cui-closed__badge-time { display: none; }
+}
+
+/* ------------------------------------------------------ working hours card -- */
+
+/*
+ * The card states follow the same verdict: an accent bar and a tinted header
+ * per state, so the answer is readable at a glance without reading the range.
+ */
+.cui-hours { position: relative; }
+.cui-hours::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  background: var(--hc, color-mix(in srgb, var(--primary) 70%, transparent));
+}
+.cui-hours.is-open { --hc: #16a34a; }
+.cui-hours.is-soon { --hc: #e08a1e; }
+.cui-hours.is-closed { --hc: #e05252; }
+.cui-hours.is-holiday { --hc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
+
+.cui-hours.is-soon .cui-hours__head {
+  background: linear-gradient(180deg, color-mix(in srgb, #e08a1e 14%, var(--surface)), color-mix(in srgb, #e08a1e 6%, var(--surface)));
+}
+.cui-hours.is-closed .cui-hours__head {
+  background: linear-gradient(180deg, color-mix(in srgb, #e05252 12%, var(--surface)), color-mix(in srgb, #e05252 5%, var(--surface)));
+}
+.cui-hours.is-holiday .cui-hours__head {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--hc) 14%, var(--surface)),
+    color-mix(in srgb, var(--hc) 6%, var(--surface))
+  );
+}
+
+.cui-state.is-soon {
+  color: #96600c;
+  background: color-mix(in srgb, #f0a531 16%, var(--surface));
+  border-color: color-mix(in srgb, #f0a531 34%, transparent);
+}
+.cui-state.is-holiday {
+  color: color-mix(in srgb, var(--primary) 84%, #221a4d);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+}
+[data-theme='dark'] .cui-state.is-soon { color: #f5c169; }
+[data-theme='dark'] .cui-state.is-holiday { color: color-mix(in srgb, var(--primary) 66%, #ffffff); }
+
+/* -------------------------------------------------------- inactive state -- */
+
+/*
+ * The paused ordering surface. The photographs lose their colour and the cards
+ * sit behind a soft veil, so they read as "not now" rather than "sold out" —
+ * the stock badge is untouched and no card is ever marked unavailable.
+ */
+.cui-search.is-disabled {
+  opacity: 0.72;
+  box-shadow: 0 14px 30px rgba(16, 32, 26, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.cui-search.is-disabled input { cursor: not-allowed; }
+.cui-search.is-disabled svg { opacity: 0.7; }
+
+.cui-prod.is-locked {
+  cursor: default;
+  filter: grayscale(0.62) saturate(0.62);
+}
+.cui-prod.is-locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  background: color-mix(in srgb, var(--surface) 26%, transparent);
+  pointer-events: none;
+}
+@media (hover: hover) {
+  .cui-prod.is-locked:hover {
+    transform: none;
+    border-color: var(--cui-line);
+    box-shadow: 0 1px 2px rgba(16, 32, 26, 0.05), 0 14px 30px -18px rgba(16, 32, 26, 0.28), var(--cui-inset);
+  }
+  .cui-prod.is-locked:hover .cui-prod__media img { transform: none; }
+}
+
+.cui-cat:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+}
+.cui-cat:disabled:hover { transform: none; box-shadow: none; }
+
+.cui-nav__cart:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: var(--cui-inset);
+}
+
+/* The card list keeps its snap points but no user dragging while paused. */
+.cui-car__track.is-locked { cursor: default; }
+
+/* ------------------------------------------- compact header identity ----- */
+
+/*
+ * The small business identity in the compact header: the same localized name
+ * the banner shows, with the logo mark. It truncates instead of pushing the
+ * cart or the language control out of the row.
+ */
+.cui-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: min(46%, 320px);
+  height: 38px;
+  padding: 4px 13px 4px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+[dir='rtl'] .cui-nav__brand { padding: 4px 5px 4px 13px; }
+
+.cui-nav__brandmark {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 999px;
+  color: var(--primary-ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 90%, #ffffff), var(--primary));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.cui-nav__brandmark img { width: 100%; height: 100%; object-fit: contain; }
+/* The compact bar's mark is the same logo, so it drops the tinted disc too. */
+.cui-nav__brandmark.has-image {
+  background: none;
+  box-shadow: none;
+  border: 0;
+}
+
+.cui-nav__brandname {
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .cui-nav__brand { max-width: 42%; padding: 4px 10px 4px 4px; }
+  .cui-nav__brandname { font-size: 12px; }
+}
+@media (max-width: 400px) {
+  .cui-nav__brand { max-width: 34%; }
+}
+
+/* --------------------------------------------- price-unavailable product -- */
+
+/*
+ * A product with no valid price in the language the guest is reading. It stays
+ * in place — only the amount is missing — so the card keeps its layout and its
+ * ordering controls simply switch off. The photograph loses a little colour,
+ * which reads as "not orderable in this language" without pretending the
+ * product itself is sold out.
+ */
+.cui-prod.is-noprice .cui-prod__media img { filter: grayscale(0.38) saturate(0.72); }
+
+.cui-prod__badge--off {
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+  background: color-mix(in srgb, var(--surface) 92%, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--muted) 26%, transparent);
+}
+
+.cui-prod__stock--off {
+  border-color: color-mix(in srgb, var(--muted) 26%, transparent);
+  background: color-mix(in srgb, var(--muted) 12%, var(--surface));
+  color: color-mix(in srgb, var(--muted) 82%, var(--text));
+}
+
+.cui-prod__offlabel,
+.cui-pd__offlabel {
+  font-size: 12px;
+  font-weight: 800;
+  color: color-mix(in srgb, var(--muted) 82%, var(--text));
+}
+
+.cui-line--off .cui-line__thumb img { filter: grayscale(0.4) saturate(0.7); }
+.cui-line__off {
+  color: color-mix(in srgb, var(--danger, #d9534f) 62%, var(--muted));
+  font-weight: 700;
+}

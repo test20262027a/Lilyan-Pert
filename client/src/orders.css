@@ -1,0 +1,746 @@
+/* ==========================================================================
+   Orders page — illustrated banner, filter bar, orders table and phone cards.
+   Layout only: colours, radii and shadows come from the tokens in styles.css.
+   ========================================================================== */
+
+.orders {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ----------------------------------------------------------- page banner */
+
+.obanner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 165px;
+  padding: 18px 22px;
+  border-radius: 20px;
+  border: 1px solid var(--mint-line);
+  background:
+    radial-gradient(90% 140% at 88% 10%, #fdf1d6 0%, transparent 60%),
+    radial-gradient(80% 130% at 12% 96%, var(--theme-primary-soft) 0%, transparent 62%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 14%, transparent);
+  overflow: hidden;
+}
+
+.obanner__identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+.obanner__text { min-width: 0; }
+.obanner__title { color: var(--text); white-space: nowrap; }
+.obanner__sub { color: var(--muted); }
+
+.obanner__art {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  padding-inline: 12px;
+}
+.oart,
+.obanner__image {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  max-height: 134px;
+  display: block;
+}
+.obanner__image { object-fit: contain; border-radius: 14px; }
+
+.obanner__controls {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+[data-theme='dark'] .obanner {
+  background: linear-gradient(150deg, #1e1c15, #191c19);
+  border-color: var(--mint-line);
+}
+[data-theme='dark'] .obanner__title { color: #f0e9d8; }
+[data-theme='dark'] .obanner__sub { color: var(--muted); }
+[data-theme='dark'] .obanner__art { opacity: 0.92; }
+
+/* --------------------------------------------------------- date controls */
+
+.odate { display: flex; align-items: center; gap: 6px; }
+
+.odate__pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.odate__pick:hover { background: var(--surface); }
+.odate__pick.is-open {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 14%, transparent);
+}
+.odate__value { min-width: 0; }
+.odate__caret { color: var(--muted); transition: transform 180ms ease; }
+.odate__pick.is-open .odate__caret { transform: rotate(180deg); }
+
+/* ------------------------------------------------------- calendar popover */
+
+/*
+ * Portalled to <body>, so the banner's overflow can never clip it, and placed
+ * in viewport coordinates by the component — it stays beside its button and
+ * inside the window on every screen size.
+ */
+.odate__pop {
+  position: fixed;
+  z-index: 1200;
+  width: min(308px, calc(100vw - 16px));
+  padding: 12px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow:
+    0 18px 44px rgba(24, 45, 32, 0.16),
+    0 4px 12px rgba(24, 45, 32, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+.odate__pop.is-placed { opacity: 1; visibility: visible; transform: none; }
+
+[data-theme='dark'] .odate__pop {
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.odate__pop-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 2px 10px;
+}
+.odate__pop-title { font-size: 13.5px; font-weight: 750; color: var(--text); }
+.odate__pop-nav {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-soft);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+}
+.odate__pop-nav:hover {
+  background: var(--mint-soft);
+  border-color: color-mix(in srgb, var(--mint) 40%, transparent);
+  color: var(--mint-ink);
+}
+
+/* The header row and the day grid share one column track: seven equal columns
+   whose width never depends on their own text (`minmax(0, 1fr)`), so a date
+   always sits directly under its own weekday — in every language, in both
+   directions, at every popover width. */
+.odate__pop-week,
+.odate__pop-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.odate__pop-week { padding-bottom: 6px; }
+.odate__pop-week span {
+  min-width: 0;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--muted);
+  /* A longer translation is clipped inside its own column rather than allowed
+     to widen it and shift the rest of the row. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.odate__pop-day {
+  min-width: 0;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
+}
+.odate__pop-day:hover { background: var(--mint-soft); color: var(--mint-ink); }
+.odate__pop-day:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
+.odate__pop-day.is-today {
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  color: var(--mint-ink);
+}
+.odate__pop-day.is-selected {
+  background: var(--mint);
+  border-color: var(--mint);
+  color: var(--primary-ink);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--mint) 32%, transparent);
+}
+.odate__pop-foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+.odate__pop-today {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--mint) 35%, transparent);
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.odate__pop-today:hover {
+  background: color-mix(in srgb, var(--mint) 16%, var(--surface));
+}
+
+.odate__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  min-width: 38px;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  color: var(--text-soft);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.odate__btn:hover:not(:disabled) { background: var(--surface); color: var(--text); }
+/* "Next day" stops at today: muted surface, lighter icon, no hover lift. */
+.odate__btn:disabled {
+  background: color-mix(in srgb, var(--surface-2) 62%, transparent);
+  border-color: color-mix(in srgb, var(--border-strong) 45%, transparent);
+  color: color-mix(in srgb, var(--text-soft) 55%, transparent);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+.odate__btn--today { padding-inline: 14px; }
+.odate__btn--today.is-active {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--mint) 48%, transparent);
+  color: var(--mint-ink);
+}
+
+/* --------------------------------------------------------- filter toolbar */
+
+.otoolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* The surface and the focus ring come from the shared `.lilyan-search`. */
+.osearch { flex: 0 1 300px; min-width: 0; }
+.osearch__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 36px;
+  border: 0;
+  background: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+}
+.osearch__clear {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-3);
+  color: var(--text-soft);
+  cursor: pointer;
+}
+.osearch__clear:hover { background: var(--border-strong); }
+
+.ofilters {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-block: 2px;
+}
+.ofilters::-webkit-scrollbar { display: none; }
+
+.ofilter {
+  flex: none;
+  min-height: 34px;
+  padding: 7px 13px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ofilter:hover {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
+.ofilter.is-active {
+  background: var(--mint-deep);
+  border-color: var(--mint-deep);
+  color: #ffffff;
+}
+
+/* -------------------------------------------------------------- list card */
+
+.otable-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+}
+
+/* Only a cramped tablet ever scrolls here; the page itself never overflows. */
+.otable-scroll { overflow-x: auto; }
+
+.otable {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.otable th {
+  text-align: start;
+  padding: 12px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.otable td {
+  padding: 12px 14px;
+  height: 62px;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border);
+}
+.otable tbody tr:last-child td { border-bottom: none; }
+.otable tbody tr:hover td { background: color-mix(in srgb, var(--mint) 5%, transparent); }
+
+.otable__no { font-weight: 750; white-space: nowrap; }
+.otable__when { color: var(--muted); font-size: 12.5px; line-height: 1.35; white-space: nowrap; }
+.otable__when > span { display: block; }
+.otable__customer { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Table name plus the pill that says how the table was identified. */
+.otable-label {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+.otable-label__name { font-weight: 650; }
+.otable-label__src {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 650;
+  line-height: 1.55;
+  white-space: nowrap;
+}
+.otable-label__src svg { flex: none; }
+.otable-label__src--qr {
+  border-color: color-mix(in srgb, var(--primary) 32%, transparent);
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  color: color-mix(in srgb, var(--primary) 78%, var(--text));
+}
+.otable__amount { font-weight: 750; white-space: nowrap; }
+.otable__actions-head { text-align: end; }
+.otable__actions {
+  white-space: nowrap;
+  text-align: end;
+  width: 1%;
+}
+
+/*
+ * The action cell is a fixed two-column grid: the view button owns its own
+ * column, the status control its own. A status change (a longer label, the
+ * saving spinner, a locked state) can never resize either column, so the eye
+ * buttons stay in one straight vertical line on every row.
+ */
+.orow-actions {
+  display: grid;
+  grid-template-columns: 34px 132px;
+  align-items: center;
+  gap: 8px;
+  justify-content: end;
+}
+.orow-actions .orow-btn { grid-column: 1; }
+.orow-actions .ostatus { grid-column: 2; min-width: 0; width: 100%; }
+.orow-actions .ostatus__btn {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: center;
+  overflow: hidden;
+}
+/* A long translation truncates inside the fixed column instead of pushing. */
+.orow-actions .ostatus__text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Small white icon button that opens the order details. */
+.orow-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-soft);
+  text-decoration: none;
+  vertical-align: middle;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+.orow-btn:hover { background: var(--theme-primary-tint-hover); color: var(--mint-ink); }
+
+/* ---------------------------------------------------------- status dropdown */
+
+.ostatus { display: inline-flex; vertical-align: middle; }
+
+.ostatus__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 6px 11px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-soft);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ostatus__btn:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+}
+.ostatus__btn:disabled { cursor: not-allowed; }
+.ostatus__btn.is-locked { background: var(--surface-2); color: var(--muted); }
+.ostatus__caret { color: var(--muted); transition: transform 0.16s ease; }
+.ostatus__caret.is-open { transform: rotate(180deg); }
+.ostatus__spinner { width: 13px; height: 13px; border-width: 2px; }
+
+/* The status list uses the shared selection popup surface (see select.css). */
+.ostatus__menu {
+  position: fixed;
+  z-index: 70;
+  min-width: 176px;
+  padding: 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--lysel-bg);
+  border: 1px solid var(--lysel-border);
+  border-radius: var(--lysel-radius);
+  box-shadow: var(--lysel-shadow);
+  animation: ostatus-in 0.17s cubic-bezier(0.2, 0.7, 0.3, 1);
+}
+@keyframes ostatus-in { from { opacity: 0; transform: translateY(-4px) scale(0.985); } }
+
+.ostatus__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--lysel-row-radius);
+  background: none;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+.ostatus__item:hover,
+.ostatus__item:focus-visible { background: var(--lysel-row-hover); outline: none; }
+.ostatus__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--muted);
+}
+.ostatus__dot--preparing { background: var(--status-preparing); }
+.ostatus__dot--ready { background: var(--status-ready); }
+.ostatus__dot--completed { background: var(--success); }
+.ostatus__dot--cancelled { background: var(--danger); }
+.ostatus__item--cancelled { color: var(--danger); }
+
+/* ------------------------------------------------------- list footer/state */
+
+/*
+ * The list's summary strip at the foot of the card. It is a quiet band that
+ * carries a raised glass pill with the count, an optional note about a
+ * cross-date search, and the load-more control — one row on a wide screen, a
+ * stack on a phone. Every value is a theme token or flow-relative, so it
+ * follows the selected appearance and mirrors in RTL without overrides.
+ */
+.otable__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 11px 14px 12px;
+  border-top: 1px solid var(--border);
+  background:
+    linear-gradient(180deg, var(--surface-2) 0%, color-mix(in srgb, var(--surface-2) 60%, var(--surface)) 100%);
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.ofoot__group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+/* The count: a glass capsule lifted off the band by its own inner light and a
+   single soft contact shadow. */
+.ofoot__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding-block: 0;
+  padding-inline: 8px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 rgba(23, 26, 43, 0.04),
+    0 1px 2px rgba(23, 26, 43, 0.06),
+    0 10px 18px -16px color-mix(in srgb, var(--primary) 70%, transparent);
+  line-height: 1.4;
+}
+
+.ofoot__count-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--theme-icon-bg);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ofoot__count-text {
+  min-width: 0;
+}
+
+/* Only the numbers carry weight, so the sentence reads at a glance. */
+.ofoot__num {
+  color: var(--text);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+/* The active-search note: the same capsule language, tinted like the theme. */
+.ofoot__note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding-inline: 11px;
+  border-radius: 999px;
+  border: 1px solid var(--mint-line);
+  background: color-mix(in srgb, var(--mint) 9%, transparent);
+  color: var(--mint-ink);
+  font-weight: 650;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.ofoot__more {
+  flex: none;
+  box-shadow: var(--shadow-sm);
+}
+
+[data-theme='dark'] .ofoot__count {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.35),
+    0 12px 20px -18px rgba(0, 0, 0, 0.9);
+}
+[data-theme='dark'] .ofoot__count-icon,
+[data-theme='dark'] .ofoot__note {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+/* A phone: the count owns its own row and the next-page control settles on the
+   end edge, so nothing crowds and nothing is stranded mid-row. */
+@media (max-width: 640px) {
+  .otable__foot {
+    padding: 10px 12px 12px;
+    gap: 8px;
+  }
+  .ofoot__group { flex: 1 1 100%; }
+  .ofoot__count {
+    flex: 1 1 100%;
+    min-height: 36px;
+    padding-inline: 7px 12px;
+  }
+  .ofoot__note { min-height: 28px; font-size: 12px; }
+  .ofoot__more { margin-inline-start: auto; }
+}
+
+.olist__state { padding: 6px; }
+
+/* ------------------------------------------------------------ phone cards */
+
+.ocards { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
+
+.ocard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  min-width: 0;
+}
+.ocard__top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.ocard__no { font-size: 14px; font-weight: 750; }
+.ocard__amount { margin-inline-start: auto; font-size: 13.5px; font-weight: 750; white-space: nowrap; }
+.ocard__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.ocard__foot { display: flex; align-items: center; gap: 10px; }
+.ocard__foot .orow-actions { justify-content: start; }
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 1180px) {
+  .obanner__art { max-width: 300px; }
+}
+
+@media (max-width: 1000px) {
+  /* The controls need the full width before the picture starts to crowd them. */
+  .obanner__art { display: none; }
+}
+
+@media (max-width: 900px) {
+  .obanner { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px; }
+  .obanner__controls { justify-content: space-between; }
+  /*
+   * Tablet keeps the search and the status pills on ONE line: the search gives
+   * up width, the pills scroll sideways inside their own track instead of
+   * wrapping to a second row. Only a phone stacks the two groups.
+   */
+  .otoolbar { flex-wrap: nowrap; gap: 8px; padding: 7px 10px; }
+  .osearch { flex: 1 1 180px; }
+  .ofilters { flex: 1 1 auto; }
+  .obanner__title { white-space: normal; }
+}
+
+@media (max-width: 520px) {
+  .otoolbar { flex-wrap: wrap; }
+  .osearch { flex: 1 1 100%; }
+  .ofilters { flex: 1 1 100%; }
+}
+
+@media (max-width: 480px) {
+  .odate { flex-wrap: wrap; }
+  .odate__pick { flex: 1 1 100%; justify-content: center; }
+  .odate__btn { flex: 1 1 auto; }
+}
