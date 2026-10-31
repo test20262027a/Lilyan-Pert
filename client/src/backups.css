@@ -916,26 +916,27 @@
   color: #97a097;
 }
 
-/* The two actions form one compact group anchored to the card's start corner —
-   bottom-right in RTL, bottom-left in LTR — so the group never stretches across
-   the card and every backup card keeps the exact same geometry. */
+/* The two actions form one compact group anchored to the corner opposite the
+   card's details — bottom-left in RTL, bottom-right in LTR — so the group never
+   stretches across the card and every backup card keeps the same geometry. */
 .bk-card__foot {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
   gap: 8px;
   margin-top: auto;
   padding: 2px 12px 12px;
 }
 
-/* Identical 120 × 40 chips: fixed size, no grow, no shrink, no wrap. */
+/* Identical chips: content-sized width from a 125 × 40 footprint — no grow, no
+   shrink, no wrap — so a longer translation widens its own button only. */
 .bk-card__foot .bk-btn {
   flex: none;
-  width: 120px;
-  min-width: 120px;
+  width: max-content;
+  min-width: 125px;
   height: 40px;
   min-height: 40px;
-  padding: 0 10px;
+  padding: 0 16px;
   gap: 6px;
   border-radius: 10px;
   box-shadow: var(--ui-elev-1);
@@ -947,12 +948,12 @@
     transform var(--ui-dur-fast) var(--ui-ease);
 }
 
-/* A long label clips inside its own chip instead of widening the group. */
+/* The label is always shown in full: it never truncates, wraps or clips. */
 .bk-card__foot .bk-btn__label {
   min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  overflow-wrap: normal;
+  text-overflow: clip;
 }
 
 /* Restore — solid accent with a lit top edge; it rises a hair on hover and the
@@ -1347,19 +1348,19 @@
     font-size: 12px;
     padding: 0 11px;
   }
-  /* The pair stays side by side on the narrowest screen — only the chip inside
-     the card gives up a few pixels, never its 120 × 40 footprint. */
+  /* The pair stays side by side on the narrowest screen — only the horizontal
+     padding tightens, never the 125 × 40 footprint or the full label. */
   .bk-card__foot {
     gap: 6px;
     padding: 2px 10px 10px;
   }
   .bk-card__foot .bk-btn {
-    width: 120px;
-    min-width: 120px;
+    width: max-content;
+    min-width: 125px;
     height: 40px;
     min-height: 40px;
     font-size: 12px;
-    padding: 0 8px;
+    padding: 0 12px;
   }
 }
 
