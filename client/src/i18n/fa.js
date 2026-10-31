@@ -833,7 +833,7 @@ export default {
   user_creator_setup_hint: 'رمز superadmin@work.app را یک بار تعیین کنید؛ فقط شما می‌توانید.',
   user_creator_password_set: 'رمز مدیر ارشد تعیین شد',
   user_creator_already_claimed: 'این حساب از قبل رمز دارد. فقط صاحب آن می‌تواند تغییرش دهد.',
-  user_invalid_username: 'فقط حرف، رقم، نقطه، خط تیره و زیرخط مجاز است',
+  user_invalid_username: 'فقط حروف انگلیسی (A–Z) و ارقام (0–9) مجاز است',
   user_invalid_suffix: 'پسوند معتبر وارد کنید، مثلاً @lilyanpert.app',
   user_email_taken: 'این شناسه ورود قبلاً برای حساب دیگری استفاده شده است',
   user_suffix_locked: 'از نام کسب‌وکار شما ساخته شده — محافظت‌شده و قابل ویرایش نیست',

@@ -835,7 +835,7 @@ export default {
   user_creator_setup_hint: 'Set the password for superadmin@work.app once; only you can do it.',
   user_creator_password_set: 'Super Admin password set',
   user_creator_already_claimed: 'This account already has a password. Only its owner can change it.',
-  user_invalid_username: 'Use letters, digits, dot, dash or underscore only',
+  user_invalid_username: 'Use English letters (A–Z) and digits (0–9) only',
   user_invalid_suffix: 'Enter a valid login suffix, e.g. @lilyanpert.app',
   user_email_taken: 'This login identifier is already used by another account',
   user_suffix_locked: 'Set by your business name — protected and not editable',

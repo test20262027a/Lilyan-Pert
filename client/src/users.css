@@ -623,6 +623,32 @@
   font-weight: 650;
   cursor: default;
 }
+
+/*
+ * Username + suffix share one row, and the suffix column is sized by its own
+ * locked domain instead of a fixed half — the input's `size` attribute sets
+ * that intrinsic width, so the whole brand suffix is visible without clipping
+ * and the username keeps every pixel that is left. `fit-content(50%)` keeps a
+ * very long domain from crowding the username out, and then the read-only
+ * field scrolls horizontally inside itself instead of truncating.
+ */
+.um-fields--2--ident {
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(0, min(50%, calc(var(--um-suffix-len, 14) * 1ch + 60px)));
+}
+.um-field--suffix { min-width: 0; max-width: 100%; }
+.um-field--suffix .um-field__wrap { min-width: 0; max-width: 100%; }
+.um-field--suffix .um-input--locked {
+  /* Fills the track the row sized from the domain's own character count, so
+     the whole suffix shows and nothing is reserved that it does not need. */
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  text-overflow: clip;
+  white-space: nowrap;
+}
 .um-input--locked:focus {
   border-color: var(--um-mint-line);
   box-shadow: none;

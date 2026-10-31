@@ -1262,10 +1262,15 @@ router.patch(
        */
       const suffix = current.suffix || await businessSuffix(req.businessId);
       if (suffixLocked(b, suffix)) throw bad('SUFFIX_LOCKED');
-      const identity = resolveIdentity(
-        { username: b.username === undefined ? current.username : b.username },
-        suffix,
-      );
+      // An account created before the English-only rule keeps the username it
+      // signs in with: the strict rule is applied only to a name the form
+      // actually changes, so editing a legacy user never breaks its login.
+      const requested = b.username === undefined
+        ? current.username
+        : String(b.username).trim().toLowerCase();
+      const identity = requested === current.username
+        ? { username: current.username, suffix, identifier: membership.email }
+        : resolveIdentity({ username: requested }, suffix);
       if (identity.error) throw bad(identity.error);
       if (identity.identifier && identity.identifier !== membership.email) {
         const taken = await q(

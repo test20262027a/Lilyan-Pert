@@ -12,7 +12,10 @@
  * and no duplicated login field.
  */
 
-const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]{0,62})$/;
+// English letters and digits only — no spaces, dots, dashes or non-Latin
+// scripts. Login lookups stay exact, so the rule is enforced here, not just in
+// the form, and an unchanged legacy username is never rewritten by an update.
+const USERNAME_RE = /^[a-z0-9]{1,63}$/;
 const SUFFIX_RE = /^@[a-z0-9](?:[a-z0-9.-]{0,61}[a-z0-9])$/;
 
 /** The full identifier the sign-in form sends. */

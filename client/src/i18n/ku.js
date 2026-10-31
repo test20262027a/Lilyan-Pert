@@ -834,7 +834,7 @@ export default {
   user_creator_setup_hint: 'وشەی نهێنی superadmin@work.app یەک جار دابنێ؛ تەنها تۆ دەتوانیت.',
   user_creator_password_set: 'وشەی نهێنی سوپەر ئەدمین دانرا',
   user_creator_already_claimed: 'ئەم هەژمارە پێشتر وشەی نهێنی هەیە. تەنها خاوەنەکەی دەتوانێت بیگۆڕێت.',
-  user_invalid_username: 'تەنها پیت، ژمارە، خاڵ، هێڵ و ژێرهێڵ بەکاربهێنە',
+  user_invalid_username: 'تەنها پیتەکانی ئینگلیزی (A–Z) و ژمارەکان (0–9) بەکاربهێنە',
   user_invalid_suffix: 'پاشکۆی دروست بنووسە، بۆ نموونە @lilyanpert.app',
   user_email_taken: 'ئەم ناسنامەی چوونەژوورەوە بۆ هەژمارێکی تر بەکارهاتووە',
   user_suffix_locked: 'لە ناوی کارەکەتەوە دانراوە — پارێزراوە و ناگۆڕدرێت',

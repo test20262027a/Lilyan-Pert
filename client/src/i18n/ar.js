@@ -832,7 +832,7 @@ export default {
   user_creator_setup_hint: 'عيّن كلمة مرور superadmin@work.app مرة واحدة؛ أنت فقط تستطيع ذلك.',
   user_creator_password_set: 'تم تعيين كلمة مرور المدير الأعلى',
   user_creator_already_claimed: 'لهذا الحساب كلمة مرور بالفعل. صاحبه فقط يمكنه تغييرها.',
-  user_invalid_username: 'استخدم الحروف والأرقام والنقطة والشرطة فقط',
+  user_invalid_username: 'استخدم الأحرف الإنجليزية (A–Z) والأرقام (0–9) فقط',
   user_invalid_suffix: 'أدخل لاحقة صحيحة، مثل @lilyanpert.app',
   user_email_taken: 'معرّف الدخول هذا مستخدم لحساب آخر',
   user_suffix_locked: 'مُشتقّة من اسم نشاطك — محمية وغير قابلة للتعديل',

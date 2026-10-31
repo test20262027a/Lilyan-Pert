@@ -31,9 +31,10 @@ import {
  * the business's own suffix — `rebar@lilyanpert.app`. Only the username is
  * editable: the suffix is generated from the brand name in the Business
  * Profile and locked here and on the server (lib/identity.js). The rule below
- * mirrors the server's so a typo is reported before the request.
+ * mirrors the server's — English letters and digits only, never a space, a
+ * dot, a dash or a non-Latin script — so a typo is reported before the request.
  */
-const USERNAME_RE = /^[a-z0-9](?:[a-z0-9._-]{0,62})$/;
+const USERNAME_RE = /^[a-z0-9]{1,63}$/;
 
 function Section({ title, children, aside }) {
   return (
@@ -219,21 +220,28 @@ export default function UserFormModal({
   const confirmNeeded = passwordNeeded || password.length > 0;
   const errors = useMemo(() => {
     const found = {};
+    const keptUsername = String(user?.username || '').toLowerCase();
     if (!fullName.trim()) found.fullName = t('user_name_required');
     if (!cleanUsername) found.username = t('user_required_field');
-    else if (!USERNAME_RE.test(cleanUsername)) found.username = t('user_invalid_username');
+    // A name already stored is never re-judged — only a name this form actually
+    // changes has to follow the English-only rule, so editing a legacy account
+    // cannot lock its owner out.
+    else if (cleanUsername !== keptUsername && !USERNAME_RE.test(cleanUsername)) found.username = t('user_invalid_username');
     if (passwordNeeded && !password) found.password = t('user_required_field');
     else if (password && password.length < 8) found.password = t('auth_weak_password');
     if (confirmNeeded && !confirmPassword) found.confirm = t('user_confirm_required');
     else if (confirmNeeded && confirmPassword !== password) found.confirm = t('user_password_mismatch');
     if (!role) found.role = t('user_required_field');
     return found;
-  }, [fullName, cleanUsername, password, confirmPassword, passwordNeeded, confirmNeeded, role, t]);
+  }, [fullName, cleanUsername, user?.username, password, confirmPassword, passwordNeeded, confirmNeeded, role, t]);
 
   const hasErrors = Object.keys(errors).length > 0;
   const touch = (field) => setTouched((current) => ({ ...current, [field]: true }));
   // A message is visible once its field was left, or after a save attempt.
   const errorFor = (field) => ((touched[field] || submitted) ? errors[field] : null);
+  // The username's character rule is absolute, so its message appears the
+  // moment an invalid character exists instead of waiting for a blur.
+  const usernameError = username.trim() ? errors.username : errorFor('username');
 
   const dirty =
     fullName !== (user?.full_name || '')
@@ -386,32 +394,48 @@ export default function UserFormModal({
                 />
                 <FieldError id="um-full-name-error" message={errorFor('fullName')} />
               </label>
-              <div className="um-fields--2">
+              {/* The row measures the suffix column from the domain's own
+                  length, so the whole brand suffix is visible and the username
+                  keeps the rest of the row. */}
+              <div
+                className="um-fields--2 um-fields--2--ident"
+                style={{ '--um-suffix-len': Math.max(suffix.length, 8) }}
+              >
                 <label className="um-field">
                   <FieldLabel label={t('user_username')} required />
                   <input
-                    className={`um-input ${errorFor('username') ? 'is-invalid' : ''}`}
+                    className={`um-input ${usernameError ? 'is-invalid' : ''}`}
                     dir="ltr"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    onBlur={() => touch('username')}
+                    onBlur={() => {
+                      // Surrounding whitespace is never part of a username.
+                      setUsername((value) => value.trim());
+                      touch('username');
+                    }}
                     autoComplete="off"
                     spellCheck={false}
+                    autoCapitalize="none"
+                    inputMode="text"
+                    pattern="[A-Za-z0-9]+"
+                    maxLength={63}
                     required
                     aria-required="true"
-                    aria-invalid={errorFor('username') ? 'true' : undefined}
-                    aria-describedby={errorFor('username') ? 'um-username-error' : undefined}
+                    aria-invalid={usernameError ? 'true' : undefined}
+                    aria-describedby={usernameError ? 'um-username-error' : undefined}
                   />
-                  <FieldError id="um-username-error" message={errorFor('username')} />
+                  <FieldError id="um-username-error" message={usernameError} />
                 </label>
                 {/* Business-owned suffix: shown, never editable or clearable. */}
-                <div className="um-field">
+                <div className="um-field um-field--suffix">
                   <FieldLabel label={t('user_login_suffix')} />
                   <span className="um-field__wrap um-field__wrap--locked">
                     <input
                       className="um-input um-input--locked"
                       dir="ltr"
                       value={suffix}
+                      title={suffix}
+                      aria-label={t('user_login_suffix')}
                       placeholder={loginSuffix || '@lilyanpert.app'}
                       readOnly
                       tabIndex={-1}
