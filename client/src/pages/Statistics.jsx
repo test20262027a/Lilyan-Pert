@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import Icon from '../components/Icon';
+import DashIcon from '../components/dashboard/DashIcon';
 import { Alert, Loading, SectionCard } from '../components/ui';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import StatisticsArtwork from '../components/statistics/StatisticsArtwork';
@@ -77,11 +77,11 @@ export default function Statistics() {
           <StatCards totals={stats.totals} currency={currency} locale={locale} />
 
           <div className="stats-grid">
-            <StatPanel icon="trendUp" tone="blue" title={t('statistics_visits_orders')}>
+            <StatPanel icon="trendUp" tone="cyan" title={t('statistics_visits_orders')}>
               <VisitsOrdersChart days={stats.daily} locale={locale} />
             </StatPanel>
 
-            <StatPanel icon="flame" tone="orange" title={t('statistics_top_products')}>
+            <StatPanel icon="flame" tone="gold" title={t('statistics_top_products')}>
               <TopProductsChart rows={stats.best_selling} locale={locale} />
             </StatPanel>
           </div>
@@ -89,14 +89,14 @@ export default function Statistics() {
           <RevenuePanel revenue={stats.revenue} currency={currency} locale={locale} />
 
           {menu ? (
-            <SectionCard icon="utensils" iconClass="ic-green" title={t('statistics_menu')}>
+            <SectionCard icon="utensils" iconTone="green" title={t('statistics_menu')}>
               <div className="fstat-row fstat-row--six">
-                <MenuCounter icon="layers" label={t('menu_stats_categories')} value={menu.categories.total} locale={locale} />
-                <MenuCounter icon="checkCircle" label={t('menu_stats_active')} value={menu.categories.active} locale={locale} />
-                <MenuCounter icon="xCircle" label={t('menu_stats_inactive')} value={menu.categories.inactive} locale={locale} />
-                <MenuCounter icon="package" label={t('menu_stats_products')} value={menu.products.total} locale={locale} />
-                <MenuCounter icon="checkCircle" label={t('menu_stats_active')} value={menu.products.active} locale={locale} />
-                <MenuCounter icon="eye" label={t('menu_stats_hidden')} value={menu.products.hidden_by_category} locale={locale} />
+                <MenuCounter icon="layers" tone="indigo" label={t('menu_stats_categories')} value={menu.categories.total} locale={locale} />
+                <MenuCounter icon="checkCircle" tone="teal" label={t('menu_stats_active')} value={menu.categories.active} locale={locale} />
+                <MenuCounter icon="xCircle" tone="red" label={t('menu_stats_inactive')} value={menu.categories.inactive} locale={locale} />
+                <MenuCounter icon="package" tone="blue" label={t('menu_stats_products')} value={menu.products.total} locale={locale} />
+                <MenuCounter icon="checkCircle" tone="teal" label={t('menu_stats_active')} value={menu.products.active} locale={locale} />
+                <MenuCounter icon="eye" tone="amber" label={t('menu_stats_hidden')} value={menu.products.hidden_by_category} locale={locale} />
               </div>
             </SectionCard>
           ) : null}
@@ -106,13 +106,15 @@ export default function Statistics() {
   );
 }
 
-/** One menu counter: a real stored count, never an estimate. */
-function MenuCounter({ icon, label, value, locale }) {
+/**
+ * One menu counter: a real stored count, never an estimate. Its multicolor 3D
+ * tile uses the shared category tones — active is teal, inactive red, hidden
+ * amber — so the same meaning keeps one colour across Analytics.
+ */
+function MenuCounter({ icon, tone, label, value, locale }) {
   return (
     <div className="fstat">
-      <span className="fstat__icon">
-        <Icon name={icon} size={18} />
-      </span>
+      <DashIcon name={icon} tone={tone} size={40} hover />
       <span className="fstat__label">{label}</span>
       <span className="fstat__value">{fmtNumber(value, locale)}</span>
     </div>

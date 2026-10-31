@@ -154,6 +154,7 @@
  */
 .kpi:hover .dash-ic--hover,
 .fstat:hover .dash-ic--hover,
+.stats-kpi:hover .dash-ic--hover,
 .status-tile:hover .dash-ic--hover,
 .welcome:hover .dash-ic--hover,
 .dash .card:hover .dash-ic--hover {
@@ -166,6 +167,7 @@
 }
 [data-theme='dark'] .kpi:hover .dash-ic--hover,
 [data-theme='dark'] .fstat:hover .dash-ic--hover,
+[data-theme='dark'] .stats-kpi:hover .dash-ic--hover,
 [data-theme='dark'] .status-tile:hover .dash-ic--hover,
 [data-theme='dark'] .welcome:hover .dash-ic--hover,
 [data-theme='dark'] .dash .card:hover .dash-ic--hover {
@@ -177,6 +179,7 @@
 }
 .kpi:hover .dash-ic--hover::after,
 .fstat:hover .dash-ic--hover::after,
+.stats-kpi:hover .dash-ic--hover::after,
 .status-tile:hover .dash-ic--hover::after,
 .welcome:hover .dash-ic--hover::after,
 .dash .card:hover .dash-ic--hover::after {
@@ -225,6 +228,7 @@
 @media (max-width: 720px) {
   .kpi:hover .dash-ic--hover,
   .fstat:hover .dash-ic--hover,
+  .stats-kpi:hover .dash-ic--hover,
   .status-tile:hover .dash-ic--hover { transform: none; }
 }
 
@@ -233,6 +237,7 @@
   .dash-ic::after { transition: none; }
   .kpi:hover .dash-ic--hover,
   .fstat:hover .dash-ic--hover,
+  .stats-kpi:hover .dash-ic--hover,
   .status-tile:hover .dash-ic--hover,
   .welcome:hover .dash-ic--hover,
   .dash .card:hover .dash-ic--hover { transform: none; }

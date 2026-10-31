@@ -16,7 +16,7 @@ export default function RevenuePanel({ revenue = {}, currency, locale }) {
   ];
 
   return (
-    <StatPanel icon="wallet" tone="green" title={t('statistics_revenue')} className="stat-panel--revenue">
+    <StatPanel icon="wallet" tone="emerald" title={t('statistics_revenue')} className="stat-panel--revenue">
       <div className="stats-revenue">
         {items.map((item) => (
           <div className="stats-revenue__item" key={item.key}>
