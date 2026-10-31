@@ -73,9 +73,9 @@
   flex: none;
   display: grid;
   place-items: center;
-  background: var(--mp-orange-soft);
-  color: var(--mp-orange);
-  border: 1px solid color-mix(in srgb, var(--mp-orange) 26%, transparent);
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
 }
 .mhero__text { min-width: 0; }
 .mhero__title {

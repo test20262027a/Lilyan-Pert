@@ -12,8 +12,8 @@
   --rs-green-ink: var(--theme-primary-strong);
   /* The confirmation mark stays positive green in every theme. */
   --rs-check: #17a95a;
-  --rs-mint: #eefbf2;
-  --rs-mint-line: #bfe8cc;
+  --rs-mint: var(--theme-primary-soft);
+  --rs-mint-line: var(--theme-primary-line);
   --rs-ink: #23281f;
   --rs-muted: #8a908a;
   --rs-line: #eceee9;
@@ -76,13 +76,13 @@
   padding: 9px 13px;
   border-radius: 10px;
   border: 1px solid var(--theme-primary-line);
-  background: #f2fbf4;
-  color: #2c6b43;
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
   font-size: 12.5px;
   line-height: 1.5;
 }
 
-.rs-notice .icon { flex: none; color: #38a35c; }
+.rs-notice .icon { flex: none; color: var(--theme-primary-strong); }
 
 /* ---------------------------------------------------------------- toolbar */
 
@@ -133,7 +133,8 @@
   box-shadow: 0 2px 6px color-mix(in srgb, var(--theme-primary) 22%, transparent);
 }
 
-.rs-btn--green:hover:not(:disabled) { background: #289b52; }
+.rs-btn--green:hover:not(:disabled) { background: var(--theme-primary-hover); }
+.rs-btn--green:active:not(:disabled) { background: var(--theme-primary-active); }
 
 .rs-btn--ghost {
   background: #ffffff;
@@ -426,9 +427,9 @@
 /* ------------------------------------------------------------ result panel */
 
 .rs-result {
-  border: 1px solid #d8ecdf;
+  border: 1px solid var(--theme-primary-line);
   border-radius: 11px;
-  background: #f6fdf8;
+  background: var(--theme-primary-soft);
   padding: 9px 12px;
 }
 
@@ -437,7 +438,7 @@
   align-items: center;
   gap: 7px;
   font-size: 12.5px;
-  color: #22623c;
+  color: var(--theme-primary-strong);
 }
 
 .rs-result__close {
@@ -449,11 +450,11 @@
   border: none;
   border-radius: 6px;
   background: transparent;
-  color: #6f8a79;
+  color: var(--muted);
   cursor: pointer;
 }
 
-.rs-result__close:hover { background: #e8f6ec; }
+.rs-result__close:hover { background: var(--theme-primary-soft); }
 
 .rs-result__list {
   margin: 6px 0 0;
@@ -470,7 +471,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 11px;
-  color: #4a6b55;
+  color: var(--text-soft);
   padding: 1px 0;
 }
 

@@ -45,6 +45,12 @@
   --theme-primary-strong: color-mix(in srgb, var(--primary) 74%, var(--text));
   --theme-primary-hover: color-mix(in srgb, var(--primary) 88%, #10141f);
   --theme-primary-active: color-mix(in srgb, var(--primary) 76%, #10141f);
+  /* Short aliases for the three roles components ask for by name: a light
+     tint, a hairline border and a soft outer glow. They point at the derived
+     tokens above, so a component never has to invent a colour of its own. */
+  --theme-primary-light: var(--theme-primary-soft);
+  --theme-primary-border: var(--theme-primary-line);
+  --theme-primary-glow: var(--theme-focus-ring);
   --theme-primary-foreground: var(--primary-ink);
   --theme-primary-soft: color-mix(in srgb, var(--primary) 9%, var(--surface));
   --theme-primary-line: color-mix(in srgb, var(--primary) 26%, var(--border));
@@ -506,7 +512,7 @@ a { color: var(--primary); }
   color: var(--navy-ink);
 }
 .sidebar .btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
-.sidebar .btn--primary { background: var(--mint); border-color: var(--mint); color: #ffffff; }
+.sidebar .btn--primary { background: var(--mint); border-color: var(--mint); color: var(--primary-ink); }
 .sidebar__user {
   flex: none;
   font-size: 11.5px;

@@ -410,7 +410,7 @@
 }
 .stat-chart__hit:focus-visible {
   outline: none;
-  stroke: #9ed8ad;
+  stroke: var(--theme-primary);
   stroke-width: 1.5;
   stroke-dasharray: 4 4;
 }

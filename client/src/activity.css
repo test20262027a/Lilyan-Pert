@@ -63,8 +63,8 @@
   stroke-width: 1.9;
 }
 [data-theme='dark'] .activity-page .mhero__icon {
-  background: rgba(122, 76, 216, 0.18);
-  border-color: rgba(122, 76, 216, 0.36);
+  background: color-mix(in srgb, var(--theme-primary) 18%, transparent);
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, transparent);
   box-shadow: none;
 }
 

@@ -8,7 +8,7 @@
 .tables-page {
   --tp-green: var(--theme-primary);
   --tp-green-ink: var(--theme-primary-strong);
-  --tp-teal: #319d91;
+  --tp-teal: var(--theme-primary-strong);
   --tp-ink: #242724;
   --tp-muted: #898c87;
   --tp-line: #e9ede9;
@@ -27,7 +27,7 @@
 [data-theme='dark'] .tables-page {
   --tp-green: var(--mint);
   --tp-green-ink: var(--mint-ink);
-  --tp-teal: #5fc4b8;
+  --tp-teal: var(--theme-primary-strong);
   --tp-ink: var(--text);
   --tp-muted: var(--muted);
   --tp-line: var(--border);

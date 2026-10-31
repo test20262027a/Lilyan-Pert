@@ -21,18 +21,18 @@
   width: 52px;
   height: 52px;
   border-radius: 16px;
-  background: #f3efff;
-  color: var(--theme-primary);
-  border: 1px solid rgba(124, 103, 228, 0.24);
-  box-shadow: 0 4px 12px rgba(124, 103, 228, 0.16), inset 0 1px 0 #ffffff;
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--theme-primary) 16%, transparent), inset 0 1px 0 #ffffff;
 }
 .tx-hero .mhero__title { font-size: clamp(21px, 2.4vw, 27px); }
 .tx-hero .tx-art { max-width: 540px; }
 
 [data-theme='dark'] .tx-hero .mhero__icon {
-  background: rgba(124, 103, 228, 0.2);
-  color: #b3a4ff;
-  border-color: rgba(179, 164, 255, 0.34);
+  background: color-mix(in srgb, var(--theme-primary) 20%, transparent);
+  color: var(--theme-primary-strong);
+  border-color: color-mix(in srgb, var(--theme-primary) 32%, transparent);
 }
 
 .tx-unsaved {
@@ -241,7 +241,7 @@
   transition: background 180ms ease;
 }
 .tx-group__toggle:hover { background: var(--surface-2); }
-.tx-group__toggle:focus-visible { outline: 2px solid #58b978; outline-offset: -2px; }
+.tx-group__toggle:focus-visible { outline: 2px solid var(--theme-primary); outline-offset: -2px; }
 .tx-group__icon {
   width: 28px;
   height: 28px;
@@ -249,9 +249,9 @@
   display: grid;
   place-items: center;
   flex: none;
-  background: #eefaf1;
-  color: var(--mint-deep);
-  border: 1px solid #d9efe1;
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
 }
 .tx-group__title { font-size: 13.5px; font-weight: 750; letter-spacing: -0.01em; }
 .tx-group__count {
@@ -285,11 +285,11 @@
 }
 .tx-row:hover { border-color: var(--border-strong); }
 .tx-row.is-open {
-  border-color: #cfe9d8;
+  border-color: var(--theme-primary-border);
   box-shadow: 0 6px 18px rgba(23, 26, 43, 0.06);
 }
 .tx-row.is-dirty { border-color: #ead9b0; }
-.tx-row.is-dirty.is-open { border-color: #d8e8c9; }
+.tx-row.is-dirty.is-open { border-color: var(--theme-primary-border); }
 
 .tx-row__heading { margin: 0; font: inherit; }
 .tx-row__head {
@@ -309,7 +309,7 @@
   transition: background 180ms ease;
 }
 .tx-row__head:hover { background: var(--surface-2); }
-.tx-row__head:focus-visible { outline: 2px solid #58b978; outline-offset: -2px; }
+.tx-row__head:focus-visible { outline: 2px solid var(--theme-primary); outline-offset: -2px; }
 .tx-row__label { display: flex; align-items: center; gap: 7px; min-width: 0; flex-wrap: wrap; }
 .tx-row__num { font-size: 12.5px; font-weight: 750; color: var(--mint-ink); font-variant-numeric: tabular-nums; }
 .tx-row__sep { color: var(--border-strong); font-size: 12px; }
@@ -317,16 +317,16 @@
 .tx-row__badge {
   padding: 2px 8px;
   border-radius: 999px;
-  background: #eafaf0;
-  border: 1px solid #d3f0de;
-  color: #1f8a4c;
+  background: var(--theme-primary-soft);
+  border: 1px solid var(--theme-primary-line);
+  color: var(--theme-primary-strong);
   font-size: 10.5px;
   font-weight: 700;
 }
 [data-theme='dark'] .tx-row__badge {
-  background: rgba(31, 138, 76, 0.18);
-  border-color: rgba(31, 138, 76, 0.4);
-  color: #7ddcae;
+  background: color-mix(in srgb, var(--theme-primary) 18%, transparent);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
 }
 .tx-row__dot {
   width: 7px;
@@ -387,8 +387,8 @@
 .tx-lang__input::placeholder { color: var(--muted); }
 .tx-lang__input:focus {
   outline: none;
-  border-color: #7cc995;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 16%, transparent);
+  border-color: var(--theme-primary-border);
+  box-shadow: 0 0 0 3px var(--theme-primary-glow);
 }
 .tx-lang__input:disabled { background: var(--surface-2); color: var(--text-soft); }
 
@@ -421,9 +421,9 @@
   transition: border-color 180ms ease, background 180ms ease, color 180ms ease;
 }
 .tx-translate:hover:not(:disabled) {
-  border-color: #bfe3cb;
-  background: #f3fbf6;
-  color: var(--mint-ink);
+  border-color: var(--theme-primary-border);
+  background: var(--theme-primary-light);
+  color: var(--theme-primary-strong);
 }
 .tx-translate:disabled { cursor: default; opacity: 0.6; }
 [data-theme='dark'] .tx-translate:hover:not(:disabled) { background: var(--mint-soft); }

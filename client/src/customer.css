@@ -468,10 +468,12 @@
   text-align: center;
 }
 .cui-summary__item + .cui-summary__item { border-inline-start: 1px solid var(--cui-line); }
-.cui-summary__item--blue { --tone: #3b82f6; }
-.cui-summary__item--amber { --tone: #f59e0b; }
-.cui-summary__item--mint { --tone: #10b981; }
-.cui-summary__item--rose { --tone: #e05a52; }
+/* Metric tiles share the selected theme family; the four steps of the ramp
+   keep them readable as separate figures without a foreign hue. */
+.cui-summary__item--blue { --tone: var(--theme-primary); }
+.cui-summary__item--amber { --tone: color-mix(in srgb, var(--theme-primary) 62%, var(--text)); }
+.cui-summary__item--mint { --tone: color-mix(in srgb, var(--theme-primary) 82%, var(--text)); }
+.cui-summary__item--rose { --tone: color-mix(in srgb, var(--theme-primary) 76%, var(--text)); }
 .cui-summary__icon {
   width: 34px;
   height: 34px;

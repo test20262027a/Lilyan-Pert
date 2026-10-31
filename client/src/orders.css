@@ -215,7 +215,7 @@
 .odate__pop-day.is-selected {
   background: var(--mint);
   border-color: var(--mint);
-  color: #ffffff;
+  color: var(--primary-ink);
   box-shadow: 0 6px 14px color-mix(in srgb, var(--mint) 32%, transparent);
 }
 .odate__pop-foot {
