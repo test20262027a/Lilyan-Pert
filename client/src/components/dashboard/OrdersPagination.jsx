@@ -6,10 +6,12 @@ import { fmtDigits } from '../../format';
  * Pagination under the dashboard's Recent Orders table.
  *
  * The page it reports is the page the API returned, so the numbers here are
- * always the pages that actually exist for the active status filter. The
- * chevrons follow the document direction — "previous" sits on the right and
- * points right in Kurdish, Persian and Arabic — and every control is a real
- * button, reachable by Tab and readable by a screen reader.
+ * always the pages that actually exist for the active status filter. The two
+ * steps are icon-only: the shared Icon mirrors directional glyphs inside an
+ * RTL document, so a plain chevronLeft always reads as "back" — left in
+ * English, right in Kurdish, Persian and Arabic — while the flex row itself
+ * follows the document direction, putting "previous" first on the right. The
+ * text lives on the buttons as aria-label/title only, never on screen.
  */
 const GAP = (index) => `gap-${index}`;
 
@@ -29,10 +31,9 @@ function pageItems(page, pages) {
 }
 
 export default function OrdersPagination({ page = 1, pages = 1, onPage }) {
-  const { t, locale, dir } = useI18n();
+  const { t, locale } = useI18n();
   if (pages <= 1) return null;
 
-  const rtl = dir === 'rtl';
   const go = (next) => {
     if (next < 1 || next > pages || next === page) return;
     onPage?.(next);
@@ -43,13 +44,13 @@ export default function OrdersPagination({ page = 1, pages = 1, onPage }) {
     <nav className="pager" aria-label={t('pager_label')}>
       <button
         type="button"
-        className="pager__btn pager__btn--step"
+        className="pager__btn"
         onClick={() => go(page - 1)}
         disabled={page <= 1}
         aria-label={t('pager_prev')}
+        title={t('pager_prev')}
       >
-        <Icon name={rtl ? 'chevronRight' : 'chevronLeft'} size={15} />
-        <span className="pager__btn-text">{t('pager_prev')}</span>
+        <Icon name="chevronLeft" size={16} />
       </button>
 
       <ul className="pager__nums">
@@ -80,13 +81,13 @@ export default function OrdersPagination({ page = 1, pages = 1, onPage }) {
 
       <button
         type="button"
-        className="pager__btn pager__btn--step"
+        className="pager__btn"
         onClick={() => go(page + 1)}
         disabled={page >= pages}
         aria-label={t('pager_next')}
+        title={t('pager_next')}
       >
-        <span className="pager__btn-text">{t('pager_next')}</span>
-        <Icon name={rtl ? 'chevronLeft' : 'chevronRight'} size={15} />
+        <Icon name="chevronRight" size={16} />
       </button>
     </nav>
   );
