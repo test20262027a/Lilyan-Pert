@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from '../Icon';
+import DashIcon from './DashIcon';
 import { Badge } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtClock, fmtWeekdayDate } from '../../format';
@@ -41,9 +42,7 @@ export default function DateHours({ hours, timeZone, locale }) {
   return (
     <section className="card hours-card">
       <header className="card__head">
-        <span className="card__icon ic-blue">
-          <Icon name="calendar" size={18} />
-        </span>
+        <DashIcon name="calendar" tone="indigo" size={36} />
         <div className="card__titles">
           <div className="card__title">{t('dash_date_hours')}</div>
         </div>
@@ -56,7 +55,12 @@ export default function DateHours({ hours, timeZone, locale }) {
       <div className="card__body hours-card__body">
         <div className="hours-card__col">
           <span className="hours-card__date">
-            <Icon name="calendar" size={14} className="hours-card__date-icon" />
+            <Icon
+              name="calendar"
+              size={14}
+              className="hours-card__date-icon"
+              style={{ color: 'var(--dashic-indigo-ink)' }}
+            />
             <span className="hours-card__date-text">{fmtWeekdayDate(now, locale, timeZone)}</span>
           </span>
           <span className="hours-card__clock" aria-label={fmtClock(now, locale, timeZone)}>
@@ -68,7 +72,7 @@ export default function DateHours({ hours, timeZone, locale }) {
 
         <div className="hours-card__col">
           <span className="hours-card__hours-label">
-            <Icon name="clock" size={15} />
+            <Icon name="clock" size={15} style={{ color: 'var(--dashic-indigo-ink)' }} />
             {t('dash_today_hours')}
           </span>
           {range ? (

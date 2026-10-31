@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import DashIcon from './DashIcon';
 import { Alert, Select, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
 import { playSound, SOUND_OPTIONS, DEFAULT_SOUND } from '../../sound';
@@ -83,9 +84,7 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
   return (
     <section className="card notif-card">
       <header className="card__head">
-        <span className="card__icon ic-amber">
-          <Icon name="bell" size={18} />
-        </span>
+        <DashIcon name="bell" tone="pink" size={36} />
         <div className="card__titles">
           <div className="card__title">{t('dash_notification_settings')}</div>
         </div>
@@ -94,6 +93,7 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
       <div className="card__body">
         <SwitchRow
           icon="volume"
+          tone="pink"
           title={t('dash_sound_new_order')}
           hint={audioUnavailable ? t('dash_sound_unsupported') : undefined}
           checked={soundOn}
@@ -101,7 +101,7 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
         />
         <SwitchRow
           icon="bell"
-          iconClass="switch-row__icon--muted"
+          tone="pink"
           title={t('dash_push_background')}
           hint={pushHint}
           checked={push.subscribed}
@@ -144,7 +144,7 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
             neighbouring Date & working hours card. */}
         <div className="sound-picker">
           <span className="sound-picker__label">
-            <Icon name="volume" size={13} />
+            <Icon name="volume" size={13} style={{ color: 'var(--dashic-pink-ink)' }} />
             {t('dash_sound')}
           </span>
           <div className="sound-picker__row">
@@ -157,12 +157,12 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
             />
             <button
               type="button"
-              className="sound-play"
+              className="sound-play dash-ic dash-ic--pink dash-ic--circle"
               onClick={() => playSound(soundKey)}
               aria-label={t('dash_sound_preview')}
               title={t('dash_sound_preview')}
             >
-              <Icon name="volume" size={17} />
+              <Icon name="volume" size={19} />
             </button>
           </div>
         </div>

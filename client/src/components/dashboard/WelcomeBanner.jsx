@@ -1,5 +1,5 @@
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
-import Icon from '../Icon';
+import DashIcon from './DashIcon';
 import { localized, useI18n } from '../../i18n';
 
 /*
@@ -68,9 +68,7 @@ export default function WelcomeBanner({ business }) {
         {/* The tile and the whole text group (title + subtitle) share one
             centred row, so the icon is centred against both lines together. */}
         <div className="welcome__head">
-          <span className="welcome__badge" aria-hidden="true">
-            <Icon name="dashboard" size={22} />
-          </span>
+          <DashIcon name="dashboard" tone="blue" size={48} hover />
           <div className="welcome__titles">
             <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
             <p className="welcome__sub">{t('dash_welcome_sub')}</p>

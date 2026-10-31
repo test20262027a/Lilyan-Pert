@@ -81,7 +81,7 @@ export default function OrderFlow({ series, locale, timeZone }) {
   const active = hover !== null && points[hover] ? hover : null;
 
   return (
-    <SectionCard icon="trendUp" iconClass="ic-blue" title={t('dash_order_flow')} subtitle={t('dash_order_flow_hint')}>
+    <SectionCard icon="trendUp" iconTone="turquoise" title={t('dash_order_flow')} subtitle={t('dash_order_flow_hint')}>
       <div className="chart-wrap" ref={wrapRef} onMouseLeave={() => setHover(null)}>
         {count === 0 ? (
           <EmptyState icon="chart" title={t('dash_no_data')} />

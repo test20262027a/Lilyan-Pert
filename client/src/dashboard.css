@@ -272,17 +272,27 @@
 /* The shared dropdown stretches to the row; its skin lives in select.css. */
 .sound-picker__select { flex: 1 1 auto; min-width: 0; }
 .sound-picker__select .lysel__trigger { min-height: 46px; font-size: 13.5px; }
+/*
+ * The sound preview is the card's one real button, so it is the dashboard's one
+ * genuinely interactive icon: the shared pink 3D tile (`dash-ic--pink` on the
+ * element) plus the lift, the deeper pink shade and the matching glow here.
+ */
 .sound-play {
-  width: 46px; height: 46px; border-radius: 50%; flex: none;
-  display: grid; place-items: center; cursor: pointer; border: none;
-  background: var(--mint); color: var(--primary-ink);
-  box-shadow:
-    0 4px 12px color-mix(in srgb, var(--mint) 35%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
-  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  width: 46px; height: 46px; padding: 0;
+  cursor: pointer;
+  transition: transform 220ms var(--ui-ease), box-shadow 220ms var(--ui-ease);
 }
-.sound-play:hover { background: var(--mint-deep); transform: translateY(-1px); }
+.sound-play:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.66),
+    inset 0 -2px 5px color-mix(in srgb, var(--ic-b) 58%, #0b0f1a),
+    0 4px 9px rgba(16, 22, 38, 0.13),
+    0 14px 26px -10px color-mix(in srgb, var(--ic-glow) 78%, transparent);
+}
+.sound-play:hover::after { opacity: 1; }
 .sound-play:active { transform: translateY(0) scale(0.97); }
+.sound-play:active::after { opacity: 1; }
 
 /* ----------------------------------------------------------- kpi cards */
 
@@ -321,33 +331,7 @@
     0 18px 35px rgba(20, 45, 30, 0.075),
     var(--inset-top);
 }
-.kpi--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
-.kpi--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
-.kpi--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
-.kpi--pink { --tone: var(--pastel-pink); --tone-ink: var(--pastel-pink-ink); --tone-line: var(--pastel-pink-line); }
 
-/* Raised circular icon: pastel tone, inner highlight, soft matching halo. */
-.kpi__icon {
-  width: 52px; height: 52px; border-radius: 50%; flex: none;
-  display: grid; place-items: center;
-  background:
-    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
-    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
-  color: var(--tone-ink);
-  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
-    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-.kpi:hover .kpi__icon {
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
-    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
-}
 .kpi__label { font-size: 13px; font-weight: 700; color: var(--text-soft); min-width: 0; }
 .kpi__value {
   font-size: clamp(28px, 3.3vw, 34px); font-weight: 800; line-height: 1.04;
@@ -442,32 +426,7 @@
     0 18px 35px rgba(20, 45, 30, 0.075),
     var(--inset-top);
 }
-.fstat--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
-.fstat--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
-.fstat--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
-.fstat--lavender { --tone: var(--pastel-lavender); --tone-ink: var(--pastel-lavender-ink); --tone-line: var(--pastel-lavender-line); }
 
-.fstat__icon {
-  width: 50px; height: 50px; border-radius: 50%; flex: none;
-  display: grid; place-items: center;
-  background:
-    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
-    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
-  color: var(--tone-ink);
-  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
-    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-.fstat:hover .fstat__icon {
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
-    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
-}
 .fstat__label { font-size: 12.5px; color: var(--text-soft); font-weight: 650; min-width: 0; }
 .fstat__value {
   font-size: clamp(19px, 2vw, 23px); font-weight: 800; min-width: 0;
@@ -509,13 +468,6 @@
 .insights__head {
   display: inline-flex; align-items: center; gap: 8px;
   font-size: 12.5px; font-weight: 800; color: var(--mint-ink);
-}
-.insights__badge {
-  display: inline-grid; place-items: center; flex: none;
-  width: 26px; height: 26px; border-radius: 9px;
-  background: color-mix(in srgb, var(--mint) 18%, transparent);
-  color: var(--mint-deep);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .insights__row {
   display: flex; align-items: flex-start; gap: 9px;
@@ -755,33 +707,7 @@
     0 18px 35px rgba(20, 45, 30, 0.07),
     var(--inset-top);
 }
-.status-tile--blue { --tone: var(--pastel-blue); --tone-ink: var(--pastel-blue-ink); --tone-line: var(--pastel-blue-line); }
-.status-tile--amber { --tone: var(--pastel-amber); --tone-ink: var(--pastel-amber-ink); --tone-line: var(--pastel-amber-line); }
-.status-tile--lavender { --tone: var(--pastel-lavender); --tone-ink: var(--pastel-lavender-ink); --tone-line: var(--pastel-lavender-line); }
-.status-tile--green { --tone: var(--pastel-green); --tone-ink: var(--pastel-green-ink); --tone-line: var(--pastel-green-line); }
-.status-tile--pink { --tone: var(--pastel-pink); --tone-ink: var(--pastel-pink-ink); --tone-line: var(--pastel-pink-line); }
 
-.status-tile__icon {
-  width: 50px; height: 50px; border-radius: 50%; flex: none;
-  display: grid; place-items: center;
-  background:
-    radial-gradient(circle at 50% 26%, var(--sheen) 0%, rgba(255, 255, 255, 0) 72%),
-    color-mix(in srgb, var(--tone-ink) 13%, var(--surface));
-  color: var(--tone-ink);
-  border: 1px solid color-mix(in srgb, var(--tone-ink) 16%, transparent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 9%, transparent),
-    0 6px 14px color-mix(in srgb, var(--tone-ink) 20%, transparent);
-  transition: transform 200ms ease, box-shadow 200ms ease;
-}
-.status-tile:hover .status-tile__icon {
-  transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -2px 4px color-mix(in srgb, var(--tone-ink) 11%, transparent),
-    0 9px 20px color-mix(in srgb, var(--tone-ink) 24%, transparent);
-}
 .status-tile__label {
   font-size: 12.5px; font-weight: 700; color: var(--text-soft);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
@@ -948,9 +874,6 @@
   }
   .kpi, .fstat, .status-tile { min-height: 0; padding: 16px 12px 14px; }
   .kpi:hover, .fstat:hover, .status-tile:hover { transform: none; }
-  .kpi:hover .kpi__icon, .fstat:hover .fstat__icon, .status-tile:hover .status-tile__icon {
-    transform: none;
-  }
 
   /* Below this width the six columns become one compact card per order, so the
      order number and the grand total stay on screen without sideways scrolling. */
@@ -1001,7 +924,6 @@
   .welcome__art { display: none; }
   .kpi { padding: 13px 10px; }
   .kpi__value { font-size: 26px; }
-  .kpi__icon, .fstat__icon, .status-tile__icon { width: 44px; height: 44px; }
   .fstat__value { font-size: 19px; }
   .status-tile__value { font-size: 28px; }
   .best-row { padding: 5px 6px; }
@@ -1014,14 +936,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .best-row, .best-row__fill { transition: none; }
-  .dash .card, .kpi, .fstat, .status-tile, .kpi__icon, .fstat__icon, .status-tile__icon,
+  .dash .card, .kpi, .fstat, .status-tile, .dash-ic,
   .sound-play, .range-pill, .chart__dot, .best-row__fill {
     transition: none;
   }
   .kpi:hover, .fstat:hover, .status-tile:hover, .sound-play:hover { transform: none; }
-  .kpi:hover .kpi__icon, .fstat:hover .fstat__icon, .status-tile:hover .status-tile__icon {
-    transform: none;
-  }
 }
 
 /* ------------------------------------------------ custom date range modal */
@@ -1137,11 +1056,14 @@
 .dash-field__icon {
   position: absolute; inset-inline-start: 14px; top: 50%;
   transform: translateY(-50%);
-  color: var(--muted); pointer-events: none;
+  /* Calendar = the indigo category, matching the hours card. */
+  color: var(--dashic-indigo-ink); pointer-events: none;
   transition: color 160ms ease;
 }
 .dash-field__input:hover + .dash-field__icon,
-.dash-field__input.is-open + .dash-field__icon { color: var(--primary); }
+.dash-field__input.is-open + .dash-field__icon {
+  color: color-mix(in srgb, var(--dashic-indigo-ink) 74%, #0b0f1a);
+}
 
 .dash-modal__error {
   margin-top: 14px;

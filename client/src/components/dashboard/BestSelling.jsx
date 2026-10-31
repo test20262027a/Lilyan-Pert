@@ -20,7 +20,7 @@ export default function BestSelling({ rows = [], locale }) {
   const max = rows.reduce((m, row) => Math.max(m, Number(row.units) || 0), 0);
 
   return (
-    <SectionCard icon="trophy" iconClass="ic-purple" title={t('dash_best_selling')}>
+    <SectionCard icon="trophy" iconTone="gold" title={t('dash_best_selling')}>
       {rows.length === 0 ? (
         <EmptyState icon="chart" title={t('dash_no_data_yet')} />
       ) : (

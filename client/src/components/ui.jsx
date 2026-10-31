@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 import Icon from './Icon';
+import DashIcon from './dashboard/DashIcon';
 import ModalActions from './ModalActions';
 import SectionHeader from '../headers/SectionHeader';
 import { useI18n } from '../i18n';
@@ -23,14 +24,30 @@ export function Card({ children, className = '', pad = false }) {
  * A card whose own header is part of the same container as its content —
  * sections never render a detached, header-only card.
  */
-export function SectionCard({ icon, iconClass = 'ic-purple', title, subtitle, actions, children, footer, plain = false }) {
+export function SectionCard({
+  icon,
+  iconClass = 'ic-purple',
+  iconTone,
+  title,
+  subtitle,
+  actions,
+  children,
+  footer,
+  plain = false,
+}) {
   return (
     <section className="card">
       <header className={`card__head ${plain ? 'card__head--plain' : ''}`}>
+        {/* A category tone renders the multicolor 3D tile; without one the card
+            keeps its neutral themed badge, so other pages are untouched. */}
         {icon ? (
-          <span className={`card__icon ${iconClass}`}>
-            <Icon name={icon} size={18} />
-          </span>
+          iconTone ? (
+            <DashIcon name={icon} tone={iconTone} size={36} />
+          ) : (
+            <span className={`card__icon ${iconClass}`}>
+              <Icon name={icon} size={18} />
+            </span>
+          )
         ) : null}
         <div className="card__titles">
           <div className="card__title">{title}</div>
@@ -139,13 +156,17 @@ export function Switch({ checked, onChange, label, hint, disabled = false, ariaL
   );
 }
 
-export function SwitchRow({ title, hint, checked, onChange, disabled, icon, iconClass = '' }) {
+export function SwitchRow({ title, hint, checked, onChange, disabled, icon, iconClass = '', tone }) {
   return (
     <div className="switch-row">
       {icon ? (
-        <span className={`switch-row__icon ${iconClass}`} aria-hidden="true">
-          <Icon name={icon} size={15} />
-        </span>
+        tone ? (
+          <DashIcon name={icon} tone={tone} size={28} />
+        ) : (
+          <span className={`switch-row__icon ${iconClass}`} aria-hidden="true">
+            <Icon name={icon} size={15} />
+          </span>
+        )
       ) : null}
       <div className="switch-row__text">
         <div className="switch-row__title">{title}</div>

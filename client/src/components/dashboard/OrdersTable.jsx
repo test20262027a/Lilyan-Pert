@@ -40,7 +40,7 @@ export default function OrdersTable({
             <tr>
               <td colSpan={COLUMNS} className="orders-table__state">
                 <span className="orders-table__state-inner">
-                  <Icon name="alert" size={18} />
+                  <Icon name="alert" size={18} style={{ color: 'var(--dashic-amber-ink)' }} />
                   <span>{t('dash_orders_error')}</span>
                   {onRetry ? (
                     <button type="button" className="btn btn--sm" onClick={onRetry}>
@@ -54,7 +54,7 @@ export default function OrdersTable({
             <tr>
               <td colSpan={COLUMNS} className="orders-table__state">
                 <span className="orders-table__state-inner">
-                  <Icon name="receipt" size={18} />
+                  <Icon name="receipt" size={18} style={{ color: 'var(--dashic-blue-ink)' }} />
                   <span>{t('dash_no_data')}</span>
                 </span>
               </td>

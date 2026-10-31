@@ -1,4 +1,4 @@
-import Icon from '../Icon';
+import DashIcon from './DashIcon';
 import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 
@@ -53,9 +53,7 @@ export default function BusinessInsights({ insights, finance, locale }) {
   return (
     <div className="insights">
       <div className="insights__head">
-        <span className="insights__badge">
-          <Icon name="bulb" size={15} />
-        </span>
+        <DashIcon name="bulb" tone="green" size={28} />
         {t('dash_insights')}
       </div>
       {rows.length === 0 ? (

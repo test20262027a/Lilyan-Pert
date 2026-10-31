@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import DashIcon from './DashIcon';
 import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 
@@ -9,10 +10,8 @@ const share = (part, whole) => (whole > 0 ? Math.round((part / whole) * 100) : 0
 
 function Kpi({ tone, icon, label, value, hint, hintTone }) {
   return (
-    <article className={`kpi kpi--${tone}`}>
-      <span className="kpi__icon">
-        <Icon name={icon} size={22} />
-      </span>
+    <article className={`kpi kpi--${tone} dash-tone-${tone}`}>
+      <DashIcon name={icon} tone={tone} size={52} shape="circle" hover />
       <span className="kpi__label">{label}</span>
       <span className="kpi__value">{value}</span>
       {hint ? <span className={`kpi__hint ${hintTone ? `kpi__hint--${hintTone}` : ''}`}>{hint}</span> : null}
@@ -21,8 +20,8 @@ function Kpi({ tone, icon, label, value, hint, hintTone }) {
 }
 
 /**
- * Four pastel headline metrics — total (blue), today (amber), completed
- * (green) and cancelled (pink), in that right-to-left order. Every number is
+ * Four pastel headline metrics — total orders (blue), today's orders (orange),
+ * completed (teal) and cancelled (red), in that right-to-left order. Every number is
  * aggregated by the dashboard endpoint from this business's own orders.
  *
  * "Today" is the only metric whose displayed value is a single day, so it is
@@ -56,7 +55,7 @@ export default function KpiCards({ kpi = {}, locale }) {
     <div className="kpi-row">
       <Kpi tone="blue" icon="clipboard" label={t('dash_orders_total')} value={fmtNumber(total, locale)} />
       <Kpi
-        tone="amber"
+        tone="orange"
         icon="cart"
         label={t('dash_orders_today')}
         value={fmtNumber(today, locale)}
@@ -64,7 +63,7 @@ export default function KpiCards({ kpi = {}, locale }) {
         hintTone={delta === null ? null : delta > 0 ? 'up' : delta < 0 ? 'down' : null}
       />
       <Kpi
-        tone="green"
+        tone="teal"
         icon="checkCircle"
         label={t('dash_orders_completed')}
         value={fmtNumber(completed, locale)}
@@ -76,7 +75,7 @@ export default function KpiCards({ kpi = {}, locale }) {
         }
       />
       <Kpi
-        tone="pink"
+        tone="red"
         icon="xCircle"
         label={t('dash_orders_cancelled')}
         value={fmtNumber(cancelled, locale)}

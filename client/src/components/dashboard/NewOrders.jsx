@@ -21,7 +21,7 @@ export default function NewOrders({
   const { t } = useI18n();
 
   return (
-    <SectionCard icon="receipt" iconClass="ic-blue" title={t('dash_new_orders')}>
+    <SectionCard icon="receipt" iconTone="orange" title={t('dash_new_orders')}>
       <OrdersTable
         orders={orders}
         currency={currency}
