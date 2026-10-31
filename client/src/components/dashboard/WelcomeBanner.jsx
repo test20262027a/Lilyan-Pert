@@ -62,7 +62,7 @@ function CafeScene() {
  *
  * Both halves of the greeting are live data, in this order: the signed-in
  * person's own `full_name`, then the business brand in the reader's language
- * ("دانا بەخێربێیت بە لیلیان پیرت"). A name is never derived from the username,
+ * ("دانا بەخێربێیت بۆ لیلیان پێرت"). A name is never derived from the username,
  * the email or the role — a profile that never got a real name (registration
  * fills it with the email's local part) falls back to the localized greeting
  * without a name instead of showing a login id.
