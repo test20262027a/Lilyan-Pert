@@ -46,6 +46,8 @@
  * button's own hue and the shared radius. Every value comes from the shared
  * `--btn-*` tokens (see buttons.css), so a theme switch and dark mode repaint
  * it with no extra rule and a hover can only deepen its own colour.
+ *
+ * The fill is a real gradient, painted by the `.tx-page .tx-save` rule below.
  */
 .tx-save {
   position: relative;
@@ -58,7 +60,7 @@
   border: 1px solid var(--btn-line);
   border-radius: var(--btn-radius);
   background-color: var(--btn-fill);
-  background-image: var(--btn-sheen-strong);
+  background-image: var(--btn-sheen);
   color: var(--btn-ink);
   font: inherit;
   font-size: 14px;
@@ -68,16 +70,47 @@
   box-shadow: var(--btn-shadow);
   transition:
     background-color var(--ui-dur) var(--ui-ease),
-    background-image var(--ui-dur) var(--ui-ease),
     border-color var(--ui-dur) var(--ui-ease),
     color var(--ui-dur) var(--ui-ease),
     box-shadow var(--ui-dur) var(--ui-ease),
     transform var(--ui-dur-fast) var(--ui-ease);
 }
 
-/* One centred row: the icon keeps its own box, the label can never shift. */
+/*
+ * The plate's gradient: a gloss falling from the lit top edge and a shade
+ * gathering along the underside, both layered over the theme accent. The
+ * washes are translucent, so hover and press only change `background-color` —
+ * the theme's richer, then darker, shade cross-fades in place instead of
+ * swapping one gradient for another, and the plate never flashes. The
+ * two-class selector outranks the shared plate rule in buttons.css, which is
+ * loaded after this file, without touching any other page's button.
+ */
+.tx-page .tx-save {
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 22%, transparent) 0%,
+      color-mix(in srgb, #ffffff 7%, transparent) 40%,
+      transparent 58%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, #10141f 24%, transparent) 0%,
+      color-mix(in srgb, #10141f 7%, transparent) 28%,
+      transparent 54%
+    );
+}
+
+/* One centred row: the icon keeps its own box, the label can never shift.
+   A hairline shadow under the label keeps the ink crisp where the gloss rises
+   at the top of the plate, without touching the plate's size. */
 .tx-save > :is(svg, .icon, .spinner) { flex: none; }
-.tx-save__label { line-height: 1.1; }
+.tx-save__label {
+  line-height: 1.1;
+  white-space: nowrap;
+  text-shadow: 0 1px 1px color-mix(in srgb, #10141f 24%, transparent);
+}
+.tx-save:disabled .tx-save__label { text-shadow: none; }
 
 /* Hover: the same accent one step richer, a glow in its own hue, one lift. */
 .tx-save:hover:not(:disabled) {
