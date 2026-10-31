@@ -18,12 +18,16 @@
   --nc: #e05252;
   position: relative;
   isolation: isolate;
-  /* Narrower than the content column and centred in it, compact by design. */
-  width: min(100%, 760px);
+  /* Fills the same content column as the search field, so the card and the
+     field below it share one set of left and right edges in every language and
+     at every breakpoint — no narrower, centred variant. */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   /* The page body already spaces its children (~18px), so the card only brings
      its own top gap and never doubles up the gap above the search field. */
-  margin: 16px auto 0;
-  padding: 13px 16px 14px;
+  margin: 16px 0 0;
+  padding: 13px 18px 14px;
   border-radius: 18px;
   border: 1px solid color-mix(in srgb, var(--nc) 24%, var(--cui-line));
   background:
@@ -56,7 +60,9 @@
 
 /* The search field lifts half onto the banner with a negative top margin. That
    lift belongs to the banner only: when the notice sits in between, the field
-   keeps its normal position so the two never collide or stack their shadows. */
+   keeps its normal position so the two never collide or stack their shadows.
+   The body's own 18px row gap is trimmed to the card's 16px rhythm. */
+.cui-closed + .cui-head { margin-top: -2px; }
 .cui-closed + .cui-head .cui-search { margin-top: 0; }
 
 .cui-closed__main { display: flex; align-items: center; gap: 13px; min-width: 0; }
@@ -98,6 +104,28 @@
 .cui-closed__icon svg { position: relative; filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25)); }
 
 .cui-closed__text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+
+/*
+ * Wide screens: the card now spans the whole menu column, so the message and
+ * the three status badges share one line — text at the start, badges at the end
+ * — instead of leaving an empty tail under a short sentence. Grid columns follow
+ * the document direction, so RTL mirrors without extra rules.
+ */
+@media (min-width: 900px) {
+  .cui-closed__text {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title badges'
+      'hint badges';
+    align-content: center;
+    column-gap: 22px;
+    row-gap: 4px;
+  }
+  .cui-closed__title { grid-area: title; }
+  .cui-closed__hint { grid-area: hint; }
+  .cui-closed__badges { grid-area: badges; margin-top: 0; justify-content: flex-end; }
+}
 
 /* --------------------------------------------------- status badges group -- */
 
@@ -195,12 +223,8 @@
   text-wrap: pretty;
 }
 
-@media (max-width: 900px) {
-  .cui-closed { width: min(100%, 660px); }
-}
-
 @media (max-width: 720px) {
-  .cui-closed { width: 100%; padding: 12px 13px 13px; margin: 14px auto 0; }
+  .cui-closed { width: 100%; padding: 12px 13px 13px; margin: 14px 0 0; }
   .cui-closed__main { gap: 11px; align-items: flex-start; }
   .cui-closed__icon { width: 42px; height: 42px; border-radius: 13px; }
   .cui-closed__badges { gap: 6px; margin-top: 7px; }
