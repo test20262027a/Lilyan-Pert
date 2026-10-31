@@ -2,7 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { addDaysToDay, fmtWeekday } from '../../format';
+import { addDaysToDay, fmtWeekdayShort } from '../../format';
 
 /*
  * The Orders calendar.
@@ -110,12 +110,14 @@ export default function DatePickerPopover({ anchorEl, value, today, timeZone, on
       new Intl.DateTimeFormat(tag, { timeZone, month: '2-digit', year: 'numeric' }).format(noon(grid.start)),
     [tag, timeZone, grid.start],
   );
-  /* Weekday names come from the shared formatter, which knows the app's own
-     Kurdish names — the browser has no `ckb` data and would answer in English. */
+  /* Weekday markers come from the shared formatter, which knows the app's own
+     Kurdish names — the browser has no `ckb` data and would answer in English.
+     The compact form is used on purpose: the header row is seven equal columns,
+     so a full-length name would not fit its own column. */
   const weekdayLabels = useMemo(() => {
     const labels = [];
     for (let i = 0; i < 7; i += 1) {
-      labels.push(fmtWeekday(noon(addDaysToDay('2024-01-07', i)), locale, timeZone));
+      labels.push(fmtWeekdayShort(noon(addDaysToDay('2024-01-07', i)), locale, timeZone));
     }
     return labels.slice(first).concat(labels.slice(0, first));
   }, [locale, timeZone, first]);

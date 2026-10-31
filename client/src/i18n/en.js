@@ -1546,4 +1546,14 @@ export default {
   rel_hours_ago: '{count} h ago',
   rel_days_ago: '{count} d ago',
 
+  /* Compact weekday markers for the calendar header row — they must fit one
+     seventh of the calendar width, unlike the full names used in sentences. */
+  date_weekday_short_0: 'Sun',
+  date_weekday_short_1: 'Mon',
+  date_weekday_short_2: 'Tue',
+  date_weekday_short_3: 'Wed',
+  date_weekday_short_4: 'Thu',
+  date_weekday_short_5: 'Fri',
+  date_weekday_short_6: 'Sat',
+
 };

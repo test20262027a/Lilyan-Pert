@@ -159,21 +159,35 @@
   color: var(--mint-ink);
 }
 
+/* The header row and the day grid share one column track: seven equal columns
+   whose width never depends on their own text (`minmax(0, 1fr)`), so a date
+   always sits directly under its own weekday — in every language, in both
+   directions, at every popover width. */
 .odate__pop-week,
 .odate__pop-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 3px;
 }
 .odate__pop-week { padding-bottom: 6px; }
 .odate__pop-week span {
-  text-align: center;
+  min-width: 0;
+  height: 20px;
+  display: grid;
+  place-items: center;
   font-size: 10.5px;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  line-height: 1;
+  text-align: center;
   color: var(--muted);
+  /* A longer translation is clipped inside its own column rather than allowed
+     to widen it and shift the rest of the row. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .odate__pop-day {
+  min-width: 0;
   height: 34px;
   border-radius: 10px;
   border: 1px solid transparent;

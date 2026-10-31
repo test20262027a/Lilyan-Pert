@@ -1544,4 +1544,13 @@ export default {
   rel_hours_ago: '{count} ساعت پیش',
   rel_days_ago: '{count} روز پیش',
 
+  /* Compact weekday markers for the calendar header row. */
+  date_weekday_short_0: 'یک',
+  date_weekday_short_1: 'دو',
+  date_weekday_short_2: 'سه',
+  date_weekday_short_3: 'چهار',
+  date_weekday_short_4: 'پنج',
+  date_weekday_short_5: 'جمعه',
+  date_weekday_short_6: 'شنبه',
+
 };

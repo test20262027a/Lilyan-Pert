@@ -14,6 +14,9 @@
  */
 
 import ku from './i18n/ku';
+import en from './i18n/en';
+import fa from './i18n/fa';
+import ar from './i18n/ar';
 
 /* Persian calendar for Persian; Gregorian for the rest. */
 const calendarFor = (locale) => (locale === 'fa' ? 'persian' : 'gregory');
@@ -43,6 +46,18 @@ export function fmtDigits(text, locale) {
  * names left in a date; months are always numeric. */
 const KU_WEEKDAYS = Array.from({ length: 7 }, (_, i) => ku[`date_weekday_${i}`]);
 const WEEKDAY_INDEX = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+/* The calendar header needs one marker per column, so it uses the dictionaries'
+ * compact weekday labels (three to five characters) instead of the full names a
+ * sentence uses: a full Kurdish Thursday is wider than a seventh of the grid and
+ * would push its column out of line with the dates below it. */
+const DICTS = { ku, en, fa, ar };
+const WEEKDAY_SHORT = Object.fromEntries(
+  Object.entries(DICTS).map(([code, dict]) => [
+    code,
+    Array.from({ length: 7 }, (_, i) => dict[`date_weekday_short_${i}`]),
+  ]),
+);
 
 function toDate(value) {
   if (!value) return null;
@@ -129,6 +144,13 @@ export function fmtWeekday(value, locale, timeZone, { long = false } = {}) {
     weekday: long ? 'long' : 'short',
     timeZone: timeZone || undefined,
   }).format(d);
+}
+
+/** The calendar header's own compact weekday marker — see WEEKDAY_SHORT. */
+export function fmtWeekdayShort(value, locale, timeZone) {
+  const d = toDate(value);
+  if (!d) return '';
+  return WEEKDAY_SHORT[locale]?.[zonedWeekday(d, timeZone)] || fmtWeekday(d, locale, timeZone);
 }
 
 /** Month bucket of a chart, as numbers: `10`, `۱۰`. */

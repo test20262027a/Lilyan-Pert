@@ -1559,6 +1559,15 @@ export default {
   date_weekday_4: 'پێنجشەممە',
   date_weekday_5: 'ھەینی',
   date_weekday_6: 'شەممە',
+  /* Compact weekday markers for the calendar header row — one seventh of the
+     calendar width each, so the full names above would not fit. */
+  date_weekday_short_0: 'یەک',
+  date_weekday_short_1: 'دوو',
+  date_weekday_short_2: 'سێ',
+  date_weekday_short_3: 'چوار',
+  date_weekday_short_4: 'پێنج',
+  date_weekday_short_5: 'ھەینی',
+  date_weekday_short_6: 'شەممە',
 
   rel_seconds_ago: 'پێش {count} چرکە',
   rel_minutes_ago: 'پێش {count} خولەک',

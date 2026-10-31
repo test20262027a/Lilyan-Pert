@@ -1542,4 +1542,13 @@ export default {
   rel_hours_ago: 'قبل {count} ساعة',
   rel_days_ago: 'قبل {count} يوم',
 
+  /* Compact weekday markers for the calendar header row. */
+  date_weekday_short_0: 'أحد',
+  date_weekday_short_1: 'اثن',
+  date_weekday_short_2: 'ثلا',
+  date_weekday_short_3: 'أرب',
+  date_weekday_short_4: 'خمي',
+  date_weekday_short_5: 'جمع',
+  date_weekday_short_6: 'سبت',
+
 };
