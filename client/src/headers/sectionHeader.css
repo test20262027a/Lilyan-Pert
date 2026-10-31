@@ -1,11 +1,11 @@
 /*
- * Section header system. Each header paints its own picture complete and at
- * its own aspect ratio (contain), at full opacity, with ONE narrow reading
- * scrim on the copy's edge; a blurred copy of the same picture fills the
- * margin behind it. There is no theme tint, painted sunlight, beam, bounce or
- * full-width veil over the artwork, so the illustration keeps the colours and
- * detail of the original file. Light mode shows it as-is; dark mode dims it
- * just enough for light copy to stay readable.
+ * Section header system. Each header paints its own picture stretched to the
+ * header's exact box (100% x 100%), at full opacity, with ONE narrow reading
+ * scrim on the copy's edge. No blurred margin fill, theme tint, painted
+ * sunlight, beam, bounce or full-width veil sits over the artwork, so the
+ * illustration keeps the colours and detail of the original file and no seam,
+ * blur boundary or empty strip can appear around it. Light mode shows it
+ * as-is; dark mode dims it just enough for light copy to stay readable.
  */
 .sh-host, .mhero, .obanner, .welcome, .modal__head, .mcmodal__head, .cui-sheet__art, .dcd,
 .dash-modal__head, .adp__head { isolation: isolate; }
@@ -14,32 +14,22 @@
   position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
   border-radius: inherit;
 }
-/* Both layers paint the section's own picture over its fallback (see
+/* The picture paints the section's own file over its fallback (see
    HeaderBackdrop): an absent file is not painted, so the fallback shows. */
-.sh-bg__wash, .sh-bg__art {
+.sh-bg__art {
   background-image: var(--sh-img), var(--sh-alt, linear-gradient(transparent, transparent));
   background-repeat: no-repeat;
 }
-/* A blurred full-bleed copy of the same picture fills the leftover space
-   around the artwork, so a header wider or taller than the picture is never
-   flat empty. It sits BEHIND the picture, never over it, and carries just
-   enough saturation to continue the illustration's colours, not a grey glow. */
-.sh-bg__wash {
-  position: absolute; inset: -8%;
-  background-size: cover;
-  background-position: center;
-  filter: blur(20px) saturate(1.18);
-  opacity: 1;
-  transition: filter 0.2s ease;
-}
-/* The picture itself: ONE rule for every illustrated header. `contain` keeps
-   the artwork's own aspect ratio — complete, never cropped, never squeezed —
-   at every viewport, and the wash above fills whatever margin is left. */
+/* The picture itself: ONE rule for every illustrated header, page banner and
+   dialog alike. `100% 100%` stretches the whole artwork edge to edge and top
+   to bottom of the header's CURRENT box at every viewport — the complete
+   image, both ends and all four corners visible, never cropped, never
+   letterboxed, with no blurred margin fill behind it to expose a seam. */
 .sh-bg__art {
   position: absolute; inset: 0;
-  background-size: contain;
+  background-size: 100% 100%;
   background-repeat: no-repeat;
-  background-position: center;
+  background-position: center center;
   /* Natural, not processed: the original file with only a whisper of extra
      saturation and contrast. No brightness lift (the artwork is already
      luminous — raising it clips the cream highlights into white) and no heavy
@@ -67,7 +57,6 @@
     transparent var(--hd-scrim-end));
 }
 /* Night: the same rig at candle power, so the picture stays warm, not muddy. */
-[data-theme='dark'] .sh-bg__wash { filter: blur(20px) brightness(0.52) saturate(1.12); }
 [data-theme='dark'] .sh-bg__art { filter: brightness(0.9) saturate(1.1) contrast(1.05); }
 
 /* Page banners: the old drawn artwork gives way to the section picture. */
@@ -107,27 +96,6 @@
 /* Confirmation dialogs: a soft banner fades out behind the top of the card. */
 .sh-bg--dcd { inset: 0 0 auto 0; height: var(--hd-modal-h); border-radius: 19px 19px 0 0; opacity: 1;
   -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent); }
-
-/*
- * Dialog banners COVER their box. These headers are compact and wide, so a
- * `contain` fit would letterbox an ultra-wide section picture into a thin
- * strip with empty wash above and below it; `cover` fills the whole header at
- * one consistent scale in every form and popup. Page banners keep `contain`,
- * where the whole picture has room to show.
- */
-.sh-head > .sh-bg > .sh-bg__art,
-.um-modal__head > .sh-bg > .sh-bg__art,
-.promo-modal__head > .sh-bg > .sh-bg__art,
-.ad-modal__head > .sh-bg > .sh-bg__art,
-.adp__head > .sh-bg > .sh-bg__art,
-.mcmodal__head > .sh-bg > .sh-bg__art,
-.odm__head > .sh-bg > .sh-bg__art,
-.dash-modal__head > .sh-bg > .sh-bg__art,
-.cui-sheet__art > .sh-bg > .sh-bg__art,
-.sh-bg--dcd > .sh-bg__art {
-  background-size: cover;
-  background-position: center;
-}
 
 /* Customer cart / review sheets: the same full-bleed rule, raised above the
    sheet's own painted background so the artwork is actually visible. */

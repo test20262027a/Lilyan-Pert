@@ -6,12 +6,12 @@ import './sectionHeader.css';
  * child of any header surface (the host gets `isolation: isolate`, see the
  * stylesheet); it never carries text and never takes pointer events.
  *
- * Two layers of the same picture: `wash` is a blurred full-bleed copy that
- * colours the header's edges, and `art` is the picture itself, painted across
- * the whole header box (100% x 100%, see the stylesheet) so no part of the
- * artwork is ever cropped.
+ * ONE layer: `art` is the picture itself, stretched across the whole header
+ * box (100% x 100%, see the stylesheet) so the complete artwork fills the
+ * header edge to edge at every size — never cropped, never letterboxed, and
+ * with no blurred margin copy behind it to expose a seam.
  *
- * Both layers paint the section's own file over its fallback (a second
+ * It paints the section's own file over its fallback (a second
  * `background-image` entry). A picture that is not in /public/headers yet is
  * simply not painted, so the fallback underneath shows instead — no fetch
  * error, no flash, no blank header.
@@ -22,7 +22,6 @@ export default function HeaderBackdrop({ section, className = '' }) {
   if (fallback && fallback !== image) style['--sh-alt'] = `url(${fallback})`;
   return (
     <span className={`sh-bg ${className}`.trim()} style={style} aria-hidden="true">
-      <span className="sh-bg__wash" />
       <span className="sh-bg__art" />
     </span>
   );
