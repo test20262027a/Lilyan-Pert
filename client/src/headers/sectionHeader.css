@@ -38,9 +38,11 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
-  /* Sunlit, not faded: the illustrations gain clarity, richness and warm
-     brightness, so a large banner reads vivid instead of milky. */
-  filter: saturate(1.42) contrast(1.12) brightness(1.08);
+  /* Sunlit, not faded: the illustrations gain clarity and richness. The
+     pictures are pale cream artwork, so a small brightness reduction keeps
+     them from bleaching into white (measured: no clipped highlights), while
+     the saturation and contrast lift restores the colour and the line detail. */
+  filter: saturate(1.55) contrast(1.25) brightness(0.92);
   transition: filter 0.2s ease;
 }
 /*
@@ -83,7 +85,7 @@
 }
 /* Night: the same rig at candle power, so the picture stays warm, not muddy. */
 [data-theme='dark'] .sh-bg__wash { filter: blur(26px) brightness(0.5) saturate(1.16); }
-[data-theme='dark'] .sh-bg__art { filter: brightness(0.8) saturate(1.22) contrast(1.1); }
+[data-theme='dark'] .sh-bg__art { filter: brightness(0.88) saturate(1.18) contrast(1.12); }
 
 /* Page banners: the old drawn artwork gives way to the section picture. */
 .mhero:has(> .sh-bg) > .mhero__art,

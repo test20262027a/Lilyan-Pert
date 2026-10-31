@@ -47,38 +47,38 @@
 
   /*
    * The reading scrim over an illustrated header: a warm ivory page surface
-   * with a little of the theme accent, and — crucially — light enough that the
-   * picture keeps its colour instead of sitting under a white film.
+   * with a little of the theme accent, kept low enough that the picture stays
+   * colourful and sharp behind the copy — a hint of shade, never white fog.
    */
-  --hd-scrim: color-mix(in srgb, #fff7ea 84%, var(--primary));
-  --hd-scrim-start: 52%;
-  --hd-scrim-mid: 20%;
+  --hd-scrim: color-mix(in srgb, #fff7ea 60%, var(--primary));
+  --hd-scrim-start: 26%;
+  --hd-scrim-mid: 6%;
   /* Tint laid over the illustration itself. */
-  --hd-tint: color-mix(in srgb, var(--primary) 14%, transparent);
-  --hd-tint-soft: color-mix(in srgb, var(--primary) 8%, transparent);
+  --hd-tint: color-mix(in srgb, var(--primary) 9%, transparent);
+  --hd-tint-soft: color-mix(in srgb, var(--primary) 5%, transparent);
 
   /*
    * The sunlight of every illustrated header: a golden flare in the corner
    * away from the copy, a soft beam crossing the top, and a warm bounce along
    * the bottom edge. Warm, never white — the picture keeps its saturation.
    */
-  --hd-sun: rgba(255, 208, 128, 0.66);
-  --hd-sun-mid: rgba(255, 196, 108, 0.26);
-  --hd-ray: rgba(255, 246, 219, 0.3);
-  --hd-bounce: rgba(255, 226, 174, 0.22);
+  --hd-sun: rgba(255, 202, 118, 0.4);
+  --hd-sun-mid: rgba(255, 190, 100, 0.15);
+  --hd-ray: rgba(255, 243, 210, 0.14);
+  --hd-bounce: rgba(255, 226, 174, 0.12);
 }
 
 [data-theme='dark'] {
-  --hd-scrim: color-mix(in srgb, #0a0f15 88%, var(--primary));
-  --hd-scrim-start: 82%;
-  --hd-scrim-mid: 54%;
-  --hd-tint: color-mix(in srgb, var(--primary) 20%, transparent);
-  --hd-tint-soft: color-mix(in srgb, var(--primary) 11%, transparent);
+  --hd-scrim: color-mix(in srgb, #0a0f15 84%, var(--primary));
+  --hd-scrim-start: 68%;
+  --hd-scrim-mid: 38%;
+  --hd-tint: color-mix(in srgb, var(--primary) 14%, transparent);
+  --hd-tint-soft: color-mix(in srgb, var(--primary) 8%, transparent);
   /* Night keeps a restrained golden lamp-light instead of a bright sun. */
-  --hd-sun: rgba(255, 196, 112, 0.34);
-  --hd-sun-mid: rgba(255, 178, 92, 0.14);
-  --hd-ray: rgba(255, 226, 172, 0.12);
-  --hd-bounce: rgba(255, 206, 140, 0.1);
+  --hd-sun: rgba(255, 196, 112, 0.26);
+  --hd-sun-mid: rgba(255, 178, 92, 0.11);
+  --hd-ray: rgba(255, 226, 172, 0.09);
+  --hd-bounce: rgba(255, 206, 140, 0.08);
 }
 
 /* ------------------------------------------- 1. icon + text, one centred row */
