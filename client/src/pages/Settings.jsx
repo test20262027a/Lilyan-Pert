@@ -35,18 +35,20 @@ import '../settingsProfile.css';
  * /text-editor) map onto the matching tab instead of duplicating a screen.
  */
 
+/* `tone` gives every tab icon its own persistent colour identity; the hues are
+   declared in settingsProfile.css so light/dark and all presets adapt. */
 const TABS = [
-  { value: 'branding', icon: 'image' },
-  { value: 'business', icon: 'building' },
-  { value: 'contact', icon: 'phone' },
-  { value: 'social', icon: 'share' },
-  { value: 'hours', icon: 'clock' },
-  { value: 'dashboard', icon: 'dashboard' },
-  { value: 'best', icon: 'trophy' },
-  { value: 'menu', icon: 'sliders' },
-  { value: 'menutext', icon: 'type' },
-  { value: 'receipt', icon: 'print' },
-  { value: 'appearance', icon: 'palette' },
+  { value: 'branding', icon: 'image', tone: 'azure' },
+  { value: 'business', icon: 'building', tone: 'teal' },
+  { value: 'contact', icon: 'phone', tone: 'emerald' },
+  { value: 'social', icon: 'share', tone: 'violet' },
+  { value: 'hours', icon: 'clock', tone: 'amber' },
+  { value: 'dashboard', icon: 'dashboard', tone: 'cyan' },
+  { value: 'best', icon: 'trophy', tone: 'gold' },
+  { value: 'menu', icon: 'sliders', tone: 'indigo' },
+  { value: 'menutext', icon: 'type', tone: 'rose' },
+  { value: 'receipt', icon: 'print', tone: 'copper' },
+  { value: 'appearance', icon: 'palette', tone: 'fuchsia' },
 ];
 
 const TAB_VALUES = TABS.map((tab) => tab.value);
@@ -269,7 +271,12 @@ export default function Settings({ initialTab }) {
       <SettingsTabs
         value={tab}
         onChange={selectTab}
-        tabs={TABS.map((item) => ({ value: item.value, icon: item.icon, label: t(`settings_tab_${item.value}`) }))}
+        tabs={TABS.map((item) => ({
+          value: item.value,
+          icon: item.icon,
+          tone: item.tone,
+          label: t(`settings_tab_${item.value}`),
+        }))}
       />
 
       <div className="set-panel" role="tabpanel" id={`settings-panel-${tab}`} aria-labelledby={`settings-tab-${tab}`}>

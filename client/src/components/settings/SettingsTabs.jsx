@@ -224,7 +224,11 @@ export default function SettingsTabs({ tabs, value, onChange }) {
                 className={`set-tab ${value === tab.value ? 'is-active' : ''}`}
                 onClick={() => onChange(tab.value)}
               >
-                <span className="set-tab__icon" aria-hidden="true">
+                <span
+                  className="set-tab__icon"
+                  data-tone={tab.tone || 'azure'}
+                  aria-hidden="true"
+                >
                   <Icon name={tab.icon} size={16} />
                 </span>
                 <span className="set-tab__label">{tab.label}</span>

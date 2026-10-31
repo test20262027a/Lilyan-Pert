@@ -149,8 +149,6 @@
     box-shadow 180ms ease,
     transform 180ms ease;
 }
-.set-tab__icon { display: grid; place-items: center; opacity: 0.72; }
-
 .set-tab:hover:not(.is-active) {
   background: color-mix(in srgb, var(--theme-primary) 7%, var(--surface-2));
   border-color: color-mix(in srgb, var(--theme-primary) 14%, transparent);
@@ -169,7 +167,154 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.85);
   transform: translateY(-1px);
 }
-.set-tab.is-active .set-tab__icon { opacity: 1; }
+/* ------------------------------------------------------- 3D tab icons */
+
+/* One shared 3D plate for every tab, then a single hue per tab below. Every
+   tint, rim and glow is mixed with the theme surface tokens, so the plates
+   follow all five presets and light/dark mode on their own. */
+.set-tab__icon {
+  --tab-color: #3b82f6;
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  line-height: 0;
+  color: color-mix(in srgb, var(--tab-color) 80%, #10202e);
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 255, 255, 0.55), transparent 60%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tab-color) 17%, var(--surface)),
+      color-mix(in srgb, var(--tab-color) 33%, var(--surface-2))
+    );
+  box-shadow:
+    0 1px 1px color-mix(in srgb, var(--tab-color) 30%, rgba(16, 32, 46, 0.18)),
+    0 3px 8px -2px color-mix(in srgb, var(--tab-color) 30%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 3px color-mix(in srgb, var(--tab-color) 26%, transparent);
+  transition:
+    color 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+/* Glass highlight across the top half of each plate. */
+.set-tab__icon::before {
+  content: '';
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 46%;
+  border-radius: 7px 7px 9px 9px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+.set-tab__icon svg { position: relative; }
+
+/* Per-tab hue identity — every icon keeps its own colour. */
+.set-tab__icon[data-tone='azure'] { --tab-color: #3b82f6; }
+.set-tab__icon[data-tone='teal'] { --tab-color: #0d9488; }
+.set-tab__icon[data-tone='emerald'] { --tab-color: #16a34a; }
+.set-tab__icon[data-tone='violet'] { --tab-color: #8b5cf6; }
+.set-tab__icon[data-tone='amber'] { --tab-color: #f59e0b; }
+.set-tab__icon[data-tone='cyan'] { --tab-color: #0891b2; }
+.set-tab__icon[data-tone='gold'] { --tab-color: #d9a406; }
+.set-tab__icon[data-tone='indigo'] { --tab-color: #4f46e5; }
+.set-tab__icon[data-tone='rose'] { --tab-color: #e11d48; }
+.set-tab__icon[data-tone='copper'] { --tab-color: #b45309; }
+.set-tab__icon[data-tone='fuchsia'] { --tab-color: #c026d3; }
+
+/* Hover: the same hue a shade deeper, lifted on a soft coloured glow. */
+.set-tab:hover .set-tab__icon {
+  color: color-mix(in srgb, var(--tab-color) 92%, #0a1822);
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 255, 255, 0.5), transparent 60%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tab-color) 27%, var(--surface)),
+      color-mix(in srgb, var(--tab-color) 45%, var(--surface-2))
+    );
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    0 2px 3px color-mix(in srgb, var(--tab-color) 34%, rgba(16, 32, 46, 0.18)),
+    0 7px 15px -4px color-mix(in srgb, var(--tab-color) 52%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 3px color-mix(in srgb, var(--tab-color) 32%, transparent);
+}
+
+/* Selected tab: a deeper plate, a lit rim and a wider glow — same hue. */
+.set-tab.is-active .set-tab__icon {
+  color: color-mix(in srgb, var(--tab-color) 88%, #06121b);
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 255, 255, 0.6), transparent 62%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tab-color) 32%, var(--surface)),
+      color-mix(in srgb, var(--tab-color) 52%, var(--surface-2))
+    );
+  transform: translateY(-2px) scale(1.06);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 5px 9px -2px color-mix(in srgb, var(--tab-color) 38%, transparent),
+    0 11px 22px -7px color-mix(in srgb, var(--tab-color) 55%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--tab-color) 32%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 4px color-mix(in srgb, var(--tab-color) 36%, transparent);
+}
+.set-tab.is-active:hover .set-tab__icon { transform: translateY(-3px) scale(1.08); }
+
+/* Dark mode: deeper plates, brighter ink, stronger coloured glow. */
+[data-theme='dark'] .set-tab__icon {
+  color: color-mix(in srgb, var(--tab-color) 62%, #ffffff);
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 255, 255, 0.16), transparent 62%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tab-color) 32%, var(--surface-2)),
+      color-mix(in srgb, var(--tab-color) 18%, var(--surface-3))
+    );
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.45),
+    0 4px 10px -3px color-mix(in srgb, var(--tab-color) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.35);
+}
+[data-theme='dark'] .set-tab__icon::before {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0));
+}
+[data-theme='dark'] .set-tab:hover .set-tab__icon {
+  color: color-mix(in srgb, var(--tab-color) 45%, #ffffff);
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 255, 255, 0.2), transparent 62%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tab-color) 42%, var(--surface-2)),
+      color-mix(in srgb, var(--tab-color) 26%, var(--surface-3))
+    );
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    0 8px 18px -4px color-mix(in srgb, var(--tab-color) 68%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.38);
+}
+[data-theme='dark'] .set-tab.is-active .set-tab__icon {
+  color: color-mix(in srgb, var(--tab-color) 52%, #ffffff);
+  background:
+    radial-gradient(120% 90% at 50% -30%, rgba(255, 255, 255, 0.24), transparent 64%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tab-color) 50%, var(--surface-2)),
+      color-mix(in srgb, var(--tab-color) 32%, var(--surface-3))
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--tab-color) 48%, transparent),
+    0 4px 10px -2px rgba(0, 0, 0, 0.5),
+    0 12px 24px -8px color-mix(in srgb, var(--tab-color) 72%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.42);
+}
 .set-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 [data-theme='dark'] .set-tab.is-active {
   border-color: color-mix(in srgb, var(--theme-primary) 52%, transparent);
@@ -413,6 +558,7 @@
   .set-tabs { border-radius: 16px; padding: 5px; gap: 4px; }
   .set-tabs__arrow { width: 30px; height: 30px; border-radius: 9px; }
   .set-tab { min-height: 40px; padding: 7px 11px; font-size: 12.4px; }
+  .set-tab__icon { width: 24px; height: 24px; border-radius: 7px; }
   .set-tabs__fade { width: 26px; }
 
   /* Both media cards stack; the cover keeps its landscape frame on top. */
@@ -430,6 +576,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .set-tab,
+  .set-tab__icon,
   .set-tabs__arrow,
   .set-tabs__fade,
   .set-media-card,
