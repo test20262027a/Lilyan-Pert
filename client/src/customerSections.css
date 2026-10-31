@@ -1,0 +1,168 @@
+/*
+ * The customer ordering panel's section headers.
+ *
+ * One system for every section: a colorful, slightly raised 3D tile, one short
+ * title and an optional trailing badge (item count or state pill). Only the
+ * `cui-sect--<tone>` color family changes between sections, so the icons are
+ * instantly distinguishable while the geometry stays identical everywhere.
+ *
+ * Three tones of the same hue do the 3D work on the tile:
+ *   --sect-hi   the lit top face,
+ *   --sect-lo   the shaded bottom face (also the icon's drop shadow),
+ *   --sect-wash the hue mixed into the header bar and its rule.
+ */
+
+.cui-sect {
+  --sect-hi: #5fd39b;
+  --sect-lo: #178a55;
+  --sect-wash: #178a55;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 62px;
+  padding: 11px 16px;
+  background:
+    radial-gradient(140% 170% at 50% -35%, color-mix(in srgb, var(--sect-wash) 14%, transparent), transparent 72%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sect-wash) 7%, var(--surface)),
+      color-mix(in srgb, var(--sect-wash) 2%, var(--surface))
+    );
+  border-bottom: 1px solid color-mix(in srgb, var(--sect-wash) 16%, var(--cui-line, var(--border)));
+}
+
+/* The tile: a lit top edge, a shaded bottom bevel, a colored cast shadow and a
+   soft gloss overlay — enough depth to read as raised, never glossy plastic. */
+.cui-sect__icon {
+  position: relative;
+  isolation: isolate;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 13px;
+  color: #ffffff;
+  background: linear-gradient(165deg, var(--sect-hi) 0%, var(--sect-lo) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 6px color-mix(in srgb, var(--sect-lo) 62%, #000000),
+    0 7px 15px -6px color-mix(in srgb, var(--sect-lo) 62%, transparent),
+    0 2px 4px rgba(16, 22, 38, 0.12);
+}
+
+.cui-sect__icon::after {
+  content: '';
+  position: absolute;
+  inset: 1px 1px auto;
+  height: 46%;
+  border-radius: 12px 12px 55% 55% / 12px 12px 42% 42%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.02));
+  pointer-events: none;
+}
+
+.cui-sect__icon .icon {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--sect-lo) 65%, #000000));
+}
+
+.cui-sect__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 820;
+  letter-spacing: 0.1px;
+  color: var(--text);
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+.cui-sect > .cui-count,
+.cui-sect > .cui-state,
+.cui-sect > .cui-sect__badge {
+  flex: none;
+}
+
+/* ------------------------------------------------------------- color families */
+
+.cui-sect--rose {
+  --sect-hi: #fb7ba2;
+  --sect-lo: #d6335a;
+  --sect-wash: #d6335a;
+}
+
+.cui-sect--amber {
+  --sect-hi: #ffca5a;
+  --sect-lo: #d98906;
+  --sect-wash: #d98906;
+}
+
+.cui-sect--violet {
+  --sect-hi: #a78bfa;
+  --sect-lo: #6d3fe0;
+  --sect-wash: #6d3fe0;
+}
+
+.cui-sect--sky {
+  --sect-hi: #74b9ff;
+  --sect-lo: #2a6fd6;
+  --sect-wash: #2a6fd6;
+}
+
+.cui-sect--teal {
+  --sect-hi: #54d6c6;
+  --sect-lo: #0e8f84;
+  --sect-wash: #0e8f84;
+}
+
+.cui-sect--mint {
+  --sect-hi: color-mix(in srgb, var(--primary, #2f9e6b) 62%, #ffffff);
+  --sect-lo: color-mix(in srgb, var(--primary, #2f9e6b) 88%, #0d3a26);
+  --sect-wash: var(--primary, #2f9e6b);
+}
+
+/* --------------------------------------------------------------- dark theme */
+
+[data-theme='dark'] .cui-sect {
+  background:
+    radial-gradient(140% 170% at 50% -35%, color-mix(in srgb, var(--sect-wash) 30%, transparent), transparent 72%),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--sect-wash) 16%, var(--surface)),
+      color-mix(in srgb, var(--sect-wash) 6%, var(--surface))
+    );
+  border-bottom-color: color-mix(in srgb, var(--sect-wash) 34%, var(--cui-line, var(--border)));
+}
+
+[data-theme='dark'] .cui-sect__icon {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -2px 7px color-mix(in srgb, var(--sect-lo) 70%, #000000),
+    0 8px 18px -8px color-mix(in srgb, var(--sect-lo) 75%, transparent),
+    0 2px 5px rgba(0, 0, 0, 0.42);
+}
+
+/* --------------------------------------------------------------- breakpoints */
+
+@media (max-width: 720px) {
+  .cui-sect {
+    min-height: 56px;
+    padding: 10px 14px;
+    gap: 9px;
+  }
+  .cui-sect__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+  }
+  .cui-sect__icon .icon {
+    width: 17px;
+    height: 17px;
+  }
+  .cui-sect__title {
+    font-size: 14px;
+  }
+}

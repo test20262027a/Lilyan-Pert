@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import CustomerSectionHead from './CustomerSectionHead';
 import { useI18n } from '../../i18n';
 import { fmtDate, fmtWeekday } from '../../format';
 
@@ -39,16 +40,19 @@ export default function CustomerHours({ hours, timeZone, status }) {
 
   return (
     <section className={`cui-hours ${view.tone}`}>
-      <header className="cui-hours__head">
-        <span className="cui-hours__icon">
-          <Icon name="clock" size={17} />
-        </span>
-        <h2 className="cui-hours__title">{t('dash_working_hours')}</h2>
+      {/* The shared section header, keeping the card's own class so the
+          open / soon / closed / holiday tints still drive its bar. */}
+      <CustomerSectionHead
+        className="cui-hours__head"
+        icon="clock"
+        tone="mint"
+        title={t('dash_working_hours')}
+      >
         <span className={`cui-state ${view.tone}`}>
           <i aria-hidden="true" />
           {t(view.label)}
         </span>
-      </header>
+      </CustomerSectionHead>
 
       <div className="cui-hours__body">
         <div className="cui-hours__date">

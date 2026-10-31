@@ -520,39 +520,8 @@
   box-shadow: var(--cui-shadow-2), var(--cui-inset);
   overflow: hidden;
 }
-.cui-hours__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 16px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 13%, var(--surface)),
-    color-mix(in srgb, var(--primary) 7%, var(--surface))
-  );
-  border-bottom: 1px solid var(--cui-line);
-}
-.cui-hours__icon {
-  width: 34px;
-  height: 34px;
-  flex: none;
-  border-radius: 11px;
-  display: grid;
-  place-items: center;
-  color: var(--primary-ink);
-  background: linear-gradient(180deg, var(--theme-primary, var(--primary)), var(--theme-primary-active, var(--primary)));
-  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 28%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.35);
-}
-.cui-hours__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 14px;
-  font-weight: 820;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* The card's own header is the shared section header (customerSections.css);
+   only its state tints remain here, in customerAvailability.css. */
 .cui-hours__body {
   display: flex;
   flex-wrap: wrap;
@@ -1114,39 +1083,8 @@
   box-shadow: var(--cui-shadow-1), var(--cui-inset);
   overflow: hidden;
 }
-.cui-panel__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 62px;
-  padding: 11px 16px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 13%, var(--surface)),
-    color-mix(in srgb, var(--primary) 6%, var(--surface))
-  );
-  border-bottom: 1px solid color-mix(in srgb, var(--primary) 16%, var(--cui-line));
-}
-.cui-panel__icon {
-  width: 40px;
-  height: 40px;
-  flex: none;
-  border-radius: 13px;
-  display: grid;
-  place-items: center;
-  color: color-mix(in srgb, var(--primary) 84%, #0b1220);
-  background: color-mix(in srgb, var(--surface) 86%, var(--primary));
-  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
-  box-shadow: 0 4px 10px color-mix(in srgb, var(--primary) 18%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-.cui-panel__title {
-  font-size: 14.5px;
-  font-weight: 820;
-  color: var(--text);
-  letter-spacing: 0.1px;
-}
+/* The header itself is the shared section header (customerSections.css). */
 .cui-panel__body { padding: 14px 16px 16px; }
-.cui-panel__title { flex: 1 1 auto; min-width: 0; }
 /* The item counter of every section header — Best Sellers, Featured and
    Advertisements — is this one badge, so the three always look identical. */
 .cui-count {
@@ -1288,7 +1226,6 @@
   .cui-links { gap: 9px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 96px), 1fr)); }
   .cui-link { min-height: 104px; padding: 12px 7px 11px; border-radius: 16px; gap: 8px; }
   .cui-link__icon { width: 44px; height: 44px; border-radius: 13px; }
-  .cui-panel__head { min-height: 58px; padding: 10px 14px; }
   .cui-panel__body { padding: 13px 14px 15px; }
   .cui-panel--products .cui-panel__body { padding: 14px; }
 }

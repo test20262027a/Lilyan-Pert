@@ -96,7 +96,7 @@ export default function CustomerContact({ business, locale, onReview }) {
   if (!tiles.length) return null;
 
   return (
-    <CustomerPanel icon="share" title={t('customer_menu_contact')}>
+    <CustomerPanel icon="share" tone="teal" title={t('customer_menu_contact')}>
       <div className="cui-links">
         {tiles.map((tile) => {
           const inner = (

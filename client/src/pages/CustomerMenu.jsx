@@ -560,7 +560,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         {featuredProducts.length > 0 ? (
           <CustomerPanel
             className="cui-panel--products"
-            icon="sparkles"
+            icon="star"
+            tone="amber"
             title={t('customer_menu_featured')}
             count={fmtNumber(featuredProducts.length, locale)}
           >
@@ -595,6 +596,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
           <CustomerPanel
             className="cui-panel--products"
             icon="trophy"
+            tone="violet"
             title={t('customer_menu_best_sellers')}
             count={fmtNumber(bestProducts.length, locale)}
           >

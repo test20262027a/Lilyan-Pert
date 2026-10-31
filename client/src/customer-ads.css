@@ -30,77 +30,9 @@
 
 /* ---------------------------------------------------------------- header */
 
-/* The section picture fills the bar; it is fitted by the shared header system
-   (a blurred full-bleed wash underneath the artwork), so it never stretches or
-   leaves a gap. The theme-tinted gradient beneath it is the decorative fallback
-   while the Advertising picture is missing, and the same metrics as the product
-   panels' header keep the three sections visually identical in height. */
-.cui-ads__head {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 62px;
-  padding: 11px 16px;
-  border-bottom: 1px solid color-mix(in srgb, var(--primary) 16%, var(--cui-line, var(--border)));
-  background:
-    radial-gradient(120% 170% at 10% 0%, color-mix(in srgb, var(--primary) 20%, transparent), transparent 72%),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--primary) 13%, var(--surface)),
-      color-mix(in srgb, var(--primary) 6%, var(--surface))
-    );
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 55%, transparent), inset 0 -10px 18px -14px color-mix(in srgb, var(--primary) 40%, transparent), 0 10px 22px -18px color-mix(in srgb, var(--primary) 55%, transparent);
-}
-[data-theme='dark'] .cui-ads__head {
-  background:
-    radial-gradient(120% 170% at 10% 0%, color-mix(in srgb, var(--primary) 26%, transparent), transparent 72%),
-    linear-gradient(180deg, color-mix(in srgb, var(--primary) 16%, var(--surface)), color-mix(in srgb, var(--primary) 7%, var(--surface)));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 10px 22px -18px rgba(0, 0, 0, 0.7);
-}
-.cui-ads__head > * { position: relative; z-index: 1; }
-
-.cui-ads__title {
-  flex: 1 1 auto;
-  min-width: 0;
-  margin: 0;
-  font-size: 14.5px;
-  font-weight: 820;
-  letter-spacing: 0.1px;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  text-shadow: 0 1px 2px color-mix(in srgb, var(--surface) 55%, transparent);
-}
-
-/* A glass tile, so the mark stays legible on top of the illustration instead of
-   carrying a flat tint over it. */
-.cui-ads__icon {
-  width: 40px;
-  height: 40px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 13px;
-  color: color-mix(in srgb, var(--primary) 84%, #0b1220);
-  background: color-mix(in srgb, var(--surface) 74%, transparent);
-  border: 1px solid color-mix(in srgb, var(--primary) 26%, transparent);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow:
-    0 6px 14px -8px rgba(16, 22, 38, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-}
-[data-theme='dark'] .cui-ads__icon {
-  color: color-mix(in srgb, var(--primary) 78%, #ffffff);
-  box-shadow: 0 6px 14px -8px rgba(0, 0, 0, 0.62), inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-[data-theme='dark'] .cui-ads__title {
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-}
+/* The Advertising header is the shared customer section header
+   (customerSections.css) in its own `rose` color family — a 3D megaphone tile
+   with the title and the count, on the same metrics as every other panel. */
 
 /* ------------------------------------------------------------------ grid */
 
@@ -369,11 +301,6 @@
   .cui-adcard__foot { flex-wrap: nowrap; }
   .cui-adcard__related { flex: 1 1 auto; }
   .cui-adcard__cta { flex: 0 0 auto; }
-}
-
-/* Same compact head as the product panels on a phone. */
-@media (max-width: 560px) {
-  .cui-ads__head { min-height: 58px; padding: 10px 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,5 +1,6 @@
 import Icon from '../Icon';
 import CustomerCarousel from '../customer/CustomerCarousel';
+import CustomerSectionHead from '../customer/CustomerSectionHead';
 import { localized, useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
 import '../../customer-ads.css';
@@ -34,20 +35,17 @@ export default function CustomerAds({ ads, locale, onOpen }) {
 
   return (
     <section className="cui-ads" aria-labelledby="cui-ads-title">
-      {/* Deliberately no picture: a glass bar painted only from the selected
-          theme's colors (see customer-ads.css), with the icon tile, the
-          localized title and the count on the opposite side. */}
-      <header className="cui-ads__head">
-        <span className="cui-ads__icon" aria-hidden="true">
-          <Icon name="megaphone" size={20} />
-        </span>
-        <h2 className="cui-ads__title" id="cui-ads-title">
-          {t('marketing_ads')}
-        </h2>
-        {/* How many ads this strip really holds — the eligible list the API
-            already filtered, never the cards currently on screen. */}
-        <span className="cui-count">{fmtNumber(ads.length, locale)}</span>
-      </header>
+      {/* The same section header the other customer panels use, in its own
+          color family: a 3D megaphone tile with the localized title and the
+          count of ads this strip really holds — the eligible list the API
+          already filtered, never the cards currently on screen. */}
+      <CustomerSectionHead
+        icon="megaphone"
+        tone="rose"
+        title={t('marketing_ads')}
+        titleId="cui-ads-title"
+        count={fmtNumber(ads.length, locale)}
+      />
 
       <CustomerCarousel
         className="cui-car--ads"

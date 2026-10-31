@@ -1,23 +1,19 @@
-import Icon from '../Icon';
+import CustomerSectionHead from './CustomerSectionHead';
 
 /*
- * The shared shell of the customer content cards: one theme-tinted header with
- * its contextual icon and title, then the section's own body. Both the About
- * and the Contact cards use it, so their headers always read as a pair.
+ * The shared shell of the customer content cards: one section header with its
+ * colorful 3D icon and title, then the section's own body. Featured products,
+ * Best sellers, About and Contact all use it, so their headers always read as
+ * one family — only the icon and its color family differ per section.
  *
- * The icon comes first in the markup, which puts it at the inline-start edge —
- * the right side in RTL, exactly like the reference.
+ * The tone is chosen by the caller (`rose`, `amber`, `violet`, `sky`, `teal`,
+ * `mint`), which keeps the sections visually distinguishable while every header
+ * keeps the same geometry.
  */
-export default function CustomerPanel({ icon, title, count, children, className = '' }) {
+export default function CustomerPanel({ icon, tone = 'mint', title, count, children, className = '' }) {
   return (
     <section className={`cui-panel ${className}`.trim()}>
-      <header className="cui-panel__head">
-        <span className="cui-panel__icon">
-          <Icon name={icon} size={19} />
-        </span>
-        <h2 className="cui-panel__title">{title}</h2>
-        {count !== undefined ? <span className="cui-count">{count}</span> : null}
-      </header>
+      <CustomerSectionHead icon={icon} tone={tone} title={title} count={count} />
       <div className="cui-panel__body">{children}</div>
     </section>
   );

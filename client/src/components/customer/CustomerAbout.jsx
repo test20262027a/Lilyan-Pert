@@ -9,7 +9,7 @@ export default function CustomerAbout({ text }) {
   if (!text) return null;
 
   return (
-    <CustomerPanel icon="store" title={t('customer_menu_about')}>
+    <CustomerPanel icon="store" tone="sky" title={t('customer_menu_about')}>
       <p className="cui-about__text">{text}</p>
     </CustomerPanel>
   );
