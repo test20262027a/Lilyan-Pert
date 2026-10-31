@@ -55,8 +55,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 46px;
-  padding: 0 18px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0 22px;
   border: 1px solid var(--btn-line);
   border-radius: var(--btn-radius);
   background-color: var(--btn-fill);
@@ -84,9 +85,12 @@
  * swapping one gradient for another, and the plate never flashes. The
  * two-class selector outranks the shared plate rule in buttons.css, which is
  * loaded after this file, without touching any other page's button.
+ *
+ * It is kept in a custom property so the disabled plate below can wear the
+ * very same gloss instead of falling back to a flat fill.
  */
 .tx-page .tx-save {
-  background-image:
+  --tx-save-gloss:
     linear-gradient(
       180deg,
       color-mix(in srgb, #ffffff 22%, transparent) 0%,
@@ -99,6 +103,7 @@
       color-mix(in srgb, #10141f 7%, transparent) 28%,
       transparent 54%
     );
+  background-image: var(--tx-save-gloss);
 }
 
 /* One centred row: the icon keeps its own box, the label can never shift.
@@ -133,19 +138,30 @@
   outline-offset: 2px;
 }
 
-/* "Nothing to save yet" keeps the plate, only eases back a single step. */
-.tx-save:disabled {
-  background-color: var(--btn-disabled-fill);
-  background-image: none;
-  border-color: var(--btn-disabled-line);
-  color: var(--btn-disabled-ink);
-  box-shadow: none;
+/*
+ * "Nothing to save yet" stays the same raised plate, exactly like the header
+ * Save in Settings: still the theme's accent (eased back one step), still the
+ * gloss and the accent depth — only the lift is withheld. The shared rule in
+ * buttons.css (`:is(…):disabled`) flattens every plate to a pale, shadow-less
+ * fill on load, which is why this button used to read as washed out before a
+ * single edit was made. The three-class selector outranks that shared rule
+ * regardless of which stylesheet the bundler emits last.
+ */
+.tx-page .tx-save:disabled {
+  background-color: color-mix(in srgb, var(--primary) 86%, var(--surface));
+  background-image: var(--tx-save-gloss);
+  border-color: color-mix(in srgb, var(--primary) 58%, var(--border));
+  color: color-mix(in srgb, var(--primary-ink) 84%, var(--primary));
+  box-shadow: var(--btn-accent-depth);
   transform: none;
   opacity: 1;
   cursor: not-allowed;
 }
 
-.tx-save[aria-busy='true'] { cursor: progress; }
+/* While saving the plate keeps its size and its disabled tone, but the pointer
+   must read "working", not "unavailable" — same weight as the disabled rule
+   so it wins by order. */
+.tx-page .tx-save[aria-busy='true'] { cursor: progress; }
 
 .tx-save .spinner {
   width: 15px;
@@ -156,7 +172,7 @@
 }
 
 @media (max-width: 640px) {
-  .tx-save { min-height: 44px; padding: 0 16px; font-size: 13.5px; }
+  .tx-save { height: 40px; min-height: 40px; padding: 0 16px; font-size: 13.5px; }
 }
 
 /* ---------------------------------------------------------------- notices */
