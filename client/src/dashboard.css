@@ -80,6 +80,8 @@
 /* ------------------------------------------------------- welcome banner */
 
 .welcome {
+  --welcome-badge: 46px;
+  --welcome-badge-gap: 12px;
   position: relative;
   overflow: hidden;
   border-radius: var(--dash-radius);
@@ -96,13 +98,64 @@
   padding: 20px 26px;
 }
 .welcome__text { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 6px; }
+/* Badge and title on one line, vertically centred, on the inline-start side in
+   both directions. The subtitle lines up with the title text. */
+.welcome__head {
+  display: flex;
+  align-items: center;
+  gap: var(--welcome-badge-gap);
+  min-width: 0;
+}
+/*
+ * Raised accent tile: the theme accent as a soft gradient, a top gloss, an
+ * inset bottom shade for depth and a wide, low opacity cast shadow — the same
+ * soft-3D language as the KPI icons, scaled up for the header.
+ */
+.welcome__badge {
+  flex: none;
+  width: var(--welcome-badge);
+  height: var(--welcome-badge);
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+  color: var(--primary-ink);
+  background:
+    radial-gradient(120% 110% at 30% 14%, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0) 58%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--primary) 84%, #ffffff) 0%,
+      var(--primary) 52%,
+      color-mix(in srgb, var(--primary) 82%, #000000) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--primary) 62%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    inset 0 -3px 6px color-mix(in srgb, var(--primary) 58%, #000000),
+    0 6px 14px -4px color-mix(in srgb, var(--primary) 55%, transparent),
+    0 12px 24px -14px rgba(16, 22, 38, 0.5);
+  transition: transform 220ms ease, box-shadow 220ms ease;
+}
+.welcome__badge .icon { filter: drop-shadow(0 1px 1px rgba(16, 22, 38, 0.35)); }
+[data-theme='dark'] .welcome__badge {
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -3px 7px rgba(0, 0, 0, 0.45),
+    0 8px 18px -6px color-mix(in srgb, var(--primary) 60%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
 .welcome__title {
   font-size: clamp(17px, 2.4vw, 22px);
   font-weight: 800;
   color: var(--text);
   letter-spacing: -0.01em;
+  min-width: 0;
 }
-.welcome__sub { font-size: 12.5px; color: var(--muted); }
+.welcome__sub {
+  font-size: 12.5px;
+  color: var(--muted);
+  padding-inline-start: calc(var(--welcome-badge) + var(--welcome-badge-gap));
+}
 .welcome__art { flex: none; width: min(46%, 320px); height: auto; }
 
 [data-theme='dark'] .welcome {
@@ -926,7 +979,8 @@
   .dash { gap: 12px; }
   .dash-row { gap: 12px; }
   .kpi-row, .status-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .welcome { padding: 16px; min-height: 132px; gap: 10px; }
+  .welcome { --welcome-badge: 42px; --welcome-badge-gap: 10px; padding: 16px; min-height: 132px; gap: 10px; }
+  .welcome__badge { border-radius: 13px; }
   .welcome__art { width: min(40%, 170px); }
   .hours-card__body { gap: 12px; }
 
@@ -988,6 +1042,8 @@
 @media (max-width: 420px) {
   .kpi-row, .status-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .fstat-row { grid-template-columns: minmax(0, 1fr); }
+  .welcome { --welcome-badge: 38px; --welcome-badge-gap: 9px; }
+  .welcome__badge { border-radius: 12px; }
   .welcome__art { display: none; }
   .kpi { padding: 13px 10px; }
   .kpi__value { font-size: 26px; }
@@ -1005,7 +1061,7 @@
 @media (prefers-reduced-motion: reduce) {
   .best-row, .best-row__fill { transition: none; }
   .dash .card, .kpi, .fstat, .status-tile, .kpi__icon, .fstat__icon, .status-tile__icon,
-  .sound-play, .range-pill, .chart__dot, .best-row__fill {
+  .welcome__badge, .sound-play, .range-pill, .chart__dot, .best-row__fill {
     transition: none;
   }
   .kpi:hover, .fstat:hover, .status-tile:hover, .sound-play:hover { transform: none; }

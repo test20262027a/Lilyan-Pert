@@ -1,4 +1,5 @@
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
+import Icon from '../Icon';
 import { localized, useI18n } from '../../i18n';
 
 /*
@@ -64,7 +65,14 @@ export default function WelcomeBanner({ business }) {
     <section className="welcome">
       <HeaderBackdrop section="dashboard" />
       <div className="welcome__text">
-        <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
+        <div className="welcome__head">
+          {/* Premium raised tile on the theme accent; it follows the global
+              preset, and sits on the inline-start side in both RTL and LTR. */}
+          <span className="welcome__badge" aria-hidden="true">
+            <Icon name="dashboard" size={22} />
+          </span>
+          <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
+        </div>
         <p className="welcome__sub">{t('dash_welcome_sub')}</p>
       </div>
       <CafeScene />

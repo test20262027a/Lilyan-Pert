@@ -160,7 +160,6 @@ export default function Dashboard() {
               push={push}
               onPushToggle={onPushToggle}
               pushError={pushError}
-              locale={locale}
             />
           ) : null}
         </div>

@@ -1,7 +1,6 @@
 import Icon from '../Icon';
 import { Alert, Select, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
-import { fmtNumber } from '../../format';
 import { playSound, SOUND_OPTIONS, DEFAULT_SOUND } from '../../sound';
 
 /* The app's own address, so "open in a new tab" leaves the preview frame. */
@@ -17,7 +16,7 @@ const appHref = () => (typeof window === 'undefined' ? '#' : window.location.hre
  * the card says exactly which one it is and offers the way out, while in-app
  * alerts and the sound keep working.
  */
-export default function NotificationSettings({ settings = {}, onChange, push, onPushToggle, pushError, locale }) {
+export default function NotificationSettings({ settings = {}, onChange, push, onPushToggle, pushError }) {
   const { t } = useI18n();
   const soundOn = settings.sound_enabled !== false;
   const soundKey = SOUND_OPTIONS.includes(settings.sound_key) ? settings.sound_key : DEFAULT_SOUND;
@@ -68,20 +67,18 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
 
   const notice = NOTICES[context];
 
+  /* Only a real restriction earns a second line under the switch. The live
+     device count is deliberately not repeated here: the browser switch itself
+     already reads as on, and the extra line only added noise. */
   const pushHint = !push.supported
     ? t('dash_push_unsupported')
-    : push.subscribed
-      ? `${t('dash_push_devices')}: ${fmtNumber(push.devices, locale)}`
-      : context === 'preview'
-        ? t('dash_push_preview_hint')
-        : context === 'denied'
-          ? t('dash_push_denied')
-          : context === 'insecure'
-            ? t('dash_push_insecure')
-            /* Nothing to add in the ordinary case: the row is the description
-               and its toggle on one line. Only a real restriction, or a live
-               device count, earns a second line. */
-            : undefined;
+    : context === 'preview'
+      ? t('dash_push_preview_hint')
+      : context === 'denied'
+        ? t('dash_push_denied')
+        : context === 'insecure'
+          ? t('dash_push_insecure')
+          : undefined;
 
   return (
     <section className="card notif-card">
