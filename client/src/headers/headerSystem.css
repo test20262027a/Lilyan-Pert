@@ -27,6 +27,12 @@
   /* The tile, the gap to its text and the two type steps. */
   --hd-tile-size: 48px;
   --hd-tile-radius: 15px;
+  /* The ONE compact banner height of every modal and form header, plus its
+     phone step. A single value keeps the banner's proportion — and the whole
+     dialog's rhythm — identical in every form and popup, and stops any one of
+     them from growing into an oversized header. */
+  --hd-modal-h: 96px;
+  --hd-modal-h-sm: 88px;
   --hd-gap: 14px;
   --hd-title-size: clamp(20px, 2.5vw, 27px);
   --hd-title-sm: 17px;

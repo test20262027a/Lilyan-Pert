@@ -43,10 +43,10 @@
 .odm__head {
   position: relative;
   flex: none;
-  min-height: 104px;
-  padding: 16px 18px 14px;
+  min-height: var(--hd-modal-h);
+  padding: 14px 18px;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   overflow: hidden;
   background:
     radial-gradient(120% 150% at 88% 0%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 62%),
@@ -671,7 +671,7 @@
     border-radius: 20px 20px 0 0;
     border-bottom: 0;
   }
-  .odm__head { min-height: 96px; }
+  .odm__head { min-height: var(--hd-modal-h-sm); padding: 12px 14px; }
   .odm__body { padding: 13px 13px 15px; }
   .odm-disc__controls { grid-template-columns: minmax(0, 1fr); }
   .odm__foot { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }

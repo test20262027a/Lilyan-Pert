@@ -31,8 +31,8 @@
 .modal.modal--account .sh-head,
 .modal.modal--password .sh-head {
   isolation: isolate;
-  min-height: 104px;
-  padding-block: 16px;
+  min-height: var(--hd-modal-h);
+  padding-block: 14px;
   padding-inline: 18px 58px;
   border-bottom: 1px solid color-mix(in srgb, var(--theme-primary-line) 60%, var(--border));
 }
@@ -288,7 +288,7 @@
 
 @media (max-width: 860px) {
   .modal.modal--account .sh-head,
-  .modal.modal--password .sh-head { min-height: 92px; padding-block: 14px; }
+  .modal.modal--password .sh-head { min-height: var(--hd-modal-h-sm); padding-block: 12px; }
 }
 
 @media (max-width: 640px) {

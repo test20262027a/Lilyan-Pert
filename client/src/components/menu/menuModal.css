@@ -67,9 +67,9 @@
   flex: none;
   display: flex;
   align-items: center;
-  min-height: 96px;
-  padding: 16px 18px;
-  padding-inline-end: 60px;
+  min-height: var(--hd-modal-h);
+  padding: 14px 18px;
+  padding-inline-end: 58px;
   overflow: hidden;
   background: linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
 }
@@ -339,7 +339,7 @@
 /* -------------------------------------------------------- responsive */
 
 @media (max-width: 560px) {
-  .mcmodal__head { min-height: 86px; padding: 14px; padding-inline-end: 56px; }
+  .mcmodal__head { min-height: var(--hd-modal-h-sm); padding: 12px 14px; padding-inline-end: 52px; }
   .mcmodal__body { padding: 16px 16px 18px; }
   .mcmodal__foot { padding: 12px 16px; }
 }

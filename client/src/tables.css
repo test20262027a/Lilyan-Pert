@@ -334,9 +334,9 @@
    banner's height and cropped at the sides, so the round table and its two
    chairs stay centred behind the heading instead of shrinking into a strip. */
 .tform .mcmodal__head {
-  min-height: 132px;
-  padding: 18px;
-  padding-inline-end: 64px;
+  min-height: var(--hd-modal-h);
+  padding: 14px 18px;
+  padding-inline-end: 58px;
 }
 .tform .mcmodal__art .mart {
   height: 100%;
@@ -438,5 +438,5 @@
 /* The name cards' columns come from LanguageFieldsGrid (see languageGrid.css). */
 
 @media (max-width: 560px) {
-  .tform .mcmodal__head { min-height: 118px; padding: 15px; padding-inline-end: 58px; }
+  .tform .mcmodal__head { min-height: var(--hd-modal-h-sm); padding: 12px 14px; padding-inline-end: 52px; }
 }

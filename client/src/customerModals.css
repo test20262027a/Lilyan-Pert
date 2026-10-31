@@ -62,12 +62,13 @@
 
 .cui-sheet__art {
   position: relative;
-  height: 148px;
   flex: none;
+  display: flex;
+  min-height: var(--hd-modal-h);
   overflow: hidden;
   background: linear-gradient(180deg, #fdf6e2, #eaf3e3);
 }
-.cui-sheet.is-empty .cui-sheet__art { height: 126px; }
+.cui-sheet.is-empty .cui-sheet__art { min-height: var(--hd-modal-h); }
 .cui-sheet__art .cui-art {
   position: absolute;
   inset: 0;
@@ -75,16 +76,28 @@
   height: 100%;
   display: block;
 }
+/* One compact banner for every customer sheet: the bar fills the header and
+   centres its icon + title row, so the copy never floats in empty space. It
+   takes the sheet's width, so a longer translated title grows the banner
+   instead of clipping. */
 .cui-sheet__artbar {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: 9px;
-  padding: 30px 16px 11px;
-  background: linear-gradient(0deg, rgba(7, 20, 15, 0.72), rgba(7, 20, 15, 0.24) 58%, transparent);
+  min-height: var(--hd-modal-h);
+  padding: 10px 52px 10px 16px;
+  background: linear-gradient(
+    0deg,
+    rgba(7, 20, 15, 0.6) 0%,
+    rgba(7, 20, 15, 0.44) 52%,
+    rgba(7, 20, 15, 0.08) 100%
+  );
 }
+[dir='rtl'] .cui-sheet__artbar { padding: 10px 16px 10px 52px; }
 .cui-sheet__badge {
   width: 36px;
   height: 36px;
@@ -112,11 +125,12 @@
   color: #fff;
   text-shadow: 0 1px 10px rgba(4, 12, 9, 0.5);
 }
-/* The close control keeps the physical top-left corner in every language. */
+/* The close control takes the top corner opposite the title in every language. */
 .cui-sheet__close {
   position: absolute;
-  top: 12px;
-  left: 12px;
+  top: 10px;
+  left: auto;
+  inset-inline-end: 12px;
   width: 32px;
   height: 32px;
   display: grid;
@@ -525,48 +539,6 @@
 
 /* -------------------------------------------------------------- review --- */
 
-/* A compact banner for the review form: one ~96px band instead of the cart's
-   taller one, so the copy never floats in empty space. The bar sits in the
-   flow (min-height, not a fixed height), so a longer translated title grows
-   the header instead of clipping it, and its icon + title stay on ONE centred
-   row. Only the reading band carries a shade — the top of the picture keeps
-   its own light. */
-.cui-sheet--review .cui-sheet__art {
-  height: auto;
-  min-height: 98px;
-  display: flex;
-}
-.cui-sheet--review .cui-sheet__artbar {
-  position: relative;
-  inset: auto;
-  flex: 1;
-  min-height: 98px;
-  box-sizing: border-box;
-  align-items: center;
-  padding: 10px 52px 10px 16px;
-  background: linear-gradient(
-    0deg,
-    rgba(7, 20, 15, 0.58) 0%,
-    rgba(7, 20, 15, 0.46) 48%,
-    rgba(7, 20, 15, 0.1) 100%
-  );
-}
-[dir='rtl'] .cui-sheet--review .cui-sheet__artbar { padding: 10px 16px 10px 52px; }
-.cui-sheet--review .cui-sheet__badge--star {
-  width: 32px;
-  height: 32px;
-  border-radius: 11px;
-}
-/* The close control takes the top corner opposite the title, in every
-   language, and leaves the picture between them visible. */
-.cui-sheet--review .cui-sheet__close {
-  top: 10px;
-  left: auto;
-  inset-inline-end: 12px;
-  width: 30px;
-  height: 30px;
-}
-
 .cui-review__label {
   font-size: 12.2px;
   font-weight: 760;
@@ -673,10 +645,9 @@
 
 @media (max-width: 420px) {
   .cui-sheet { max-height: 94dvh; border-radius: 20px; }
-  .cui-sheet__art { height: 128px; }
-  .cui-sheet.is-empty .cui-sheet__art { height: 112px; }
-  .cui-sheet--review .cui-sheet__art,
-  .cui-sheet--review .cui-sheet__artbar { min-height: 92px; }
+  .cui-sheet__art { min-height: var(--hd-modal-h-sm); }
+  .cui-sheet.is-empty .cui-sheet__art { min-height: var(--hd-modal-h-sm); }
+  .cui-sheet__artbar { min-height: var(--hd-modal-h-sm); padding-block: 8px; }
   .cui-sheet__body { padding: 12px 12px 4px; }
   .cui-sheet__foot { padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
   .cui-stars__btn { width: 38px; height: 38px; }

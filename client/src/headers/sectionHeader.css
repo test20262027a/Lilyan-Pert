@@ -95,18 +95,39 @@
    come from the header design system (headerSystem.css); only the bar itself
    is laid out here. */
 .sh-head {
-  position: relative; flex: none; min-height: 96px;
-  padding: 18px 62px 18px 18px; overflow: hidden;
+  position: relative; flex: none; min-height: var(--hd-modal-h);
+  padding: 14px 58px 14px 18px; overflow: hidden;
   border-bottom: 1px solid var(--mint-line);
   border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
-[dir='rtl'] .sh-head { padding: 18px 18px 18px 62px; }
+[dir='rtl'] .sh-head { padding: 14px 18px 14px 58px; }
 .sh-head__title { color: var(--text); }
 .sh-head__sub { color: var(--text-soft); }
 
 /* Confirmation dialogs: a soft banner fades out behind the top of the card. */
-.sh-bg--dcd { inset: 0 0 auto 0; height: 92px; border-radius: 19px 19px 0 0; opacity: 1;
+.sh-bg--dcd { inset: 0 0 auto 0; height: var(--hd-modal-h); border-radius: 19px 19px 0 0; opacity: 1;
   -webkit-mask-image: linear-gradient(#000 62%, transparent); mask-image: linear-gradient(#000 62%, transparent); }
+
+/*
+ * Dialog banners COVER their box. These headers are compact and wide, so a
+ * `contain` fit would letterbox an ultra-wide section picture into a thin
+ * strip with empty wash above and below it; `cover` fills the whole header at
+ * one consistent scale in every form and popup. Page banners keep `contain`,
+ * where the whole picture has room to show.
+ */
+.sh-head > .sh-bg > .sh-bg__art,
+.um-modal__head > .sh-bg > .sh-bg__art,
+.promo-modal__head > .sh-bg > .sh-bg__art,
+.ad-modal__head > .sh-bg > .sh-bg__art,
+.adp__head > .sh-bg > .sh-bg__art,
+.mcmodal__head > .sh-bg > .sh-bg__art,
+.odm__head > .sh-bg > .sh-bg__art,
+.dash-modal__head > .sh-bg > .sh-bg__art,
+.cui-sheet__art > .sh-bg > .sh-bg__art,
+.sh-bg--dcd > .sh-bg__art {
+  background-size: cover;
+  background-position: center;
+}
 
 /* Customer cart / review sheets: the same full-bleed rule, raised above the
    sheet's own painted background so the artwork is actually visible. */
@@ -120,7 +141,7 @@
 .cui-sheet__art:has(> .sh-bg) > .cui-art { display: none; }
 .cui-sheet__art:has(> .sh-bg) .cui-sheet__artbar { z-index: 1; }
 .cui-sheet__art:has(> .sh-bg) .cui-sheet__close { z-index: 2; }
-@media (max-width: 560px) { .sh-head { min-height: 84px; padding-block: 14px; } }
+@media (max-width: 560px) { .sh-head { min-height: var(--hd-modal-h-sm); padding-block: 12px; } }
 
 /* Section-specific modal headers share the same picture; their drawn art yields. */
 .um-modal__head, .promo-modal__head, .ad-modal__head, .odm__head { isolation: isolate; }

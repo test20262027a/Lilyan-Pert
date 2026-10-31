@@ -977,8 +977,12 @@
 /* The header reads as its own layer: soft tint, its own padding, a hairline. */
 .dash-modal__head {
   position: relative;
-  padding: 22px 24px 18px;
-  padding-inline-end: 64px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--hd-modal-h);
+  padding: 14px 20px;
+  padding-inline-end: 58px;
   background:
     radial-gradient(120% 150% at 50% 0%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 64%),
     linear-gradient(180deg, color-mix(in srgb, var(--primary) 5%, var(--surface)), var(--surface));
@@ -1198,7 +1202,7 @@
 @media (max-width: 620px) {
   .dash-modal { padding: 12px; }
   .dash-modal__card { border-radius: 18px; }
-  .dash-modal__head { padding: 18px 16px 14px; padding-inline-end: 58px; }
+  .dash-modal__head { min-height: var(--hd-modal-h-sm); padding: 12px 16px; padding-inline-end: 54px; }
   .dash-modal__body { padding: 18px 16px 4px; }
   .dash-modal__fields { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .dash-modal__foot { padding: 14px 16px 16px; gap: 8px; }
