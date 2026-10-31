@@ -298,7 +298,7 @@
 
 .bk-cat {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 9px;
   min-height: 62px;
   padding: 10px 11px;
@@ -345,16 +345,19 @@
 
 .bk-sel-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  padding: 12px 15px 14px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* Every row takes the height of the tallest card, so no card is ever short. */
+  grid-auto-rows: 1fr;
+  gap: 9px;
+  padding: 12px 14px 14px;
 }
 
 .bk-sel-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 12px 13px 13px;
+  min-width: 0;
+  padding: 11px 12px 12px;
   border: 1px solid color-mix(in srgb, var(--theme-primary) 18%, #e9eee9);
   border-radius: 17px;
   background: color-mix(in srgb, var(--theme-primary) 7%, #ffffff);
@@ -386,24 +389,29 @@
     0 12px 24px color-mix(in srgb, var(--theme-primary) 20%, transparent);
 }
 
+/* Icon, title and the card's tick share one centred row; the badges follow
+   underneath. The icon never sits above the title, in RTL or LTR. */
 .bk-sel-card__top {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
 }
 
 .bk-sel-card__top .bk-ico {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
 }
 
 .bk-sel-card__name {
-  margin-top: 10px;
-  font-size: 13px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12.5px;
   font-weight: 700;
-  line-height: 1.45;
+  line-height: 1.35;
   color: var(--bk-text);
+  overflow-wrap: break-word;
 }
 
 .bk-sel-card__body {
@@ -411,7 +419,6 @@
   flex-wrap: wrap;
   align-content: flex-start;
   gap: 6px;
-  margin-top: 10px;
 }
 
 .bk-chip {
@@ -1223,19 +1230,15 @@
 
 /* --------------------------------------------------------------- breakpoints */
 
-@media (max-width: 1080px) {
-  .bk-cat-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
+/* Four cards per row on desktop, two on tablet, one on mobile. */
+@media (max-width: 1199px) {
+  .bk-cat-grid,
   .bk-sel-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 820px) {
-  .bk-cat-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .bk-hist-grid {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -1247,6 +1250,13 @@
   }
   .bk-sel-grid {
     padding: 11px 12px 13px;
+  }
+}
+
+@media (max-width: 767px) {
+  .bk-cat-grid,
+  .bk-sel-grid {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1267,9 +1277,6 @@
   .bk-cat-grid {
     gap: 8px;
   }
-  .bk-sel-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .bk-panel__head > .bk-btn,
   .bk-toolbar {
     width: 100%;
@@ -1285,9 +1292,6 @@
 }
 
 @media (max-width: 430px) {
-  .bk-cat-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
   .bk-btn {
     height: 36px;
     font-size: 12px;

@@ -28,6 +28,28 @@ function activeScroller() {
   return { element: null, top: 0 };
 }
 
+/* One chevron: a shade below the body and a gloss along its top edge give the
+   ridge its depth, so it stays dimensional in both themes. */
+function Chevron({ className }) {
+  return (
+    <svg
+      className={`btt__arrow ${className}`}
+      viewBox="0 0 32 16"
+      fill="none"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path
+        className="btt__arrow-shade"
+        d="M4.6 12.1 16 3.7l11.4 8.4"
+        strokeWidth="4.6"
+      />
+      <path className="btt__arrow-body" d="M4.6 12.1 16 3.7l11.4 8.4" strokeWidth="4.6" />
+      <path className="btt__arrow-gloss" d="M6 10.9 16 4.4l10 6.5" strokeWidth="1.4" />
+    </svg>
+  );
+}
+
 export default function AnimatedBackToTop() {
   const { t } = useI18n();
   const [visible, setVisible] = useState(false);
@@ -84,15 +106,9 @@ export default function AnimatedBackToTop() {
       onClick={scrollToTop}
     >
       <span className="btt__arrows" aria-hidden="true">
-        <svg className="btt__arrow btt__arrow--top" viewBox="0 0 24 14" fill="none">
-          <path d="M4 11 12 3l8 8" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <svg className="btt__arrow btt__arrow--middle" viewBox="0 0 24 14" fill="none">
-          <path d="M4 11 12 3l8 8" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <svg className="btt__arrow btt__arrow--bottom" viewBox="0 0 24 14" fill="none">
-          <path d="M4 11 12 3l8 8" stroke="currentColor" strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        <Chevron className="btt__arrow--top" />
+        <Chevron className="btt__arrow--middle" />
+        <Chevron className="btt__arrow--bottom" />
       </span>
     </button>
   );

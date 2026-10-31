@@ -122,10 +122,12 @@ export default function SelectiveBackupPanel({
                  whole card stays the target for its category shortcut. */
               onClick={() => onToggleCategory?.(category.key)}
             >
+              {/* Icon and title share one row; the card's tick sits at its end. */}
               <div className="bk-sel-card__top">
                 <span className={`bk-ico bk-tone--${visual.tone}`} aria-hidden="true">
                   <Icon name={visual.icon} size={17} />
                 </span>
+                <span className="bk-sel-card__name">{name}</span>
                 <button
                   type="button"
                   className={`bk-tick ${part ? 'is-partial' : ''}`}
@@ -142,8 +144,6 @@ export default function SelectiveBackupPanel({
                   {part ? <span className="bk-tick__dash" aria-hidden="true" /> : null}
                 </button>
               </div>
-
-              <span className="bk-sel-card__name">{name}</span>
 
               <div className="bk-sel-card__body" role="group" aria-label={name}>
                 {cardSections.map((section) => {
