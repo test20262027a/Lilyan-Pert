@@ -1186,17 +1186,51 @@
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
+/* Confirm stays the theme green with white type; only the depth moves. */
 .dash-modal__btn--apply {
-  border-color: var(--theme-primary); color: var(--primary-ink);
+  border-color: var(--theme-primary-deep);
+  color: #ffffff;
   background: linear-gradient(180deg, var(--theme-primary), var(--theme-primary-active));
   box-shadow:
     0 6px 16px color-mix(in srgb, var(--theme-primary) 34%, transparent),
+    0 1px 2px rgba(20, 45, 30, 0.18),
     inset 0 1px 0 rgba(255, 255, 255, 0.32);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    box-shadow 200ms ease,
+    transform 200ms ease;
 }
+/* Hover deepens the same green family — never a pale tint — and lifts it a hair
+   with a soft cast and a theme glow. The box itself never changes size. */
 .dash-modal__btn--apply:hover:not(:disabled) {
+  color: #ffffff;
+  border-color: var(--theme-primary-deep);
+  background: linear-gradient(180deg, var(--theme-primary-hover), var(--theme-primary-deep));
+  transform: translateY(-1px);
   box-shadow:
-    0 9px 22px color-mix(in srgb, var(--theme-primary) 40%, transparent),
-    inset 0 1px 0 rgba(255, 255, 255, 0.32);
+    0 12px 26px -10px color-mix(in srgb, var(--theme-primary) 62%, transparent),
+    0 0 0 4px color-mix(in srgb, var(--theme-primary) 14%, transparent),
+    0 2px 4px rgba(20, 45, 30, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+.dash-modal__btn--apply:active:not(:disabled) {
+  color: #ffffff;
+  background: linear-gradient(180deg, var(--theme-primary-deep), var(--theme-primary-active));
+  transform: translateY(0);
+  box-shadow:
+    0 4px 10px -6px color-mix(in srgb, var(--theme-primary) 46%, transparent),
+    inset 0 2px 5px rgba(10, 30, 18, 0.3);
+}
+/* Disabled reads as a muted green surface, never white type on pale green. */
+.dash-modal__btn--apply:disabled {
+  border-color: color-mix(in srgb, var(--theme-primary) 26%, var(--border));
+  background: color-mix(in srgb, var(--theme-primary) 18%, var(--surface));
+  color: color-mix(in srgb, var(--theme-primary) 58%, var(--text));
+  box-shadow: none;
+  transform: none;
+  cursor: not-allowed;
 }
 
 [data-theme='dark'] .dash-modal { background: rgba(6, 10, 12, 0.6); }

@@ -87,7 +87,12 @@
 .dash-modal__head, .adp__head { position: relative; overflow: hidden; background-image: none; }
 .dash-modal__head { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
 .adp__head { border-radius: 18px 18px 0 0; }
-.dash-modal__head > *:not(.sh-bg), .adp__head > *:not(.sh-bg) { position: relative; z-index: 1; }
+/* Content blocks sit above the picture. The close control is chrome, not copy:
+   it keeps the dialog's own absolute corner placement instead of dropping into
+   the text flow below the title. */
+.dash-modal__head > *:not(.sh-bg):not(.dash-modal__close),
+.adp__head > *:not(.sh-bg) { position: relative; z-index: 1; }
+.dash-modal__head > .dash-modal__close { position: absolute; z-index: 2; }
 
 /* Modal / drawer header. The icon tile, the centred icon+text row and the type
    come from the header design system (headerSystem.css); only the bar itself
