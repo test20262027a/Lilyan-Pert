@@ -64,6 +64,8 @@ export default function Select({
       // Optional visual marker (an avatar glyph, a colour dot…) shown in the row
       // and, once chosen, on the trigger itself.
       leading: option.leading ?? null,
+      // Optional right-aligned hint (a count, a shortcut…) shown in the row only.
+      trailing: option.trailing ?? null,
       disabled: Boolean(option.disabled),
     }));
     if (placeholder) {
@@ -315,6 +317,11 @@ export default function Select({
                   >
                     {row.leading ? <span className="lysel-opt__lead" aria-hidden="true">{row.leading}</span> : null}
                     <span className="lysel-opt__text">{row.label}</span>
+                    {row.trailing ? (
+                      <span className="lysel-opt__trail" aria-hidden="true">
+                        {row.trailing}
+                      </span>
+                    ) : null}
                     <span className="lysel-opt__check" aria-hidden="true">
                       {isSelected ? <Icon name="check" size={15} /> : null}
                     </span>

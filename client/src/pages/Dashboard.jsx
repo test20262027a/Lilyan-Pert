@@ -206,6 +206,9 @@ export default function Dashboard() {
           orders={data.new_orders}
           status={recentStatus}
           onStatusChange={setRecentStatus}
+          /* The dashboard's own per-status tally — the same counters the status
+             tiles draw, so the filter's badges never disagree with them. */
+          counts={data.order_flow}
           currency={currency}
           locale={locale}
           timeZone={timeZone}

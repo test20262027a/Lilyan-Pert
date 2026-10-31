@@ -15,6 +15,7 @@ export default function NewOrders({
   orders = [],
   status = 'all',
   onStatusChange,
+  counts,
   currency,
   locale,
   timeZone,
@@ -43,7 +44,7 @@ export default function NewOrders({
       icon="receipt"
       iconTone="orange"
       title={t('dash_new_orders')}
-      actions={<RecentOrdersFilter value={status} onChange={onStatusChange} />}
+      actions={<RecentOrdersFilter value={status} onChange={onStatusChange} counts={counts} />}
     >
       <OrdersTable
         orders={orders}
