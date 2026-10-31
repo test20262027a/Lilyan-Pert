@@ -525,6 +525,48 @@
 
 /* -------------------------------------------------------------- review --- */
 
+/* A compact banner for the review form: one ~96px band instead of the cart's
+   taller one, so the copy never floats in empty space. The bar sits in the
+   flow (min-height, not a fixed height), so a longer translated title grows
+   the header instead of clipping it, and its icon + title stay on ONE centred
+   row. Only the reading band carries a shade — the top of the picture keeps
+   its own light. */
+.cui-sheet--review .cui-sheet__art {
+  height: auto;
+  min-height: 98px;
+  display: flex;
+}
+.cui-sheet--review .cui-sheet__artbar {
+  position: relative;
+  inset: auto;
+  flex: 1;
+  min-height: 98px;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 10px 52px 10px 16px;
+  background: linear-gradient(
+    0deg,
+    rgba(7, 20, 15, 0.58) 0%,
+    rgba(7, 20, 15, 0.46) 48%,
+    rgba(7, 20, 15, 0.1) 100%
+  );
+}
+[dir='rtl'] .cui-sheet--review .cui-sheet__artbar { padding: 10px 16px 10px 52px; }
+.cui-sheet--review .cui-sheet__badge--star {
+  width: 32px;
+  height: 32px;
+  border-radius: 11px;
+}
+/* The close control takes the top corner opposite the title, in every
+   language, and leaves the picture between them visible. */
+.cui-sheet--review .cui-sheet__close {
+  top: 10px;
+  left: auto;
+  inset-inline-end: 12px;
+  width: 30px;
+  height: 30px;
+}
+
 .cui-review__label {
   font-size: 12.2px;
   font-weight: 760;
@@ -633,6 +675,8 @@
   .cui-sheet { max-height: 94dvh; border-radius: 20px; }
   .cui-sheet__art { height: 128px; }
   .cui-sheet.is-empty .cui-sheet__art { height: 112px; }
+  .cui-sheet--review .cui-sheet__art,
+  .cui-sheet--review .cui-sheet__artbar { min-height: 92px; }
   .cui-sheet__body { padding: 12px 12px 4px; }
   .cui-sheet__foot { padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
   .cui-stars__btn { width: 38px; height: 38px; }
