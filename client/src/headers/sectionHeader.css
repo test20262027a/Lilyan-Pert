@@ -25,8 +25,8 @@
   position: absolute; inset: -8%;
   background-size: cover;
   background-position: center;
-  filter: blur(26px) saturate(1.32);
-  opacity: 0.92;
+  filter: blur(26px) saturate(1.44) brightness(1.08);
+  opacity: 0.94;
   transition: filter 0.2s ease;
 }
 /* The picture itself: ONE rule for every illustrated header. The whole
@@ -38,14 +38,17 @@
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
-  /* Richer, not darker: the illustrations keep their full brightness and gain
-     saturation and micro-contrast so a large banner never looks washed out. */
-  filter: saturate(1.26) contrast(1.07) brightness(1.02);
+  /* Sunlit, not faded: the illustrations gain clarity, richness and warm
+     brightness, so a large banner reads vivid instead of milky. */
+  filter: saturate(1.42) contrast(1.12) brightness(1.08);
   transition: filter 0.2s ease;
 }
 /*
- * Over the picture, two quiet layers (the header design system owns their
- * colours, see headerSystem.css):
+ * Over the picture, three families of layer (the header design system owns
+ * their colours, see headerSystem.css):
+ *   - the sunlight: a golden flare in the corner away from the copy, a soft
+ *     beam across the top and a warm bounce along the bottom, so the picture
+ *     looks lit rather than painted flat;
  *   - a theme tint from the top-end and bottom-start corners, so the artwork
  *     picks up the active preset instead of a white film;
  *   - the reading scrim, which fades out from the text side, so the title and
@@ -54,6 +57,9 @@
 .sh-bg::after {
   content: ''; position: absolute; inset: 0;
   background:
+    radial-gradient(58% 132% at 92% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
+    linear-gradient(112deg, var(--hd-ray) 0%, color-mix(in srgb, var(--hd-ray) 32%, transparent) 24%, transparent 46%),
+    radial-gradient(78% 122% at 50% 122%, var(--hd-bounce) 0%, transparent 72%),
     radial-gradient(120% 150% at 88% 2%, var(--hd-tint) 0%, transparent 58%),
     radial-gradient(115% 145% at 6% 100%, var(--hd-tint-soft) 0%, transparent 60%),
     linear-gradient(to right,
@@ -61,8 +67,13 @@
       color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 54%,
       transparent 100%);
 }
+/* Right-to-left mirrors the whole lighting rig: the copy sits on the right, so
+   the sun rises on the left and the beam sweeps the other way. */
 [dir='rtl'] .sh-bg::after {
   background:
+    radial-gradient(58% 132% at 8% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
+    linear-gradient(248deg, var(--hd-ray) 0%, color-mix(in srgb, var(--hd-ray) 32%, transparent) 24%, transparent 46%),
+    radial-gradient(78% 122% at 50% 122%, var(--hd-bounce) 0%, transparent 72%),
     radial-gradient(120% 150% at 12% 2%, var(--hd-tint) 0%, transparent 58%),
     radial-gradient(115% 145% at 94% 100%, var(--hd-tint-soft) 0%, transparent 60%),
     linear-gradient(to left,
@@ -70,8 +81,9 @@
       color-mix(in srgb, var(--hd-scrim) var(--hd-scrim-mid), transparent) 54%,
       transparent 100%);
 }
-[data-theme='dark'] .sh-bg__wash { filter: blur(26px) brightness(0.42) saturate(1.05); }
-[data-theme='dark'] .sh-bg__art { filter: brightness(0.68) saturate(1.14) contrast(1.05); }
+/* Night: the same rig at candle power, so the picture stays warm, not muddy. */
+[data-theme='dark'] .sh-bg__wash { filter: blur(26px) brightness(0.5) saturate(1.16); }
+[data-theme='dark'] .sh-bg__art { filter: brightness(0.8) saturate(1.22) contrast(1.1); }
 
 /* Page banners: the old drawn artwork gives way to the section picture. */
 .mhero:has(> .sh-bg) > .mhero__art,
@@ -114,7 +126,20 @@
 /* Customer cart / review sheets: the same full-bleed rule, raised above the
    sheet's own painted background so the artwork is actually visible. */
 .sh-bg--cart { z-index: 0; }
-.sh-bg--cart::after { background: linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent)); }
+/* The sheet header carries white copy of its own, so it keeps the sunlight but
+   swaps the horizontal reading scrim for a fade into the sheet below. */
+.sh-bg--cart::after {
+  background:
+    radial-gradient(58% 132% at 92% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
+    linear-gradient(112deg, var(--hd-ray) 0%, transparent 46%),
+    linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent));
+}
+[dir='rtl'] .sh-bg--cart::after {
+  background:
+    radial-gradient(58% 132% at 8% -16%, var(--hd-sun) 0%, var(--hd-sun-mid) 34%, transparent 70%),
+    linear-gradient(248deg, var(--hd-ray) 0%, transparent 46%),
+    linear-gradient(to bottom, transparent 30%, color-mix(in srgb, var(--surface) 20%, transparent));
+}
 .cui-sheet__art:has(> .sh-bg) > .cui-art { display: none; }
 .cui-sheet__art:has(> .sh-bg) .cui-sheet__artbar { z-index: 1; }
 .cui-sheet__art:has(> .sh-bg) .cui-sheet__close { z-index: 2; }

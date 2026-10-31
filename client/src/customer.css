@@ -235,6 +235,8 @@
   background-size: cover;
   background-position: center;
   background-color: color-mix(in srgb, var(--primary) 70%, #08120f);
+  /* The same sunlit quality as every section header: richer, clearer, warmer. */
+  filter: saturate(1.32) contrast(1.1) brightness(1.06);
   transform: scale(1.03);
   transition: transform 900ms ease;
 }
@@ -246,18 +248,34 @@
   );
 }
 /* Darker at both edges so the floating controls and the logo always separate
-   from whatever is in the photograph. */
+   from whatever is in the photograph, with golden sunlight grazing the corner
+   on the far side of the copy. */
 .cui-hero__bg::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(6, 14, 12, 0.56),
-    rgba(6, 14, 12, 0.18) 34%,
-    rgba(6, 14, 12, 0.14) 58%,
-    rgba(6, 14, 12, 0.54)
-  );
+  background:
+    radial-gradient(52% 120% at 90% -12%, rgba(255, 206, 126, 0.42) 0%, rgba(255, 190, 104, 0.16) 36%, transparent 72%),
+    linear-gradient(112deg, rgba(255, 246, 219, 0.16) 0%, transparent 42%),
+    linear-gradient(
+      180deg,
+      rgba(6, 14, 12, 0.5),
+      rgba(6, 14, 12, 0.14) 34%,
+      rgba(6, 14, 12, 0.12) 58%,
+      rgba(6, 14, 12, 0.52)
+    );
+}
+[dir='rtl'] .cui-hero__bg::after {
+  background:
+    radial-gradient(52% 120% at 10% -12%, rgba(255, 206, 126, 0.42) 0%, rgba(255, 190, 104, 0.16) 36%, transparent 72%),
+    linear-gradient(248deg, rgba(255, 246, 219, 0.16) 0%, transparent 42%),
+    linear-gradient(
+      180deg,
+      rgba(6, 14, 12, 0.5),
+      rgba(6, 14, 12, 0.14) 34%,
+      rgba(6, 14, 12, 0.12) 58%,
+      rgba(6, 14, 12, 0.52)
+    );
 }
 .cui-hero__body {
   position: relative;
