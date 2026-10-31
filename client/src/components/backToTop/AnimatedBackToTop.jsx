@@ -45,7 +45,7 @@ function Chevron({ className }) {
         strokeWidth="4.6"
       />
       <path className="btt__arrow-body" d="M4.6 12.1 16 3.7l11.4 8.4" strokeWidth="4.6" />
-      <path className="btt__arrow-gloss" d="M6 10.9 16 4.4l10 6.5" strokeWidth="1.4" />
+      <path className="btt__arrow-gloss" d="M6 10.9 16 4.4l10 6.5" strokeWidth="1.2" />
     </svg>
   );
 }

@@ -17,20 +17,20 @@
   /* Resting and lit chevron filters: the lit one carries the LED glow. */
   --btt-lift:
     drop-shadow(0 1px 0 rgba(255, 255, 255, 0.55))
-    drop-shadow(0 3px 6px color-mix(in srgb, var(--primary) 32%, transparent));
+    drop-shadow(0 2px 4px color-mix(in srgb, var(--primary) 30%, transparent));
   --btt-lift-lit:
-    drop-shadow(0 0 9px var(--btt-glow))
+    drop-shadow(0 0 7px var(--btt-glow))
     drop-shadow(0 1px 0 rgba(255, 255, 255, 0.6))
-    drop-shadow(0 3px 7px color-mix(in srgb, var(--primary) 42%, transparent));
+    drop-shadow(0 2px 5px color-mix(in srgb, var(--primary) 40%, transparent));
 
   position: fixed;
-  inset-block-end: calc(22px + env(safe-area-inset-bottom, 0px));
-  inset-inline-end: 20px;
+  inset-block-end: calc(18px + env(safe-area-inset-bottom, 0px));
+  inset-inline-end: 16px;
   z-index: 45;
   /* Equal width and height with a full radius: a true circle at every size. */
   box-sizing: border-box;
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   aspect-ratio: 1 / 1;
   display: grid;
   place-items: center;
@@ -47,12 +47,12 @@
       color-mix(in srgb, var(--primary) 14%, var(--surface))
     );
   box-shadow:
-    0 14px 28px -12px color-mix(in srgb, var(--primary) 62%, transparent),
-    0 4px 10px -5px rgba(14, 22, 18, 0.24),
+    0 10px 20px -9px color-mix(in srgb, var(--primary) 58%, transparent),
+    0 3px 7px -4px rgba(14, 22, 18, 0.22),
     0 0 0 1px color-mix(in srgb, var(--primary) 10%, transparent),
-    inset 0 2px 2px -1px rgba(255, 255, 255, 0.95),
-    inset 0 -7px 13px -7px color-mix(in srgb, var(--primary) 30%, transparent),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.34);
+    inset 0 1.5px 1.5px -1px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 10px -5px color-mix(in srgb, var(--primary) 28%, transparent),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32);
   backdrop-filter: blur(14px) saturate(150%);
   -webkit-backdrop-filter: blur(14px) saturate(150%);
   cursor: pointer;
@@ -68,6 +68,19 @@
     visibility 260ms;
 }
 
+/* A 44px invisible hit area centred on the plate: the visible control stays
+   compact while the accessible touch target keeps its minimum size. */
+.btt::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .btt.is-visible {
   opacity: 1;
   visibility: visible;
@@ -79,7 +92,7 @@
 
 @keyframes btt-float {
   0%, 100% { translate: 0 0; }
-  50% { translate: 0 -3px; }
+  50% { translate: 0 -2px; }
 }
 
 /* Dark mode: the tokens darken the plate; the ink, gloss and inner highlight
@@ -90,11 +103,11 @@
   --btt-shade: color-mix(in srgb, #050806 55%, var(--primary));
   --btt-lift:
     drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12))
-    drop-shadow(0 3px 8px color-mix(in srgb, var(--primary) 46%, transparent));
+    drop-shadow(0 2px 6px color-mix(in srgb, var(--primary) 44%, transparent));
   --btt-lift-lit:
-    drop-shadow(0 0 11px color-mix(in srgb, var(--primary) 80%, transparent))
+    drop-shadow(0 0 9px color-mix(in srgb, var(--primary) 78%, transparent))
     drop-shadow(0 1px 0 rgba(255, 255, 255, 0.16))
-    drop-shadow(0 3px 9px color-mix(in srgb, var(--primary) 55%, transparent));
+    drop-shadow(0 2px 7px color-mix(in srgb, var(--primary) 52%, transparent));
 
   background:
     radial-gradient(120% 82% at 50% -6%, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0) 62%),
@@ -106,33 +119,33 @@
     );
   border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
   box-shadow:
-    0 14px 30px -12px rgba(0, 0, 0, 0.68),
+    0 10px 22px -9px rgba(0, 0, 0, 0.66),
     0 0 0 1px color-mix(in srgb, var(--primary) 18%, transparent),
-    0 0 20px -8px color-mix(in srgb, var(--primary) 60%, transparent),
+    0 0 16px -7px color-mix(in srgb, var(--primary) 58%, transparent),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.18),
-    inset 0 -8px 14px -8px color-mix(in srgb, var(--primary) 42%, transparent);
+    inset 0 -6px 11px -6px color-mix(in srgb, var(--primary) 40%, transparent);
 }
 
 /* Hover lifts the plate and brightens the ring — never resizes it. */
 .btt.is-visible:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   color: color-mix(in srgb, var(--primary) 44%, var(--text));
   border-color: color-mix(in srgb, var(--primary) 44%, var(--border));
   box-shadow:
-    0 22px 36px -14px color-mix(in srgb, var(--primary) 78%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--primary) 28%, transparent),
-    0 0 22px -8px color-mix(in srgb, var(--primary) 62%, transparent),
-    0 5px 12px -6px rgba(14, 22, 18, 0.26),
-    inset 0 2px 3px -1px rgba(255, 255, 255, 0.95),
-    inset 0 -7px 13px -7px color-mix(in srgb, var(--primary) 34%, transparent);
+    0 15px 26px -10px color-mix(in srgb, var(--primary) 70%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--primary) 26%, transparent),
+    0 0 17px -7px color-mix(in srgb, var(--primary) 58%, transparent),
+    0 4px 9px -5px rgba(14, 22, 18, 0.24),
+    inset 0 1.5px 2px -1px rgba(255, 255, 255, 0.95),
+    inset 0 -5px 10px -5px color-mix(in srgb, var(--primary) 32%, transparent);
 }
 [data-theme='dark'] .btt.is-visible:hover {
   color: color-mix(in srgb, var(--primary) 34%, #ffffff);
   border-color: color-mix(in srgb, var(--primary) 58%, transparent);
   box-shadow:
-    0 22px 40px -14px rgba(0, 0, 0, 0.72),
-    0 0 0 1px color-mix(in srgb, var(--primary) 48%, transparent),
-    0 0 26px -6px color-mix(in srgb, var(--primary) 68%, transparent),
+    0 15px 28px -10px rgba(0, 0, 0, 0.7),
+    0 0 0 1px color-mix(in srgb, var(--primary) 46%, transparent),
+    0 0 20px -6px color-mix(in srgb, var(--primary) 66%, transparent),
     inset 0 1.5px 0 rgba(255, 255, 255, 0.22);
 }
 .btt.is-visible:active { transform: translateY(-1px); }
@@ -142,7 +155,7 @@
   outline-offset: 3px;
   box-shadow:
     0 0 0 6px var(--theme-focus-ring),
-    0 14px 28px -12px color-mix(in srgb, var(--primary) 62%, transparent);
+    0 10px 20px -9px color-mix(in srgb, var(--primary) 58%, transparent);
 }
 
 /* ------------------------------------------------------------- chevrons --- */
@@ -153,7 +166,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5px;
+  gap: 1px;
   line-height: 0;
   pointer-events: none;
 }
@@ -177,18 +190,18 @@
 }
 .btt__arrow-shade {
   stroke: var(--btt-shade);
-  transform: translateY(1.25px);
+  transform: translateY(1.05px);
 }
 .btt__arrow-body { stroke: currentColor; }
 .btt__arrow-gloss {
   stroke: var(--btt-gloss);
-  transform: translateY(-1.15px);
+  transform: translateY(-0.95px);
 }
 
 /* Bottom LARGE — middle MEDIUM — top SMALL. */
-.btt__arrow--bottom { width: 21px; }
-.btt__arrow--middle { width: 16px; }
-.btt__arrow--top { width: 11.5px; }
+.btt__arrow--bottom { width: 15.5px; }
+.btt__arrow--middle { width: 12px; }
+.btt__arrow--top { width: 8.5px; }
 
 /*
  * One → two → three, on a 3s loop. The bottom chevron stands alone and lights
@@ -209,23 +222,23 @@
 .btt__arrow--top { animation-name: btt-chase-top; }
 
 @keyframes btt-chase-bottom {
-  0% { filter: var(--btt-lift-lit); transform: scale(1.04); }
-  18%, 84% { filter: var(--btt-lift); transform: scale(1); }
-  100% { filter: var(--btt-lift-lit); transform: scale(1.04); }
+  0% { filter: var(--btt-lift-lit); transform: scale(1.03); }
+  16%, 86% { filter: var(--btt-lift); transform: scale(1); }
+  100% { filter: var(--btt-lift-lit); transform: scale(1.03); }
 }
 
 @keyframes btt-chase-middle {
-  0%, 20% { opacity: 0; transform: translateY(6px) scale(0.62); }
-  32% { opacity: 1; transform: translateY(0) scale(1.06); filter: var(--btt-lift-lit); }
-  50%, 84% { opacity: 1; transform: translateY(0) scale(1); filter: var(--btt-lift); }
-  96%, 100% { opacity: 0; transform: translateY(6px) scale(0.62); }
+  0%, 18% { opacity: 0; transform: translateY(4px) scale(0.68); }
+  30% { opacity: 1; transform: translateY(0) scale(1.05); filter: var(--btt-lift-lit); }
+  44%, 86% { opacity: 1; transform: translateY(0) scale(1); filter: var(--btt-lift); }
+  96%, 100% { opacity: 0; transform: translateY(3px) scale(0.72); }
 }
 
 @keyframes btt-chase-top {
-  0%, 42% { opacity: 0; transform: translateY(6px) scale(0.58); }
-  54% { opacity: 1; transform: translateY(0) scale(1.08); filter: var(--btt-lift-lit); }
-  72%, 86% { opacity: 1; transform: translateY(0) scale(1); filter: var(--btt-lift); }
-  98%, 100% { opacity: 0; transform: translateY(6px) scale(0.58); }
+  0%, 40% { opacity: 0; transform: translateY(4px) scale(0.64); }
+  52% { opacity: 1; transform: translateY(0) scale(1.06); filter: var(--btt-lift-lit); }
+  64%, 88% { opacity: 1; transform: translateY(0) scale(1); filter: var(--btt-lift); }
+  98%, 100% { opacity: 0; transform: translateY(3px) scale(0.68); }
 }
 
 /* ------------------------------------------------------- avoidance rules --- */
@@ -241,23 +254,23 @@ body:has(.cui-overlay) .btt { opacity: 0; visibility: hidden; pointer-events: no
 /* ----------------------------------------------------------- responsive --- */
 
 @media (max-width: 1024px) {
-  .btt { width: 48px; height: 48px; }
-  .btt__arrow--bottom { width: 19.5px; }
-  .btt__arrow--middle { width: 15px; }
-  .btt__arrow--top { width: 10.5px; }
+  .btt { width: 36px; height: 36px; }
+  .btt__arrow--bottom { width: 14.5px; }
+  .btt__arrow--middle { width: 11px; }
+  .btt__arrow--top { width: 8px; }
 }
 
 @media (max-width: 640px) {
   .btt {
-    width: 46px;
-    height: 46px;
-    inset-inline-end: 14px;
-    inset-block-end: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 34px;
+    height: 34px;
+    inset-inline-end: 12px;
+    inset-block-end: calc(14px + env(safe-area-inset-bottom, 0px));
   }
-  .btt__arrow--bottom { width: 19px; }
-  .btt__arrow--middle { width: 14.5px; }
-  .btt__arrow--top { width: 10px; }
-  .customer-shell:has(.cart-bar) .btt { inset-block-end: calc(84px + env(safe-area-inset-bottom, 0px)); }
+  .btt__arrow--bottom { width: 13.5px; }
+  .btt__arrow--middle { width: 10.5px; }
+  .btt__arrow--top { width: 7.5px; }
+  .customer-shell:has(.cart-bar) .btt { inset-block-end: calc(80px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* ------------------------------------------------- reduced motion support --- */
