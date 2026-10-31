@@ -837,7 +837,7 @@ export default {
   user_invalid_username: 'تەنها پیتەکانی ئینگلیزی (A–Z) و ژمارەکان (0–9) بەکاربهێنە',
   user_invalid_suffix: 'پاشکۆی دروست بنووسە، بۆ نموونە @lilyanpert.app',
   user_email_taken: 'ئەم ناسنامەی چوونەژوورەوە بۆ هەژمارێکی تر بەکارهاتووە',
-  user_suffix_locked: 'لە ناوی کارەکەتەوە دانراوە — پارێزراوە و ناگۆڕدرێت',
+  user_suffix_locked: 'پارێزراوە و ناگۆڕدرێت',
   user_suffix_locked_error: 'پاشکۆی چوونەژوورەوە هی کارەکەتە و ناگۆڕدرێت',
   user_suffix_kept: 'ئەم هەژمارە ئەو پاشکۆیە دەپارێزێت کە پێی دروستکراوە',
   access_denied: 'دەستگەیشتن بەم بەشە ڕێگەپێدراو نییە',

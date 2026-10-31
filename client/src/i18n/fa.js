@@ -836,7 +836,7 @@ export default {
   user_invalid_username: 'فقط حروف انگلیسی (A–Z) و ارقام (0–9) مجاز است',
   user_invalid_suffix: 'پسوند معتبر وارد کنید، مثلاً @lilyanpert.app',
   user_email_taken: 'این شناسه ورود قبلاً برای حساب دیگری استفاده شده است',
-  user_suffix_locked: 'از نام کسب‌وکار شما ساخته شده — محافظت‌شده و قابل ویرایش نیست',
+  user_suffix_locked: 'محافظت‌شده و قابل ویرایش نیست',
   user_suffix_locked_error: 'پسوند ورود متعلق به کسب‌وکار شماست و قابل تغییر نیست',
   user_suffix_kept: 'این حساب همان پسوندی را که با آن ساخته شده نگه می‌دارد',
   access_denied: 'دسترسی به این بخش مجاز نیست',

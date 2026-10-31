@@ -394,85 +394,74 @@ export default function UserFormModal({
                 />
                 <FieldError id="um-full-name-error" message={errorFor('fullName')} />
               </label>
-              {/* The row measures the suffix column from the domain's own
-                  length, so the whole brand suffix is visible and the username
-                  keeps the rest of the row. */}
-              <div
-                className="um-fields--2 um-fields--2--ident"
-                style={{ '--um-suffix-len': Math.max(suffix.length, 8) }}
-              >
-                <label className="um-field">
-                  <FieldLabel label={t('user_username')} required />
+              {/* Username, then the business-owned suffix on its own full
+                  width line: the whole brand domain always fits, and no
+                  column ever squeezes the name beside it. */}
+              <label className="um-field">
+                <FieldLabel label={t('user_username')} required />
+                <input
+                  className={`um-input ${usernameError ? 'is-invalid' : ''}`}
+                  dir="ltr"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onBlur={() => {
+                    // Surrounding whitespace is never part of a username.
+                    setUsername((value) => value.trim());
+                    touch('username');
+                  }}
+                  autoComplete="off"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  inputMode="text"
+                  pattern="[A-Za-z0-9]+"
+                  maxLength={63}
+                  required
+                  aria-required="true"
+                  aria-invalid={usernameError ? 'true' : undefined}
+                  aria-describedby={usernameError ? 'um-username-error' : undefined}
+                />
+                <FieldError id="um-username-error" message={usernameError} />
+              </label>
+              {/* Business-owned suffix: shown, never editable or clearable. */}
+              <div className="um-field um-field--suffix">
+                <FieldLabel label={t('user_login_suffix')} />
+                <span className="um-field__wrap um-field__wrap--locked">
                   <input
-                    className={`um-input ${usernameError ? 'is-invalid' : ''}`}
+                    className="um-input um-input--locked"
                     dir="ltr"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    onBlur={() => {
-                      // Surrounding whitespace is never part of a username.
-                      setUsername((value) => value.trim());
-                      touch('username');
-                    }}
+                    value={suffix}
+                    title={suffix}
+                    size={Math.max(suffix.length, 8)}
+                    aria-label={t('user_login_suffix')}
+                    placeholder={loginSuffix || '@lilyanpert.app'}
+                    readOnly
+                    tabIndex={-1}
+                    aria-readonly="true"
+                    aria-describedby="um-suffix-locked"
                     autoComplete="off"
                     spellCheck={false}
-                    autoCapitalize="none"
-                    inputMode="text"
-                    pattern="[A-Za-z0-9]+"
-                    maxLength={63}
-                    required
-                    aria-required="true"
-                    aria-invalid={usernameError ? 'true' : undefined}
-                    aria-describedby={usernameError ? 'um-username-error' : undefined}
                   />
-                  <FieldError id="um-username-error" message={usernameError} />
-                </label>
-                {/* Business-owned suffix: shown, never editable or clearable. */}
-                <div className="um-field um-field--suffix">
-                  <FieldLabel label={t('user_login_suffix')} />
-                  <span className="um-field__wrap um-field__wrap--locked">
-                    <input
-                      className="um-input um-input--locked"
-                      dir="ltr"
-                      value={suffix}
-                      title={suffix}
-                      aria-label={t('user_login_suffix')}
-                      placeholder={loginSuffix || '@lilyanpert.app'}
-                      readOnly
-                      tabIndex={-1}
-                      aria-readonly="true"
-                      aria-describedby="um-suffix-locked"
-                      autoComplete="off"
-                      spellCheck={false}
-                    />
-                    <span className="um-field__lock" aria-hidden="true">
-                      <Icon name="lock" size={13} />
-                    </span>
+                  <span className="um-field__lock" aria-hidden="true">
+                    <Icon name="lock" size={13} />
                   </span>
-                  <span className="um-field__hint" id="um-suffix-locked">
-                    <Icon name="lock" size={11} />
-                    {t(suffixKept ? 'user_suffix_kept' : 'user_suffix_locked')}
-                  </span>
-                </div>
-              </div>
-              {/* The identifier the person will actually sign in with. */}
-              <div className="um-preview" dir="ltr">
-                <Icon name="mail" size={13} />
-                <span className={identifier ? '' : 'um-preview__empty'}>
-                  {identifier || t('user_login_preview_empty')}
+                </span>
+                <span className="um-field__hint" id="um-suffix-locked">
+                  <Icon name="lock" size={11} />
+                  {t(suffixKept ? 'user_suffix_kept' : 'user_suffix_locked')}
                 </span>
               </div>
+              {/* The identifier the person will actually sign in with. The box
+                  follows the page direction — icon first, so it sits on the
+                  right in RTL — while the address itself always reads LTR. */}
+              <div className="um-preview">
+                <Icon name="mail" size={13} />
+                {identifier ? (
+                  <span className="um-preview__id" dir="ltr">{identifier}</span>
+                ) : (
+                  <span className="um-preview__empty">{t('user_login_preview_empty')}</span>
+                )}
+              </div>
             </div>
-          </Section>
-
-          <Section title={t('user_section_profile')}>
-            <UserPhotoField
-              photo={profileImage}
-              avatarType={avatarType}
-              name={fullName}
-              onPhotoChange={setProfileImage}
-              onAvatarChange={setAvatarType}
-              onUploading={setUploading}
-            />
           </Section>
 
           <Section title={t('user_section_password')}>
@@ -497,6 +486,17 @@ export default function UserFormModal({
               />
             </div>
             <p className="um-note">{t('user_password_notice')}</p>
+          </Section>
+
+          <Section title={t('user_section_profile')}>
+            <UserPhotoField
+              photo={profileImage}
+              avatarType={avatarType}
+              name={fullName}
+              onPhotoChange={setProfileImage}
+              onAvatarChange={setAvatarType}
+              onUploading={setUploading}
+            />
           </Section>
 
           <Section title={t('user_section_role')}>

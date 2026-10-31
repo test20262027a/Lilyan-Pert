@@ -835,7 +835,7 @@ export default {
   user_invalid_username: 'استخدم الأحرف الإنجليزية (A–Z) والأرقام (0–9) فقط',
   user_invalid_suffix: 'أدخل لاحقة صحيحة، مثل @lilyanpert.app',
   user_email_taken: 'معرّف الدخول هذا مستخدم لحساب آخر',
-  user_suffix_locked: 'مُشتقّة من اسم نشاطك — محمية وغير قابلة للتعديل',
+  user_suffix_locked: 'محمية وغير قابلة للتعديل',
   user_suffix_locked_error: 'لاحقة الدخول تخص نشاطك ولا يمكن تغييرها',
   user_suffix_kept: 'يحتفظ هذا الحساب باللاحقة التي أُنشئ بها',
   access_denied: 'الوصول إلى هذا القسم غير مسموح',

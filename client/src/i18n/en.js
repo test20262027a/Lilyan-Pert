@@ -838,7 +838,7 @@ export default {
   user_invalid_username: 'Use English letters (A–Z) and digits (0–9) only',
   user_invalid_suffix: 'Enter a valid login suffix, e.g. @lilyanpert.app',
   user_email_taken: 'This login identifier is already used by another account',
-  user_suffix_locked: 'Set by your business name — protected and not editable',
+  user_suffix_locked: 'Protected and not editable',
   user_suffix_locked_error: 'The login suffix belongs to your business and cannot be changed',
   user_suffix_kept: 'This account keeps the suffix it was created with',
   access_denied: 'You do not have access to this section',
