@@ -99,7 +99,7 @@
 /* Badge and the whole text group (title + subtitle) sit on one centred row, so
    the badge is centred against both lines together, in both directions. The
    row itself is laid out by the shared header design system. */
-.welcome__titles { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.welcome__titles { min-width: 0; display: flex; flex-direction: column; gap: var(--hd-title-gap); }
 /* The badge tile itself is the shared 3D header icon (headerSystem.css). */
 .welcome__title {
   color: var(--text);

@@ -1,0 +1,375 @@
+/*
+ * ==========================================================================
+ * Header design system — the ONE look of every section header in the app.
+ *
+ * A header is always the same three parts, in this order:
+ *
+ *   1. a raised 3D tile carrying the section's icon,
+ *   2. a text block: the title, then the subtitle beneath it,
+ *   3. the section's own controls / artwork (owned by each page).
+ *
+ * The tile and the text block sit in one flex row with `align-items: center`,
+ * so the icon is centred against BOTH text lines together — never against the
+ * title alone. The row follows the document direction, so the tile is on the
+ * inline-start side in LTR and in RTL without a mirrored rule.
+ *
+ * Every value below is a token, and every colour derives from the live theme
+ * accent (`--primary`), so switching preset or Light/Dark repaints the whole
+ * header set instantly. This file loads last (see main.jsx); page stylesheets
+ * no longer skin a header icon or title of their own.
+ * ==========================================================================
+ */
+
+:root {
+  /* Two faces, one voice: Latin from Jakarta, Arabic script from Kufi. */
+  --hd-font: 'Plus Jakarta Sans', 'Noto Kufi Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
+
+  /* The tile, the gap to its text and the two type steps. */
+  --hd-tile-size: 48px;
+  --hd-tile-radius: 15px;
+  --hd-gap: 14px;
+  --hd-title-size: clamp(20px, 2.5vw, 27px);
+  --hd-title-sm: 17px;
+  --hd-title-weight: 800;
+  --hd-sub-size: 13px;
+  --hd-sub-weight: 500;
+
+  /*
+   * The one vertical rhythm of a header's text group: the gap between the title
+   * and the subtitle that belongs to it. Page heroes and dialog headers use the
+   * roomy step, cards and inline panels the compact one — never a hardcoded
+   * per-page margin, so every header in every language breathes the same way.
+   */
+  --hd-title-gap: 8px;
+  --hd-title-gap-compact: 6px;
+  --hd-title-line: 1.26;
+  --hd-sub-line: 1.55;
+
+  /*
+   * The reading scrim over an illustrated header: the page surface warmed with
+   * a little of the theme accent, so the wash reads as part of the palette
+   * instead of a white film over the picture.
+   */
+  --hd-scrim: color-mix(in srgb, var(--surface) 76%, var(--primary));
+  --hd-scrim-start: 74%;
+  --hd-scrim-mid: 42%;
+  /* Tint laid over the illustration itself. */
+  --hd-tint: color-mix(in srgb, var(--primary) 16%, transparent);
+  --hd-tint-soft: color-mix(in srgb, var(--primary) 9%, transparent);
+}
+
+[data-theme='dark'] {
+  --hd-scrim: color-mix(in srgb, #0a0f15 86%, var(--primary));
+  --hd-scrim-start: 84%;
+  --hd-scrim-mid: 56%;
+  --hd-tint: color-mix(in srgb, var(--primary) 22%, transparent);
+  --hd-tint-soft: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+/* ------------------------------------------- 1. icon + text, one centred row */
+
+/*
+ * Every header's icon and text block live in one of these rows. `align-items:
+ * center` centres the tile against the title AND subtitle together, `min-width:
+ * 0` lets a long word shrink instead of pushing the icon off the edge, and the
+ * row itself inherits the document direction.
+ */
+.mhero__identity,
+.obanner__identity,
+.welcome__head,
+.sh-head,
+.cui-sheet__artbar,
+.cui-panel__head,
+.um-modal__identity,
+.promo-modal__titlewrap,
+.ad-modal__identity,
+.odm__head-row,
+.mcmodal__identity,
+.adp__head {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--hd-gap);
+  min-width: 0;
+}
+
+/* The text block of a header shrinks and wraps before the icon ever moves. */
+.mhero__text,
+.obanner__text,
+.welcome__titles,
+.sh-head__text,
+.odm__head-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  /* The title/subtitle gap comes from the rhythm token, never a local value. */
+  gap: var(--hd-title-gap);
+}
+
+/* ------------------------------------------------------ 2. the 3D tile --- */
+
+/*
+ * One tile for every header icon: a lit top edge, an accent gradient that
+ * darkens toward the bottom-right, an inset shade for real depth, and a low,
+ * accent-tinted cast shadow. It never changes the box on hover — only its
+ * elevation — so nothing around it can shift.
+ */
+.mhero__icon,
+.obanner__icon,
+.welcome__badge,
+.sh-head__icon,
+.cui-sheet__badge,
+.cui-panel__icon,
+.um-modal__glyph,
+.promo-modal__icon,
+.ad-modal__glyph,
+.odm__head-icon,
+.mcmodal__glyph,
+.adp__icon {
+  flex: none;
+  width: var(--hd-tile-size);
+  height: var(--hd-tile-size);
+  display: grid;
+  place-items: center;
+  border-radius: var(--hd-tile-radius);
+  color: var(--primary-ink);
+  background:
+    radial-gradient(120% 110% at 32% 12%, rgba(255, 255, 255, 0.52) 0%, rgba(255, 255, 255, 0) 58%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--primary) 78%, #ffffff) 0%,
+      var(--primary) 54%,
+      color-mix(in srgb, var(--primary) 82%, #0b0f1a) 100%
+    );
+  border: 1px solid color-mix(in srgb, var(--primary) 52%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -3px 8px color-mix(in srgb, var(--primary) 58%, #10141f),
+    0 8px 18px -8px color-mix(in srgb, var(--primary) 62%, transparent),
+    0 2px 4px rgba(16, 22, 38, 0.16);
+  transition:
+    transform var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease);
+}
+
+/* The glyph itself carries a soft drop shadow so it reads as raised too. */
+.mhero__icon .icon,
+.obanner__icon .icon,
+.welcome__badge .icon,
+.sh-head__icon .icon,
+.cui-sheet__badge .icon,
+.cui-panel__icon .icon,
+.um-modal__glyph .icon,
+.promo-modal__icon .icon,
+.ad-modal__glyph .icon,
+.odm__head-icon .icon,
+.mcmodal__glyph .icon,
+.adp__icon .icon {
+  /* A touch heavier than the UI default so the glyph survives the gradient. */
+  stroke-width: 1.9;
+  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--primary) 55%, #10141f));
+}
+
+[data-theme='dark'] .mhero__icon,
+[data-theme='dark'] .obanner__icon,
+[data-theme='dark'] .welcome__badge,
+[data-theme='dark'] .sh-head__icon,
+[data-theme='dark'] .cui-sheet__badge,
+[data-theme='dark'] .cui-panel__icon,
+[data-theme='dark'] .um-modal__glyph,
+[data-theme='dark'] .promo-modal__icon,
+[data-theme='dark'] .ad-modal__glyph,
+[data-theme='dark'] .odm__head-icon,
+[data-theme='dark'] .mcmodal__glyph,
+[data-theme='dark'] .adp__icon {
+  border-color: color-mix(in srgb, var(--primary) 46%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -3px 9px rgba(0, 0, 0, 0.45),
+    0 10px 22px -10px color-mix(in srgb, var(--primary) 72%, transparent),
+    0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* Gentle lift and accent glow when the pointer is anywhere on the header. */
+.mhero:hover .mhero__icon,
+.obanner:hover .obanner__icon,
+.welcome:hover .welcome__badge,
+.sh-head:hover .sh-head__icon,
+.cui-sheet__art:hover .cui-sheet__badge,
+.cui-panel__head:hover .cui-panel__icon,
+.um-modal__head:hover .um-modal__glyph,
+.promo-modal__head:hover .promo-modal__icon,
+.ad-modal__head:hover .ad-modal__glyph,
+.odm__head:hover .odm__head-icon,
+.mcmodal__head:hover .mcmodal__glyph,
+.adp__head:hover .adp__icon {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.68),
+    inset 0 -3px 8px color-mix(in srgb, var(--primary) 58%, #10141f),
+    0 14px 26px -10px color-mix(in srgb, var(--primary) 72%, transparent),
+    0 3px 7px rgba(16, 22, 38, 0.2);
+}
+
+/* ------------------------------------------------------- 3. typography ---- */
+
+/*
+ * Titles are the display voice: heavy, tight, and set in the two self-hosted
+ * faces. Colours stay with each surface (a sheet title sits on a dark art bar
+ * and stays white), so only the type itself is unified here.
+ */
+.mhero__title,
+.obanner__title,
+.welcome__title,
+.sh-head__title,
+.cui-panel__title,
+.cui-sheet__title,
+.um-modal__title,
+.promo-modal__title,
+.ad-modal__title,
+.odm__title,
+.mcmodal__title,
+.adp__title,
+.dash-modal__title,
+.cui-hero__name {
+  font-family: var(--hd-font);
+  font-weight: var(--hd-title-weight);
+  letter-spacing: -0.015em;
+  line-height: var(--hd-title-line);
+  /* A wrapped title in Kurdish, Persian or Arabic never clips or overlaps the
+     illustration behind it; the header box grows instead. */
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+/* Page banners carry the largest step; dialogs and sheet headers the small one. */
+.mhero__title,
+.obanner__title,
+.welcome__title {
+  font-size: var(--hd-title-size);
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 55%, transparent);
+}
+.sh-head__title,
+.cui-panel__title,
+.cui-sheet__title,
+.um-modal__title,
+.promo-modal__title,
+.ad-modal__title,
+.odm__title,
+.mcmodal__title,
+.adp__title,
+.dash-modal__title {
+  font-size: var(--hd-title-sm);
+}
+
+.mhero__sub,
+.obanner__sub,
+.welcome__sub,
+.sh-head__sub,
+.dash-modal__subtitle {
+  font-family: var(--hd-font);
+  font-size: var(--hd-sub-size);
+  font-weight: var(--hd-sub-weight);
+  letter-spacing: 0.005em;
+  line-height: var(--hd-sub-line);
+  /* The gap is owned by the text block's `gap` above, so no margin here. */
+  margin-top: 0;
+  max-width: 62ch;
+  /* Long translated sentences wrap on word boundaries instead of colliding
+     with the controls or the artwork beside them. */
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+  text-shadow: 0 1px 0 color-mix(in srgb, var(--surface) 45%, transparent);
+}
+
+/* A dialog head that is not a flex column (the date-range sheet) gets the same
+   gap from the subtitle itself. */
+.dash-modal__subtitle {
+  margin-top: var(--hd-title-gap);
+  max-width: 60ch;
+}
+
+/* The customer banner's welcome line is that page's header subtitle. */
+.cui-hero__welcome {
+  margin-top: var(--hd-title-gap);
+  max-width: 58ch;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+/*
+ * Compact headers — a card, a settings panel or a backup section — carry the
+ * smaller type step, so they take the tighter end of the same rhythm.
+ */
+.bk-panel__sub,
+.card__subtitle,
+.set-card__subtitle,
+.mpanel__sub,
+.msummary__sub,
+.ad-card__sub {
+  margin-top: var(--hd-title-gap-compact);
+}
+
+/* The order number under an order dialog's title keeps its own weight/colour. */
+.odm__subtitle {
+  font-family: var(--hd-font);
+  margin-top: 0;
+}
+
+[data-theme='dark'] .mhero__title,
+[data-theme='dark'] .obanner__title,
+[data-theme='dark'] .welcome__title,
+[data-theme='dark'] .sh-head__title {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+[data-theme='dark'] .mhero__sub,
+[data-theme='dark'] .obanner__sub,
+[data-theme='dark'] .welcome__sub,
+[data-theme='dark'] .sh-head__sub {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+/* ------------------------------------------------------ 4. responsive ----- */
+
+/* A narrower tile keeps the same rhythm on small screens — never a taller row. */
+@media (max-width: 720px) {
+  :root {
+    --hd-tile-size: 44px;
+    --hd-tile-radius: 14px;
+    --hd-gap: 12px;
+    --hd-title-size: clamp(18px, 5vw, 22px);
+    --hd-title-sm: 16px;
+    --hd-sub-size: 12.5px;
+    /* Tablet: still a clear breath between the two lines, one step tighter. */
+    --hd-title-gap: 6px;
+    --hd-title-gap-compact: 5px;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --hd-tile-size: 40px;
+    --hd-tile-radius: 13px;
+    --hd-gap: 10px;
+    /* Phone: the floor of the rhythm, so nothing ever touches. */
+    --hd-title-gap: 5px;
+    --hd-title-gap-compact: 5px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mhero:hover .mhero__icon,
+  .obanner:hover .obanner__icon,
+  .welcome:hover .welcome__badge,
+  .sh-head:hover .sh-head__icon,
+  .cui-sheet__art:hover .cui-sheet__badge,
+  .cui-panel__head:hover .cui-panel__icon,
+  .um-modal__head:hover .um-modal__glyph,
+  .promo-modal__head:hover .promo-modal__icon,
+  .ad-modal__head:hover .ad-modal__glyph,
+  .odm__head:hover .odm__head-icon,
+  .mcmodal__head:hover .mcmodal__glyph,
+  .adp__head:hover .adp__icon {
+    transform: none;
+  }
+}
