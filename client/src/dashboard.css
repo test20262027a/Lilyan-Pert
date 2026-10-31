@@ -1098,6 +1098,154 @@
 .orders-empty__title { font-size: 13px; font-weight: 700; color: var(--text); }
 .orders-empty__hint { font-size: 11.5px; color: var(--muted); }
 
+/* --------------------------------------------------- recent orders pager */
+
+/*
+ * Seven rows at a time. The controls are the same raised 3D plate as every
+ * other compact control on the dashboard — one step, the page numbers, the
+ * "1 / 4" readout and the other step — and they follow the document direction,
+ * so "previous" leads on the right in Kurdish, Persian and Arabic.
+ */
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+.pager__nums {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pager__btn,
+.pager__num {
+  --pager-accent: var(--theme-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 9px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--pager-accent) 22%, var(--border-strong));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pager-accent) 9%, var(--surface)),
+    color-mix(in srgb, var(--pager-accent) 4%, var(--surface-2))
+  );
+  color: var(--text-soft);
+  font-size: 12px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 2px 0 color-mix(in srgb, var(--pager-accent) 18%, transparent),
+    0 7px 14px -9px color-mix(in srgb, var(--pager-accent) 55%, transparent);
+  transition:
+    transform 170ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    box-shadow 170ms ease,
+    border-color 170ms ease,
+    color 170ms ease;
+}
+
+.pager__btn:hover:not(:disabled),
+.pager__num:hover:not(.is-active) {
+  transform: translateY(-1px);
+  color: var(--theme-primary-strong);
+  border-color: color-mix(in srgb, var(--pager-accent) 42%, var(--border-strong));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 3px 0 color-mix(in srgb, var(--pager-accent) 24%, transparent),
+    0 12px 20px -10px color-mix(in srgb, var(--pager-accent) 60%, transparent);
+}
+.pager__btn:active:not(:disabled),
+.pager__num:active:not(.is-active) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 5px color-mix(in srgb, var(--pager-accent) 22%, transparent),
+    0 1px 0 color-mix(in srgb, var(--pager-accent) 16%, transparent);
+}
+.pager__btn:focus-visible,
+.pager__num:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--pager-accent) 60%, var(--border-strong));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pager-accent) 20%, transparent);
+}
+
+/* The page you are on: the theme's own plate, pressed into the surface. */
+.pager__num.is-active {
+  color: var(--primary-ink);
+  border-color: color-mix(in srgb, var(--primary) 70%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 82%, #ffffff),
+    var(--primary)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    0 2px 0 color-mix(in srgb, var(--primary) 40%, transparent),
+    0 8px 16px -8px color-mix(in srgb, var(--primary) 70%, transparent);
+  cursor: default;
+}
+
+.pager__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.pager__gap {
+  min-width: 18px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* The compact "1 / 4" readout, on a quiet pill that never competes with the pages. */
+.pager__count {
+  /* "1 / 5" reads left to right in every language — the slash is a divider,
+     not a sentence, so the RTL paragraph must not mirror the numbers. */
+  direction: ltr;
+  unicode-bidi: isolate;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--border-strong) 55%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+  color: var(--text-soft);
+  font-size: 11.5px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+[data-theme='dark'] .pager__btn,
+[data-theme='dark'] .pager__num {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 2px 0 color-mix(in srgb, var(--pager-accent) 24%, transparent),
+    0 8px 16px -10px rgba(0, 0, 0, 0.8);
+}
+
+/* On a phone the steps keep their chevron only, so the numbers stay reachable. */
+@media (max-width: 640px) {
+  .pager { gap: 5px; }
+  .pager__btn { padding: 0 8px; }
+  .pager__btn-text { display: none; }
+  .pager__nums { gap: 3px; }
+}
+
 /*
  * Title and filter share one row while they fit; on a phone the filter drops
  * under the title at full width, so neither is ever clipped or overlapped.

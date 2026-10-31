@@ -36,6 +36,9 @@ export default function Dashboard() {
   // Status filter of the Recent Orders section — a real backend filter over the
   // business's whole order history, "all" meaning every status.
   const [recentStatus, setRecentStatus] = useState('all');
+  // Current page of that table — the API clamps it to the pages that exist for
+  // the active filter, so a shrinking result set never strands the reader.
+  const [recentPage, setRecentPage] = useState(1);
   // The order the shared details modal is open on — dashboard rows never
   // navigate away from the page any more.
   const [openOrderId, setOpenOrderId] = useState(null);
@@ -44,10 +47,11 @@ export default function Dashboard() {
     range === 'custom' && custom.from && custom.to
       ? `range=custom&from=${custom.from}&to=${custom.to}`
       : `range=${range}`;
-  const query = recentStatus === 'all' ? rangeQuery : `${rangeQuery}&recent_status=${recentStatus}`;
+  const statusQuery = recentStatus === 'all' ? rangeQuery : `${rangeQuery}&recent_status=${recentStatus}`;
+  const query = `${statusQuery}&recent_page=${recentPage}`;
 
   /* The last range the API actually answered for — what the cards show. */
-  const applied = useRef({ query: `range=${range}`, range, custom, recentStatus });
+  const applied = useRef({ query: `range=${range}`, range, custom, recentStatus, recentPage });
 
   /*
    * The financial window is a real backend filter: the API recomputes every
@@ -61,7 +65,11 @@ export default function Dashboard() {
         const res = await get(`/dashboard?${query}`);
         setData(res);
         setFailed(false);
-        applied.current = { query, range, custom, recentStatus };
+        applied.current = { query, range, custom, recentStatus, recentPage };
+        // The server is the authority on which pages exist: when a filter made
+        // the current page impossible it answers with the last real page, and
+        // the table follows it in the same breath (no empty page, no reload).
+        if (res?.recent && res.recent.page !== recentPage) setRecentPage(res.recent.page);
         return res;
       } catch {
         setFailed(true);
@@ -71,13 +79,14 @@ export default function Dashboard() {
           setRange(applied.current.range);
           setCustom(applied.current.custom);
           setRecentStatus(applied.current.recentStatus);
+          setRecentPage(applied.current.recentPage);
         }
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [query, range, custom, recentStatus],
+    [query, range, custom, recentStatus, recentPage],
   );
 
   useEffect(() => {
@@ -205,7 +214,14 @@ export default function Dashboard() {
         <NewOrders
           orders={data.new_orders}
           status={recentStatus}
-          onStatusChange={setRecentStatus}
+          /* A new status is a new result set, so it always starts on page 1. */
+          onStatusChange={(next) => {
+            setRecentStatus(next);
+            setRecentPage(1);
+          }}
+          page={data.recent?.page || 1}
+          pages={data.recent?.pages || 1}
+          onPage={setRecentPage}
           /* The dashboard's own per-status tally — the same counters the status
              tiles draw, so the filter's badges never disagree with them. */
           counts={data.order_flow}

@@ -22,6 +22,8 @@ const RANGE_KEYS = ['today', 'week', 'month', 'year', 'all', 'custom'];
 /* The application's authoritative order statuses — never a second list. */
 const ORDER_STATUSES = ['pending', 'preparing', 'ready', 'completed', 'cancelled'];
 const DEFAULT_RANGE = 'today';
+/* Rows per page of the dashboard's Recent Orders table. */
+const RECENT_PAGE_SIZE = 7;
 
 /* Notification settings a member may change from the dashboard. */
 const NOTIF_BOOL_KEYS = ['sound_enabled', 'new_order', 'status_changes', 'daily_summary'];
@@ -126,6 +128,20 @@ router.get(
       recentWhere.push(`o.status = $${recentParams.length}`);
     }
 
+    /*
+     * Paging happens in SQL, after the status filter, so page 2 of "completed"
+     * is the next seven completed orders — never a re-slice of the same short
+     * list. The requested page is clamped to the pages that actually exist, so
+     * a filter that shrinks the result set can never leave the reader on an
+     * empty page.
+     */
+    const recentFilter = recentWhere.join(' AND ');
+    const recentTotal =
+      Number((await q(`SELECT count(*)::int AS c FROM orders o WHERE ${recentFilter}`, recentParams)).rows[0].c) || 0;
+    const recentPages = Math.max(1, Math.ceil(recentTotal / RECENT_PAGE_SIZE));
+    const recentPage = Math.min(Math.max(1, Number.parseInt(req.query.recent_page, 10) || 1), recentPages);
+    const recentListParams = [...recentParams, RECENT_PAGE_SIZE, (recentPage - 1) * RECENT_PAGE_SIZE];
+
     const [flow, bestSelling, newOrders, kpiRow, financeRow, viewsRow, firstRow, topProductRow, peakHourRow] = await Promise.all([
       q(`SELECT status, count(*)::int AS c FROM orders WHERE business_id = $1 GROUP BY status`, [b]),
       q(
@@ -137,17 +153,19 @@ router.get(
       ),
       /*
        * The newest orders of the requested status (every status when none is
-       * chosen), always newest first. The same six-column shape the dashboard
-       * table draws — no second status system and no client-side filtering.
+       * chosen), always newest first and one page at a time. The same
+       * six-column shape the dashboard table draws — no second status system
+       * and no client-side filtering.
        */
       q(
         `SELECT o.id, o.order_number, o.status, o.total, o.created_at, o.customer_name,
                 t.name AS table_name,
                 (SELECT coalesce(sum(i.quantity), 0)::int FROM order_items i WHERE i.order_id = o.id) AS item_count
            FROM orders o LEFT JOIN tables t ON t.id = o.table_id
-          WHERE ${recentWhere.join(' AND ')}
-          ORDER BY o.created_at DESC, o.id DESC LIMIT 6`,
-        recentParams,
+          WHERE ${recentFilter}
+          ORDER BY o.created_at DESC, o.id DESC
+          LIMIT $${recentListParams.length - 1} OFFSET $${recentListParams.length}`,
+        recentListParams,
       ),
       q(
         `SELECT count(*)::int AS total_orders,
@@ -293,6 +311,15 @@ router.get(
       order_flow_total: flow.rows.reduce((s, r) => s + r.c, 0),
       best_selling: bestSelling.rows,
       new_orders: newOrders.rows,
+      /* What the Recent Orders table is currently showing, so the pagination
+         never has to guess a page count on the client. */
+      recent: {
+        status: recentStatus,
+        page: recentPage,
+        pages: recentPages,
+        total: recentTotal,
+        page_size: RECENT_PAGE_SIZE,
+      },
       kpi: kpiRow.rows[0],
       finance: {
         range: win.key,
