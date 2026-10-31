@@ -15,6 +15,10 @@ import './interaction.css';
 // 3D icon tile, alignment and typography every section header uses.
 import './headers/headerFonts.css';
 import './headers/headerSystem.css';
+// The one premium 3D action plate: every admin button family (page actions,
+// modal actions, confirm dialogs, toolbars) picks up its geometry, sheen,
+// depth and states from here. Imported last so it wins over page skins.
+import './buttons.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

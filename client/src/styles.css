@@ -158,6 +158,69 @@
   /* Hover elevation is tinted with the element's own accent, never grey. */
   --ui-elev-accent: 0 4px 10px -6px color-mix(in srgb, var(--primary) 42%, transparent),
     0 14px 26px -16px color-mix(in srgb, var(--primary) 70%, transparent);
+
+  /*
+   * ------------------------------------------------ premium action plate --
+   * ONE physical model for every button in the admin panel: the shared
+   * `Button` (see `.btn` below) and every page-level action class (see
+   * buttons.css) draw their geometry, sheen and depth from these tokens, so a
+   * save button in Settings and a create button in Tables are the same object.
+   *
+   *   geometry  a rounded rectangle, never a pill, one radius for the panel
+   *   sheen     a light wash falling from the top edge of the fill
+   *   edge      a lit top hairline; the underside darkens into the cast
+   *   depth     a tight contact shadow plus a wide, soft cast shadow
+   *
+   * Families (primary / secondary / destructive …) only swap fill, ink and
+   * glow, so a theme switch repaints every button at once and a hover can
+   * only ever deepen the button's own colour.
+   */
+  --btn-radius: 12px;
+  --btn-radius-sm: 10px;
+  --btn-sheen: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 30%, transparent),
+    color-mix(in srgb, #ffffff 8%, transparent) 46%,
+    transparent 74%
+  );
+  /* Filled plates keep a stronger top light so the raised edge still reads. */
+  --btn-sheen-strong: linear-gradient(
+    180deg,
+    color-mix(in srgb, #ffffff 34%, transparent),
+    color-mix(in srgb, #ffffff 9%, transparent) 52%,
+    color-mix(in srgb, #10141f 6%, transparent) 100%
+  );
+  --btn-edge: inset 0 1px 0 color-mix(in srgb, #ffffff 60%, transparent);
+  --btn-under: inset 0 -2px 3px color-mix(in srgb, #10141f 9%, transparent);
+  --btn-depth-1: var(--btn-edge), var(--btn-under),
+    0 1px 2px rgba(23, 26, 43, 0.1),
+    0 5px 12px -7px rgba(23, 26, 43, 0.3);
+  --btn-depth-2: var(--btn-edge), var(--btn-under),
+    0 2px 4px rgba(23, 26, 43, 0.12),
+    0 12px 22px -12px rgba(23, 26, 43, 0.34);
+  --btn-depth-press: inset 0 2px 6px color-mix(in srgb, #10141f 26%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 18%, transparent);
+  /* A filled accent plate casts its shadow in its own hue, never in grey. */
+  --btn-accent-depth: inset 0 1px 0 color-mix(in srgb, #ffffff 42%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 22%, transparent),
+    0 2px 4px -1px color-mix(in srgb, var(--primary) 45%, transparent),
+    0 12px 24px -12px color-mix(in srgb, var(--primary) 88%, transparent);
+  --btn-accent-depth-hover: inset 0 1px 0 color-mix(in srgb, #ffffff 50%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 26%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--primary) 48%, transparent),
+    0 18px 32px -14px color-mix(in srgb, var(--primary) 92%, transparent),
+    0 0 22px -6px color-mix(in srgb, var(--primary) 52%, transparent);
+  --btn-danger-depth: inset 0 1px 0 color-mix(in srgb, #ffffff 40%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 24%, transparent),
+    0 2px 4px -1px color-mix(in srgb, var(--danger) 45%, transparent),
+    0 12px 24px -12px color-mix(in srgb, var(--danger) 82%, transparent);
+  --btn-danger-depth-hover: inset 0 1px 0 color-mix(in srgb, #ffffff 48%, transparent),
+    inset 0 -3px 6px color-mix(in srgb, #10141f 28%, transparent),
+    0 4px 8px -3px color-mix(in srgb, var(--danger) 48%, transparent),
+    0 18px 32px -14px color-mix(in srgb, var(--danger) 86%, transparent),
+    0 0 22px -6px color-mix(in srgb, var(--danger) 46%, transparent);
+  --btn-halo: 0 0 0 3px color-mix(in srgb, var(--primary) 26%, transparent);
+  --btn-halo-danger: 0 0 0 3px color-mix(in srgb, var(--danger) 28%, transparent);
   /*
    * Accent ramps used by every hover in the app. Each one is the same hue as
    * the element's resting colour, only deeper and richer: hover mixes 12% of
@@ -247,6 +310,18 @@
     0 24px 48px -24px rgba(0, 0, 0, 0.72), var(--ui-highlight);
   --ui-elev-accent: 0 4px 12px -6px rgba(0, 0, 0, 0.5),
     0 14px 26px -16px color-mix(in srgb, var(--primary) 48%, transparent);
+  /* On a near-black canvas a 60% white hairline glares, so the plate keeps a
+     quiet rim and pushes the cast shadow deeper — same geometry, same lift. */
+  --btn-edge: inset 0 1px 0 color-mix(in srgb, #ffffff 22%, transparent);
+  --btn-under: inset 0 -2px 3px rgba(0, 0, 0, 0.42);
+  --btn-depth-1: var(--btn-edge), var(--btn-under),
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    0 6px 14px -8px rgba(0, 0, 0, 0.6);
+  --btn-depth-2: var(--btn-edge), var(--btn-under),
+    0 2px 5px rgba(0, 0, 0, 0.55),
+    0 14px 26px -14px rgba(0, 0, 0, 0.7);
+  --btn-depth-press: inset 0 2px 6px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 12%, transparent);
   /* A dark surface sits closer to the accent, so the tint steps are read as
      brightness rather than as a wash: same hue, slightly stronger. */
   --theme-primary-tint-hover: color-mix(in srgb, var(--primary) 22%, var(--surface));
@@ -671,18 +746,21 @@ a { color: var(--primary); }
 /* ---------------------------------------------------------------- buttons */
 
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-  border-radius: var(--radius-pill);
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border-radius: var(--btn-radius);
   border: 1px solid var(--border-strong);
-  background: var(--surface);
+  background-color: var(--surface);
+  background-image: var(--btn-sheen);
   color: var(--text);
-  padding: 9px 15px;
+  padding: 9px 16px;
   font-size: 13.5px;
-  font-weight: 650;
+  font-weight: 700;
+  line-height: 1.2;
   cursor: pointer;
   min-height: 40px;
-  box-shadow: var(--ui-elev-1);
+  box-shadow: var(--btn-depth-1);
   transition: background-color var(--ui-dur) var(--ui-ease),
+    background-image var(--ui-dur) var(--ui-ease),
     border-color var(--ui-dur) var(--ui-ease),
     box-shadow var(--ui-dur) var(--ui-ease),
     color var(--ui-dur) var(--ui-ease),
@@ -690,6 +768,9 @@ a { color: var(--primary); }
   text-decoration: none;
   white-space: nowrap;
 }
+/* Icons and labels share one centred row, so an icon can never push the label
+   off-centre and an RTL label keeps the same optical middle as an LTR one. */
+.btn > :is(svg, .icon, .spinner) { flex: none; }
 /*
  * States are explicit rather than an opacity fade: a disabled button keeps a
  * legible label on a muted surface, destructive buttons stay red (and get a
@@ -699,18 +780,23 @@ a { color: var(--primary); }
 /* A neutral button deepens into its own theme tint — same hue as the accent,
    one step richer than rest — and lifts by a single pixel. */
 .btn:hover:not(:disabled) {
-  background: var(--theme-primary-tint-hover);
+  background-color: var(--theme-primary-tint-hover);
   border-color: var(--theme-primary-border);
   color: var(--theme-primary-strong);
   transform: var(--ui-lift);
-  box-shadow: var(--ui-elev-2);
+  box-shadow: var(--btn-depth-2),
+    0 0 0 1px color-mix(in srgb, var(--primary) 14%, transparent);
 }
 .btn:active:not(:disabled) {
-  background: var(--theme-primary-tint-active);
+  background-color: var(--theme-primary-tint-active);
   transform: var(--ui-press);
-  box-shadow: inset 0 2px 5px rgba(16, 22, 38, 0.14);
+  box-shadow: var(--btn-depth-press);
 }
-.btn:focus-visible { outline: 2px solid var(--focus-ring); outline-offset: 2px; }
+.btn:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: var(--btn-depth-1), var(--btn-halo);
+}
 .btn:disabled {
   opacity: 1;
   background: var(--surface-2);
@@ -725,17 +811,10 @@ a { color: var(--primary); }
    highlight and the shadow sits in the accent's own hue. */
 .btn--primary {
   background-color: var(--primary);
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in srgb, #ffffff 15%, transparent),
-    transparent 64%
-  );
-  border-color: var(--theme-primary-deep);
+  background-image: var(--btn-sheen-strong);
+  border-color: color-mix(in srgb, var(--primary) 74%, #10141f);
   color: var(--primary-ink);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 32%, transparent),
-    0 6px 16px -10px color-mix(in srgb, var(--primary) 90%, transparent),
-    0 2px 4px -2px color-mix(in srgb, var(--primary) 50%, transparent);
+  box-shadow: var(--btn-accent-depth);
 }
 /* Deeper accent on hover — the same hue at a richer saturation, exactly what
    the theme rules demand — with the shadow and sheen stepped up together. */
@@ -743,16 +822,14 @@ a { color: var(--primary); }
   background-color: var(--theme-primary-hover);
   border-color: var(--theme-primary-active);
   color: var(--primary-ink);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 38%, transparent),
-    0 10px 24px -12px color-mix(in srgb, var(--primary) 95%, transparent),
-    0 3px 6px -3px color-mix(in srgb, var(--primary) 62%, transparent);
+  box-shadow: var(--btn-accent-depth-hover);
+  transform: var(--ui-lift);
 }
 .btn--primary:active:not(:disabled) {
   background-color: var(--theme-primary-active);
-  box-shadow:
-    inset 0 2px 6px color-mix(in srgb, #10141f 26%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent);
+  background-image: var(--btn-sheen-strong);
+  box-shadow: var(--btn-depth-press);
+  transform: var(--ui-press);
 }
 .btn--primary:disabled {
   background: color-mix(in srgb, var(--primary) 20%, var(--surface));
@@ -768,30 +845,22 @@ a { color: var(--primary); }
 }
 .btn--danger {
   background-color: var(--danger);
-  background-image: linear-gradient(
-    180deg,
-    color-mix(in srgb, #ffffff 14%, transparent),
-    transparent 64%
-  );
+  background-image: var(--btn-sheen-strong);
   border-color: color-mix(in srgb, var(--danger) 82%, #10141f);
   color: #fff;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 28%, transparent),
-    0 6px 16px -10px color-mix(in srgb, var(--danger) 80%, transparent);
+  box-shadow: var(--btn-danger-depth);
 }
 .btn--danger:hover:not(:disabled) {
   background-color: var(--danger-hover);
   border-color: var(--danger-active);
   color: #fff;
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent),
-    0 10px 24px -12px color-mix(in srgb, var(--danger) 78%, transparent);
+  box-shadow: var(--btn-danger-depth-hover);
+  transform: var(--ui-lift);
 }
 .btn--danger:active:not(:disabled) {
   background-color: var(--danger-active);
-  box-shadow:
-    inset 0 2px 6px color-mix(in srgb, #10141f 30%, transparent),
-    inset 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent);
+  box-shadow: var(--btn-depth-press);
+  transform: var(--ui-press);
 }
 .btn--danger:focus-visible { outline-color: var(--focus-ring-danger); }
 /* Muted red, not an almost-invisible label. */
@@ -801,22 +870,56 @@ a { color: var(--primary); }
   color: color-mix(in srgb, var(--danger) 72%, var(--text));
   box-shadow: none;
 }
-.btn--danger-soft { background: var(--danger-soft); border-color: transparent; color: var(--danger); }
+.btn--danger-soft {
+  background-color: var(--danger-soft);
+  background-image: var(--btn-sheen);
+  border-color: color-mix(in srgb, var(--danger) 26%, transparent);
+  color: color-mix(in srgb, var(--danger) 88%, #10141f);
+  box-shadow:
+    var(--btn-edge),
+    0 1px 2px rgba(120, 16, 16, 0.12),
+    0 8px 16px -10px color-mix(in srgb, var(--danger) 48%, transparent);
+}
 /* Muted destructive plate: hover stays inside the red family and only deepens. */
 .btn--danger-soft:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--danger) 20%, var(--surface));
-  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  background-color: color-mix(in srgb, var(--danger) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 36%, transparent);
   color: color-mix(in srgb, var(--danger) 88%, #10141f);
-  box-shadow: 0 6px 14px -10px color-mix(in srgb, var(--danger) 55%, transparent);
+  box-shadow:
+    var(--btn-edge),
+    0 2px 4px rgba(120, 16, 16, 0.14),
+    0 14px 24px -12px color-mix(in srgb, var(--danger) 58%, transparent);
+  transform: var(--ui-lift);
 }
-.btn--ghost { background: transparent; border-color: transparent; color: var(--text-soft); }
+.btn--danger-soft:active:not(:disabled) {
+  background-color: color-mix(in srgb, var(--danger) 26%, var(--surface));
+  box-shadow: inset 0 2px 6px color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.btn--danger-soft:focus-visible { outline-color: var(--focus-ring-danger); }
+.btn--ghost {
+  background-color: transparent;
+  background-image: none;
+  border-color: transparent;
+  color: var(--text-soft);
+  box-shadow: none;
+}
 .btn--ghost:hover:not(:disabled) {
-  background: var(--theme-primary-tint-hover);
+  background-color: var(--theme-primary-tint-hover);
   border-color: transparent;
   color: var(--theme-primary-strong);
+  box-shadow: none;
+  transform: none;
 }
-.btn--sm { padding: 6px 11px; font-size: 12.5px; min-height: 34px; }
-.btn--icon { padding: 8px; min-width: 38px; min-height: 38px; border-radius: 12px; }
+.btn--sm { padding: 6px 12px; font-size: 12.5px; min-height: 34px; border-radius: var(--btn-radius-sm); }
+/* Icon-only keeps the same plate and depth, squared off so the glyph sits in
+   the optical centre of a rounded rectangle instead of a stretched pill. */
+.btn--icon {
+  padding: 8px;
+  min-width: 38px;
+  min-height: 38px;
+  border-radius: var(--btn-radius-sm);
+  gap: 0;
+}
 .btn--block { width: 100%; }
 .btn-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 
