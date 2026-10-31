@@ -1,6 +1,7 @@
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import DashIcon from './DashIcon';
 import { localized, useI18n } from '../../i18n';
+import { useAuth } from '../../context/AuthContext';
 
 /*
  * Café scene: sunrise over pale green hills with the illustrated storefront on
@@ -56,10 +57,23 @@ function CafeScene() {
   );
 }
 
-/** Wide, shallow welcome banner. The business name always comes from the API. */
+/**
+ * Wide, shallow welcome banner.
+ *
+ * Both halves of the greeting are live data: the brand name comes from the
+ * business profile in the reader's language, and the person's name comes from
+ * the signed-in account's own `full_name`. The name is never derived from the
+ * username, the email or the role, and when the profile has no full name the
+ * greeting drops the name entirely instead of inventing one.
+ */
 export default function WelcomeBanner({ business }) {
   const { t, locale } = useI18n();
-  const name = localized(business, 'name', locale) || business?.name || t('app_name');
+  const { user } = useAuth();
+  const brand = localized(business, 'name', locale) || business?.name || t('app_name');
+  const fullName = String(user?.full_name || '').trim();
+  const title = fullName
+    ? t('dash_welcome', { brand, name: fullName })
+    : t('dash_welcome_generic', { brand });
 
   return (
     <section className="welcome">
@@ -70,7 +84,7 @@ export default function WelcomeBanner({ business }) {
         <div className="welcome__head">
           <DashIcon name="dashboard" tone="blue" size={48} hover />
           <div className="welcome__titles">
-            <h1 className="welcome__title">{t('dash_welcome', { name })}</h1>
+            <h1 className="welcome__title">{title}</h1>
             <p className="welcome__sub">{t('dash_welcome_sub')}</p>
           </div>
         </div>
