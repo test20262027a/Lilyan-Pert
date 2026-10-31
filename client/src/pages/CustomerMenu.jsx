@@ -560,7 +560,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         {featuredProducts.length > 0 ? (
           <CustomerPanel
             className="cui-panel--products"
-            icon="star"
+            icon="award"
             tone="amber"
             title={t('customer_menu_featured')}
             count={fmtNumber(featuredProducts.length, locale)}

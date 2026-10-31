@@ -1,15 +1,16 @@
 /*
  * The customer ordering panel's section headers.
  *
- * One system for every section: a colorful, slightly raised 3D tile, one short
- * title and an optional trailing badge (item count or state pill). Only the
- * `cui-sect--<tone>` color family changes between sections, so the icons are
- * instantly distinguishable while the geometry stays identical everywhere.
+ * One system for every section, laid out in three clear zones: a colourful 3D
+ * tile, the title, and a trailing aside (item count or state pill). Only the
+ * `cui-sect--<tone>` colour family changes between sections, so the icons are
+ * instantly distinguishable while the geometry — tile size, gap, title rhythm,
+ * aside slot — stays identical everywhere, in both directions.
  *
- * Three tones of the same hue do the 3D work on the tile:
- *   --sect-hi   the lit top face,
- *   --sect-lo   the shaded bottom face (also the icon's drop shadow),
- *   --sect-wash the hue mixed into the header bar and its rule.
+ * The tone drives four things, so a header always reads as one piece:
+ *   --sect-hi    the lit top face of the tile,
+ *   --sect-lo    the shaded bottom face (also the icon's drop shadow),
+ *   --sect-wash  the hue mixed into the bar, its rule and the count pill.
  */
 
 .cui-sect {
@@ -17,39 +18,66 @@
   --sect-lo: #178a55;
   --sect-wash: #178a55;
 
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-height: 62px;
+  gap: 12px;
+  min-height: 64px;
   padding: 11px 16px;
   background:
-    radial-gradient(140% 170% at 50% -35%, color-mix(in srgb, var(--sect-wash) 14%, transparent), transparent 72%),
+    radial-gradient(120% 160% at 50% -55%, color-mix(in srgb, var(--sect-wash) 15%, transparent), transparent 70%),
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--sect-wash) 7%, var(--surface)),
-      color-mix(in srgb, var(--sect-wash) 2%, var(--surface))
+      color-mix(in srgb, var(--sect-wash) 6%, var(--surface)),
+      color-mix(in srgb, var(--sect-wash) 1%, var(--surface))
     );
-  border-bottom: 1px solid color-mix(in srgb, var(--sect-wash) 16%, var(--cui-line, var(--border)));
+  border-bottom: 1px solid color-mix(in srgb, var(--sect-wash) 18%, var(--cui-line, var(--border)));
 }
 
-/* The tile: a lit top edge, a shaded bottom bevel, a colored cast shadow and a
-   soft gloss overlay — enough depth to read as raised, never glossy plastic. */
+/* --------------------------------------------------------------- the tile */
+
+/* A lit top face, a shaded bottom bevel, a coloured cast shadow and a gloss
+   overlay: enough depth to read as a raised object, never glossy plastic. The
+   halo behind it spills the section's hue without touching the icon's contrast. */
 .cui-sect__icon {
   position: relative;
   isolation: isolate;
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 13px;
+  border-radius: 14px;
   color: #ffffff;
-  background: linear-gradient(165deg, var(--sect-hi) 0%, var(--sect-lo) 100%);
+  background:
+    linear-gradient(152deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.06) 40%, transparent 64%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--sect-hi) 90%, #ffffff) 0%,
+      var(--sect-hi) 30%,
+      color-mix(in srgb, var(--sect-hi) 42%, var(--sect-lo)) 64%,
+      var(--sect-lo) 100%
+    );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 6px color-mix(in srgb, var(--sect-lo) 62%, #000000),
-    0 7px 15px -6px color-mix(in srgb, var(--sect-lo) 62%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -3px 7px color-mix(in srgb, var(--sect-lo) 55%, #000000),
+    inset 0 0 0 1px color-mix(in srgb, var(--sect-lo) 22%, transparent),
+    0 9px 18px -8px color-mix(in srgb, var(--sect-wash) 70%, transparent),
     0 2px 4px rgba(16, 22, 38, 0.12);
+}
+
+.cui-sect__icon::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  z-index: -1;
+  border-radius: 19px;
+  background: radial-gradient(
+    circle at 50% 58%,
+    color-mix(in srgb, var(--sect-wash) 26%, transparent),
+    transparent 72%
+  );
+  pointer-events: none;
 }
 
 .cui-sect__icon::after {
@@ -57,33 +85,74 @@
   position: absolute;
   inset: 1px 1px auto;
   height: 46%;
-  border-radius: 12px 12px 55% 55% / 12px 12px 42% 42%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.46), rgba(255, 255, 255, 0.02));
+  border-radius: 13px 13px 55% 55% / 13px 13px 42% 42%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.02));
   pointer-events: none;
 }
 
 .cui-sect__icon .icon {
   position: relative;
   z-index: 1;
-  filter: drop-shadow(0 1px 1px color-mix(in srgb, var(--sect-lo) 65%, #000000));
+  filter: drop-shadow(0 1.2px 1.2px color-mix(in srgb, var(--sect-lo) 72%, #000000));
+}
+
+/* --------------------------------------------------------------- the title */
+
+.cui-sect__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .cui-sect__title {
-  flex: 1 1 auto;
-  min-width: 0;
   margin: 0;
-  font-size: 15px;
+  font-size: 15.5px;
+  line-height: 1.3;
   font-weight: 820;
   letter-spacing: 0.1px;
-  color: var(--text);
+  /* The section hue tints the ink just enough to belong to its icon while the
+     title keeps full body contrast. */
+  color: color-mix(in srgb, var(--sect-wash) 18%, var(--text));
   overflow-wrap: break-word;
   text-wrap: pretty;
 }
 
-.cui-sect > .cui-count,
-.cui-sect > .cui-state,
-.cui-sect > .cui-sect__badge {
+.cui-sect__sub {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--muted, color-mix(in srgb, var(--text) 62%, transparent));
+  overflow-wrap: break-word;
+}
+
+/* --------------------------------------------------------------- the aside */
+
+/* Count pill or state pill — always flushed to the far end, never crowded
+   against a long translated title. */
+.cui-sect__aside {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+}
+
+.cui-sect__aside > * {
+  flex: none;
+}
+
+/* The item counter of every section header follows the section's own hue, so a
+   rose advertisement bar never carries a green badge. */
+.cui-sect .cui-count {
+  color: color-mix(in srgb, var(--sect-wash) 84%, #0b1220);
+  background: color-mix(in srgb, var(--sect-wash) 13%, var(--surface));
+  border-color: color-mix(in srgb, var(--sect-wash) 32%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.65),
+    0 2px 6px -3px color-mix(in srgb, var(--sect-wash) 70%, transparent);
 }
 
 /* ------------------------------------------------------------- color families */
@@ -95,9 +164,9 @@
 }
 
 .cui-sect--amber {
-  --sect-hi: #ffca5a;
-  --sect-lo: #d98906;
-  --sect-wash: #d98906;
+  --sect-hi: #ffcb63;
+  --sect-lo: #d38305;
+  --sect-wash: #d38305;
 }
 
 .cui-sect--violet {
@@ -128,41 +197,52 @@
 
 [data-theme='dark'] .cui-sect {
   background:
-    radial-gradient(140% 170% at 50% -35%, color-mix(in srgb, var(--sect-wash) 30%, transparent), transparent 72%),
+    radial-gradient(120% 160% at 50% -55%, color-mix(in srgb, var(--sect-wash) 30%, transparent), transparent 70%),
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--sect-wash) 16%, var(--surface)),
-      color-mix(in srgb, var(--sect-wash) 6%, var(--surface))
+      color-mix(in srgb, var(--sect-wash) 15%, var(--surface)),
+      color-mix(in srgb, var(--sect-wash) 5%, var(--surface))
     );
   border-bottom-color: color-mix(in srgb, var(--sect-wash) 34%, var(--cui-line, var(--border)));
 }
 
 [data-theme='dark'] .cui-sect__icon {
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.28),
-    inset 0 -2px 7px color-mix(in srgb, var(--sect-lo) 70%, #000000),
-    0 8px 18px -8px color-mix(in srgb, var(--sect-lo) 75%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -3px 8px color-mix(in srgb, var(--sect-lo) 65%, #000000),
+    inset 0 0 0 1px color-mix(in srgb, var(--sect-lo) 40%, transparent),
+    0 10px 20px -9px color-mix(in srgb, var(--sect-wash) 80%, transparent),
     0 2px 5px rgba(0, 0, 0, 0.42);
+}
+
+[data-theme='dark'] .cui-sect__title {
+  color: color-mix(in srgb, var(--sect-wash) 26%, #ffffff);
+}
+
+[data-theme='dark'] .cui-sect .cui-count {
+  color: color-mix(in srgb, var(--sect-hi) 74%, #ffffff);
+  background: color-mix(in srgb, var(--sect-wash) 26%, var(--surface));
+  border-color: color-mix(in srgb, var(--sect-wash) 46%, transparent);
 }
 
 /* --------------------------------------------------------------- breakpoints */
 
 @media (max-width: 720px) {
   .cui-sect {
-    min-height: 56px;
+    min-height: 58px;
     padding: 10px 14px;
-    gap: 9px;
+    gap: 10px;
   }
   .cui-sect__icon {
-    width: 36px;
-    height: 36px;
+    width: 37px;
+    height: 37px;
     border-radius: 12px;
   }
   .cui-sect__icon .icon {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
   }
   .cui-sect__title {
-    font-size: 14px;
+    font-size: 14.5px;
   }
 }
