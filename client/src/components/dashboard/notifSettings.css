@@ -16,14 +16,8 @@
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  background: linear-gradient(
-    150deg,
-    rgba(255, 255, 255, 0.97),
-    color-mix(in srgb, var(--theme-primary) 5%, #ffffff)
-  );
-}
-[data-theme='dark'] .dash .card.notif-card {
-  background: linear-gradient(150deg, rgba(32, 37, 49, 0.97), rgba(22, 26, 34, 0.94));
+  /* The supplied artwork, fitted to the whole card without cropping. */
+  background: #fdeef6 url('/headers/notifications-bg.avif') no-repeat center / 100% 100%;
 }
 .dash .card.notif-card { border-radius: 20px; }
 
@@ -83,7 +77,8 @@
   padding: 10px 14px;
   border: 1px solid var(--glass-line);
   border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.6));
+  backdrop-filter: blur(6px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     0 8px 18px -16px rgba(16, 22, 38, 0.5);
@@ -286,91 +281,12 @@
  * the layout — no control ever lives inside it.
  */
 .dash .notif-card__art {
-  position: relative;
-  flex: 0 0 32%;
-  min-width: 240px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background:
-    radial-gradient(70% 55% at 50% 42%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--theme-primary) 7%, #ffffff),
-      color-mix(in srgb, var(--theme-primary) 17%, #ffffff)
-    );
+  flex: 0 0 26%;
+  min-width: 200px;
 }
-[data-theme='dark'] .dash .notif-card__art {
-  background:
-    radial-gradient(70% 55% at 50% 42%, rgba(255, 255, 255, 0.06) 0%, transparent 70%),
-    linear-gradient(
-      165deg,
-      color-mix(in srgb, var(--theme-primary) 14%, #1b2030),
-      color-mix(in srgb, var(--theme-primary) 24%, #1b2030)
-    );
-}
-
-.dash .notif-art__ring,
-.dash .notif-art__halo,
-.dash .notif-art__pedestal {
-  position: absolute;
-  inset-inline-start: 50%;
-  pointer-events: none;
-}
-.dash .notif-art__ring {
-  top: 50%;
-  width: 250px;
-  height: 250px;
-  margin: -141px 0 0 -125px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--theme-primary) 20%, transparent);
-  box-shadow: inset 0 0 0 26px color-mix(in srgb, #ffffff 42%, transparent);
-}
-.dash .notif-art__halo {
-  top: 50%;
-  width: 188px;
-  height: 188px;
-  margin: -110px 0 0 -94px;
-  border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--theme-primary) 20%, transparent) 0%, transparent 68%);
-}
-.dash .notif-art__pedestal {
-  bottom: 34px;
-  width: 132px;
-  height: 26px;
-  margin-inline-start: -66px;
-  border-radius: 50%;
-  background: radial-gradient(
-    62% 100% at 50% 34%,
-    color-mix(in srgb, var(--theme-primary) 26%, #ffffff) 0%,
-    color-mix(in srgb, var(--theme-primary) 8%, transparent) 72%,
-    transparent 100%
-  );
-}
-.dash .notif-art__bell {
-  position: relative;
-  z-index: 2;
-  margin-bottom: 20px;
-  filter: drop-shadow(0 16px 22px color-mix(in srgb, var(--theme-primary) 30%, transparent));
-}
-/* The little notification bubble hovering over the bell. */
-.dash .notif-art__chip {
-  position: absolute;
-  z-index: 3;
-  top: calc(50% - 66px);
-  inset-inline-start: calc(50% + 26px);
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  color: #ffffff;
-  background: linear-gradient(158deg, #f88ec0, #db2777);
-  border: 1px solid #be185d;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.6),
-    0 8px 16px -8px rgba(190, 24, 93, 0.6);
-}
+/* The artwork's bell sits on the physical left of the picture, so the spacer
+   is on the left in both directions. */
+html[dir='ltr'] .dash .notif-card__art { order: -1; }
 
 /* --- responsive -------------------------------------------------------- */
 
@@ -380,18 +296,17 @@
 }
 
 @media (max-width: 900px) {
-  /* Stacked: the illustration leads, the settings follow. */
-  .dash .notif-card { flex-direction: column; }
+  /* Stacked: the whole picture sits on top at its natural proportions (never
+     cropped) and the settings follow on the artwork's own soft pink. */
+  .dash .card.notif-card { flex-direction: column; background-image: none; }
   .dash .notif-card__art {
     order: -1;
     flex: 0 0 auto;
     min-width: 0;
-    min-height: 176px;
+    width: 100%;
+    aspect-ratio: 2 / 1;
+    background: url('/headers/notifications-bg.avif') no-repeat center / 100% 100%;
   }
-  .dash .notif-art__bell { margin-bottom: 10px; }
-  .dash .notif-art__pedestal { bottom: 18px; }
-  .dash .notif-art__ring { width: 210px; height: 210px; margin: -121px 0 0 -105px; }
-  .dash .notif-art__halo { width: 160px; height: 160px; margin: -96px 0 0 -80px; }
 }
 
 @media (max-width: 720px) {
@@ -402,3 +317,21 @@
   /* Touch-sized controls on a phone. */
   .dash .notif-card .switch-row { padding: 11px 12px; }
 }
+
+/* Translucent plates keep the controls readable over the artwork. */
+.dash .notif-card .push-devices,
+.dash .notif-card .sound-picker {
+  padding: 12px 14px;
+  border: 1px solid var(--glass-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(6px);
+}
+.dash .notif-card .sound-picker { margin-top: 0; }
+[data-theme='dark'] .dash .notif-card .push-devices,
+[data-theme='dark'] .dash .notif-card .sound-picker,
+[data-theme='dark'] .dash .notif-card .switch-row {
+  background: rgba(22, 26, 34, 0.72);
+}
+.dash .notif-card__head { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
+

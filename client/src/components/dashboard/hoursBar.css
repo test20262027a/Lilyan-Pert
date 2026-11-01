@@ -13,7 +13,7 @@
 .dash .card.hours-bar {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   min-height: 90px;
   padding: 14px 20px;
   overflow: hidden;
@@ -35,12 +35,16 @@
 .dash .hours-bar__group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
-  padding-inline: 16px;
+  padding-inline: 10px;
+  /* Every group takes a share of the bar and centres its content, so the row
+     fills the card edge to edge with no empty end. */
+  flex: 1 1 auto;
+  justify-content: center;
 }
-.dash .hours-bar__group:first-child { padding-inline-start: 0; }
-.dash .hours-bar__group:last-child { padding-inline-end: 0; }
+.dash .hours-bar__group:first-child { padding-inline-start: 0; justify-content: flex-start; flex-grow: 0.6; }
+.dash .hours-bar__group:last-child { padding-inline-end: 0; justify-content: flex-end; flex-grow: 0.6; }
 
 .dash .hours-bar__title {
   font-size: clamp(13.5px, 1.05vw, 15px);
@@ -156,15 +160,18 @@
 
 /* --- responsive ------------------------------------------------------- */
 
-@media (max-width: 1180px) {
+@media (max-width: 1240px) {
   /* A wrapped row has no single seam left to draw: the gap separates. */
   .dash .hours-bar {
+    flex-wrap: wrap;
     min-height: 0;
     row-gap: 10px;
     padding-block: 16px;
   }
   .dash .hours-bar__sep { display: none; }
-  .dash .hours-bar__group { padding-inline: 0 18px; }
+  .dash .hours-bar__group,
+  .dash .hours-bar__group:first-child,
+  .dash .hours-bar__group:last-child { padding-inline: 0 18px; flex: 0 1 auto; justify-content: flex-start; }
 }
 
 @media (max-width: 720px) {

@@ -385,20 +385,9 @@ export default function NotificationSettings({
         </div>
       </div>
 
-      {/*
-       * Decorative illustration. It carries no control, so the artwork can
-       * never overlap a switch, a select or a button — the settings live on
-       * their own clean surface beside it.
-       */}
-      <div className="notif-card__art" aria-hidden="true">
-        <span className="notif-art__ring" />
-        <span className="notif-art__halo" />
-        <span className="notif-art__pedestal" />
-        <DashIcon name="bell" tone="pink" size={66} className="notif-art__bell" />
-        <span className="notif-art__chip">
-          <Icon name="bell" size={14} />
-        </span>
-      </div>
+      {/* Open space that keeps the uploaded artwork (drawn as the card's own
+          background) clear of every control. */}
+      <div className="notif-card__art" aria-hidden="true" />
     </section>
   );
 }
