@@ -1,14 +1,16 @@
 /*
  * Notification priorities.
  *
- * One place decides both the badge colour and the number on it, so the header
- * bell can never disagree with the panel:
- *   unread orders   → purple  (highest)
+ * One place decides the badge's colour, its three-colour proportions and the
+ * number on it, so the header bell can never disagree with the panel:
+ *   unread orders   → green (highest)
  *   unread reviews  → gold
  *   unread activity → red
  *   nothing unread  → no badge
- * The count is always the total unread across all three categories; only the
- * colour follows the highest-priority category that still has unread rows.
+ * The count is always the total unread across all three categories. The bell's
+ * plate splits itself into those three colours by each category's share of
+ * that total, and the bell button behind it follows the highest-priority
+ * category that still has unread rows.
  */
 
 import { fmtDateTime, fmtDigits } from './format';
@@ -35,8 +37,27 @@ export function priorityOf(unread) {
   const reviews = Number(unread?.reviews) || 0;
   const activities = Number(unread?.activities) || 0;
   const total = orders + reviews + activities;
-  const tone = orders > 0 ? 'purple' : reviews > 0 ? 'gold' : activities > 0 ? 'red' : 'none';
+  const tone = orders > 0 ? 'green' : reviews > 0 ? 'gold' : activities > 0 ? 'red' : 'none';
   return { total, tone };
+}
+
+/**
+ * Proportions of the summary badge's three colours, as the two boundaries a
+ * single linear-gradient needs: green (orders) owns everything before `s1`,
+ * gold (reviews) everything up to `s2`, coral (activity) the rest. Each slice
+ * is its category's share of the unread total, so a category with nothing
+ * unread collapses to zero width and one busy category fills the plate alone.
+ * With nothing unread the plate is one solid green — the badge itself is not
+ * shown in that state.
+ */
+export function unreadSlices(unread) {
+  const orders = Number(unread?.orders) || 0;
+  const reviews = Number(unread?.reviews) || 0;
+  const activities = Number(unread?.activities) || 0;
+  const total = orders + reviews + activities;
+  if (total <= 0) return { s1: '100%', s2: '100%' };
+  const pct = (n) => `${Math.round((n / total) * 10000) / 100}%`;
+  return { s1: pct(orders), s2: pct(orders + reviews) };
 }
 
 /** Compact readable count for the badge. */

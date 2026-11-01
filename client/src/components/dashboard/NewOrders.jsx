@@ -48,7 +48,7 @@ export default function NewOrders({
     <SectionCard
       className="recent-orders"
       icon="receipt"
-      iconTone="orange"
+      iconTone="green"
       title={t('dash_new_orders')}
       actions={<RecentOrdersFilter value={status} onChange={onStatusChange} counts={counts} />}
     >

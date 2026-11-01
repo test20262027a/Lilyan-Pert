@@ -491,18 +491,29 @@
 
 /* Bell emphasis follows the badge priority; the badge itself is the loud part. */
 .hdr-bell__btn.is-alert { color: var(--text-soft); }
-.hdr-bell__btn.is-purple { color: #6f45d6; border-color: color-mix(in srgb, #8054e8 32%, var(--border-strong)); }
+.hdr-bell__btn.is-green { color: #0f7a3d; border-color: color-mix(in srgb, #34c97a 34%, var(--border-strong)); }
 .hdr-bell__btn.is-gold { color: #a9721a; border-color: color-mix(in srgb, #f5bc37 45%, var(--border-strong)); }
 .hdr-bell__btn.is-red { color: #c93b41; border-color: color-mix(in srgb, #e94e55 32%, var(--border-strong)); }
 
 /*
- * Count badge. One green identity in every category, theme and appearance —
- * the priority still tints the bell button, never the badge — so the counter
- * always reads as the same raised plate: a glossy gradient, a hairline of inner
- * light, a solid contact edge and a soft green glow. The white figure keeps its
- * contrast against the deepest part of the gradient in light and dark mode.
+ * Count badge. The unread total sits on a raised pill split into three
+ * proportional slices — green orders, gold reviews, coral activity — each sized
+ * by its category's share of the unread rows, so the plate shows at a glance
+ * what is waiting. One busy category fills the whole pill, a category with
+ * nothing unread collapses to zero width, and the bell button behind it still
+ * takes the priority tint. The two slice boundaries are registered percentages,
+ * so a new count slides them across in 220ms instead of jumping, and the white
+ * figure keeps a dark halo so it stays readable on every slice, theme and
+ * appearance.
  */
+@property --ntm-s1 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+@property --ntm-s2 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+
 .hdr-bell__badge {
+  --ntm-orders: #2fc276;
+  --ntm-reviews: #e3a61b;
+  --ntm-activity: #df4a52;
+  --ntm-dir: 90deg;
   position: absolute; top: -4px; inset-inline-end: -4px;
   min-width: 19px; height: 19px; padding: 0 5px;
   display: grid; place-items: center;
@@ -511,30 +522,36 @@
   font-size: 10.5px; font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
-  text-shadow: 0 1px 1px rgba(4, 52, 24, 0.55);
+  text-shadow: 0 1px 2px rgba(6, 32, 20, 0.66), 0 0 1px rgba(6, 32, 20, 0.5);
   background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 52%),
-    linear-gradient(180deg, #34c97a 0%, #12833f 54%, #0a5f2c 100%);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, rgba(6, 32, 20, 0) 46%, rgba(6, 32, 20, 0.2)),
+    linear-gradient(var(--ntm-dir),
+      var(--ntm-orders) 0 var(--ntm-s1),
+      var(--ntm-reviews) var(--ntm-s1) var(--ntm-s2),
+      var(--ntm-activity) var(--ntm-s2) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2px 4px rgba(4, 52, 24, 0.5),
-    0 2px 0 rgba(10, 95, 44, 0.5),
-    0 6px 12px -4px rgba(16, 131, 63, 0.6);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+    inset 0 -2px 4px rgba(6, 32, 20, 0.36),
+    0 2px 0 rgba(10, 74, 40, 0.34),
+    0 6px 12px -4px rgba(16, 110, 62, 0.45);
+  transition:
+    --ntm-s1 0.22s ease, --ntm-s2 0.22s ease,
+    transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   animation: bell-badge-in 0.22s ease;
 }
-/* Hover deepens the green and lifts the plate one step off the bell. */
+/* Read right to left, the order slice starts at the trailing edge. */
+[dir='rtl'] .hdr-bell__badge { --ntm-dir: 270deg; }
+/* Hover deepens every slice a step and lifts the plate off the bell. */
 .hdr-bell__btn:hover .hdr-bell__badge,
 .hdr-bell__badge:hover {
   transform: translateY(-1px) scale(1.04);
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 52%),
-    linear-gradient(180deg, #1fa863 0%, #0c6c33 54%, #074a22 100%);
+  filter: saturate(1.1) brightness(0.9);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -2px 4px rgba(3, 45, 20, 0.6),
-    0 3px 0 rgba(7, 74, 34, 0.55),
-    0 10px 18px -6px rgba(12, 108, 51, 0.7);
+    inset 0 -2px 4px rgba(4, 26, 16, 0.46),
+    0 3px 0 rgba(7, 60, 34, 0.46),
+    0 10px 18px -6px rgba(12, 90, 48, 0.6);
 }
 @keyframes bell-badge-in { from { transform: scale(0.72); opacity: 0; } }
 
@@ -604,9 +621,9 @@
  *   --nt-ink         readable ink on a soft tint (icon, chip)
  *   --nt-glow        the badge's own soft 3D glow
  */
-.notif-tab--purple, .notif-item--purple {
-  --nt-a: #9166f0; --nt-b: #8054e8; --nt-hover: #6f45d6;
-  --nt-on: #ffffff; --nt-ink: #6f45d6; --nt-glow: rgba(128, 84, 232, 0.42);
+.notif-tab--green, .notif-item--green {
+  --nt-a: #34c97a; --nt-b: #12833f; --nt-hover: #0a5f2c;
+  --nt-on: #ffffff; --nt-ink: #0f7a3d; --nt-glow: rgba(18, 131, 63, 0.42);
 }
 .notif-tab--gold, .notif-item--gold {
   --nt-a: #ffd066; --nt-b: #f5bc37; --nt-hover: #dda31f;
@@ -819,11 +836,11 @@
 
 [data-theme='dark'] .notif-panel { background: #1c222d; }
 [data-theme='dark'] .notif-panel__head { background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent); }
-[data-theme='dark'] .notif-item--purple .notif-item__icon { background: rgba(128, 84, 232, 0.18); color: #c9b4fb; }
+[data-theme='dark'] .notif-item--green .notif-item__icon { background: rgba(52, 201, 122, 0.18); color: #86e8b0; }
 [data-theme='dark'] .notif-item--gold .notif-item__icon { background: rgba(245, 188, 55, 0.16); color: #f6d089; }
 [data-theme='dark'] .notif-item--red .notif-item__icon { background: rgba(233, 78, 85, 0.16); color: #f6a7ab; }
 [data-theme='dark'] .notif-empty__icon { background: rgba(255, 255, 255, 0.05); }
-[data-theme='dark'] .notif-item--purple .notif-item__chip { background: rgba(128, 84, 232, 0.22); color: #c9b4fb; }
+[data-theme='dark'] .notif-item--green .notif-item__chip { background: rgba(52, 201, 122, 0.22); color: #86e8b0; }
 [data-theme='dark'] .notif-item--gold .notif-item__chip { background: rgba(245, 188, 55, 0.2); color: #f6d089; }
 [data-theme='dark'] .notif-item--red .notif-item__chip { background: rgba(233, 78, 85, 0.2); color: #f6a7ab; }
 

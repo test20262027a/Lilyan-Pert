@@ -23,19 +23,19 @@ import { ENTITY_KEYS, entityLabelText } from '../activity/activityMeta';
  */
 
 const TONE_ICON = {
-  orders: { icon: 'receipt', tone: 'purple' },
+  orders: { icon: 'receipt', tone: 'green' },
   reviews: { icon: 'star', tone: 'gold' },
   activities: { icon: 'info', tone: 'red' },
 };
 
 /*
  * The colour of a tab's counter and its message dots comes from the category
- * itself, never from the tab's position in the row: orders are purple, reviews
+ * itself, never from the tab's position in the row: orders are green, reviews
  * amber, activity coral, and "all" follows the business theme. The unread tab
  * borrows the colour of the highest-priority category that still has unread
  * rows — the same rule the header badge follows — so the two can never differ.
  */
-const TAB_TONE = { all: 'primary', orders: 'purple', reviews: 'gold', activities: 'red' };
+const TAB_TONE = { all: 'primary', orders: 'green', reviews: 'gold', activities: 'red' };
 const toneOfTab = (key, priority) =>
   key === 'unread' ? (priority.tone === 'none' ? 'primary' : priority.tone) : TAB_TONE[key];
 

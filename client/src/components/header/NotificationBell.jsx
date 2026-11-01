@@ -8,14 +8,15 @@ import { useBusiness } from '../../context/BusinessContext';
 import { useAuth } from '../../context/AuthContext';
 import { get, post } from '../../api';
 import { playSound } from '../../sound';
-import { compactCount, priorityOf } from '../../notifications';
+import { compactCount, priorityOf, unreadSlices } from '../../notifications';
 import NotificationPanel from './NotificationPanel';
 
 /*
  * Bell + panel. The list, the three unread counts and the alert sound all come
  * from the backend feed, so nothing here is faked client-side.
  *
- * The badge is one green plate in every category, theme and appearance; only
+ * The badge plate is split into the three category colours in proportion to
+ * each one's unread rows — green orders, gold reviews, coral activity — and
  * the bell button behind it takes the priority tint (orders first, then
  * reviews, then activity). Nothing is shown once everything has been read.
  */
@@ -40,6 +41,8 @@ export default function NotificationBell() {
   const soundKey = business?.notification_settings?.sound_key;
   const soundVolume = business?.notification_settings?.sound_volume;
   const priority = useMemo(() => priorityOf(unread), [unread]);
+  // The two gradient boundaries that give each category its share of the plate.
+  const slices = useMemo(() => unreadSlices(unread), [unread]);
 
   const load = useCallback(async (options) => {
     // A background push that the OS already announced only refreshes the badge.
@@ -177,7 +180,11 @@ export default function NotificationBell() {
       >
         <Icon name="bell" size={18} />
         {priority.total > 0 ? (
-          <span className={`hdr-bell__badge hdr-bell__badge--${priority.tone}`} aria-hidden="true">
+          <span
+            className={`hdr-bell__badge hdr-bell__badge--${priority.tone}`}
+            style={{ '--ntm-s1': slices.s1, '--ntm-s2': slices.s2 }}
+            aria-hidden="true"
+          >
             {fmtDigits(compactCount(priority.total), locale)}
           </span>
         ) : null}
