@@ -159,6 +159,35 @@
   color: var(--mint-ink);
 }
 
+/*
+ * Too narrow to hang beside a field (phones, small tablets): the calendar
+ * leaves its anchor and becomes a centred sheet over a scrim, so it can never
+ * be clipped by the viewport edge or overlap the field it belongs to.
+ */
+.odate__scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1190;
+  background: rgba(20, 30, 26, 0.34);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  animation: odate-scrim-in 160ms ease-out;
+}
+[data-theme='dark'] .odate__scrim { background: rgba(6, 10, 12, 0.6); }
+@keyframes odate-scrim-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.odate__pop.is-sheet,
+.odate__pop.is-sheet.is-placed {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px;
+  border-radius: 20px;
+}
+
 /* The header row and the day grid share one column track: seven equal columns
    whose width never depends on their own text (`minmax(0, 1fr)`), so a date
    always sits directly under its own weekday — in every language, in both
@@ -199,7 +228,14 @@
   cursor: pointer;
   transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
 }
-.odate__pop-day:hover { background: var(--mint-soft); color: var(--mint-ink); }
+.odate__pop-day:hover:not(:disabled) { background: var(--mint-soft); color: var(--mint-ink); }
+/* A day outside the range the other field allows: visible, but not pickable. */
+.odate__pop-day:disabled {
+  color: color-mix(in srgb, var(--muted) 55%, transparent);
+  background: transparent;
+  border-color: transparent;
+  cursor: not-allowed;
+}
 .odate__pop-day:focus-visible { outline: 2px solid var(--mint); outline-offset: 1px; }
 .odate__pop-day.is-today {
   border-color: color-mix(in srgb, var(--mint) 48%, transparent);
@@ -233,8 +269,12 @@
   font-weight: 700;
   cursor: pointer;
 }
-.odate__pop-today:hover {
+.odate__pop-today:hover:not(:disabled) {
   background: color-mix(in srgb, var(--mint) 16%, var(--surface));
+}
+.odate__pop-today:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .odate__btn {

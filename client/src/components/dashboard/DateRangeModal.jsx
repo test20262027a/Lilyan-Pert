@@ -178,6 +178,10 @@ export default function DateRangeModal({ value, timeZone, locale, onApply, onClo
             value={(picker === 'from' ? from : to) || today}
             today={today}
             timeZone={timeZone}
+            /* The two days bound each other: the start can never be picked
+               after the end, nor the end before the start. */
+            min={picker === 'to' && isDay(from) ? from : undefined}
+            max={picker === 'from' && isDay(to) ? to : undefined}
             onSelect={(day) => {
               if (picker === 'from') setFrom(day);
               else setTo(day);

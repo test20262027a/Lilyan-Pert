@@ -400,6 +400,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* Never wider than the card it sits in, whatever shape it is asked to keep. */
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   min-height: 200px;
   border-radius: 14px;
   border: 1px solid var(--border);
@@ -408,9 +413,12 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
 }
-/* The cover is a wide landscape frame; the logo card stretches to match it. */
+/* The cover is a wide landscape frame; the logo card stretches to match it.
+   `min-height: 0` on purpose: a minimum height on an aspect-ratio box resolves
+   into a minimum WIDTH, which is what used to push the frame out of the card on
+   a phone. The frame keeps its ratio from its own width instead. */
 .set-media-card--cover { grid-template-rows: auto auto auto; }
-.set-media-card--cover .set-media-card__preview { aspect-ratio: 16 / 9; min-height: 200px; }
+.set-media-card--cover .set-media-card__preview { aspect-ratio: 16 / 9; min-height: 0; }
 .set-media-card--logo .set-media-card__preview {
   background:
     radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--theme-primary) 7%, transparent), transparent 70%),
@@ -422,11 +430,13 @@
   background: var(--theme-primary-soft);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 15%, transparent);
 }
+/* Both previews show the whole picture, un-cropped and un-stretched. */
 .set-media-card__preview img {
   width: 100%;
   height: 100%;
+  max-width: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 .set-media-card--logo .set-media-card__preview img {
   object-fit: contain;
@@ -562,16 +572,25 @@
   .set-tabs__fade { width: 26px; }
 
   /* Both media cards stack; the cover keeps its landscape frame on top. */
-  .set-media-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .set-media-card { grid-template-rows: auto auto auto; }
-  .set-media-card--cover .set-media-card__preview { aspect-ratio: 16 / 9; }
+  .set-media-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; width: 100%; min-width: 0; }
+  .set-media-card { grid-template-rows: auto auto auto; min-width: 0; }
+  .set-media-card--cover .set-media-card__preview { aspect-ratio: 16 / 9; min-height: 0; }
   .set-media-card--logo .set-media-card__preview { min-height: 180px; max-height: 240px; }
+  /* The footer never pushes past the card: the button shrinks and the guidance
+     line wraps instead of forcing the row wider than the screen. */
+  .set-media-card__foot { width: 100%; min-width: 0; }
+  .set-media-card__upload { max-width: 100%; }
+  .set-media-card__note { min-height: 0; width: 100%; }
+  .set-media-card__empty { padding: 14px; }
+  .set-media-card__empty-text { max-width: 100%; }
 }
 
 @media (max-width: 430px) {
   .set-tabs__arrow { width: 28px; height: 28px; }
   .set-tab { padding: 7px 10px; }
-  .set-media-card { padding: 12px; }
+  .set-media-card { padding: 10px; gap: 10px; }
+  .set-media-card__preview { border-radius: 12px; }
+  .set-media-card--logo .set-media-card__preview img { padding: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

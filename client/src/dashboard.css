@@ -54,7 +54,9 @@
 }
 
 .dash-row { display: grid; gap: 14px; align-items: stretch; }
-.dash-row--analytics { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+/* Both analytics cards own the full dashboard width: the product rows need the
+   room to show a whole name beside a bar that means something. */
+.dash-row--analytics { grid-template-columns: minmax(0, 1fr); }
 .dash-row--analytics > .card { display: flex; flex-direction: column; }
 .dash-row--analytics > .card > .card__body { flex: 1 1 auto; }
 
@@ -700,21 +702,26 @@
 /* --------------------------------------------------------- best selling */
 
 /*
- * The widget fills its card. The wrap measures the space the card actually
- * gives it (a half-width dashboard column or a full-width row), and the list
- * shares that height evenly between the products, so a short list never leaves
- * a block of empty card under the last bar and a long one never overflows.
+ * Every row fills the whole card. One grid does it: a flexible name track, a
+ * flexible bar track and a fixed count track, so the bars end on one straight
+ * line and the quantities on another — in both directions, because the grid
+ * follows the document's own direction.
+ *
+ * The wrap is a size container, so a card too narrow to hold three tracks
+ * stacks the name above its bar instead of squeezing the name into an ellipsis.
  */
 .best-wrap {
   container-type: inline-size;
   display: flex;
+  width: 100%;
   min-width: 0;
   height: 100%;
 }
 .best-list {
   flex: 1 1 auto;
   display: grid;
-  grid-auto-rows: minmax(0, 1fr);
+  /* Rows share the card's height but may grow for a name that wraps. */
+  grid-auto-rows: minmax(min-content, 1fr);
   align-content: stretch;
   gap: 6px;
   width: 100%;
@@ -725,8 +732,14 @@
 }
 .best-row {
   display: grid;
-  align-content: center;
-  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'name name'
+    'track badge';
+  align-items: center;
+  column-gap: 10px;
+  row-gap: 7px;
+  width: 100%;
   min-width: 0;
   padding: 7px 9px;
   border-radius: 14px;
@@ -739,7 +752,18 @@
 }
 [data-theme='dark'] .best-row:hover { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06); }
 
-.best-row__top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+/* The name cell: its rank badge, then the full product name. */
+.best-row__name {
+  grid-area: name;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.35;
+}
 .best-row__rank {
   width: 22px; height: 22px; border-radius: 7px; flex: none;
   display: grid; place-items: center;
@@ -748,32 +772,26 @@
   font-variant-numeric: tabular-nums;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
-/* A long name wraps to a second line instead of being cut off — the product
-   name is the row's identity, and Kurdish / Persian / Arabic names are often
-   longer than one line. Never more than two, so every row keeps its height. */
-.best-row__name {
-  flex: 1 1 auto; min-width: 0; font-size: 13px; font-weight: 700; color: var(--text);
-  line-height: 1.35; overflow-wrap: anywhere;
-  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
-  overflow: hidden;
+/* The name is the row's identity: it wraps onto as many lines as it needs and
+   is never clamped, ellipsised or cut off. */
+.best-row__label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
+
 /* Bar plus a fixed value column: the column is what keeps every circle on the
    same vertical line, whatever the quantity's digit count. */
-.best-row__line {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 34px;
-  align-items: center; gap: 10px;
-  padding-inline-start: 30px;
-  min-width: 0;
-}
 .best-row__track {
-  height: 11px; border-radius: var(--radius-pill);
+  grid-area: track;
+  width: 100%;
+  min-width: 0;
+  height: 12px;
+  border-radius: var(--radius-pill);
   background: color-mix(in srgb, var(--border-strong) 42%, transparent);
   box-shadow:
     inset 0 1px 2px rgba(20, 45, 30, 0.11),
     inset 0 -1px 0 rgba(255, 255, 255, 0.55);
   overflow: hidden;
-  min-width: 0;
 }
 /* Each product keeps the section's own colour, in a slightly different depth,
    so the bars read as one family and still distinguish their rows. */
@@ -806,7 +824,8 @@
 
 /* The quantity: one colour-matched pastel circle at the end of its own bar. */
 .best-row__badge {
-  width: 30px; height: 30px; border-radius: 50%; justify-self: center;
+  grid-area: badge;
+  width: 36px; height: 30px; border-radius: var(--radius-pill);
   display: grid; place-items: center;
   font-size: 12px; font-weight: 800; line-height: 1;
   color: var(--mint-ink);
@@ -822,35 +841,22 @@
   white-space: nowrap;
 }
 /* Three digits and up (a locale may also group them) shrink instead of
-   spilling out of the circle or pushing the bar sideways. */
+   spilling out of the badge or pushing the bar sideways. */
 .best-row__badge.is-tight { font-size: 10.5px; letter-spacing: -0.02em; }
 
 /*
- * A card wide enough to hold it lays each product out on ONE line: name on the
- * starting edge, then the bar running to the card's far edge with its count at
- * the end. Every bar therefore starts and ends on the same two vertical lines.
+ * A card wide enough to hold three tracks lays each product out on ONE line:
+ * name on the starting edge, the bar running across the remaining width, and
+ * the count in its own fixed column at the far edge. Every bar therefore starts
+ * and ends on the same two vertical lines.
  */
-@container (min-width: 430px) {
+@container (min-width: 520px) {
   .best-row {
-    grid-template-columns: minmax(0, 38%) minmax(0, 1fr);
-    align-items: center;
-    column-gap: 14px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.7fr) 36px;
+    grid-template-areas: 'name track badge';
+    column-gap: 16px;
+    row-gap: 0;
   }
-  .best-row__top { grid-column: 1; }
-  .best-row__line {
-    grid-column: 2;
-    grid-template-columns: minmax(0, 1fr) 34px;
-    padding-inline-start: 0;
-  }
-  /* One line on a wide card: the row is already short, and the full name is
-     still there in the hover title. */
-  .best-row__name { -webkit-line-clamp: 1; }
-}
-
-/* A narrow card stacks them: the name above a full-width bar, the count at the
-   bar's end. No horizontal scrolling and nothing clipped. */
-@container (max-width: 429.98px) {
-  .best-row__line { padding-inline-start: 0; }
 }
 
 /* --------------------------------------------------------- status tiles */
@@ -1504,9 +1510,8 @@
   .kpi__value { font-size: 26px; }
   .fstat__value { font-size: 19px; }
   .status-tile__value { font-size: 28px; }
-  .best-row { padding: 5px 6px; }
-  .best-row__line { grid-template-columns: minmax(0, 1fr) 32px; gap: 8px; }
-  .best-row__badge { width: 28px; height: 28px; font-size: 11.5px; }
+  .best-row { padding: 5px 6px; column-gap: 8px; }
+  .best-row__badge { width: 32px; height: 28px; font-size: 11.5px; }
   .best-row__name { font-size: 12.5px; }
 }
 

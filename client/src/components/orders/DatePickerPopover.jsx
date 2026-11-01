@@ -92,13 +92,30 @@ function weekStart(tag, locale) {
   return locale === 'en' ? 0 : 6;
 }
 
-export default function DatePickerPopover({ anchorEl, value, today, timeZone, onSelect, onClose }) {
+export default function DatePickerPopover({
+  anchorEl,
+  value,
+  today,
+  timeZone,
+  /* Optional bounds — a day outside them cannot be picked. */
+  min,
+  max,
+  onSelect,
+  onClose,
+}) {
   const { t, locale, rtl } = useI18n();
   const tag = safeLocale(locale);
   const cardRef = useRef(null);
   const [view, setView] = useState(value);
   const [focus, setFocus] = useState(value);
   const [pos, setPos] = useState({ top: 0, left: 0, ready: false });
+  // Too narrow to hang the calendar off a field: it becomes a centred sheet.
+  const [sheet, setSheet] = useState(false);
+
+  const blocked = useCallback(
+    (ymd) => (min && ymd < min) || (max && ymd > max),
+    [min, max],
+  );
 
   const grid = useMemo(() => monthOf(view, tag, timeZone), [view, tag, timeZone]);
   const first = weekStart(tag, locale);
@@ -129,6 +146,14 @@ export default function DatePickerPopover({ anchorEl, value, today, timeZone, on
   /* ------------------------------------------------------------- placement */
 
   const place = useCallback(() => {
+    // A narrow viewport has no room beside a field: centre the calendar and let
+    // the scrim below own the outside-click.
+    const narrow = document.documentElement.clientWidth <= 640;
+    setSheet(narrow);
+    if (narrow) {
+      setPos((current) => (current.ready ? current : { top: 0, left: 0, ready: true }));
+      return;
+    }
     const anchor = anchorEl?.getBoundingClientRect();
     const card = cardRef.current;
     if (!anchor || !card) return;
@@ -213,76 +238,105 @@ export default function DatePickerPopover({ anchorEl, value, today, timeZone, on
   };
 
   const choose = (ymd) => {
+    if (blocked(ymd)) return;
     onSelect(ymd);
     onClose();
   };
 
   return createPortal(
-    <div
-      ref={cardRef}
-      className={`odate__pop ${pos.ready ? 'is-placed' : ''}`}
-      style={{ top: pos.top, left: pos.left }}
-      role="dialog"
-      aria-label={t('order_select_date')}
-      onKeyDown={onKeyDown}
-    >
-      <header className="odate__pop-head">
-        <button
-          type="button"
-          className="odate__pop-nav"
-          onClick={() => setView(addDaysToDay(grid.start, -1))}
-          aria-label={t('order_prev_month')}
-          title={t('order_prev_month')}
-        >
-          <Icon name="chevronLeft" size={16} />
-        </button>
-        <span className="odate__pop-title" aria-live="polite">
-          {heading}
-        </span>
-        <button
-          type="button"
-          className="odate__pop-nav"
-          onClick={() => setView(addDaysToDay(grid.end, 1))}
-          aria-label={t('order_next_month')}
-          title={t('order_next_month')}
-        >
-          <Icon name="chevronRight" size={16} />
-        </button>
-      </header>
-
-      <div className="odate__pop-week" aria-hidden="true">
-        {weekdayLabels.map((label, index) => (
-          <span key={`${label}-${index}`}>{label}</span>
-        ))}
-      </div>
-
-      <div className="odate__pop-grid" role="grid">
-        {Array.from({ length: leading }, (_, index) => (
-          <span key={`pad-${index}`} className="odate__pop-pad" aria-hidden="true" />
-        ))}
-        {grid.days.map((ymd) => (
+    <>
+      {sheet ? <div className="odate__scrim" aria-hidden="true" /> : null}
+      <div
+        ref={cardRef}
+        className={`odate__pop ${pos.ready ? 'is-placed' : ''} ${sheet ? 'is-sheet' : ''}`.trim()}
+        style={sheet ? undefined : { top: pos.top, left: pos.left }}
+        role="dialog"
+        aria-label={t('order_select_date')}
+        onKeyDown={onKeyDown}
+      >
+        <header className="odate__pop-head">
           <button
-            key={ymd}
             type="button"
-            data-day={ymd}
-            className={`odate__pop-day ${ymd === value ? 'is-selected' : ''} ${ymd === today ? 'is-today' : ''}`}
-            aria-pressed={ymd === value}
-            aria-current={ymd === today ? 'date' : undefined}
-            tabIndex={ymd === focus ? 0 : -1}
-            onClick={() => choose(ymd)}
+            className="odate__pop-nav"
+            onClick={() => setView(addDaysToDay(grid.start, -1))}
+            aria-label={t('order_prev_month')}
+            title={t('order_prev_month')}
           >
-            {dayLabel(ymd)}
+            <Icon name="chevronLeft" size={16} />
           </button>
-        ))}
-      </div>
+          <span className="odate__pop-title" aria-live="polite">
+            {heading}
+          </span>
+          <button
+            type="button"
+            className="odate__pop-nav"
+            onClick={() => setView(addDaysToDay(grid.end, 1))}
+            aria-label={t('order_next_month')}
+            title={t('order_next_month')}
+          >
+            <Icon name="chevronRight" size={16} />
+          </button>
+          {/* The sheet has no field beside it to click again, so it carries its
+              own close control. */}
+          {sheet ? (
+            <button
+              type="button"
+              className="odate__pop-nav"
+              onClick={onClose}
+              aria-label={t('action_close')}
+              title={t('action_close')}
+            >
+              <Icon name="close" size={16} />
+            </button>
+          ) : null}
+        </header>
 
-      <footer className="odate__pop-foot">
-        <button type="button" className="odate__pop-today" onClick={() => choose(today)}>
-          <Icon name="calendar" size={14} />
-          {t('order_today')}
-        </button>
-      </footer>
-    </div>,
+        <div className="odate__pop-week" aria-hidden="true">
+          {weekdayLabels.map((label, index) => (
+            <span key={`${label}-${index}`}>{label}</span>
+          ))}
+        </div>
+
+        <div className="odate__pop-grid" role="grid">
+          {Array.from({ length: leading }, (_, index) => (
+            <span key={`pad-${index}`} className="odate__pop-pad" aria-hidden="true" />
+          ))}
+          {grid.days.map((ymd) => {
+            const disabled = blocked(ymd);
+            return (
+              <button
+                key={ymd}
+                type="button"
+                data-day={ymd}
+                /* A blocked day is never drawn as the selected one. */
+                className={`odate__pop-day ${ymd === value && !disabled ? 'is-selected' : ''} ${
+                  ymd === today ? 'is-today' : ''
+                }`.trim()}
+                aria-pressed={ymd === value && !disabled}
+                aria-current={ymd === today ? 'date' : undefined}
+                disabled={disabled}
+                tabIndex={ymd === focus ? 0 : -1}
+                onClick={() => choose(ymd)}
+              >
+                {dayLabel(ymd)}
+              </button>
+            );
+          })}
+        </div>
+
+        <footer className="odate__pop-foot">
+          <button
+            type="button"
+            className="odate__pop-today"
+            onClick={() => choose(today)}
+            disabled={blocked(today)}
+          >
+            <Icon name="calendar" size={14} />
+            {t('order_today')}
+          </button>
+        </footer>
+      </div>
+    </>,
     document.body,
   );
 }
