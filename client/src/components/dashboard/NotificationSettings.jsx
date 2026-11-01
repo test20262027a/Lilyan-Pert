@@ -292,6 +292,9 @@ export default function NotificationSettings({
                     {device.endpoint === push.thisEndpoint ? (
                       <span className="push-device__this">{t('dash_push_device_this')}</span>
                     ) : null}
+                    {device.endpoint === push.thisEndpoint && push.permission ? (
+                      <span className={`push-device__perm push-device__perm--${permissionTone}`}>{permissionText}</span>
+                    ) : null}
                   </span>
                   <button
                     type="button"
