@@ -310,36 +310,10 @@ export default function NotificationSettings({
           )}
         </div>
 
-        {/* Ringtone and volume share one row on desktop: the groove on one
-            side, the picker and its round preview button on the other. */}
+        {/* Ringtone first, then volume: in Kurdish, Persian and Arabic that
+            puts the picker on the right and the groove on the left, and the
+            order mirrors in English. */}
         <div className="sound-picker">
-          <div className="sound-picker__col">
-            <span className="sound-picker__label">
-              <Icon name="volume" size={14} style={{ color: 'var(--dashic-pink-ink)' }} />
-              {t('dash_sound_volume')}
-            </span>
-            <div className="sound-volume">
-              <input
-                id="sound-volume-input"
-                type="range"
-                min="0"
-                max="100"
-                step="1"
-                className="sound-range"
-                style={{ '--sound-fill': `${volume}%` }}
-                value={volume}
-                onChange={(e) => setVolume(Number(e.target.value))}
-                // One saved value per gesture: release, key press or blur.
-                onPointerUp={commitVolume}
-                onKeyUp={commitVolume}
-                onBlur={commitVolume}
-                aria-label={t('dash_sound_volume')}
-                aria-valuetext={`${fmtDigits(volume, locale)}%`}
-              />
-              <span className="sound-volume__value" aria-hidden="true">{`${fmtDigits(volume, locale)}%`}</span>
-            </div>
-          </div>
-
           <div className="sound-picker__col">
             <span className="sound-picker__label">
               <Icon name="music" size={14} style={{ color: 'var(--dashic-pink-ink)' }} />
@@ -369,6 +343,33 @@ export default function NotificationSettings({
               >
                 <Icon name="volume" size={20} />
               </button>
+            </div>
+          </div>
+
+          <div className="sound-picker__col">
+            <span className="sound-picker__label">
+              <Icon name="volume" size={14} style={{ color: 'var(--dashic-pink-ink)' }} />
+              {t('dash_sound_volume')}
+            </span>
+            <div className="sound-volume">
+              <input
+                id="sound-volume-input"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                className="sound-range"
+                style={{ '--sound-fill': `${volume}%` }}
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                // One saved value per gesture: release, key press or blur.
+                onPointerUp={commitVolume}
+                onKeyUp={commitVolume}
+                onBlur={commitVolume}
+                aria-label={t('dash_sound_volume')}
+                aria-valuetext={`${fmtDigits(volume, locale)}%`}
+              />
+              <span className="sound-volume__value" aria-hidden="true">{`${fmtDigits(volume, locale)}%`}</span>
             </div>
           </div>
 

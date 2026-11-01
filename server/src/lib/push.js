@@ -9,6 +9,8 @@
  */
 import webpush from 'web-push';
 import { q } from '../db.js';
+import { resolveLanguage } from './languages.js';
+import { newOrderMessage, testMessage } from './notification-text.js';
 
 let cachedKeys = null;
 
@@ -42,29 +44,27 @@ export async function getVapidKeys() {
   return cachedKeys;
 }
 
-const TITLES = {
-  ku: 'داواکاری نوێ',
-  fa: 'سفارش جدید',
-  ar: 'طلب جديد',
-  en: 'New order',
-};
+/**
+ * The language one device is written to.
+ *
+ * The subscription's own saved language wins, then the language stored on the
+ * account, and either is dropped when the owner has since disabled it — a
+ * disabled language must never be printed. The business's configured default
+ * enabled language is the fallback, so a card is never English by accident.
+ */
+function localeOf(business, ...candidates) {
+  const settings = business?.menu_settings?.language_settings;
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const resolved = resolveLanguage(settings, candidate);
+    if (resolved === candidate) return resolved;
+  }
+  return resolveLanguage(settings, null);
+}
 
-const TEST_TITLES = {
-  ku: 'ئاگادارکردنەوەی تاقیکاری',
-  fa: 'اعلان آزمایشی',
-  ar: 'إشعار تجريبي',
-  en: 'Test notification',
-};
-
-const ITEM_WORDS = {
-  ku: 'بەرهەم',
-  fa: 'آیتم',
-  ar: 'عنصر',
-  en: 'items',
-};
-
-export function newOrderTitle(locale) {
-  return TITLES[locale] || TITLES.en;
+/** The language of the text, so the OS lays out its own labels correctly. */
+function languageOf(locale) {
+  return { lang: locale, dir: ['ku', 'fa', 'ar'].includes(locale) ? 'rtl' : 'ltr' };
 }
 
 /*
@@ -78,7 +78,7 @@ function iconUrl(business) {
   return media ? `/api/public/media/${media[1]}` : '/apple-touch-icon.png';
 }
 
-/** Order time in the business's own timezone, in digits that read in any language. */
+/** Order time in the business's own timezone; digits follow the language later. */
 function orderTime(value, timeZone) {
   const date = value ? new Date(value) : new Date();
   if (Number.isNaN(date.getTime())) return '';
@@ -128,7 +128,7 @@ export async function pushNewOrder(business, order) {
   await getVapidKeys();
 
   const { rows } = await q(
-    `SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale
+    `SELECT s.id, s.endpoint, s.p256dh, s.auth, s.locale, u.locale AS user_locale
        FROM push_subscriptions s JOIN users u ON u.id = s.user_id
       WHERE s.business_id = $1`,
     [business.id],
@@ -141,17 +141,23 @@ export async function pushNewOrder(business, order) {
   const url = `/orders?order=${order.id}`;
 
   return deliver(rows, (s) => {
-    const locale = s.locale || 'en';
-    const place = `#${order.order_number}${order.table_name ? ` · ${order.table_name}` : ''}${time ? ` · ${time}` : ''}`;
-    const summary = `${order.item_count || 0} ${ITEM_WORDS[locale] || ITEM_WORDS.en} · ${money}`;
+    const locale = localeOf(business, s.locale, s.user_locale);
+    const { title, body } = newOrderMessage(locale, {
+      businessName: business.name,
+      orderNumber: order.order_number,
+      tableName: order.table_name,
+      time,
+      itemCount: order.item_count || 0,
+      total: money,
+    });
     return JSON.stringify({
       type: 'new_order',
       orderId: order.id,
-      title: newOrderTitle(locale),
-      // Business name first: on a locked phone that is the line the staff read.
-      body: `${business.name}\n${place}\n${summary}`,
+      title,
+      body,
       icon,
       url,
+      ...languageOf(locale),
     });
   });
 }
@@ -160,7 +166,7 @@ export async function pushNewOrder(business, order) {
 export async function pushTest(userId, businessId) {
   await getVapidKeys();
   const { rows } = await q(
-    `SELECT s.id, s.endpoint, s.p256dh, s.auth, u.locale
+    `SELECT s.id, s.endpoint, s.p256dh, s.auth, s.locale, u.locale AS user_locale
        FROM push_subscriptions s JOIN users u ON u.id = s.user_id
       WHERE s.user_id = $1 AND s.business_id = $2`,
     [userId, businessId],
@@ -168,18 +174,13 @@ export async function pushTest(userId, businessId) {
   if (!rows.length) return { total: 0, sent: 0, failed: 0, pruned: 0 };
 
   const [business] = (
-    await q('SELECT name, logo_url FROM businesses WHERE id = $1', [businessId])
+    await q('SELECT name, logo_url, menu_settings FROM businesses WHERE id = $1', [businessId])
   ).rows;
   const icon = iconUrl(business);
   return deliver(rows, (s) => {
-    const locale = s.locale || 'en';
-    return JSON.stringify({
-      type: 'test',
-      title: business.name,
-      body: TEST_TITLES[locale] || TEST_TITLES.en,
-      icon,
-      url: '/',
-    });
+    const locale = localeOf(business, s.locale, s.user_locale);
+    const { title, body } = testMessage(locale, business?.name);
+    return JSON.stringify({ type: 'test', title, body, icon, url: '/', ...languageOf(locale) });
   });
 }
 

@@ -295,6 +295,10 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS push_subs_business_idx ON push_subscriptions(business_id);
+-- The language this device's notifications are written in. Saved with the
+-- subscription, so a payload is localized on the server even with the panel
+-- closed; NULL means "use the account's language, then the business default".
+ALTER TABLE push_subscriptions ADD COLUMN IF NOT EXISTS locale text;
 
 CREATE TABLE IF NOT EXISTS notifications (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

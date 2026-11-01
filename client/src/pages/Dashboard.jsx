@@ -26,7 +26,9 @@ export default function Dashboard() {
   const { business, setBusiness } = useBusiness();
   const { businessId } = useAuth();
   const toast = useToast();
-  const push = usePush();
+  // The language the panel is showing is the language this device's pushes
+  // are written in, saved with the subscription itself.
+  const push = usePush(locale);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);

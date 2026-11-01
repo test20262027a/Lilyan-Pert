@@ -48,6 +48,10 @@ self.addEventListener('push', (event) => {
         badge: '/apple-touch-icon.png',
         // Silent exactly when the open panel is already ringing.
         silent: visible && payload.type === 'new_order',
+        // The payload names its own language, so the OS lays the card out with
+        // the right direction even for mixed table and product names.
+        lang: payload.lang || undefined,
+        dir: payload.dir || undefined,
         tag: payload.orderId ? `order-${payload.orderId}` : 'lilyan-message',
         renotify: true,
         data: { url: payload.url || '/', orderId: payload.orderId || null },

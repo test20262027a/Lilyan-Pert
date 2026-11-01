@@ -20,6 +20,7 @@ import {
 } from '../lib/identity.js';
 import { recordActivity } from '../lib/activity.js';
 import { getVapidKeys, pushTest } from '../lib/push.js';
+import { resolveLanguage } from '../lib/languages.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -1616,6 +1617,16 @@ router.get(
   }),
 );
 
+/**
+ * The language a push may be written in: what the owner still allows, never a
+ * code the request invented. A disabled language falls back to the business's
+ * configured default enabled one.
+ */
+async function pushLocale(businessId, requested) {
+  const { rows } = await q('SELECT menu_settings FROM businesses WHERE id = $1', [businessId]);
+  return resolveLanguage(rows[0]?.menu_settings?.language_settings, requested);
+}
+
 router.post(
   '/push/subscribe',
   withBusiness('staff'),
@@ -1625,14 +1636,18 @@ router.post(
     const p256dh = String(sub?.keys?.p256dh || '');
     const auth = String(sub?.keys?.auth || '');
     if (!endpoint || !p256dh || !auth) throw bad('INVALID_SUBSCRIPTION');
+    // The language this device asks for travels with the subscription, so the
+    // payload is localized even when no panel is open anywhere.
+    const locale = await pushLocale(req.businessId, req.body?.locale || req.user.locale);
     await q(
-      `INSERT INTO push_subscriptions (business_id, user_id, endpoint, p256dh, auth, user_agent)
-       VALUES ($1,$2,$3,$4,$5,$6)
+      `INSERT INTO push_subscriptions (business_id, user_id, endpoint, p256dh, auth, user_agent, locale)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
        ON CONFLICT (endpoint) DO UPDATE
          SET business_id = EXCLUDED.business_id,
              user_id = EXCLUDED.user_id,
              p256dh = EXCLUDED.p256dh,
-             auth = EXCLUDED.auth`,
+             auth = EXCLUDED.auth,
+             locale = EXCLUDED.locale`,
       [
         req.businessId,
         req.user.id,
@@ -1640,9 +1655,27 @@ router.post(
         p256dh.slice(0, 500),
         auth.slice(0, 500),
         String(req.headers['user-agent'] || '').slice(0, 300),
+        locale,
       ],
     );
-    res.status(201).json({ ok: true });
+    res.status(201).json({ ok: true, locale });
+  }),
+);
+
+/**
+ * The panel's language just changed: every device of this account follows it
+ * from the next push onwards, with no re-subscribe and no page left open.
+ */
+router.post(
+  '/push/language',
+  withBusiness('staff'),
+  ah(async (req, res) => {
+    const locale = await pushLocale(req.businessId, req.body?.locale);
+    const { rowCount } = await q(
+      'UPDATE push_subscriptions SET locale = $1 WHERE user_id = $2 AND business_id = $3',
+      [locale, req.user.id, req.businessId],
+    );
+    res.json({ ok: true, locale, devices: rowCount });
   }),
 );
 

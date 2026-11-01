@@ -45,7 +45,15 @@ export function notificationContext() {
  * context (iframe, insecure origin, denied permission) is distinguished from a
  * genuine subscription error.
  */
-export function usePush() {
+export function usePush(locale) {
+  /*
+   * The panel's language travels with every subscription call, so a push is
+   * localized from the device's own record rather than from whatever page the
+   * server happens to receive. The ref keeps the callbacks stable.
+   */
+  const localeRef = useRef(locale);
+  localeRef.current = locale;
+
   const [state, setState] = useState({
     ...notificationContext(),
     subscribed: false,
@@ -73,7 +81,10 @@ export function usePush() {
         const sub = reg ? await reg.pushManager.getSubscription() : null;
         if (sub) {
           thisEndpoint = sub.endpoint;
-          await post('/manage/push/subscribe', { subscription: sub.toJSON() }).catch(() => {});
+          await post('/manage/push/subscribe', {
+            subscription: sub.toJSON(),
+            locale: localeRef.current,
+          }).catch(() => {});
         }
       } catch {
         thisEndpoint = '';
@@ -116,6 +127,18 @@ export function usePush() {
     };
   }, [refreshStatus]);
 
+  /*
+   * A language switch reaches this account's registered devices immediately —
+   * including a tablet whose panel is closed — so the next card arrives in the
+   * language the owner just chose.
+   */
+  const sentLocale = useRef(locale);
+  useEffect(() => {
+    if (!locale || locale === sentLocale.current) return;
+    sentLocale.current = locale;
+    post('/manage/push/language', { locale }).catch(() => {});
+  }, [locale]);
+
   const enable = useCallback(async () => {
     const ctx = notificationContext();
     if (!ctx.supported) return { ok: false, reason: 'unsupported' };
@@ -152,7 +175,10 @@ export function usePush() {
           applicationServerKey: urlBase64ToUint8Array(public_key),
         });
       }
-      await post('/manage/push/subscribe', { subscription: sub.toJSON() });
+      await post('/manage/push/subscribe', {
+        subscription: sub.toJSON(),
+        locale: localeRef.current,
+      });
       setState((s) => ({ ...s, permission, subscribed: true, busy: false }));
       await refreshStatus();
       return { ok: true };

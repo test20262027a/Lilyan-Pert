@@ -13,13 +13,44 @@
    ========================================================================== */
 
 .dash .card.notif-card {
+  position: relative;
   display: flex;
   align-items: stretch;
   overflow: hidden;
-  /* The supplied artwork, fitted to the whole card without cropping. */
-  background: #fdeef6 url('/headers/notifications-bg.avif') no-repeat center / 100% 100%;
+  border-radius: 20px;
+  /*
+   * The artwork gets its own layer and keeps its own proportions; this wash is
+   * what the rest of the card is painted with, in the picture's own pink and
+   * the selected theme, so the two read as ONE continuous design.
+   */
+  background: linear-gradient(158deg, color-mix(in srgb, var(--theme-primary) 7%, #ffffff), #ffffff 64%);
 }
-.dash .card.notif-card { border-radius: 20px; }
+[data-theme='dark'] .dash .card.notif-card {
+  background: linear-gradient(158deg, color-mix(in srgb, var(--theme-primary) 10%, #1b2030), #171c27 64%);
+}
+
+/*
+ * The wash the illustration sits in. Its colour is sampled from the picture's
+ * own edges (#fcd8f2), so the artwork blends into the card with no visible
+ * rectangle and no faded overlay over the bell itself.
+ */
+.dash .card.notif-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 42%;
+  height: 100%;
+  background: radial-gradient(72% 52% at 44% 50%, #fcd8f3 0%, #fde9f7 64%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+}
+[data-theme='dark'] .dash .card.notif-card::before {
+  background: radial-gradient(
+    72% 52% at 44% 50%,
+    color-mix(in srgb, var(--theme-primary) 16%, #2b1c26) 0%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
 
 /* The two stacked sections keep a little more air between them than the
    dashboard's default rhythm, as the reference does. */
@@ -34,6 +65,11 @@
   flex-direction: column;
   gap: 12px;
   padding: 18px 20px 20px;
+  /* The illustration column is physical, so the settings never slide under the
+     bell: text still reads right-to-left, the picture stays left. */
+  padding-left: calc(36% + 12px);
+  position: relative;
+  z-index: 1;
 }
 
 .dash .notif-card__head {
@@ -243,7 +279,7 @@
   padding-top: 14px;
   border-top: 1px solid var(--glass-line);
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   /* Both labels start on the same line; the groove is given the select's own
      height so the two control rows finish level too. */
   align-items: start;
@@ -280,37 +316,55 @@
  * in an uploaded illustration means replacing the contents of this panel, not
  * the layout — no control ever lives inside it.
  */
+/*
+ * Decorative only, and a layer of its own: `contain` keeps the bell, the
+ * bubble and every detail at their true proportions — never stretched, never
+ * cropped — while the wash above fills whatever is left over.
+ */
 .dash .notif-card__art {
-  flex: 0 0 26%;
-  min-width: 200px;
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 36%;
+  background: url('/headers/notifications-bg.avif') no-repeat center / contain;
+  pointer-events: none;
+  z-index: 1;
 }
-/* The artwork's bell sits on the physical left of the picture, so the spacer
-   is on the left in both directions. */
-html[dir='ltr'] .dash .notif-card__art { order: -1; }
 
 /* --- responsive -------------------------------------------------------- */
 
-@media (max-width: 1240px) {
-  .dash .notif-card__art { flex-basis: 28%; min-width: 210px; }
-  .dash .notif-card__panel { padding: 16px 16px 18px; }
-}
-
-@media (max-width: 900px) {
-  /* Stacked: the whole picture sits on top at its natural proportions (never
-     cropped) and the settings follow on the artwork's own soft pink. */
-  .dash .card.notif-card { flex-direction: column; background-image: none; }
+@media (max-width: 1199px) {
+  /*
+   * Tablet: the picture becomes a compact band above the settings — its full
+   * width at its own proportions, never a tall empty block — and the settings
+   * sit directly under it.
+   */
+  .dash .card.notif-card { flex-direction: column; }
   .dash .notif-card__art {
+    position: relative;
+    /* The band leads the card, and the settings follow it. */
     order: -1;
-    flex: 0 0 auto;
-    min-width: 0;
     width: 100%;
-    aspect-ratio: 2 / 1;
-    background: url('/headers/notifications-bg.avif') no-repeat center / 100% 100%;
+    height: 130px;
+    background-position: center;
+    z-index: 1;
+  }
+  /* The same wash, now behind a full-width band instead of a side column. */
+  .dash .card.notif-card::before {
+    width: 100%;
+    height: 150px;
+    background: radial-gradient(58% 150% at 50% 40%, #fcd8f3 0%, #fde9f7 62%, rgba(255, 255, 255, 0) 100%);
+  }
+  .dash .notif-card__panel {
+    padding: 14px 16px 18px;
+    padding-left: 16px;
   }
 }
 
-@media (max-width: 720px) {
-  .dash .notif-card__panel { padding: 14px 14px 16px; gap: 10px; }
+@media (max-width: 767px) {
+  .dash .notif-card__art { height: 96px; }
+  .dash .notif-card__panel { padding: 12px 14px 16px; padding-left: 14px; gap: 10px; }
   .dash .notif-card__head { gap: 10px; }
   .dash .notif-card .sound-picker { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .dash .push-devices__head { align-items: flex-start; }
