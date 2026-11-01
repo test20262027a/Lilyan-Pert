@@ -101,7 +101,10 @@ export default function UserAvatar({
              scroll position: it is requested with the rest of the shell. */
           loading="eager"
           decoding="async"
-          fetchPriority={priority ? 'high' : 'auto'}
+          /* Lowercase on purpose: React 18 does not know the camelCase
+             `fetchPriority` prop and warns about it, while the lowercase
+             attribute is passed straight through to the DOM. */
+          fetchpriority={priority ? 'high' : 'auto'}
           onLoad={ready}
           onError={() => setBroken(true)}
         />
