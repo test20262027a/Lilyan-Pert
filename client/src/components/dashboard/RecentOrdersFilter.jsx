@@ -53,6 +53,10 @@ export default function RecentOrdersFilter({ value = 'all', onChange, counts }) 
         onChange={onChange}
         data-status={value}
         ariaLabel={t('order_filter_status')}
+        /* The panel stays wider than the compact trigger: status labels in
+           Kurdish, Arabic and Persian are long and must never be cut. */
+        menuMinWidth={244}
+        menuClassName="rof-pop"
         options={FILTERS.map((f) => {
           const count = countOf(f.key);
           return {
@@ -60,6 +64,8 @@ export default function RecentOrdersFilter({ value = 'all', onChange, counts }) 
             label: label(f.key),
             leading: <span className={`rof__dot rof__dot--${f.key}`} />,
             trailing: count,
+            // The badge carries its status colour, the same one as the dot.
+            trailingClass: `rof__count rof__count--${f.key}`,
           };
         })}
       />

@@ -1074,6 +1074,64 @@
 .rof__dot--completed { --rof-dot: var(--status-completed); }
 .rof__dot--cancelled { --rof-dot: var(--status-cancelled); }
 
+/*
+ * Rows of the status panel: dot on one side, the whole label in the middle and
+ * the count hugging the outer edge. The badge never takes width from the text,
+ * so long Kurdish / Arabic / Persian statuses always read in full.
+ */
+.rof-pop .lysel-opt {
+  gap: 9px;
+  padding-block: 5px;
+  padding-inline-end: 7px;
+}
+
+/* The label wraps instead of truncating. */
+.rof-pop .lysel-opt__text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+}
+
+/* The check keeps its slot, but moves inside the count so the count sits at
+   the corner of the row instead of in the middle. */
+.rof-pop .lysel-opt__check { order: 2; }
+.rof-pop .lysel-opt__trail { order: 3; }
+
+/* Status count — the same colour family as its dot, with strong ink. */
+.rof-pop .lysel-opt .lysel-opt__trail.rof__count {
+  flex: none;
+  min-width: 26px;
+  padding: 2px 8px;
+  border: 1px solid color-mix(in srgb, var(--rof-count, var(--primary)) 30%, transparent);
+  background: color-mix(in srgb, var(--rof-count, var(--primary)) 14%, transparent);
+  color: color-mix(in srgb, var(--rof-count, var(--primary)) 64%, var(--text));
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+}
+
+.rof-pop .lysel-opt.is-active .lysel-opt__trail.rof__count,
+.rof-pop .lysel-opt.is-selected .lysel-opt__trail.rof__count {
+  background: color-mix(in srgb, var(--rof-count, var(--primary)) 20%, transparent);
+  color: color-mix(in srgb, var(--rof-count, var(--primary)) 58%, var(--text));
+}
+
+[data-theme='dark'] .rof-pop .lysel-opt .lysel-opt__trail.rof__count {
+  background: color-mix(in srgb, var(--rof-count, var(--primary)) 26%, transparent);
+  border-color: color-mix(in srgb, var(--rof-count, var(--primary)) 42%, transparent);
+  color: color-mix(in srgb, var(--rof-count, var(--primary)) 42%, #ffffff);
+}
+
+.rof__count--all { --rof-count: var(--primary); }
+.rof__count--pending { --rof-count: var(--status-pending); }
+.rof__count--preparing { --rof-count: var(--status-preparing); }
+.rof__count--ready { --rof-count: var(--status-ready); }
+.rof__count--completed { --rof-count: var(--status-completed); }
+.rof__count--cancelled { --rof-count: var(--status-cancelled); }
+
 [data-theme='dark'] .rof .lysel__trigger {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),

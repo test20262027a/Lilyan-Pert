@@ -40,6 +40,10 @@ export default function Select({
   className = '',
   ariaLabel,
   menuMaxHeight = PANEL_MAX,
+  menuMinWidth = MIN_WIDTH,
+  /* Optional class on the portalled panel, so a caller can lay out its rows
+     even though the panel lives outside the trigger's DOM subtree. */
+  menuClassName = '',
   id,
   ...rest
 }) {
@@ -66,6 +70,8 @@ export default function Select({
       leading: option.leading ?? null,
       // Optional right-aligned hint (a count, a shortcut…) shown in the row only.
       trailing: option.trailing ?? null,
+      // Optional class for that hint, so a caller can tint it (status counts).
+      trailingClass: option.trailingClass ?? '',
       disabled: Boolean(option.disabled),
     }));
     if (placeholder) {
@@ -97,7 +103,7 @@ export default function Select({
     const viewportWidth = window.innerWidth;
     const viewportHeight = window.innerHeight;
 
-    const width = Math.min(Math.max(rect.width, MIN_WIDTH), viewportWidth - VIEWPORT * 2);
+    const width = Math.min(Math.max(rect.width, menuMinWidth), viewportWidth - VIEWPORT * 2);
     const estimate = Math.min(menuMaxHeight, rows.length * ROW_HEIGHT + 14);
     const below = viewportHeight - rect.bottom - VIEWPORT;
     const above = rect.top - VIEWPORT;
@@ -117,7 +123,7 @@ export default function Select({
         ? { bottom: Math.max(VIEWPORT, viewportHeight - rect.top + PANEL_GAP) }
         : { top: rect.bottom + PANEL_GAP }),
     });
-  }, [menuMaxHeight, rows.length, rtl]);
+  }, [menuMaxHeight, menuMinWidth, rows.length, rtl]);
 
   /* ---------------------------------------------------------- open / close */
 
@@ -275,7 +281,7 @@ export default function Select({
       ? createPortal(
           <div
             ref={panelRef}
-            className={`lysel-pop ${pos.openUp ? 'is-up' : ''} ${phase === 'closing' ? 'is-closing' : ''}`}
+            className={`lysel-pop ${menuClassName} ${pos.openUp ? 'is-up' : ''} ${phase === 'closing' ? 'is-closing' : ''}`.trim()}
             style={{
               left: pos.left,
               width: pos.width,
@@ -318,7 +324,7 @@ export default function Select({
                     {row.leading ? <span className="lysel-opt__lead" aria-hidden="true">{row.leading}</span> : null}
                     <span className="lysel-opt__text">{row.label}</span>
                     {row.trailing ? (
-                      <span className="lysel-opt__trail" aria-hidden="true">
+                      <span className={`lysel-opt__trail ${row.trailingClass}`.trim()} aria-hidden="true">
                         {row.trailing}
                       </span>
                     ) : null}
