@@ -416,6 +416,10 @@ a { color: var(--primary); }
   height: 100vh;
   height: 100dvh;
   z-index: 50;
+  /* The pinned header band above the tree: 14px top pad + 40px mark + 11px
+     bottom pad + the 1px rule. The collapse control anchors to this edge, so
+     it stays with the header instead of floating over the first menu row. */
+  --sidebar-header-height: 66px;
   transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1), transform 0.22s ease;
 }
 
@@ -1746,7 +1750,13 @@ table.data tr:hover td { background: var(--surface-2); }
     display: grid;
     position: absolute;
     inset-inline-end: -18px;
-    inset-block-start: 74px;
+    /*
+     * Hung on the header's bottom rule: only the last 4px of the control cross
+     * it, so the circle reads as part of the header and stops 4px short of the
+     * first navigation row (the tree's own 8px top padding). It therefore never
+     * covers the Dashboard row or its active plate, in either rail state.
+     */
+    inset-block-start: calc(var(--sidebar-header-height) - 32px);
     z-index: 3;
   }
 
