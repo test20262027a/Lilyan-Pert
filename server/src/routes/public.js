@@ -620,16 +620,20 @@ router.post(
         ],
       );
 
-      return { order: order.rows[0], tableName: table?.name || null };
+      return { order: order.rows[0], tableName: table?.name || null, itemCount: lines.length };
     });
 
-    // Web push is only ever triggered for a brand-new order.
+    // Web push is only ever triggered for a brand-new order, once, after it is
+    // saved — the order id above is what deduplicates it on every device.
     let push = { total: 0, sent: 0, failed: 0, pruned: 0 };
     try {
-      push = await pushNewOrder(business.id, {
+      push = await pushNewOrder(business, {
         id: result.order.id,
         order_number: result.order.order_number,
         table_name: result.tableName,
+        total: result.order.total,
+        created_at: result.order.created_at,
+        item_count: result.itemCount,
       });
     } catch (err) {
       console.warn('[public] push delivery failed:', err?.message || err);

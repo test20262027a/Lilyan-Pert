@@ -5,21 +5,63 @@ import { Alert, Select, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDigits } from '../../format';
 import { playSound, soundSupported, SOUND_OPTIONS, DEFAULT_SOUND, DEFAULT_VOLUME } from '../../sound';
+import './notifSettings.css';
 
 /* The app's own address, so "open in a new tab" leaves the preview frame. */
 const appHref = () => (typeof window === 'undefined' ? '#' : window.location.href);
 
-/**
- * Notification settings. Both switches persist through the dashboard's
- * whitelisted endpoint and the sound dropdown drives real synthesised sounds.
- *
- * The browser switch is never faked: it is on only while a real push
- * subscription exists. When the browser itself refuses to ask — inside the
- * preview frame, on an insecure origin, or because the user blocked the site —
- * the card says exactly which one it is and offers the way out, while in-app
- * alerts and the sound keep working.
+/*
+ * A registered device is described by what its browser reports, so staff can
+ * tell their counter tablet from their phone. Product names are not translated;
+ * they are what the device calls itself.
  */
-export default function NotificationSettings({ settings = {}, onChange, push, onPushToggle, pushError }) {
+function deviceName(userAgent = '') {
+  const browser = /Edg\//.test(userAgent)
+    ? 'Edge'
+    : /Chrome\//.test(userAgent)
+      ? 'Chrome'
+      : /Firefox\//.test(userAgent)
+        ? 'Firefox'
+        : /Safari\//.test(userAgent)
+          ? 'Safari'
+          : '';
+  const system = /iPhone|iPad|iPod/.test(userAgent)
+    ? 'iOS'
+    : /Android/.test(userAgent)
+      ? 'Android'
+      : /Windows/.test(userAgent)
+        ? 'Windows'
+        : /Mac OS X/.test(userAgent)
+          ? 'macOS'
+          : /Linux/.test(userAgent)
+            ? 'Linux'
+            : '';
+  return [browser, system].filter(Boolean).join(' · ');
+}
+
+/**
+ * Notification settings — the dashboard's full-width card.
+ *
+ * Structure only: the two switches persist through the dashboard's whitelisted
+ * endpoint, the ringtone dropdown drives real synthesised sounds, and the
+ * browser switch is never faked — it is on only while a real push subscription
+ * exists. When the browser itself refuses to ask (inside the preview frame, on
+ * an insecure origin, or because the user blocked the site) the card says
+ * exactly which one it is and offers the way out, while in-app alerts and the
+ * sound keep working.
+ *
+ * The illustration panel is purely decorative and holds no control, so the
+ * artwork can never sit on top of a switch, a select or a button.
+ */
+export default function NotificationSettings({
+  settings = {},
+  onChange,
+  push,
+  onPushToggle,
+  onPushTest,
+  onRemoveDevice,
+  pushError,
+}) {
   const { t, locale } = useI18n();
   const soundOn = settings.sound_enabled !== false;
   const soundKey = SOUND_OPTIONS.includes(settings.sound_key) ? settings.sound_key : DEFAULT_SOUND;
@@ -113,35 +155,61 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
           ? t('dash_push_insecure')
           : undefined;
 
+  /*
+   * The device permission pill speaks the browser's own vocabulary: Allowed,
+   * Blocked, Not allowed yet. It is never green without a real grant.
+   */
+  const permissionTone = !push.supported
+    ? 'muted'
+    : push.permission === 'granted'
+      ? 'ok'
+      : push.permission === 'denied'
+        ? 'bad'
+        : push.permission === 'default'
+          ? 'warn'
+          : 'muted';
+  const permissionText =
+    push.permission === 'granted'
+      ? t('dash_push_allowed')
+      : push.permission === 'denied'
+        ? t('dash_push_blocked')
+        : push.permission === 'default'
+          ? t('dash_push_ask')
+          : t('dash_push_unsupported');
+  const permissionIcon = push.permission === 'granted' ? 'check' : push.permission === 'denied' ? 'lock' : 'bell';
+
   return (
     <section className="card notif-card">
-      <header className="card__head">
-        <DashIcon name="bell" tone="pink" size={36} />
-        <div className="card__titles">
-          <div className="card__title">{t('dash_notification_settings')}</div>
-        </div>
-      </header>
+      <div className="notif-card__panel">
+        <header className="notif-card__head">
+          <DashIcon name="bell" tone="pink" size={44} />
+          <div className="notif-card__titles">
+            <h2 className="notif-card__title">{t('dash_notification_settings')}</h2>
+            <p className="notif-card__sub">{t('dash_notification_sub')}</p>
+          </div>
+        </header>
 
-      <div className="card__body">
-        <SwitchRow
-          icon="volume"
-          tone="pink"
-          title={t('dash_sound_new_order')}
-          hint={audioUnavailable ? t('dash_sound_unsupported') : undefined}
-          checked={soundOn}
-          onChange={(v) => onChange({ sound_enabled: v })}
-        />
-        <SwitchRow
-          icon="bell"
-          tone="pink"
-          title={t('dash_push_background')}
-          hint={pushHint}
-          checked={push.subscribed}
-          // Deliberately stays clickable inside the preview: a frame restriction
-          // must not lock the control for the real website behind it.
-          disabled={!push.supported || !push.secure || push.busy}
-          onChange={onPushToggle}
-        />
+        <div className="notif-rows">
+          <SwitchRow
+            icon="volume"
+            tone="pink"
+            title={t('dash_sound_new_order')}
+            hint={audioUnavailable ? t('dash_sound_unsupported') : undefined}
+            checked={soundOn}
+            onChange={(v) => onChange({ sound_enabled: v })}
+          />
+          <SwitchRow
+            icon="bell"
+            tone="pink"
+            title={t('dash_push_background')}
+            hint={pushHint}
+            checked={push.subscribed}
+            // Deliberately stays clickable inside the preview: a frame restriction
+            // must not lock the control for the real website behind it.
+            disabled={!push.supported || !push.secure || push.busy}
+            onChange={onPushToggle}
+          />
+        </div>
 
         {notice ? (
           <div className={`notif-note notif-note--${notice.tone}`} role="status">
@@ -172,61 +240,136 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
           </div>
         ) : null}
 
-        {/* Pushed to the bottom of the card so it lines up with the clock in the
-            neighbouring Date & working hours card. */}
-        <div className="sound-picker">
-          <span className="sound-picker__label">
-            <Icon name="volume" size={13} style={{ color: 'var(--dashic-pink-ink)' }} />
-            {t('dash_sound')}
-          </span>
-          <div className="sound-picker__row">
-            <Select
-              className="sound-picker__select"
-              value={soundKey}
-              // Picking a ringtone plays it on the same click, so the choice is
-              // heard before it is saved.
-              onChange={(next) => {
-                onChange({ sound_key: next });
-                preview(next, volume);
-              }}
-              aria-label={t('dash_sound')}
-              menuMaxHeight={330}
-              options={SOUND_OPTIONS.map((key) => ({ value: key, label: t(`dash_sound_${key}`) }))}
-            />
+        {/* Background delivery: permission, a real test, and the devices the
+            server will actually push to. */}
+        <div className="push-devices">
+          <div className="push-devices__head">
+            <div className="push-devices__titles">
+              <span className="push-devices__title">
+                <Icon name="laptop" size={15} />
+                {t('dash_push_devices')}
+              </span>
+              <span className="push-devices__sub">{t('dash_push_devices_sub')}</span>
+            </div>
+            <span className={`push-devices__status push-devices__status--${permissionTone}`}>
+              <Icon name={permissionIcon} size={13} />
+              {permissionText}
+            </span>
+          </div>
+
+          <div className="push-devices__actions">
+            {!push.subscribed ? (
+              <button
+                type="button"
+                className="btn btn--sm btn--primary"
+                onClick={onPushToggle}
+                disabled={!push.supported || !push.secure || push.busy}
+              >
+                <Icon name="bell" size={14} />
+                {t('dash_push_register')}
+              </button>
+            ) : null}
             <button
               type="button"
-              className={`sound-play dash-ic dash-ic--pink dash-ic--circle ${previewing ? 'is-playing' : ''}`.trim()}
-              onClick={() => preview(soundKey, volume)}
-              disabled={audioUnavailable}
-              aria-label={t('dash_sound_preview')}
-              title={t('dash_sound_preview')}
+              className="btn btn--sm btn--ghost"
+              onClick={onPushTest}
+              disabled={!push.subscribed || push.testing}
             >
-              <Icon name="volume" size={19} />
+              <Icon name="send" size={14} />
+              {t('dash_push_test')}
             </button>
           </div>
 
-          <div className="sound-volume">
-            <label className="sound-volume__label" htmlFor="sound-volume-input">
+          {push.deviceList?.length ? (
+            <ul className="push-devices__list">
+              {push.deviceList.map((device) => (
+                <li key={device.id} className="push-device">
+                  <DashIcon name="laptop" tone="indigo" size={30} />
+                  <span className="push-device__main">
+                    <span className="push-device__name">
+                      {deviceName(device.user_agent) || t('dash_push_device_unknown')}
+                    </span>
+                    {device.endpoint === push.thisEndpoint ? (
+                      <span className="push-device__this">{t('dash_push_device_this')}</span>
+                    ) : null}
+                  </span>
+                  <button
+                    type="button"
+                    className="push-device__remove"
+                    onClick={() => onRemoveDevice(device)}
+                    aria-label={t('dash_push_device_remove')}
+                    title={t('dash_push_device_remove')}
+                  >
+                    <Icon name="trash" size={15} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="push-devices__empty">{t('dash_push_devices_empty')}</p>
+          )}
+        </div>
+
+        {/* Ringtone and volume share one row on desktop: the groove on one
+            side, the picker and its round preview button on the other. */}
+        <div className="sound-picker">
+          <div className="sound-picker__col">
+            <span className="sound-picker__label">
+              <Icon name="volume" size={14} style={{ color: 'var(--dashic-pink-ink)' }} />
               {t('dash_sound_volume')}
-            </label>
-            <input
-              id="sound-volume-input"
-              type="range"
-              min="0"
-              max="100"
-              step="1"
-              className="sound-range"
-              style={{ '--sound-fill': `${volume}%` }}
-              value={volume}
-              onChange={(e) => setVolume(Number(e.target.value))}
-              // One saved value per gesture: release, key press or blur.
-              onPointerUp={commitVolume}
-              onKeyUp={commitVolume}
-              onBlur={commitVolume}
-              aria-label={t('dash_sound_volume')}
-              aria-valuetext={`${fmtDigits(volume, locale)}%`}
-            />
-            <span className="sound-volume__value" aria-hidden="true">{`${fmtDigits(volume, locale)}%`}</span>
+            </span>
+            <div className="sound-volume">
+              <input
+                id="sound-volume-input"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                className="sound-range"
+                style={{ '--sound-fill': `${volume}%` }}
+                value={volume}
+                onChange={(e) => setVolume(Number(e.target.value))}
+                // One saved value per gesture: release, key press or blur.
+                onPointerUp={commitVolume}
+                onKeyUp={commitVolume}
+                onBlur={commitVolume}
+                aria-label={t('dash_sound_volume')}
+                aria-valuetext={`${fmtDigits(volume, locale)}%`}
+              />
+              <span className="sound-volume__value" aria-hidden="true">{`${fmtDigits(volume, locale)}%`}</span>
+            </div>
+          </div>
+
+          <div className="sound-picker__col">
+            <span className="sound-picker__label">
+              <Icon name="music" size={14} style={{ color: 'var(--dashic-pink-ink)' }} />
+              {t('dash_sound')}
+            </span>
+            <div className="sound-picker__row">
+              <Select
+                className="sound-picker__select"
+                value={soundKey}
+                // Picking a ringtone plays it on the same click, so the choice is
+                // heard before it is saved.
+                onChange={(next) => {
+                  onChange({ sound_key: next });
+                  preview(next, volume);
+                }}
+                aria-label={t('dash_sound')}
+                menuMaxHeight={330}
+                options={SOUND_OPTIONS.map((key) => ({ value: key, label: t(`dash_sound_${key}`) }))}
+              />
+              <button
+                type="button"
+                className={`sound-play dash-ic dash-ic--pink dash-ic--circle ${previewing ? 'is-playing' : ''}`.trim()}
+                onClick={() => preview(soundKey, volume)}
+                disabled={audioUnavailable}
+                aria-label={t('dash_sound_preview')}
+                title={t('dash_sound_preview')}
+              >
+                <Icon name="volume" size={20} />
+              </button>
+            </div>
           </div>
 
           {blocked ? (
@@ -240,6 +383,21 @@ export default function NotificationSettings({ settings = {}, onChange, push, on
             </div>
           ) : null}
         </div>
+      </div>
+
+      {/*
+       * Decorative illustration. It carries no control, so the artwork can
+       * never overlap a switch, a select or a button — the settings live on
+       * their own clean surface beside it.
+       */}
+      <div className="notif-card__art" aria-hidden="true">
+        <span className="notif-art__ring" />
+        <span className="notif-art__halo" />
+        <span className="notif-art__pedestal" />
+        <DashIcon name="bell" tone="pink" size={66} className="notif-art__bell" />
+        <span className="notif-art__chip">
+          <Icon name="bell" size={14} />
+        </span>
       </div>
     </section>
   );

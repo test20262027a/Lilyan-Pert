@@ -1,0 +1,404 @@
+/* ==========================================================================
+   Notification settings — the dashboard's full-width card.
+
+   Two halves on desktop: the settings panel (reading order: header, the two
+   switches, registered devices, ringtone) and the decorative illustration
+   panel beside it. The illustration never holds a control, so the artwork can
+   never sit on top of a switch, a select or a button.
+
+   Shared pieces still live in dashboard.css and are used as-is here: the
+   `.sound-range` groove, the `.sound-play` 3D plate, the `.notif-note` context
+   notice and `.sound-volume__value` pill. Everything below is `.dash`-scoped so
+   it cannot leak into another page.
+   ========================================================================== */
+
+.dash .card.notif-card {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  background: linear-gradient(
+    150deg,
+    rgba(255, 255, 255, 0.97),
+    color-mix(in srgb, var(--theme-primary) 5%, #ffffff)
+  );
+}
+[data-theme='dark'] .dash .card.notif-card {
+  background: linear-gradient(150deg, rgba(32, 37, 49, 0.97), rgba(22, 26, 34, 0.94));
+}
+.dash .card.notif-card { border-radius: 20px; }
+
+/* The two stacked sections keep a little more air between them than the
+   dashboard's default rhythm, as the reference does. */
+.dash .hours-bar + .notif-card { margin-top: 2px; }
+
+/* --- settings panel --------------------------------------------------- */
+
+.dash .notif-card__panel {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 20px;
+}
+
+.dash .notif-card__head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.dash .notif-card__titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.dash .notif-card__title {
+  margin: 0;
+  font-size: clamp(16px, 1.5vw, 19px);
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text);
+}
+.dash .notif-card__sub {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+}
+
+/* --- setting rows ----------------------------------------------------- */
+
+.dash .notif-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Each switch sits on its own softly translucent plate, so the row reads as
+   one object: icon, label, toggle. */
+.dash .notif-card .switch-row {
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--glass-line);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.62));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    0 8px 18px -16px rgba(16, 22, 38, 0.5);
+  transition:
+    border-color 200ms var(--ui-ease),
+    box-shadow 200ms var(--ui-ease);
+}
+.dash .notif-card .switch-row:hover {
+  border-color: var(--theme-primary-line);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 10px 22px -16px rgba(16, 22, 38, 0.45);
+}
+[data-theme='dark'] .dash .notif-card .switch-row {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 18px -16px rgba(0, 0, 0, 0.85);
+}
+.dash .notif-card .switch-row__title {
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.55;
+  color: var(--text-soft);
+}
+.dash .notif-card .switch-row__hint {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.dash .notif-card .switch { flex: none; }
+
+/* --- registered devices ----------------------------------------------- */
+
+.dash .push-devices {
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dash .push-devices__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dash .push-devices__titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.dash .push-devices__title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: var(--text-soft);
+}
+.dash .push-devices__sub {
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+/* The browser's own verdict, in the browser's own words. */
+.dash .push-devices__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.6;
+  white-space: nowrap;
+  border: 1px solid var(--glass-line);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 4px 10px -8px rgba(16, 22, 38, 0.5);
+}
+.dash .push-devices__status--ok {
+  color: color-mix(in srgb, var(--success) 78%, #0b3c22);
+  border-color: color-mix(in srgb, var(--success) 26%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--success) 20%, #ffffff),
+    color-mix(in srgb, var(--success) 11%, #ffffff)
+  );
+}
+.dash .push-devices__status--bad {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 24%, transparent);
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+}
+.dash .push-devices__status--warn {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 24%, transparent);
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+.dash .push-devices__status--muted { color: var(--muted); }
+
+.dash .push-devices__list { gap: 7px; }
+
+/* One device: its tile, what the browser calls it, and the control that
+   forgets it — all logical, so the row mirrors as one object. */
+.dash .push-device {
+  justify-content: flex-start;
+  gap: 10px;
+  padding-block: 8px;
+  padding-inline: 10px 8px;
+  border-radius: 13px;
+  border: 1px solid var(--glass-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.66));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 8px 18px -16px rgba(16, 22, 38, 0.5);
+}
+[data-theme='dark'] .dash .push-device {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 8px 18px -16px rgba(0, 0, 0, 0.85);
+}
+.dash .push-device__main {
+  flex: 1 1 auto;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dash .push-device__name {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-soft);
+}
+.dash .push-device__this {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 9.5px;
+  font-weight: 800;
+  line-height: 1.7;
+  white-space: nowrap;
+  color: var(--theme-primary-strong);
+  border: 1px solid var(--theme-primary-line);
+  background: color-mix(in srgb, var(--theme-primary) 13%, var(--surface));
+}
+.dash .push-device__remove {
+  margin-inline-start: auto;
+}
+
+/* --- ringtone and volume ---------------------------------------------- */
+
+/* Groove on one side, picker and its round preview button on the other. */
+.dash .notif-card .sound-picker {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--glass-line);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  /* Both labels start on the same line; the groove is given the select's own
+     height so the two control rows finish level too. */
+  align-items: start;
+  gap: 14px 20px;
+}
+.dash .sound-picker__col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.dash .sound-picker__label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.dash .sound-picker__row { gap: 10px; }
+/* The one saved level, centred on its groove. */
+.dash .sound-volume {
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  margin-top: 0;
+  min-height: 46px;
+}
+.dash .notif-card .sound-picker > .notif-note {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+/* --- illustration panel ------------------------------------------------ */
+
+/*
+ * Decorative only. The picture the section ships with is drawn here; swapping
+ * in an uploaded illustration means replacing the contents of this panel, not
+ * the layout — no control ever lives inside it.
+ */
+.dash .notif-card__art {
+  position: relative;
+  flex: 0 0 32%;
+  min-width: 240px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 55% at 50% 42%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0) 70%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--theme-primary) 7%, #ffffff),
+      color-mix(in srgb, var(--theme-primary) 17%, #ffffff)
+    );
+}
+[data-theme='dark'] .dash .notif-card__art {
+  background:
+    radial-gradient(70% 55% at 50% 42%, rgba(255, 255, 255, 0.06) 0%, transparent 70%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--theme-primary) 14%, #1b2030),
+      color-mix(in srgb, var(--theme-primary) 24%, #1b2030)
+    );
+}
+
+.dash .notif-art__ring,
+.dash .notif-art__halo,
+.dash .notif-art__pedestal {
+  position: absolute;
+  inset-inline-start: 50%;
+  pointer-events: none;
+}
+.dash .notif-art__ring {
+  top: 50%;
+  width: 250px;
+  height: 250px;
+  margin: -141px 0 0 -125px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 20%, transparent);
+  box-shadow: inset 0 0 0 26px color-mix(in srgb, #ffffff 42%, transparent);
+}
+.dash .notif-art__halo {
+  top: 50%;
+  width: 188px;
+  height: 188px;
+  margin: -110px 0 0 -94px;
+  border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--theme-primary) 20%, transparent) 0%, transparent 68%);
+}
+.dash .notif-art__pedestal {
+  bottom: 34px;
+  width: 132px;
+  height: 26px;
+  margin-inline-start: -66px;
+  border-radius: 50%;
+  background: radial-gradient(
+    62% 100% at 50% 34%,
+    color-mix(in srgb, var(--theme-primary) 26%, #ffffff) 0%,
+    color-mix(in srgb, var(--theme-primary) 8%, transparent) 72%,
+    transparent 100%
+  );
+}
+.dash .notif-art__bell {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 20px;
+  filter: drop-shadow(0 16px 22px color-mix(in srgb, var(--theme-primary) 30%, transparent));
+}
+/* The little notification bubble hovering over the bell. */
+.dash .notif-art__chip {
+  position: absolute;
+  z-index: 3;
+  top: calc(50% - 66px);
+  inset-inline-start: calc(50% + 26px);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  color: #ffffff;
+  background: linear-gradient(158deg, #f88ec0, #db2777);
+  border: 1px solid #be185d;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    0 8px 16px -8px rgba(190, 24, 93, 0.6);
+}
+
+/* --- responsive -------------------------------------------------------- */
+
+@media (max-width: 1240px) {
+  .dash .notif-card__art { flex-basis: 28%; min-width: 210px; }
+  .dash .notif-card__panel { padding: 16px 16px 18px; }
+}
+
+@media (max-width: 900px) {
+  /* Stacked: the illustration leads, the settings follow. */
+  .dash .notif-card { flex-direction: column; }
+  .dash .notif-card__art {
+    order: -1;
+    flex: 0 0 auto;
+    min-width: 0;
+    min-height: 176px;
+  }
+  .dash .notif-art__bell { margin-bottom: 10px; }
+  .dash .notif-art__pedestal { bottom: 18px; }
+  .dash .notif-art__ring { width: 210px; height: 210px; margin: -121px 0 0 -105px; }
+  .dash .notif-art__halo { width: 160px; height: 160px; margin: -96px 0 0 -80px; }
+}
+
+@media (max-width: 720px) {
+  .dash .notif-card__panel { padding: 14px 14px 16px; gap: 10px; }
+  .dash .notif-card__head { gap: 10px; }
+  .dash .notif-card .sound-picker { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .dash .push-devices__head { align-items: flex-start; }
+  /* Touch-sized controls on a phone. */
+  .dash .notif-card .switch-row { padding: 11px 12px; }
+}

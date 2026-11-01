@@ -19,7 +19,7 @@ import {
   suffixLocked,
 } from '../lib/identity.js';
 import { recordActivity } from '../lib/activity.js';
-import { getVapidKeys } from '../lib/push.js';
+import { getVapidKeys, pushTest } from '../lib/push.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -1660,15 +1660,53 @@ router.post(
   }),
 );
 
+/*
+ * Who receives a new-order push: the business-wide count plus the caller's own
+ * registered devices, which is the list the settings panel shows. The endpoint
+ * is returned so the browser can mark the row that is *this* device; it is the
+ * same string that browser already stores locally.
+ */
 router.get(
   '/push/status',
   withBusiness('staff'),
   ah(async (req, res) => {
-    const { rows } = await q(
-      'SELECT count(*)::int AS devices FROM push_subscriptions WHERE business_id = $1',
-      [req.businessId],
-    );
-    res.json({ devices: rows[0].devices });
+    const [counted, mine] = await Promise.all([
+      q('SELECT count(*)::int AS devices FROM push_subscriptions WHERE business_id = $1', [
+        req.businessId,
+      ]),
+      q(
+        `SELECT id, endpoint, user_agent, created_at
+           FROM push_subscriptions
+          WHERE user_id = $1 AND business_id = $2
+          ORDER BY created_at DESC`,
+        [req.user.id, req.businessId],
+      ),
+    ]);
+    res.json({ devices: counted.rows[0].devices, mine: mine.rows });
+  }),
+);
+
+/** A real push to the caller's own devices, so the setup is proven, not assumed. */
+router.post(
+  '/push/test',
+  withBusiness('staff'),
+  ah(async (req, res) => {
+    const report = await pushTest(req.user.id, req.businessId);
+    res.json(report);
+  }),
+);
+
+/** Forget one of the caller's own devices (never another account's). */
+router.delete(
+  '/push/devices/:id',
+  withBusiness('staff'),
+  ah(async (req, res) => {
+    if (!isUuid(req.params.id)) throw bad('INVALID_DEVICE');
+    await q('DELETE FROM push_subscriptions WHERE id = $1 AND user_id = $2', [
+      req.params.id,
+      req.user.id,
+    ]);
+    res.json({ ok: true });
   }),
 );
 

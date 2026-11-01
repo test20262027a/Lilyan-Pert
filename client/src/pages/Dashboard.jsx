@@ -15,7 +15,7 @@ import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { usePush } from '../hooks/usePush';
 import { get, put } from '../api';
-import { zoneFor } from '../format';
+import { fmtDigits, zoneFor } from '../format';
 import '../dashboard.css';
 
 /** Quiet refresh cadence for the live counters. */
@@ -138,6 +138,27 @@ export default function Dashboard() {
     else setPushError(`${t('dash_sw_failed')}${res.error ? ` — ${res.error}` : ''}`);
   };
 
+  /** A real push to this account's devices; the toast reports what was delivered. */
+  const onPushTest = async () => {
+    const report = await push.sendTest();
+    if (report.ok) toast.success(t('dash_push_test_ok', { n: fmtDigits(report.sent, locale) }));
+    else if (!report.total) toast.error(t('dash_push_test_none'));
+    else toast.error(t('dash_push_test_failed'));
+  };
+
+  /*
+   * Forgetting this very device has to unsubscribe it in the browser too, or the
+   * next status read would simply register it again.
+   */
+  const onRemoveDevice = async (device) => {
+    const res =
+      device.endpoint && device.endpoint === push.thisEndpoint
+        ? await push.disable()
+        : await push.removeDevice(device.id);
+    if (res.ok) toast.success(t('state_saved'));
+    else toast.error(t('error_generic'));
+  };
+
   if (loading && !data) return <Loading />;
   if (!data) return <Alert kind="error">{t('error_generic')}</Alert>;
 
@@ -158,25 +179,25 @@ export default function Dashboard() {
 
       {failed ? <Alert kind="error">{t('error_generic')}</Alert> : null}
 
-      {/* ---- Date and working hours, then notification settings ----
-          Both cards are conditionally rendered, never hidden with opacity: the
-          surviving card stretches to the full row through the grid's
-          `:only-child` rule, and when both are off the row itself disappears. */}
-      {show('show_date_hours') || show('show_notification_settings') ? (
-        <div className="dash-row dash-row--info">
-          {show('show_date_hours') ? <DateHours hours={data.hours} timeZone={timeZone} locale={locale} /> : null}
-          {show('show_notification_settings') ? (
-            <NotificationSettings
-              /* The business record is the single source of truth for notification
-                 settings, so a change made from the header shows up here at once. */
-              settings={business?.notification_settings || data.notification_settings}
-              onChange={updateSettings}
-              push={push}
-              onPushToggle={onPushToggle}
-              pushError={pushError}
-            />
-          ) : null}
-        </div>
+      {/* ---- Working hours bar, then notification settings ----
+          Two full-width sections stacked in reading order. Each is rendered
+          only while its Business Settings toggle is on, so a hidden one leaves
+          no empty block behind. */}
+      {show('show_date_hours') ? (
+        <DateHours hours={data.hours} timeZone={timeZone} locale={locale} />
+      ) : null}
+      {show('show_notification_settings') ? (
+        <NotificationSettings
+          /* The business record is the single source of truth for notification
+             settings, so a change made from the header shows up here at once. */
+          settings={business?.notification_settings || data.notification_settings}
+          onChange={updateSettings}
+          push={push}
+          onPushToggle={onPushToggle}
+          onPushTest={onPushTest}
+          onRemoveDevice={onRemoveDevice}
+          pushError={pushError}
+        />
       ) : null}
 
       {/* ---- Four pastel order metrics ---- */}

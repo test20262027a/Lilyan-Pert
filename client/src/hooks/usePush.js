@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { get, post } from '../api';
+import { del, get, post } from '../api';
 
 function urlBase64ToUint8Array(base64String) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -50,39 +50,54 @@ export function usePush() {
     ...notificationContext(),
     subscribed: false,
     devices: 0,
+    deviceList: [],
+    thisEndpoint: '',
     busy: false,
+    testing: false,
   });
   const regRef = useRef(null);
 
+  /*
+   * The browser is the authority on this device's subscription; the server is
+   * the authority on which devices it will push to. Reading the browser first
+   * and re-posting its subscription keeps the two in step after a reload (the
+   * endpoint can rotate), so the device list below is never stale.
+   */
   const refreshStatus = useCallback(async () => {
     const ctx = notificationContext();
 
-    let devices = 0;
-    try {
-      const status = await get('/manage/push/status');
-      devices = status.devices;
-    } catch {
-      devices = 0;
-    }
-
-    let subscribed = false;
+    let thisEndpoint = '';
     if (ctx.supported) {
       try {
         const reg = await navigator.serviceWorker.getRegistration();
         const sub = reg ? await reg.pushManager.getSubscription() : null;
-        subscribed = Boolean(sub);
-        // The browser holds the subscription; the server holds the row it sends
-        // to. Re-posting the same endpoint keeps the two in step after a reload
-        // (the endpoint itself can rotate) and is an upsert, never a duplicate.
         if (sub) {
+          thisEndpoint = sub.endpoint;
           await post('/manage/push/subscribe', { subscription: sub.toJSON() }).catch(() => {});
         }
       } catch {
-        subscribed = false;
+        thisEndpoint = '';
       }
     }
 
-    setState((s) => ({ ...s, ...ctx, devices, subscribed }));
+    let devices = 0;
+    let deviceList = [];
+    try {
+      const status = await get('/manage/push/status');
+      devices = status.devices;
+      deviceList = status.mine || [];
+    } catch {
+      devices = 0;
+    }
+
+    setState((s) => ({
+      ...s,
+      ...ctx,
+      devices,
+      deviceList,
+      thisEndpoint,
+      subscribed: Boolean(thisEndpoint),
+    }));
   }, []);
 
   // Initial read, then a fresh read whenever the app regains focus — the user
@@ -165,5 +180,31 @@ export function usePush() {
     }
   }, [refreshStatus]);
 
-  return { ...state, enable, disable, refreshStatus };
+  const sendTest = useCallback(async () => {
+    setState((s) => ({ ...s, testing: true }));
+    try {
+      const report = await post('/manage/push/test', {});
+      setState((s) => ({ ...s, testing: false }));
+      return { ok: (report?.sent || 0) > 0, ...report };
+    } catch (err) {
+      setState((s) => ({ ...s, testing: false }));
+      return { ok: false, sent: 0, total: 0, error: String(err?.code || err?.message || err) };
+    }
+  }, []);
+
+  /** Forgets one of this account's own devices on the server. */
+  const removeDevice = useCallback(
+    async (id) => {
+      try {
+        await del(`/manage/push/devices/${id}`);
+        await refreshStatus();
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, error: String(err?.code || err?.message || err) };
+      }
+    },
+    [refreshStatus],
+  );
+
+  return { ...state, enable, disable, refreshStatus, sendTest, removeDevice };
 }

@@ -68,6 +68,16 @@ export default function Orders() {
   const [products, setProducts] = useState([]);
   const [tables, setTables] = useState([]);
 
+  /*
+   * A pushed notification can be tapped while this list is already on screen.
+   * Only the `order` query changes then, so the modal follows the URL instead
+   * of being seeded once on mount — and closing it clears the query again.
+   */
+  useEffect(() => {
+    const next = urlParams.get('order');
+    if (next) setViewId(next);
+  }, [urlParams]);
+
   const searching = Boolean(search);
 
   /*

@@ -41,7 +41,9 @@ export default function NotificationBell() {
   const soundVolume = business?.notification_settings?.sound_volume;
   const priority = useMemo(() => priorityOf(unread), [unread]);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (options) => {
+    // A background push that the OS already announced only refreshes the badge.
+    const silent = options?.silent === true;
     try {
       const data = await get('/manage/notifications');
       const list = data.notifications || [];
@@ -58,8 +60,10 @@ export default function NotificationBell() {
         } else if (newestOrder.id !== seenRef.current) {
           seenRef.current = newestOrder.id;
           // One alert per genuinely new order, whatever the poll interval did.
-          if (soundEnabled) playSound(soundKey, soundVolume);
-          toast.success(`${t('dash_new_orders')} · ${newestOrder.title || ''}`.trim());
+          if (!silent) {
+            if (soundEnabled) playSound(soundKey, soundVolume);
+            toast.success(`${t('dash_new_orders')} · ${newestOrder.title || ''}`.trim());
+          }
         }
       }
     } catch {
@@ -84,6 +88,22 @@ export default function NotificationBell() {
     };
     document.addEventListener('visibilitychange', onVisible);
     return () => document.removeEventListener('visibilitychange', onVisible);
+  }, [load]);
+
+  /*
+   * A background push arrives through the service worker (PushBridge). While
+   * this tab is visible it is the one place that rings; when another tab or a
+   * minimised window got the system alert instead, the badge only catches up.
+   */
+  useEffect(() => {
+    const alert = () => load();
+    const refresh = () => load({ silent: true });
+    window.addEventListener('lilyan:new-order', alert);
+    window.addEventListener('lilyan:order-arrived', refresh);
+    return () => {
+      window.removeEventListener('lilyan:new-order', alert);
+      window.removeEventListener('lilyan:order-arrived', refresh);
+    };
   }, [load]);
 
   useEffect(() => {

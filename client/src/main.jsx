@@ -7,6 +7,7 @@ import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui';
 import TooltipLayer from './components/tooltip/TooltipLayer';
 import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
+import PushBridge from './push/PushBridge';
 import './styles.css';
 import './scrollbars.css';
 // Shared interactive states (hover / press / focus depth). Imported last so the
@@ -32,6 +33,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ToastProvider>
           <AuthProvider>
             <App />
+            {/* Service-worker messages: a tapped notification opens its order,
+                an arriving push refreshes the badge. */}
+            <PushBridge />
             {/* The app's ONE loader: mounted once, here, above every route, so
                 no page can swap it for a different size, position or variant
                 and it never remounts between loading phases. */}
