@@ -3,7 +3,14 @@ import Icon from '../Icon';
 import { Spinner } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDateTime, fmtDigits } from '../../format';
-import { CATEGORY_TABS, categoryOf, compactCount, priorityOf, relativeTime } from '../../notifications';
+import {
+  CATEGORY_TABS,
+  categoryOf,
+  compactCount,
+  priorityOf,
+  relativeTime,
+  unreadSlices,
+} from '../../notifications';
 import { ENTITY_KEYS, entityLabelText } from '../activity/activityMeta';
 
 /*
@@ -183,6 +190,9 @@ export default function NotificationPanel({
   const { t } = useI18n();
   const [tab, setTab] = useState('all');
   const priority = priorityOf(unread);
+  /* The unread tab and its pill wear the header badge's own three-slice mix,
+     from the same calculation, so the panel can never disagree with the bell. */
+  const slices = priority.total > 0 ? unreadSlices(unread) : null;
 
   const visible =
     tab === 'all' ? items : tab === 'unread' ? items.filter((i) => !i.read_at) : lists[tab] || [];
@@ -221,13 +231,15 @@ export default function NotificationPanel({
       <div className="notif-panel__tabs" role="tablist" aria-label={t('dash_notifications')}>
         {CATEGORY_TABS.map((key) => {
           const count = key === 'all' || key === 'unread' ? unread.total : unread[key] || 0;
+          const sliced = key === 'unread' && slices;
           return (
             <button
               key={key}
               type="button"
               role="tab"
               aria-selected={tab === key}
-              className={`notif-tab notif-tab--${toneOfTab(key, priority)} ${tab === key ? 'is-active' : ''}`}
+              className={`notif-tab notif-tab--${sliced ? 'sliced' : toneOfTab(key, priority)} ${tab === key ? 'is-active' : ''}`}
+              style={sliced ? { '--ntm-s1': slices.s1, '--ntm-s2': slices.s2 } : undefined}
               onClick={() => setTab(key)}
             >
               <span className="notif-tab__label">{t(`notif_tab_${key}`)}</span>

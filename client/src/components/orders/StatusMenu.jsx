@@ -3,10 +3,13 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 
 /*
- * Compact row status control: the current localized status plus the statuses
- * the server said this order may move to (`allowed_transitions`, which is empty
- * for completed and cancelled orders — so the control locks itself the moment an
- * order completes). The change itself is validated again on the backend.
+ * Compact row status control: one square button carrying the order's own status
+ * colour and a dropdown chevron — never the status word, so every button in the
+ * Actions column is the same size in every language. The statuses it offers are
+ * the server's `allowed_transitions` (empty for completed and cancelled orders,
+ * so the control locks itself the moment an order completes) and the change
+ * itself is validated again on the backend. The status name stays available to
+ * screen readers through the label.
  *
  * The menu is positioned fixed from the trigger's rectangle, so the table's
  * scroll container can never clip it.
@@ -63,15 +66,21 @@ export default function StatusMenu({ order, busy, onSelect }) {
         className={`ostatus__btn ostatus__btn--${order.status} ${locked ? 'is-locked' : ''}`}
         aria-haspopup={locked ? undefined : 'menu'}
         aria-expanded={locked ? undefined : open}
+        aria-label={
+          locked
+            ? `${t('order_status_locked')} · ${t(`status_${order.status}`)}`
+            : `${t('order_change_status')} · ${t(`status_${order.status}`)}`
+        }
         disabled={locked || busy}
         title={locked ? t('order_status_locked') : t('order_change_status')}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="ostatus__text">{t(`status_${order.status}`)}</span>
         {busy ? (
           <span className="spinner ostatus__spinner" />
-        ) : locked ? null : (
-          <Icon name="chevronDown" size={13} className={`ostatus__caret ${open ? 'is-open' : ''}`} />
+        ) : locked ? (
+          <Icon name="lock" size={15} className="ostatus__icon" />
+        ) : (
+          <Icon name="chevronDown" size={16} className={`ostatus__icon ostatus__caret ${open ? 'is-open' : ''}`} />
         )}
       </button>
 

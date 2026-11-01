@@ -448,71 +448,120 @@
   color: color-mix(in srgb, var(--primary) 78%, var(--text));
 }
 .otable__amount { font-weight: 750; white-space: nowrap; }
-.otable__actions-head { text-align: end; }
+/* One fixed Actions column: the same width on every row and in both
+   directions, with the single button centred in it. */
+.otable__actions-head { text-align: center; width: 76px; }
 .otable__actions {
   white-space: nowrap;
-  text-align: end;
-  width: 1%;
+  text-align: center;
+  width: 76px;
 }
 
 /*
- * The action cell keeps one fixed column now that the row itself opens the
- * order: a status change (a longer label, the saving spinner, a locked state)
- * can never resize the column, so the status control sits on one straight
- * vertical line on every row.
+ * The action cell keeps one fixed, centred column now that the row itself opens
+ * the order: every row carries the same 38px square button, so a status change,
+ * the saving spinner or a locked order can never resize the column or push the
+ * neighbouring cells.
  */
 .orow-actions {
   display: grid;
-  grid-template-columns: minmax(0, 132px);
+  grid-template-columns: 38px;
   align-items: center;
-  gap: 8px;
-  justify-content: end;
-}
-.orow-actions .ostatus { grid-column: 1; min-width: 0; width: 100%; }
-.orow-actions .ostatus__btn {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
   justify-content: center;
-  overflow: hidden;
 }
-/* A long translation truncates inside the fixed column instead of pushing. */
-.orow-actions .ostatus__text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.orow-actions .ostatus { grid-column: 1; width: 38px; }
 
 /* ---------------------------------------------------------- status dropdown */
 
 .ostatus { display: inline-flex; vertical-align: middle; }
 
-.ostatus__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 6px 11px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text-soft);
+/*
+ * One square status button — 38×38 in every row, every language, every
+ * breakpoint, and icon-only so no translation can stretch it. The plate wears
+ * the order's OWN status colour (blue new, amber preparing, violet ready, green
+ * completed, red cancelled) as a glossy 3D gradient: a hairline of white along
+ * the top edge, a contact edge under it, and a soft glow in the same hue.
+ * Hover darkens that same colour and lifts the button one step; a locked order
+ * keeps the identical footprint with a quiet plate and a lock glyph, so an
+ * unavailable action never looks available.
+ */
+.ostatus .ostatus__btn {
+  --ost-a: #6d8ff8;
+  --ost-b: #4f46e5;
+  --ost-hover: #4338ca;
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ost-b) 60%, #ffffff);
+  background-image: linear-gradient(180deg, var(--ost-a), var(--ost-b));
+  color: #ffffff;
   cursor: pointer;
   white-space: nowrap;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 5px rgba(8, 16, 34, 0.26),
+    0 2px 0 color-mix(in srgb, var(--ost-b) 76%, #0b1020),
+    0 7px 14px -6px color-mix(in srgb, var(--ost-b) 72%, transparent);
+  transition:
+    background-image 0.2s ease, box-shadow 0.2s ease,
+    transform 0.18s ease, border-color 0.2s ease;
 }
-.ostatus__btn:hover:not(:disabled) {
-  background: var(--theme-primary-tint-hover);
-  border-color: var(--theme-primary-border);
-  color: var(--theme-primary-strong);
+.ostatus .ostatus__btn--pending { --ost-a: #63a2ff; --ost-b: #2563eb; --ost-hover: #1d4ed8; }
+.ostatus .ostatus__btn--preparing { --ost-a: #f7ab4b; --ost-b: #d97706; --ost-hover: #b45309; }
+.ostatus .ostatus__btn--ready { --ost-a: #a985fb; --ost-b: #7c3aed; --ost-hover: #6d28d9; }
+.ostatus .ostatus__btn--completed { --ost-a: #45d68a; --ost-b: #16a34a; --ost-hover: #15803d; }
+.ostatus .ostatus__btn--cancelled { --ost-a: #f5767c; --ost-b: #dc2626; --ost-hover: #b91c1c; }
+
+.ostatus .ostatus__btn:hover:not(:disabled) {
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--ost-b) 74%, #ffffff), var(--ost-hover));
+  border-color: color-mix(in srgb, var(--ost-hover) 68%, #ffffff);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -2px 5px rgba(8, 16, 34, 0.32),
+    0 3px 0 color-mix(in srgb, var(--ost-hover) 80%, #0b1020),
+    0 12px 20px -8px color-mix(in srgb, var(--ost-hover) 78%, transparent);
 }
-.ostatus__btn:disabled { cursor: not-allowed; }
-.ostatus__btn.is-locked { background: var(--surface-2); color: var(--muted); }
-.ostatus__caret { color: var(--muted); transition: transform 0.16s ease; }
+.ostatus .ostatus__btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ost-b) 62%, transparent);
+  outline-offset: 2px;
+}
+.ostatus .ostatus__btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 2px 6px rgba(8, 16, 34, 0.36),
+    0 1px 0 color-mix(in srgb, var(--ost-hover) 70%, #0b1020);
+}
+.ostatus .ostatus__btn:disabled { cursor: not-allowed; }
+/* A button that is only saving keeps its status colour; the spinner says why
+   it cannot be pressed again. */
+.ostatus .ostatus__btn:disabled:not(.is-locked) {
+  background-image: linear-gradient(180deg, var(--ost-a), var(--ost-b));
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 6px 12px -6px color-mix(in srgb, var(--ost-b) 70%, transparent);
+}
+/* Locked order: same box, unmistakably unavailable, still in its status hue. */
+.ostatus .ostatus__btn.is-locked {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ost-b) 12%, var(--surface-2)),
+    color-mix(in srgb, var(--ost-b) 20%, var(--surface-2))
+  );
+  border-color: color-mix(in srgb, var(--ost-b) 24%, var(--border));
+  color: color-mix(in srgb, var(--ost-b) 40%, var(--muted));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+.ostatus__icon { color: currentColor; }
+.ostatus__caret { transition: transform 0.16s ease; }
 .ostatus__caret.is-open { transform: rotate(180deg); }
-.ostatus__spinner { width: 13px; height: 13px; border-width: 2px; }
+.ostatus__spinner { width: 15px; height: 15px; border-width: 2px; }
 
 /* The status list uses the shared selection popup surface (see select.css). */
 .ostatus__menu {
@@ -748,7 +797,7 @@
   .otable th { padding: 11px 9px; }
   .otable td { padding: 10px 9px; height: 58px; }
   .otable__customer { max-width: 130px; }
-  .orow-actions { grid-template-columns: minmax(0, 118px); }
+  .otable__actions-head, .otable__actions { width: 68px; }
 }
 
 /*

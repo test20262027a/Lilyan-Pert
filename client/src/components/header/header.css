@@ -506,14 +506,33 @@
  * figure keeps a dark halo so it stays readable on every slice, theme and
  * appearance.
  */
-@property --ntm-s1 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
-@property --ntm-s2 { syntax: '<percentage>'; inherits: false; initial-value: 100%; }
+/*
+ * The three-slice plate. One recipe, shared by the header count badge and by
+ * the Unread tab with its count pill, so all of them always show the same live
+ * proportions: green orders, gold reviews, coral activity. The two boundaries
+ * come from the notification feed (see unreadSlices) and are registered as
+ * percentages, so a count arriving or being read slides them across in 220ms
+ * instead of jumping.
+ */
+@property --ntm-s1 { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
+@property --ntm-s2 { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
 
-.hdr-bell__badge {
+.hdr-bell__badge,
+.notif-tab--sliced {
   --ntm-orders: #2fc276;
   --ntm-reviews: #e3a61b;
   --ntm-activity: #df4a52;
   --ntm-dir: 90deg;
+  --ntm-plate:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, rgba(6, 32, 20, 0) 46%, rgba(6, 32, 20, 0.2)),
+    linear-gradient(var(--ntm-dir),
+      var(--ntm-orders) 0 var(--ntm-s1),
+      var(--ntm-reviews) var(--ntm-s1) var(--ntm-s2),
+      var(--ntm-activity) var(--ntm-s2) 100%);
+}
+
+.hdr-bell__badge {
   position: absolute; top: -4px; inset-inline-end: -4px;
   min-width: 19px; height: 19px; padding: 0 5px;
   display: grid; place-items: center;
@@ -523,13 +542,7 @@
   font-variant-numeric: tabular-nums;
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(6, 32, 20, 0.66), 0 0 1px rgba(6, 32, 20, 0.5);
-  background-image:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.44), rgba(255, 255, 255, 0) 52%),
-    linear-gradient(180deg, rgba(6, 32, 20, 0) 46%, rgba(6, 32, 20, 0.2)),
-    linear-gradient(var(--ntm-dir),
-      var(--ntm-orders) 0 var(--ntm-s1),
-      var(--ntm-reviews) var(--ntm-s1) var(--ntm-s2),
-      var(--ntm-activity) var(--ntm-s2) 100%);
+  background-image: var(--ntm-plate);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
     inset 0 -2px 4px rgba(6, 32, 20, 0.36),
@@ -541,7 +554,8 @@
   animation: bell-badge-in 0.22s ease;
 }
 /* Read right to left, the order slice starts at the trailing edge. */
-[dir='rtl'] .hdr-bell__badge { --ntm-dir: 270deg; }
+[dir='rtl'] .hdr-bell__badge,
+[dir='rtl'] .notif-tab--sliced { --ntm-dir: 270deg; }
 /* Hover deepens every slice a step and lifts the plate off the bell. */
 .hdr-bell__btn:hover .hdr-bell__badge,
 .hdr-bell__badge:hover {
@@ -719,9 +733,83 @@
   background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.14));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
-@media (max-width: 560px) {
-  .notif-panel__tabs { gap: 5px; padding: 9px 12px; }
-  .notif-tab { font-size: 11.5px; padding: 0 8px; gap: 5px; }
+/*
+ * The Unread tab is the one tab painted with the live mix: its plate and its
+ * count pill both wear the shared three-slice gradient in the SAME proportions,
+ * so the tab reads as a small summary of what is waiting. The pill keeps a
+ * white ring and a deeper inner shadow so it still reads as a raised plate on
+ * top of an identical plate, and the white figure keeps a dark halo. With
+ * nothing unread the tab falls back to the quiet neutral tone above.
+ */
+.notif-tab.notif-tab--sliced {
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(6, 32, 20, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+  background-image: var(--ntm-plate);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.46),
+    inset 0 -2px 5px rgba(6, 32, 20, 0.22),
+    0 3px 10px -5px rgba(6, 32, 20, 0.4);
+  transition:
+    --ntm-s1 0.22s ease, --ntm-s2 0.22s ease,
+    filter 0.2s ease, box-shadow 0.2s ease;
+}
+.notif-tab.notif-tab--sliced.is-active {
+  border-color: rgba(255, 255, 255, 0.52);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 6px rgba(6, 32, 20, 0.3),
+    0 5px 14px -6px rgba(6, 32, 20, 0.5);
+}
+/* Hover deepens every slice instead of replacing the plate with a flat tint. */
+.notif-tab.notif-tab--sliced:not(.is-active):hover,
+.notif-tab.notif-tab--sliced.is-active:hover {
+  color: #ffffff;
+  background-image: var(--ntm-plate);
+  border-color: rgba(255, 255, 255, 0.42);
+  filter: saturate(1.06) brightness(0.93);
+}
+.notif-tab.notif-tab--sliced .notif-tab__count {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.55);
+  background-image: var(--ntm-plate);
+  text-shadow: 0 1px 2px rgba(6, 32, 20, 0.66);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(6, 32, 20, 0.3),
+    0 1px 3px rgba(6, 32, 20, 0.28);
+}
+.notif-tab.notif-tab--sliced:hover .notif-tab__count,
+.notif-tab.notif-tab--sliced.is-active .notif-tab__count {
+  background-image: var(--ntm-plate);
+}
+
+/*
+ * Phone: the tab row becomes a two-column grid. Every tab gets the same width
+ * and the same height, stacked neatly in pairs, with its label centred and the
+ * count pill beside it — no horizontal scrolling and nothing clipped. An odd
+ * last tab simply takes its own cell at the same size, so the grid stays even.
+ */
+@media (max-width: 767px) {
+  .notif-panel__tabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 34px;
+    gap: 6px;
+    padding: 10px 12px;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+  .notif-tab {
+    width: 100%;
+    height: 34px;
+    padding: 0 8px;
+    gap: 5px;
+    font-size: 11.5px;
+    justify-content: center;
+    scroll-snap-align: none;
+  }
+  .notif-tab__label { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .notif-tab__count { min-width: 18px; padding: 0 4px; }
 }
 
