@@ -15,9 +15,9 @@ import NotificationPanel from './NotificationPanel';
  * Bell + panel. The list, the three unread counts and the alert sound all come
  * from the backend feed, so nothing here is faked client-side.
  *
- * The badge colour is derived, never chosen: purple while any order
- * notification is unread, gold once only reviews remain, red once only
- * activities remain, and no badge at all when everything has been read.
+ * The badge is one green plate in every category, theme and appearance; only
+ * the bell button behind it takes the priority tint (orders first, then
+ * reviews, then activity). Nothing is shown once everything has been read.
  */
 const POLL_MS = 20000;
 const EMPTY_COUNTS = { orders: 0, reviews: 0, activities: 0, total: 0 };

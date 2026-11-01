@@ -54,7 +54,7 @@ export default function StatCards({ totals = {}, currency, locale }) {
       {CARDS.map((card) => {
         const value = card.pick(totals);
         return (
-          <article className="stats-kpi" key={card.key}>
+          <article className={`stats-kpi stats-kpi--${card.tone}`} key={card.key}>
             <div className="stats-kpi__top">
               <DashIcon name={card.icon} tone={card.tone} size={38} hover />
               <span className="stats-kpi__label">{t(card.label)}</span>

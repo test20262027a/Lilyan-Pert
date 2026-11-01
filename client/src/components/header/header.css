@@ -496,9 +496,11 @@
 .hdr-bell__btn.is-red { color: #c93b41; border-color: color-mix(in srgb, #e94e55 32%, var(--border-strong)); }
 
 /*
- * Priority badge. The colour is set by the priority logic in NotificationBell,
- * never hardcoded per render; the inner highlight and small shadow keep it
- * raised without a continuous pulse.
+ * Count badge. One green identity in every category, theme and appearance —
+ * the priority still tints the bell button, never the badge — so the counter
+ * always reads as the same raised plate: a glossy gradient, a hairline of inner
+ * light, a solid contact edge and a soft green glow. The white figure keeps its
+ * contrast against the deepest part of the gradient in light and dark mode.
  */
 .hdr-bell__badge {
   position: absolute; top: -4px; inset-inline-end: -4px;
@@ -509,21 +511,30 @@
   font-size: 10.5px; font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
-  transition: background-color 0.22s ease, box-shadow 0.22s ease, color 0.22s ease;
+  text-shadow: 0 1px 1px rgba(4, 52, 24, 0.55);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, #34c97a 0%, #12833f 54%, #0a5f2c 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(4, 52, 24, 0.5),
+    0 2px 0 rgba(10, 95, 44, 0.5),
+    0 6px 12px -4px rgba(16, 131, 63, 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
   animation: bell-badge-in 0.22s ease;
 }
-.hdr-bell__badge--purple {
-  background: linear-gradient(180deg, #9166f0, #8054e8);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 3px 8px rgba(128, 84, 232, 0.45);
-}
-.hdr-bell__badge--gold {
-  background: linear-gradient(180deg, #ffd066, #f5bc37);
-  color: #5a3c05;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 3px 8px rgba(245, 188, 55, 0.45);
-}
-.hdr-bell__badge--red {
-  background: linear-gradient(180deg, #f4696f, #e94e55);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 3px 8px rgba(233, 78, 85, 0.42);
+/* Hover deepens the green and lifts the plate one step off the bell. */
+.hdr-bell__btn:hover .hdr-bell__badge,
+.hdr-bell__badge:hover {
+  transform: translateY(-1px) scale(1.04);
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.34), rgba(255, 255, 255, 0) 52%),
+    linear-gradient(180deg, #1fa863 0%, #0c6c33 54%, #074a22 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 4px rgba(3, 45, 20, 0.6),
+    0 3px 0 rgba(7, 74, 34, 0.55),
+    0 10px 18px -6px rgba(12, 108, 51, 0.7);
 }
 @keyframes bell-badge-in { from { transform: scale(0.72); opacity: 0; } }
 

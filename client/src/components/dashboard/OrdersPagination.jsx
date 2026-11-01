@@ -1,6 +1,7 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { fmtDigits } from '../../format';
+import useMediaQuery from '../../hooks/useMediaQuery';
 
 /*
  * Pagination under the dashboard's Recent Orders table.
@@ -12,27 +13,40 @@ import { fmtDigits } from '../../format';
  * English, right in Kurdish, Persian and Arabic — while the flex row itself
  * follows the document direction, putting "previous" first on the right. The
  * text lives on the buttons as aria-label/title only, never on screen.
+ *
+ * How many numbered plates are drawn is a responsive limit — four on a wide
+ * screen, three on a tablet, one on a phone — and the window always slides so
+ * the current page stays inside it. The row never wraps and never grows past
+ * those limits; only the arrows and the "1 / 6" readout sit beside them.
  */
-const GAP = (index) => `gap-${index}`;
+const NUMBERS_DESKTOP = 4;
+const NUMBERS_TABLET = 3;
+const NUMBERS_MOBILE = 1;
 
-/** The page numbers to draw: first, last and a window around the current one. */
-function pageItems(page, pages) {
-  if (pages <= 7) return Array.from({ length: pages }, (_, i) => i + 1);
-  const around = [page - 1, page, page + 1].filter((n) => n > 1 && n < pages);
-  const marks = [1, ...around, pages];
+const gap = (side) => ({ gap: side });
+
+/**
+ * The items to draw: a window of at most `limit` consecutive page numbers that
+ * always contains `page`, with a marker on either side where numbers are left
+ * out. The window is clamped to the first and last page instead of shrinking.
+ */
+function pageItems(page, pages, limit) {
+  const size = Math.min(limit, pages);
+  const start = Math.min(Math.max(page - Math.floor((size - 1) / 2), 1), pages - size + 1);
   const items = [];
-  let previous = 0;
-  for (const n of marks) {
-    if (previous && n - previous > 1) items.push(GAP(n));
-    items.push(n);
-    previous = n;
-  }
+  if (start > 1) items.push(gap('start'));
+  for (let n = start; n < start + size; n += 1) items.push(n);
+  if (start + size - 1 < pages) items.push(gap('end'));
   return items;
 }
 
 export default function OrdersPagination({ page = 1, pages = 1, onPage }) {
   const { t, locale } = useI18n();
+  const wide = useMediaQuery('(min-width: 1200px)');
+  const medium = useMediaQuery('(min-width: 768px)');
   if (pages <= 1) return null;
+
+  const limit = wide ? NUMBERS_DESKTOP : medium ? NUMBERS_TABLET : NUMBERS_MOBILE;
 
   const go = (next) => {
     if (next < 1 || next > pages || next === page) return;
@@ -54,7 +68,7 @@ export default function OrdersPagination({ page = 1, pages = 1, onPage }) {
       </button>
 
       <ul className="pager__nums">
-        {pageItems(page, pages).map((item) =>
+        {pageItems(page, pages, limit).map((item) =>
           typeof item === 'number' ? (
             <li key={item}>
               <button
@@ -68,7 +82,7 @@ export default function OrdersPagination({ page = 1, pages = 1, onPage }) {
               </button>
             </li>
           ) : (
-            <li key={item} className="pager__gap" aria-hidden="true">
+            <li key={item.gap} className="pager__gap" aria-hidden="true">
               …
             </li>
           ),

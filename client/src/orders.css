@@ -357,18 +357,21 @@
   overflow: hidden;
 }
 
-/* Only a cramped tablet ever scrolls here; the page itself never overflows. */
-.otable-scroll { overflow-x: auto; }
-
+/*
+ * No scroll container: the table always fits its card. Columns size to their
+ * content and the flexible ones truncate, so a tablet narrows the spacing
+ * instead of hiding a column behind a horizontal scrollbar.
+ */
 .otable {
   width: 100%;
-  min-width: 680px;
+  min-width: 0;
+  table-layout: auto;
   border-collapse: collapse;
   font-size: 13px;
 }
 .otable th {
   text-align: start;
-  padding: 12px 14px;
+  padding: 12px 12px;
   font-size: 11.5px;
   font-weight: 700;
   letter-spacing: 0.02em;
@@ -378,13 +381,38 @@
   white-space: nowrap;
 }
 .otable td {
-  padding: 12px 14px;
+  padding: 12px 12px;
   height: 62px;
   vertical-align: middle;
   border-bottom: 1px solid var(--border);
 }
 .otable tbody tr:last-child td { border-bottom: none; }
-.otable tbody tr:hover td { background: color-mix(in srgb, var(--mint) 5%, transparent); }
+
+/*
+ * The whole row is the control that opens the order. One theme-aware highlight
+ * covers the entire row — never a single cell — with a gentle inner lift and a
+ * pointer cursor, and the same state answers keyboard focus.
+ */
+.otable__row {
+  cursor: pointer;
+  transition: background-color 200ms ease, box-shadow 200ms ease;
+}
+.otable__row:hover td,
+.otable__row:focus-visible td {
+  background: color-mix(in srgb, var(--mint) 7%, transparent);
+}
+.otable__row:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--mint) 22%, transparent),
+    inset 0 -1px 0 color-mix(in srgb, var(--mint) 18%, transparent);
+}
+.otable__row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mint) 55%, transparent);
+  outline-offset: -2px;
+}
+[data-theme='dark'] .otable__row:hover td,
+[data-theme='dark'] .otable__row:focus-visible td {
+  background: color-mix(in srgb, var(--mint) 12%, transparent);
+}
 
 .otable__no { font-weight: 750; white-space: nowrap; }
 .otable__when { color: var(--muted); font-size: 12.5px; line-height: 1.35; white-space: nowrap; }
@@ -428,20 +456,19 @@
 }
 
 /*
- * The action cell is a fixed two-column grid: the view button owns its own
- * column, the status control its own. A status change (a longer label, the
- * saving spinner, a locked state) can never resize either column, so the eye
- * buttons stay in one straight vertical line on every row.
+ * The action cell keeps one fixed column now that the row itself opens the
+ * order: a status change (a longer label, the saving spinner, a locked state)
+ * can never resize the column, so the status control sits on one straight
+ * vertical line on every row.
  */
 .orow-actions {
   display: grid;
-  grid-template-columns: 34px 132px;
+  grid-template-columns: minmax(0, 132px);
   align-items: center;
   gap: 8px;
   justify-content: end;
 }
-.orow-actions .orow-btn { grid-column: 1; }
-.orow-actions .ostatus { grid-column: 2; min-width: 0; width: 100%; }
+.orow-actions .ostatus { grid-column: 1; min-width: 0; width: 100%; }
 .orow-actions .ostatus__btn {
   width: 100%;
   min-width: 0;
@@ -456,24 +483,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-/* Small white icon button that opens the order details. */
-.orow-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 11px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-soft);
-  text-decoration: none;
-  vertical-align: middle;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-.orow-btn:hover { background: var(--theme-primary-tint-hover); color: var(--mint-ink); }
 
 /* ---------------------------------------------------------- status dropdown */
 
@@ -684,6 +693,8 @@
 
 .ocards { display: flex; flex-direction: column; gap: 10px; padding: 12px; }
 
+/* The whole card opens the order, so it carries the same pointer, highlight
+   and keyboard focus ring as a table row. */
 .ocard {
   display: flex;
   flex-direction: column;
@@ -694,6 +705,22 @@
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
   min-width: 0;
+  cursor: pointer;
+  transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease;
+}
+.ocard:hover,
+.ocard:focus-visible {
+  border-color: color-mix(in srgb, var(--mint) 35%, var(--border));
+  background: color-mix(in srgb, var(--mint) 5%, var(--surface));
+  box-shadow: 0 8px 18px -12px color-mix(in srgb, var(--mint-deep) 55%, transparent), var(--shadow-sm);
+}
+.ocard:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--mint) 55%, transparent);
+  outline-offset: 2px;
+}
+[data-theme='dark'] .ocard:hover,
+[data-theme='dark'] .ocard:focus-visible {
+  background: color-mix(in srgb, var(--mint) 12%, var(--surface));
 }
 .ocard__top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ocard__no { font-size: 14px; font-weight: 750; }
@@ -712,6 +739,55 @@
 
 @media (max-width: 1180px) {
   .obanner__art { max-width: 300px; }
+}
+
+/* Tablet keeps all seven columns — only the spacing and the two flexible text
+   cells tighten, so the table still fits its card without a scrollbar. */
+@media (max-width: 1199px) {
+  .otable { font-size: 12.5px; }
+  .otable th { padding: 11px 9px; }
+  .otable td { padding: 10px 9px; height: 58px; }
+  .otable__customer { max-width: 130px; }
+  .orow-actions { grid-template-columns: minmax(0, 118px); }
+}
+
+/*
+ * Phone: the status filters become a two-column grid. Every status keeps its
+ * own equal-width cell — no horizontal scrolling, no clipped label — and more
+ * statuses simply add rows. Tablets keep the single row above.
+ */
+@media (max-width: 767px) {
+  .ofilters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    overflow: visible;
+    padding-block: 0;
+  }
+  .ofilter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    padding: 8px 10px;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    background: var(--surface-2);
+    border-color: var(--border);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6), 0 1px 2px rgba(23, 26, 43, 0.05);
+  }
+  .ofilter.is-active {
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 2px 0 color-mix(in srgb, var(--mint-deep) 45%, transparent),
+      0 8px 14px -8px color-mix(in srgb, var(--mint-deep) 65%, transparent);
+  }
+  [data-theme='dark'] .ofilter {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
 }
 
 @media (max-width: 1000px) {

@@ -470,11 +470,29 @@
     var(--inset-top);
   transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
-.kpi:hover {
+/*
+ * Hover belongs to ONE card. The selector is the card's own state — never the
+ * row's, a parent's or a sibling's — so a card beside it cannot lift, tint or
+ * glow with it. The surface and the border take a deeper, richer mix of the
+ * card's own tone and the same hue feeds the glow; nothing moves in the flow.
+ */
+.kpi:hover,
+.kpi:focus-visible {
+  outline: none;
   transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tone-ink) 26%, var(--tone-line));
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--tone-ink) 7%, var(--tone)),
+      color-mix(in srgb, var(--tone-ink) 15%, var(--tone))
+    );
   box-shadow:
     0 8px 16px rgba(20, 45, 30, 0.07),
     0 18px 35px rgba(20, 45, 30, 0.075),
+    0 0 0 1px color-mix(in srgb, var(--tone-ink) 16%, transparent),
+    0 16px 28px -18px color-mix(in srgb, var(--tone-ink) 55%, transparent),
     var(--inset-top);
 }
 
@@ -565,11 +583,25 @@
     var(--inset-top);
   transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
-.fstat:hover {
+/* Independent hover — the finance tiles sit inside one card, so the state is
+   the tile's own and never the surrounding card's. */
+.fstat:hover,
+.fstat:focus-visible {
+  outline: none;
   transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tone-ink) 26%, var(--tone-line));
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--tone-ink) 7%, var(--tone)),
+      color-mix(in srgb, var(--tone-ink) 15%, var(--tone))
+    );
   box-shadow:
     0 8px 16px rgba(20, 45, 30, 0.07),
     0 18px 35px rgba(20, 45, 30, 0.075),
+    0 0 0 1px color-mix(in srgb, var(--tone-ink) 16%, transparent),
+    0 16px 28px -18px color-mix(in srgb, var(--tone-ink) 55%, transparent),
     var(--inset-top);
 }
 
@@ -846,11 +878,23 @@
     var(--inset-top);
   transition: transform 200ms ease, box-shadow 200ms ease, border-color 200ms ease;
 }
-.status-tile:hover {
+.status-tile:hover,
+.status-tile:focus-visible {
+  outline: none;
   transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--tone-ink) 26%, var(--tone-line));
+  background:
+    radial-gradient(130% 100% at 50% -12%, var(--sheen) 0%, rgba(255, 255, 255, 0) 62%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--tone-ink) 7%, var(--tone)),
+      color-mix(in srgb, var(--tone-ink) 15%, var(--tone))
+    );
   box-shadow:
     0 8px 16px rgba(20, 45, 30, 0.065),
     0 18px 35px rgba(20, 45, 30, 0.07),
+    0 0 0 1px color-mix(in srgb, var(--tone-ink) 16%, transparent),
+    0 16px 28px -18px color-mix(in srgb, var(--tone-ink) 55%, transparent),
     var(--inset-top);
 }
 
@@ -1172,7 +1216,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  /* One line, always: the number of plates is limited by the component, so the
+     row can never wrap into a second row or push past its container. */
+  flex-wrap: nowrap;
+  min-width: 0;
   gap: 6px;
   margin-top: 12px;
   padding-top: 12px;
@@ -1181,7 +1228,8 @@
 .pager__nums {
   display: flex;
   align-items: center;
-  gap: 6px;
+  flex-wrap: nowrap;
+  min-width: 0;
   margin: 0;
   padding: 0;
   list-style: none;

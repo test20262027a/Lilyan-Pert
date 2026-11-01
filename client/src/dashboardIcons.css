@@ -148,16 +148,20 @@
 /* --------------------------------------------------------- hover lift */
 
 /*
- * Only icons that live on a hovered metric card move. The rule lists those
- * cards explicitly, so nothing else in the app can inherit an accidental lift,
- * and only the tile's elevation changes — never the box around it.
+ * Only the icon of the card you are pointing at moves. Every entry is one
+ * card's own :hover / :focus-visible — there is deliberately no container or
+ * `.dash .card` rule here, because a card holds several of these tiles and a
+ * parent-level selector would lift all of them at once.
  */
 .kpi:hover .dash-ic--hover,
+.kpi:focus-visible .dash-ic--hover,
 .fstat:hover .dash-ic--hover,
+.fstat:focus-visible .dash-ic--hover,
 .stats-kpi:hover .dash-ic--hover,
+.stats-kpi:focus-visible .dash-ic--hover,
 .status-tile:hover .dash-ic--hover,
-.welcome:hover .dash-ic--hover,
-.dash .card:hover .dash-ic--hover {
+.status-tile:focus-visible .dash-ic--hover,
+.welcome:hover .dash-ic--hover {
   transform: translateY(-2px);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.66),
@@ -166,11 +170,14 @@
     0 14px 26px -10px color-mix(in srgb, var(--ic-glow) 78%, transparent);
 }
 [data-theme='dark'] .kpi:hover .dash-ic--hover,
+[data-theme='dark'] .kpi:focus-visible .dash-ic--hover,
 [data-theme='dark'] .fstat:hover .dash-ic--hover,
+[data-theme='dark'] .fstat:focus-visible .dash-ic--hover,
 [data-theme='dark'] .stats-kpi:hover .dash-ic--hover,
+[data-theme='dark'] .stats-kpi:focus-visible .dash-ic--hover,
 [data-theme='dark'] .status-tile:hover .dash-ic--hover,
-[data-theme='dark'] .welcome:hover .dash-ic--hover,
-[data-theme='dark'] .dash .card:hover .dash-ic--hover {
+[data-theme='dark'] .status-tile:focus-visible .dash-ic--hover,
+[data-theme='dark'] .welcome:hover .dash-ic--hover {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
     inset 0 -3px 8px rgba(0, 0, 0, 0.46),
@@ -178,11 +185,14 @@
     0 16px 30px -12px color-mix(in srgb, var(--ic-glow) 88%, transparent);
 }
 .kpi:hover .dash-ic--hover::after,
+.kpi:focus-visible .dash-ic--hover::after,
 .fstat:hover .dash-ic--hover::after,
+.fstat:focus-visible .dash-ic--hover::after,
 .stats-kpi:hover .dash-ic--hover::after,
+.stats-kpi:focus-visible .dash-ic--hover::after,
 .status-tile:hover .dash-ic--hover::after,
-.welcome:hover .dash-ic--hover::after,
-.dash .card:hover .dash-ic--hover::after {
+.status-tile:focus-visible .dash-ic--hover::after,
+.welcome:hover .dash-ic--hover::after {
   opacity: 1;
 }
 
@@ -239,6 +249,5 @@
   .fstat:hover .dash-ic--hover,
   .stats-kpi:hover .dash-ic--hover,
   .status-tile:hover .dash-ic--hover,
-  .welcome:hover .dash-ic--hover,
-  .dash .card:hover .dash-ic--hover { transform: none; }
+  .welcome:hover .dash-ic--hover { transform: none; }
 }
