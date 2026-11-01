@@ -141,79 +141,24 @@
 
 /* --- registered devices ----------------------------------------------- */
 
+/*
+ * The list is a continuation of the activation switch above it, never a second
+ * card: no plate, no title, no control of its own. The switch decides whether
+ * anything is delivered; this only shows where to.
+ */
 .dash .push-devices {
-  margin-top: 2px;
-  padding-top: 12px;
-  border-top: 1px solid var(--glass-line);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-.dash .push-devices__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-.dash .push-devices__titles {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-.dash .push-devices__title {
-  display: inline-flex;
-  align-items: center;
   gap: 7px;
-  font-size: 12.5px;
-  font-weight: 750;
-  color: var(--text-soft);
 }
-.dash .push-devices__sub {
-  font-size: 11.5px;
-  line-height: 1.5;
-  color: var(--muted);
+/* Switched off: the devices stay listed but visibly step back, because nothing
+   will be delivered while the activation switch above is off. */
+.dash .push-devices.is-off .push-devices__list {
+  opacity: 0.5;
 }
-
-/* The browser's own verdict, in the browser's own words. */
-.dash .push-devices__status {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 11px 4px 10px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 750;
-  line-height: 1.6;
-  white-space: nowrap;
-  border: 1px solid var(--glass-line);
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 4px 10px -8px rgba(16, 22, 38, 0.5);
-}
-.dash .push-devices__status--ok {
-  color: color-mix(in srgb, var(--success) 78%, #0b3c22);
-  border-color: color-mix(in srgb, var(--success) 26%, transparent);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--success) 20%, #ffffff),
-    color-mix(in srgb, var(--success) 11%, #ffffff)
-  );
-}
-.dash .push-devices__status--bad {
-  color: var(--danger);
-  border-color: color-mix(in srgb, var(--danger) 24%, transparent);
-  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
-}
-.dash .push-devices__status--warn {
-  color: var(--warning);
-  border-color: color-mix(in srgb, var(--warning) 24%, transparent);
-  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
-}
-.dash .push-devices__status--muted { color: var(--muted); }
-
 .dash .push-devices__list { gap: 7px; }
 
 /* One device: its tile, what the browser calls it, and the control that
@@ -392,13 +337,11 @@
   .dash .notif-card__panel { padding: 12px 14px 16px; padding-left: 14px; gap: 10px; }
   .dash .notif-card__head { gap: 10px; }
   .dash .notif-card .sound-picker { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .dash .push-devices__head { align-items: flex-start; }
   /* Touch-sized controls on a phone. */
   .dash .notif-card .switch-row { padding: 11px 12px; }
 }
 
-/* Translucent plates keep the controls readable over the artwork. */
-.dash .notif-card .push-devices,
+/* A translucent plate keeps the controls readable over the artwork. */
 .dash .notif-card .sound-picker {
   padding: 12px 14px;
   border: 1px solid color-mix(in srgb, var(--glass-line) 78%, transparent);
@@ -411,7 +354,6 @@
   backdrop-filter: blur(var(--glass-blur));
 }
 .dash .notif-card .sound-picker { margin-top: 0; }
-[data-theme='dark'] .dash .notif-card .push-devices,
 [data-theme='dark'] .dash .notif-card .sound-picker,
 [data-theme='dark'] .dash .notif-card .switch-row {
   background: rgba(22, 26, 34, 0.72);
@@ -428,9 +370,6 @@
 .dash .notif-card .push-device:hover { transform: translateY(-1px); }
 .dash .notif-card .switch-row:active,
 .dash .notif-card .push-device:active { transform: translateY(0) scale(0.995); }
-.dash .notif-card .push-devices__status--ok {
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 6px 12px -8px color-mix(in srgb, var(--success) 70%, transparent);
-}
 .dash .notif-card .sound-play { transition: transform 160ms var(--ui-ease), filter 160ms var(--ui-ease); }
 .dash .notif-card .sound-play:hover:not(:disabled) { filter: brightness(0.92) saturate(1.1); transform: translateY(-1px); }
 .dash .notif-card .sound-play:active:not(:disabled) { transform: translateY(1px) scale(0.96); }

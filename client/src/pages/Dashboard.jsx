@@ -15,7 +15,7 @@ import { useBusiness } from '../context/BusinessContext';
 import { useAuth } from '../context/AuthContext';
 import { usePush } from '../hooks/usePush';
 import { get, put } from '../api';
-import { fmtDigits, zoneFor } from '../format';
+import { zoneFor } from '../format';
 import '../dashboard.css';
 
 /** Quiet refresh cadence for the live counters. */
@@ -140,14 +140,6 @@ export default function Dashboard() {
     else setPushError(`${t('dash_sw_failed')}${res.error ? ` — ${res.error}` : ''}`);
   };
 
-  /** A real push to this account's devices; the toast reports what was delivered. */
-  const onPushTest = async () => {
-    const report = await push.sendTest();
-    if (report.ok) toast.success(t('dash_push_test_ok', { n: fmtDigits(report.sent, locale) }));
-    else if (!report.total) toast.error(t('dash_push_test_none'));
-    else toast.error(t('dash_push_test_failed'));
-  };
-
   /*
    * Forgetting this very device has to unsubscribe it in the browser too, or the
    * next status read would simply register it again.
@@ -196,7 +188,6 @@ export default function Dashboard() {
           onChange={updateSettings}
           push={push}
           onPushToggle={onPushToggle}
-          onPushTest={onPushTest}
           onRemoveDevice={onRemoveDevice}
           pushError={pushError}
         />

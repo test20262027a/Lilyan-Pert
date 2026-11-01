@@ -3,7 +3,7 @@ import Icon from '../Icon';
 import { Spinner } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDateTime, fmtDigits } from '../../format';
-import { CATEGORY_TABS, categoryOf, compactCount, relativeTime } from '../../notifications';
+import { CATEGORY_TABS, categoryOf, compactCount, priorityOf, relativeTime } from '../../notifications';
 import { ENTITY_KEYS, entityLabelText } from '../activity/activityMeta';
 
 /*
@@ -27,6 +27,17 @@ const TONE_ICON = {
   reviews: { icon: 'star', tone: 'gold' },
   activities: { icon: 'info', tone: 'red' },
 };
+
+/*
+ * The colour of a tab's counter and its message dots comes from the category
+ * itself, never from the tab's position in the row: orders are purple, reviews
+ * amber, activity coral, and "all" follows the business theme. The unread tab
+ * borrows the colour of the highest-priority category that still has unread
+ * rows — the same rule the header badge follows — so the two can never differ.
+ */
+const TAB_TONE = { all: 'primary', orders: 'purple', reviews: 'gold', activities: 'red' };
+const toneOfTab = (key, priority) =>
+  key === 'unread' ? (priority.tone === 'none' ? 'primary' : priority.tone) : TAB_TONE[key];
 
 /** A status transition reads better with the status glyph than a generic one. */
 const iconOf = (item) => (item.type === 'status_change' ? 'refresh' : TONE_ICON[categoryOf(item.type)].icon);
@@ -171,6 +182,7 @@ export default function NotificationPanel({
 }) {
   const { t } = useI18n();
   const [tab, setTab] = useState('all');
+  const priority = priorityOf(unread);
 
   const visible =
     tab === 'all' ? items : tab === 'unread' ? items.filter((i) => !i.read_at) : lists[tab] || [];
@@ -215,11 +227,13 @@ export default function NotificationPanel({
               type="button"
               role="tab"
               aria-selected={tab === key}
-              className={`notif-tab ${tab === key ? 'is-active' : ''}`}
+              className={`notif-tab notif-tab--${toneOfTab(key, priority)} ${tab === key ? 'is-active' : ''}`}
               onClick={() => setTab(key)}
             >
               <span className="notif-tab__label">{t(`notif_tab_${key}`)}</span>
-              {count > 0 ? <span className="notif-tab__count">{compactCount(count)}</span> : null}
+              {count > 0 ? (
+                <span className="notif-tab__count">{fmtDigits(compactCount(count), locale)}</span>
+              ) : null}
             </button>
           );
         })}
@@ -285,7 +299,9 @@ export default function NotificationPanel({
                     <bdi>{fmtDateTime(item.created_at, locale, timeZone)}</bdi>
                   </span>
                 </span>
-                {item.read_at ? null : <span className="notif-item__dot" aria-hidden="true" />}
+                {/* Every row carries its own category dot: vivid and glowing
+                    while unread, a quiet version of the same colour once read. */}
+                <span className="notif-item__dot" aria-hidden="true" />
               </button>
             );
           })

@@ -58,7 +58,6 @@ export default function NotificationSettings({
   onChange,
   push,
   onPushToggle,
-  onPushTest,
   onRemoveDevice,
   pushError,
 }) {
@@ -176,7 +175,6 @@ export default function NotificationSettings({
         : push.permission === 'default'
           ? t('dash_push_ask')
           : t('dash_push_unsupported');
-  const permissionIcon = push.permission === 'granted' ? 'check' : push.permission === 'denied' ? 'lock' : 'bell';
 
   return (
     <section className="card notif-card">
@@ -240,46 +238,10 @@ export default function NotificationSettings({
           </div>
         ) : null}
 
-        {/* Background delivery: permission, a real test, and the devices the
-            server will actually push to. */}
-        <div className="push-devices">
-          <div className="push-devices__head">
-            <div className="push-devices__titles">
-              <span className="push-devices__title">
-                <Icon name="laptop" size={15} />
-                {t('dash_push_devices')}
-              </span>
-              <span className="push-devices__sub">{t('dash_push_devices_sub')}</span>
-            </div>
-            <span className={`push-devices__status push-devices__status--${permissionTone}`}>
-              <Icon name={permissionIcon} size={13} />
-              {permissionText}
-            </span>
-          </div>
-
-          <div className="push-devices__actions">
-            {!push.subscribed ? (
-              <button
-                type="button"
-                className="btn btn--sm btn--primary"
-                onClick={onPushToggle}
-                disabled={!push.supported || !push.secure || push.busy}
-              >
-                <Icon name="bell" size={14} />
-                {t('dash_push_register')}
-              </button>
-            ) : null}
-            <button
-              type="button"
-              className="btn btn--sm btn--ghost"
-              onClick={onPushTest}
-              disabled={!push.subscribed || push.testing}
-            >
-              <Icon name="send" size={14} />
-              {t('dash_push_test')}
-            </button>
-          </div>
-
+        {/* The activation switch above is the single source of truth: turned on
+            it registers this device, turned off it stops delivery again. This
+            list only reports the devices the server will really push to. */}
+        <div className={`push-devices${push.subscribed ? '' : ' is-off'}`}>
           {push.deviceList?.length ? (
             <ul className="push-devices__list">
               {push.deviceList.map((device) => (

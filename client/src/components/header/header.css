@@ -582,7 +582,40 @@
 .notif-panel__markall:hover:not(:disabled) { color: var(--mint-ink); background: var(--mint-soft); }
 .notif-panel__markall:disabled { opacity: 0.45; cursor: default; }
 
-/* Compact category tabs — the active one is a filled green pill. On a narrow
+/*
+ * One palette per notification category, so a counter, a tab and a message dot
+ * can never disagree: purple = orders, amber = reviews, coral = activity, and
+ * "all" follows the business theme rather than a fixed hue. A component only
+ * declares its tone; every shade below is derived from that single choice.
+ *   --nt-a / --nt-b  the gradient of a solid (count) pill
+ *   --nt-hover       the darker shade of the SAME colour, used on hover
+ *   --nt-on          readable ink on the solid pill
+ *   --nt-ink         readable ink on a soft tint (icon, chip)
+ *   --nt-glow        the badge's own soft 3D glow
+ */
+.notif-tab--purple, .notif-item--purple {
+  --nt-a: #9166f0; --nt-b: #8054e8; --nt-hover: #6f45d6;
+  --nt-on: #ffffff; --nt-ink: #6f45d6; --nt-glow: rgba(128, 84, 232, 0.42);
+}
+.notif-tab--gold, .notif-item--gold {
+  --nt-a: #ffd066; --nt-b: #f5bc37; --nt-hover: #dda31f;
+  --nt-on: #5a3c05; --nt-ink: #96690d; --nt-glow: rgba(245, 188, 55, 0.48);
+}
+.notif-tab--red, .notif-item--red {
+  --nt-a: #f4696f; --nt-b: #e94e55; --nt-hover: #d44046;
+  --nt-on: #ffffff; --nt-ink: #c93b41; --nt-glow: rgba(233, 78, 85, 0.42);
+}
+.notif-tab--primary {
+  --nt-a: color-mix(in srgb, var(--theme-primary) 78%, #ffffff);
+  --nt-b: var(--theme-primary);
+  --nt-hover: var(--theme-primary-hover);
+  --nt-on: var(--theme-primary-foreground);
+  --nt-ink: var(--theme-primary-strong);
+  --nt-glow: color-mix(in srgb, var(--theme-primary) 40%, transparent);
+}
+
+/* Compact category tabs — the active one is a filled pill in its own category
+   colour. On a narrow
    panel the row scrolls horizontally and the app's own ultra-thin scrollbar
    appears as the overflow indicator, instead of the tabs wrapping or shrinking. */
 .notif-panel__tabs {
@@ -613,11 +646,23 @@
   transition: background 0.16s ease, color 0.16s ease;
 }
 .notif-tab__label { display: inline-block; min-width: 0; }
-.notif-tab:hover { background: var(--mint-soft); color: var(--mint-ink); }
-.notif-tab.is-active {
-  background: var(--mint-deep); color: #ffffff;
-  box-shadow: 0 3px 8px color-mix(in srgb, var(--mint-deep) 30%, transparent);
+/* Hovering a tab deepens its OWN colour — never a shared green. */
+.notif-tab:not(.is-active):hover {
+  background: color-mix(in srgb, var(--nt-b) 12%, transparent);
+  border-color: color-mix(in srgb, var(--nt-b) 22%, transparent);
+  color: var(--nt-ink);
 }
+.notif-tab.is-active {
+  background: linear-gradient(180deg, var(--nt-a), var(--nt-b));
+  border-color: color-mix(in srgb, var(--nt-b) 60%, transparent);
+  color: var(--nt-on);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    0 4px 12px -6px var(--nt-glow);
+}
+.notif-tab.is-active:hover { filter: brightness(0.95) saturate(1.06); }
+/* The counter is a raised pill in its category colour, in every state, so the
+   colour of a number never depends on which tab happens to be selected. */
 .notif-tab__count {
   flex: none;
   display: inline-flex; align-items: center; justify-content: center;
@@ -626,7 +671,25 @@
   font-size: 10.5px; font-weight: 800; line-height: 1;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-  background: color-mix(in srgb, currentColor 16%, transparent);
+  color: var(--nt-on);
+  border: 1px solid color-mix(in srgb, var(--nt-b) 52%, transparent);
+  background-image: linear-gradient(180deg, var(--nt-a), var(--nt-b));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 2px 6px -2px var(--nt-glow);
+}
+/* Hovering a tab deepens its counter into the darker shade of the same colour. */
+.notif-tab:hover .notif-tab__count {
+  background-image: linear-gradient(180deg, var(--nt-b), var(--nt-hover));
+  border-color: color-mix(in srgb, var(--nt-hover) 55%, transparent);
+}
+/* Inside a filled tab the pill turns into a frosted plate of the same colour,
+   so the two never merge into one block. */
+.notif-tab.is-active .notif-tab__count {
+  color: var(--nt-on);
+  border-color: rgba(255, 255, 255, 0.34);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.14));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.42);
 }
 @media (max-width: 560px) {
   .notif-panel__tabs { gap: 5px; padding: 9px 12px; }
@@ -654,15 +717,16 @@
   transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 .notif-item:hover { background: var(--theme-primary-tint-hover); border-color: var(--theme-primary-border); }
-.notif-item.is-unread { background: color-mix(in srgb, var(--mint) 6%, transparent); }
+/* An unread row carries a whisper of its own category colour. */
+.notif-item.is-unread { background: color-mix(in srgb, var(--nt-b) 7%, transparent); }
 .notif-item__icon {
   width: 32px; height: 32px; flex: none; border-radius: 10px;
   display: grid; place-items: center;
+  background: color-mix(in srgb, var(--nt-b) 11%, var(--surface));
+  color: var(--nt-ink);
+  border: 1px solid color-mix(in srgb, var(--nt-b) 20%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 2px 5px rgba(23, 26, 43, 0.07);
 }
-.notif-item--purple .notif-item__icon { background: #f2ecfe; color: #8054e8; }
-.notif-item--gold .notif-item__icon { background: #fff6e0; color: #c08a12; }
-.notif-item--red .notif-item__icon { background: #fdeced; color: #e94e55; }
 
 .notif-item__body { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
 /* Titles wrap instead of being cut: a notification's own wording is never
@@ -681,8 +745,8 @@
   font-size: 10.5px; font-weight: 750; line-height: 1;
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
-  background: color-mix(in srgb, var(--mint) 13%, transparent);
-  color: var(--mint-ink);
+  background: color-mix(in srgb, var(--nt-b) 13%, transparent);
+  color: var(--nt-ink);
 }
 /* Order numbers are digits: fixed-width glyphs keep rows aligned, and `dir`
    on the element keeps `#1234` reading left-to-right inside RTL text. */
@@ -690,9 +754,8 @@
   letter-spacing: 0.02em;
   font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, monospace;
 }
-.notif-item--purple .notif-item__chip { background: color-mix(in srgb, #8054e8 13%, transparent); color: #6f45d6; }
-.notif-item--gold .notif-item__chip { background: color-mix(in srgb, #c08a12 15%, transparent); color: #96690d; }
-.notif-item--red .notif-item__chip { background: color-mix(in srgb, #e94e55 13%, transparent); color: #c93b41; }
+/* The number and status chips follow the same category palette as the icon. */
+.notif-item__chip--status { font-weight: 800; }
 /* Descriptions wrap naturally; the row grows and the list is what scrolls. */
 .notif-item__desc {
   font-size: 11.5px; color: var(--text-soft); line-height: 1.45;
@@ -705,10 +768,25 @@
   font-variant-numeric: tabular-nums;
 }
 .notif-item__sep { opacity: 0.55; }
+/*
+ * The status dot is the category's own colour, so a row is identifiable at a
+ * glance without reading it: purple order, amber review, coral activity. A read
+ * row keeps a quiet, flat version of that colour; an unread one lights up with
+ * a ring and a soft matching glow.
+ */
 .notif-item__dot {
-  width: 7px; height: 7px; flex: none; margin-top: 6px;
-  border-radius: 50%; background: var(--mint-deep);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--mint) 16%, transparent);
+  width: 8px; height: 8px; flex: none; margin-top: 6px;
+  border-radius: 50%;
+  background: var(--nt-b);
+  opacity: 0.4;
+  transition: opacity 0.18s ease, box-shadow 0.18s ease;
+}
+.notif-item.is-unread .notif-item__dot {
+  opacity: 1;
+  background-image: linear-gradient(180deg, var(--nt-a), var(--nt-b));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--nt-b) 15%, transparent),
+    0 0 9px 1px var(--nt-glow);
 }
 
 /* Empty / loading / failed state: centred grey bell, no invented rows. */
@@ -730,9 +808,9 @@
 
 [data-theme='dark'] .notif-panel { background: #1c222d; }
 [data-theme='dark'] .notif-panel__head { background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent); }
-[data-theme='dark'] .notif-item--purple .notif-item__icon { background: rgba(128, 84, 232, 0.18); }
-[data-theme='dark'] .notif-item--gold .notif-item__icon { background: rgba(245, 188, 55, 0.16); }
-[data-theme='dark'] .notif-item--red .notif-item__icon { background: rgba(233, 78, 85, 0.16); }
+[data-theme='dark'] .notif-item--purple .notif-item__icon { background: rgba(128, 84, 232, 0.18); color: #c9b4fb; }
+[data-theme='dark'] .notif-item--gold .notif-item__icon { background: rgba(245, 188, 55, 0.16); color: #f6d089; }
+[data-theme='dark'] .notif-item--red .notif-item__icon { background: rgba(233, 78, 85, 0.16); color: #f6a7ab; }
 [data-theme='dark'] .notif-empty__icon { background: rgba(255, 255, 255, 0.05); }
 [data-theme='dark'] .notif-item--purple .notif-item__chip { background: rgba(128, 84, 232, 0.22); color: #c9b4fb; }
 [data-theme='dark'] .notif-item--gold .notif-item__chip { background: rgba(245, 188, 55, 0.2); color: #f6d089; }
