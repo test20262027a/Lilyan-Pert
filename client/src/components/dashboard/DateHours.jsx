@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Icon from '../Icon';
+import TimeRange from '../TimeRange';
 import DashIcon from './DashIcon';
 import { Badge } from '../ui';
 import { useI18n } from '../../i18n';
@@ -30,7 +31,6 @@ export default function DateHours({ hours, timeZone, locale }) {
   const today = hours?.today || null;
   const closedToday = Boolean(today?.closed);
   const hasRange = Boolean(today && !closedToday && today.open && today.close);
-  const range = hasRange ? `${today.open} – ${today.close}` : null;
   // A schedule whose closing time is earlier than its opening time runs past
   // midnight, and the closing time already belongs to the next calendar day.
   const overnight = hasRange && String(today.open) > String(today.close);
@@ -75,12 +75,10 @@ export default function DateHours({ hours, timeZone, locale }) {
             <Icon name="clock" size={15} style={{ color: 'var(--dashic-indigo-ink)' }} />
             {t('dash_today_hours')}
           </span>
-          {range ? (
+          {hasRange ? (
             <span className="hours-card__range">
-              {/* Times must read start-first in every language. */}
-              <span className="hours-card__times" dir="ltr">
-                {range}
-              </span>
+              {/* Opening time first in reading order: right in RTL, left in LTR. */}
+              <TimeRange className="hours-card__times" open={today.open} close={today.close} />
               {overnight ? (
                 <span className="hours-card__overnight" title={t('dash_overnight')}>
                   +1

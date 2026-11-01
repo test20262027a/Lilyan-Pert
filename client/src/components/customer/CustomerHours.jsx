@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import TimeRange from '../TimeRange';
 import CustomerSectionHead from './CustomerSectionHead';
 import { useI18n } from '../../i18n';
 import { fmtDate, fmtWeekday } from '../../format';
@@ -74,9 +75,7 @@ export default function CustomerHours({ hours, timeZone, status }) {
               {today?.closed ? t('customer_menu_closed_today') : t('dash_closed_now')}
             </span>
           ) : (
-            <span dir="ltr">
-              {today.open} – {today.close}
-            </span>
+            <TimeRange open={today.open} close={today.close} />
           )}
         </div>
       </div>

@@ -187,8 +187,9 @@
   width: 1px; flex: none;
   background: linear-gradient(180deg, transparent, var(--glass-line) 18%, var(--glass-line) 82%, transparent);
 }
-/* Times stay start-first even inside the RTL layout. */
-.hours-card__times { direction: ltr; unicode-bidi: isolate; display: inline-block; }
+/* The shared range row keeps the opening value first in reading order, so it
+   sits on the right in RTL and on the left in LTR. */
+.hours-card__times { display: inline-flex; align-items: center; gap: 6px; }
 .hours-card__overnight { font-size: 12px; font-weight: 700; color: var(--muted); margin-inline-start: 6px; }
 
 [data-theme='dark'] .hours-card__clock,

@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import TimeRange from '../TimeRange';
 import { useI18n } from '../../i18n';
 import { fmtDigits } from '../../format';
 import '../../customerAvailability.css';
@@ -61,47 +62,47 @@ export default function CustomerClosedNotice({ status, timeZone }) {
         <div className="cui-closed__text">
           <h2 className="cui-closed__title">{t(copy.title)}</h2>
           <p className="cui-closed__hint">{t(copy.hint)}</p>
+        </div>
 
-          <div className="cui-closed__badges">
-            <span className="cui-closed__badge cui-closed__badge--day">
-              <i className="cui-closed__badge-icon" aria-hidden="true">
-                <Icon name="calendar" size={13} />
-              </i>
-              <span className="cui-closed__badge-text">
-                {t('customer_closed_today')}
-                {day ? ` · ${t(`settings_day_${day}`)}` : ''}
-              </span>
-              {hours ? (
-                /* Opening time comes first in reading order. The row follows the
-                   page direction, so it reads right-to-left in Kurdish, Persian
-                   and Arabic (opening on the right, closing on the left) and
-                   left-to-right in English. Each time is its own bidirectional
-                   island with Latin digits, so neither value is ever reversed
-                   and the visual swap never touches the stored schedule. */
-                <span className="cui-closed__badge-time">
-                  <bdi dir="ltr">{fmtDigits(hours.open, locale)}</bdi>
-                  <span className="cui-closed__badge-dash" aria-hidden="true">–</span>
-                  <bdi dir="ltr">{fmtDigits(hours.close, locale)}</bdi>
-                </span>
-              ) : null}
+        {/* The three status badges share the title's row and sit on the
+            opposite side of it, so the card reads as one line: message at the
+            start, state at the end, mirrored by the document direction. */}
+        <div className="cui-closed__badges">
+          <span className="cui-closed__badge cui-closed__badge--day">
+            <i className="cui-closed__badge-icon" aria-hidden="true">
+              <Icon name="calendar" size={13} />
+            </i>
+            <span className="cui-closed__badge-text">
+              {t('customer_closed_today')}
+              {day ? ` · ${t(`settings_day_${day}`)}` : ''}
             </span>
+            {hours ? (
+              /* Opening time first in reading order: the shared range row puts
+                 it on the RIGHT in Kurdish, Persian and Arabic and on the LEFT
+                 in English, never touching the saved schedule. */
+              <TimeRange
+                className="cui-closed__badge-time"
+                open={fmtDigits(hours.open, locale)}
+                close={fmtDigits(hours.close, locale)}
+              />
+            ) : null}
+          </span>
 
-            <span className="cui-closed__badge cui-closed__badge--closed">
-              <i className="cui-closed__badge-icon" aria-hidden="true">
-                <Icon name="lock" size={13} />
-              </i>
-              <span className="cui-closed__badge-text">
-                {copy.tone === 'soon' ? t('customer_hours_before') : t('customer_menu_closed_today')}
-              </span>
+          <span className="cui-closed__badge cui-closed__badge--closed">
+            <i className="cui-closed__badge-icon" aria-hidden="true">
+              <Icon name="lock" size={13} />
+            </i>
+            <span className="cui-closed__badge-text">
+              {copy.tone === 'soon' ? t('customer_hours_before') : t('customer_menu_closed_today')}
             </span>
+          </span>
 
-            <span className="cui-closed__badge cui-closed__badge--paused">
-              <i className="cui-closed__badge-icon" aria-hidden="true">
-                <Icon name="clock" size={13} />
-              </i>
-              <span className="cui-closed__badge-text">{t('customer_closed_ordering_paused')}</span>
-            </span>
-          </div>
+          <span className="cui-closed__badge cui-closed__badge--paused">
+            <i className="cui-closed__badge-icon" aria-hidden="true">
+              <Icon name="clock" size={13} />
+            </i>
+            <span className="cui-closed__badge-text">{t('customer_closed_ordering_paused')}</span>
+          </span>
         </div>
       </div>
     </section>

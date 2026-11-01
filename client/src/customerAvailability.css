@@ -65,7 +65,16 @@
 .cui-closed + .cui-head { margin-top: -2px; }
 .cui-closed + .cui-head .cui-search { margin-top: 0; }
 
-.cui-closed__main { display: flex; align-items: center; gap: 13px; min-width: 0; }
+/* The mark, the message and the three status badges share ONE horizontal row:
+   the message group starts it and the badges close it, mirrored by the document
+   direction, so RTL puts the message on the right and the badges on the left. */
+.cui-closed__main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 13px;
+  min-width: 0;
+}
 
 /* The header mark: a polished rounded-square tile with a theme-tinted gradient,
    a lit top edge and two soft shadows, so it reads as raised glass. */
@@ -120,10 +129,11 @@
  */
 .cui-closed__badges {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 7px;
-  margin-top: 8px;
+  flex: none;
 }
 
 .cui-closed__badge {
@@ -171,25 +181,13 @@
 .cui-closed__badge-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)); }
 
 .cui-closed__badge-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/*
- * The two times form one row that follows the page direction: opening first in
- * reading order is the RIGHT slot in RTL and the LEFT slot in LTR. Each value
- * is a `bdi` island, so the browser never re-orders the digits inside a time.
- */
+/* The shared range row (see components/timeRange.css) carries the geometry and
+   the direction-aware order; the badge only sets its colour and size. */
 .cui-closed__badge-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
   font-size: 10.5px;
   font-weight: 800;
-  font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, var(--bc) 55%, var(--muted));
   padding-inline-start: 2px;
-  white-space: nowrap;
-}
-
-.cui-closed__badge-dash {
-  opacity: 0.6;
 }
 
 /* Day: the theme-based blue. Closed: a soft amber. Paused: an elegant coral. */
@@ -220,53 +218,41 @@
   text-wrap: pretty;
 }
 
-@media (min-width: 760px) {
+/* Wide screens: the message and the three badges share the one row, with room
+   for the whole subtitle beside them. */
+@media (min-width: 1000px) {
   .cui-closed { padding-inline: 14px; }
   .cui-closed__main { gap: 12px; }
-  /* Tablet: the message owns the full row and the badges sit in one horizontal
-     group beneath it, so the subtitle is never squeezed into a second line. */
-  .cui-closed__text {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'title'
-      'hint'
-      'badges';
-    min-width: 0;
-    row-gap: 3px;
-  }
-  .cui-closed__title { grid-area: title; min-width: 0; }
+  .cui-closed__text { gap: 3px; }
   .cui-closed__hint {
-    grid-area: hint;
-    min-width: 0;
     max-width: none;
-    /* One line on tablet and desktop: never a wrapped second line, never a
-       truncated one. `clamp` keeps the line inside the card while staying at a
-       comfortable reading size. */
-    white-space: nowrap;
-    text-wrap: nowrap;
-    overflow: visible;
-    text-overflow: clip;
-    font-size: clamp(11.3px, 1.02vw, 13px);
+    font-size: clamp(11.5px, 1.02vw, 13px);
   }
-  .cui-closed__badges {
-    grid-area: badges;
-    margin-top: 5px;
-    gap: 6px;
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-  }
+  .cui-closed__badges { gap: 6px; }
   .cui-closed__badge { padding: 3px 9px 3px 4px; }
   [dir='rtl'] .cui-closed__badge { padding: 3px 4px 3px 9px; }
 }
 
-/* Phones: wrapping is allowed again — here it is the only way to keep the long
-   Kurdish, Arabic and Persian sentences readable without shrinking the type. */
+/* Anything narrower: the message keeps the row and the badges take their own
+   nowrap line beneath it, scrolling sideways instead of ever wrapping onto a
+   second line or truncating their own text. */
+@media (max-width: 999px) {
+  .cui-closed__main { flex-wrap: wrap; }
+  .cui-closed__badges {
+    flex: 1 1 100%;
+    margin-top: 7px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .cui-closed__badges::-webkit-scrollbar { display: none; }
+}
+
 @media (max-width: 720px) {
   .cui-closed { width: 100%; padding: 12px 13px 13px; margin: 14px 0 0; }
   .cui-closed__main { gap: 11px; align-items: flex-start; }
   .cui-closed__icon { width: 42px; height: 42px; border-radius: 13px; }
-  .cui-closed__badges { gap: 6px; margin-top: 7px; }
+  .cui-closed__badges { gap: 6px; }
   .cui-closed__badge { font-size: 11px; }
   .cui-closed__hint { max-width: none; }
 }
@@ -274,7 +260,6 @@
 @media (max-width: 420px) {
   .cui-closed__main { gap: 10px; }
   .cui-closed__badge { padding-inline-end: 9px; }
-  .cui-closed__badge-time { display: none; }
 }
 
 /* ------------------------------------------------------ working hours card -- */
