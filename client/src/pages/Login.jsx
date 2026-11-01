@@ -13,7 +13,6 @@ import {
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { beginLoading, endLoading } from '../loading';
-import GlobalBrandedLoader from '../components/brand/GlobalBrandedLoader';
 
 export default function Login() {
   const { t } = useI18n();
@@ -54,8 +53,8 @@ export default function Login() {
   return (
     <AuthLayout>
       {/* Signing in is the one blocking step on this page; it follows the real
-          request through the global loading signal. */}
-      <GlobalBrandedLoader />
+          request through the global loading signal, which the app's single
+          root overlay is listening to. */}
       <AuthCard title={t('auth_login')} subtitle={t('auth_login_subtitle')}>
         <form className="au-form" onSubmit={submit} noValidate>
           <AuthInput

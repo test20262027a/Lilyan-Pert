@@ -14,7 +14,7 @@ import AnimatedBackToTop from './backToTop/AnimatedBackToTop';
  */
 function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { business, loading, error, reload } = useBusiness();
+  const { business, error, reload } = useBusiness();
 
   // The tab shows this section and this business, in this language.
   useDocumentMetadata(business);
@@ -33,13 +33,16 @@ function Shell() {
      overlay. A failed read becomes a localised retry instead of an endless
      animation. */
   if (!business) {
-    return (
+    /* Loading is the root overlay's job — announcing it there means the shell
+       never paints a second loader next to it. Only a failure, which the global
+       signal cannot express, gets its own copy of the same fixed composition. */
+    return error ? (
       <GlobalBrandedLoader
-        isLoading={Boolean(loading)}
-        error={error || null}
+        isLoading={false}
+        error={error}
         onRetry={() => reload()}
       />
-    );
+    ) : null;
   }
 
   return (

@@ -3,6 +3,7 @@ import { get, put } from '../api';
 import { applyTheme } from '../theme';
 import { setLanguageSettings } from '../languages';
 import { rememberBrandLogo } from '../brandLogo';
+import { beginLoading, endLoading } from '../loading';
 
 const BusinessContext = createContext(null);
 
@@ -13,6 +14,9 @@ export function BusinessProvider({ children }) {
 
   const load = useCallback(async () => {
     setLoading(true);
+    // The shell cannot paint before this record, so it is real blocking work —
+    // announced to the one global overlay instead of a loader of its own.
+    beginLoading('business');
     try {
       const data = await get('/business');
       /* The theme is written to the document *before* the record is handed to
@@ -25,6 +29,7 @@ export function BusinessProvider({ children }) {
       setError(err.code || 'ERROR');
     } finally {
       setLoading(false);
+      endLoading('business');
     }
   }, []);
 

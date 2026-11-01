@@ -1,7 +1,6 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { EmptyState } from './components/ui';
-import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
 import { useI18n } from './i18n';
 import Layout from './components/Layout';
 import Login from './pages/Login';
@@ -26,7 +25,10 @@ import AdminOrderMenu from './pages/AdminOrderMenu';
 function RequireAuth({ children }) {
   const { loading, user } = useAuth();
   const location = useLocation();
-  if (loading) return <GlobalBrandedLoader />;
+  /* The shell's ONE loader is mounted at the app root and driven by the global
+     loading signal, so a gate renders nothing at all rather than a second,
+     differently-sized copy of it. */
+  if (loading) return null;
   if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   return children;
 }
@@ -38,7 +40,10 @@ function RequireAuth({ children }) {
 function RequirePermission({ perm, children }) {
   const { can, loading } = useAuth();
   const { t } = useI18n();
-  if (loading) return <GlobalBrandedLoader />;
+  /* The shell's ONE loader is mounted at the app root and driven by the global
+     loading signal, so a gate renders nothing at all rather than a second,
+     differently-sized copy of it. */
+  if (loading) return null;
   if (!can(perm)) {
     return <EmptyState icon="lock" title={t('access_denied')} hint={t('access_denied_hint')} />;
   }

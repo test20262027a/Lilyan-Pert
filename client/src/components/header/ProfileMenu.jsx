@@ -77,7 +77,9 @@ export default function ProfileMenu() {
         title={user?.email || t('auth_account')}
         onClick={() => setOpen((v) => !v)}
       >
-        <UserAvatar user={user} size={32} />
+        {/* The signed-in person's own face in the top bar: the one avatar worth
+            fetching at high priority while the dashboard settles. */}
+        <UserAvatar user={user} size={32} priority />
         <Icon name="chevronDown" size={14} className={`hdr-user__caret ${open ? 'is-open' : ''}`} />
       </button>
 

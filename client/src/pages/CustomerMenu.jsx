@@ -4,6 +4,7 @@ import Icon from '../components/Icon';
 import { EmptyState, Money, useToast } from '../components/ui';
 import GlobalBrandedLoader from '../components/brand/GlobalBrandedLoader';
 import { rememberBrandLogo } from '../brandLogo';
+import { beginLoading, endLoading } from '../loading';
 import { localized, useI18n, LOCALES } from '../i18n';
 import { currencyForLanguage, productPrice, setLanguageSettings } from '../languages';
 import { useAuth } from '../context/AuthContext';
@@ -91,7 +92,12 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const storageKey = `lilyan.cart.${key}`;
 
   const load = useCallback(async ({ silent = false } = {}) => {
-    if (!silent) setLoading(true);
+    /* First read only: a background re-read (a tab coming back, an admin
+       editing the menu) never takes the screen over. */
+    if (!silent) {
+      setLoading(true);
+      beginLoading('menu');
+    }
     try {
       const url = new URL(`/api/public/menu/${key}`, window.location.origin);
       // The in-store ordering menu is the "main" context; a public visitor is "qr".
@@ -122,6 +128,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       setError(err.message);
     } finally {
       setLoading(false);
+      if (!silent) endLoading('menu');
     }
   }, [key, adminMode]);
 
@@ -389,7 +396,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   /* The menu is genuinely loading, so the shared loader is told so explicitly —
      left to the global signal it would render nothing here, and the guest would
      see the first-paint splash until it is timed out. */
-  if (loading) return <GlobalBrandedLoader isLoading />;
+  /* The wait is shown by the app's one root overlay — this page renders no
+     loader of its own, so nothing can switch size or position mid-load. */
+  if (loading) return null;
   if (error || !data) {
     /* A real failure: the same branded surface turns into a localised error with
        a retry, so the guest is never left watching an endless animation. */

@@ -4,7 +4,7 @@ import { useI18n } from '../../i18n';
 import { get } from '../../api';
 import { applyTheme, cachedTheme, DEFAULT_THEME } from '../../theme';
 import useDocumentMetadata from '../../hooks/useDocumentMetadata';
-import GlobalBrandedLoader from '../brand/GlobalBrandedLoader';
+import { beginLoading, endLoading } from '../../loading';
 import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
@@ -25,9 +25,14 @@ function useBrand() {
   const [brand, setBrand] = useState(undefined);
   useEffect(() => {
     let live = true;
+    // The screen is blank until the brand answers, so it is blocking work: it
+    // raises the one global overlay, exactly like the session and the business
+    // record, instead of painting a smaller loader of its own.
+    beginLoading('brand');
     get('/public/brand')
       .then((b) => live && setBrand(b))
-      .catch(() => live && setBrand(null));
+      .catch(() => live && setBrand(null))
+      .finally(() => endLoading('brand'));
     return () => {
       live = false;
     };
@@ -61,11 +66,9 @@ export function AuthLayout({ children, footer }) {
         <main className="au__main">
           {/* Nothing of the form is painted until the business appearance is
               known, so no control is ever drawn in the wrong theme and then
-              repainted. The loader itself uses the theme already applied to the
-              document, so it is correct from its first frame too. */}
-          {brand === undefined ? (
-            <GlobalBrandedLoader variant="inline" />
-          ) : (
+              repainted — and the wait is covered by the same global overlay the
+              whole app boots behind, never by a smaller copy of it. */}
+          {brand === undefined ? null : (
             <>
               {children}
               {footer}

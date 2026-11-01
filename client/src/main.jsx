@@ -6,6 +6,7 @@ import { I18nProvider } from './i18n';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/ui';
 import TooltipLayer from './components/tooltip/TooltipLayer';
+import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
 import './styles.css';
 import './scrollbars.css';
 // Shared interactive states (hover / press / focus depth). Imported last so the
@@ -20,8 +21,8 @@ import './headers/headerSystem.css';
 // depth and states from here. Imported last so it wins over page skins.
 import './buttons.css';
 
-/* Safety net: the first-paint splash is normally removed by the branded loader.
-   If a route ever paints without it, this keeps the screen usable afterwards. */
+/* Safety net only: the branded loader below removes the first-paint splash the
+   moment it paints (or as soon as nothing is loading). */
 window.setTimeout(() => document.getElementById('boot-splash')?.remove(), 4000);
 
 ReactDOM.createRoot(document.getElementById('root')).render(
@@ -31,6 +32,10 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <ToastProvider>
           <AuthProvider>
             <App />
+            {/* The app's ONE loader: mounted once, here, above every route, so
+                no page can swap it for a different size, position or variant
+                and it never remounts between loading phases. */}
+            <GlobalBrandedLoader />
             {/* One global tooltip bubble for every tooltip in the app. */}
             <TooltipLayer />
           </AuthProvider>

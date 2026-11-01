@@ -357,6 +357,15 @@
 
 html, body, #root { margin: 0; padding: 0; }
 
+/*
+ * The scrollbar gutter is always reserved, never gained or lost mid-session.
+ * That is what keeps a fixed, full-screen layer (the global loader, a modal
+ * backdrop) perfectly still: without it, the moment the page behind it becomes
+ * scrollable the viewport narrows by the scrollbar width and every centred
+ * fixed element shifts sideways by half of it.
+ */
+html { scrollbar-gutter: stable; }
+
 body {
   font-family: var(--font);
   background: var(--bg);

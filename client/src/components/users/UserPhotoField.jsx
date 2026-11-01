@@ -11,6 +11,17 @@ const ACCEPTED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
 const MAX_BYTES = 5 * 1024 * 1024;
 const TARGET = 512;
 
+/* WebP keeps the same visual quality at roughly a third of the bytes, and every
+   browser that can open a profile photo today can open it. Browsers without an
+   encoder hand back a PNG for the same call, so the format is detected once. */
+const WEBP = (() => {
+  try {
+    return document.createElement('canvas').toDataURL('image/webp').startsWith('data:image/webp');
+  } catch {
+    return false;
+  }
+})();
+
 /**
  * Crops the picture to a centred 1:1 square and re-encodes it small enough for
  * an avatar. Nothing is stretched: the square is taken out of the middle of the
@@ -34,7 +45,7 @@ function squareDataUrl(file) {
         ctx.imageSmoothingEnabled = true;
         ctx.imageSmoothingQuality = 'high';
         ctx.drawImage(image, sourceX, sourceY, side, side, 0, 0, TARGET, TARGET);
-        resolve(canvas.toDataURL('image/jpeg', 0.9));
+        resolve(canvas.toDataURL(WEBP ? 'image/webp' : 'image/jpeg', 0.9));
       };
       image.src = reader.result;
     };

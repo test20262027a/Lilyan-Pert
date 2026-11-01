@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { get, post, setBusinessId, patch } from '../api';
+import { beginLoading, endLoading } from '../loading';
 import { ALL_PERMISSION_KEYS } from '../permissions';
 
 const AuthContext = createContext(null);
@@ -30,8 +31,12 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  /* Only the session bootstrap raises the global overlay. A later refresh (a
+     saved profile, a business switch) is ordinary background work and must not
+     take over the screen. */
   useEffect(() => {
-    refresh();
+    beginLoading('session');
+    refresh().finally(() => endLoading('session'));
   }, [refresh]);
 
   const login = useCallback(

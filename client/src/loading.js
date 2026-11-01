@@ -84,6 +84,14 @@ export function isLoadingVisible() {
   return visible;
 }
 
+/**
+ * Work is still pending, even inside the show delay. The pre-paint splash in
+ * index.html reads this, so it never disappears before something replaces it.
+ */
+export function isLoadingPending() {
+  return pending.size > 0;
+}
+
 function subscribe(listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);

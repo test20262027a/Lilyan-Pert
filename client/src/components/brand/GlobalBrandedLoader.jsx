@@ -3,42 +3,41 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { brandLogoUrl, FALLBACK_LOGO } from '../../brandLogo';
 import { cachedTheme } from '../../theme';
-import { getLoadingSnapshot, subscribeLoading } from '../../loading';
+import { getLoadingSnapshot, isLoadingPending, subscribeLoading } from '../../loading';
 import './globalLoader.css';
+
+/* Exit is opacity only, and this is the only duration the loader has. */
+const EXIT_MS = 250;
 
 /*
  * The one loading surface of Lilyan Pert.
  *
- * It is built from the business's own saved logo — never a new mark and never a
- * plate behind it — and draws in four cheap layers that all share ONE square
- * box (`.gbl__orbit`): a theme-coloured ambient glow, a rotating progress halo,
- * the transparent logo breathing in the exact centre of that halo, and a light
- * sweep behind it. There is no caption, no percentage and no dot row: the ring
- * and the logo are the whole loading surface, and the stage's only row is that
- * ring. Because every layer is pinned to the same box with `margin: auto`, the
- * logo can never drift out of the ring — in any language, at any size or
- * direction, on any breakpoint, for the whole loading process.
+ * One instance, mounted once at the app root (main.jsx) and driven by the
+ * global loading signal, so the same DOM node covers the whole boot: session,
+ * business record, sign-in family brand and the customer menu. Nothing about it
+ * is variant, size or route dependent — a failure is the only thing that adds a
+ * second row, and even then the ring keeps its own 144px box.
  *
- * Colour is the theme that is already applied to the document. When no theme
- * has ever been resolved on this device there is nothing correct to show, so
- * the loader stays neutral instead of flashing a preset hue and then repainting.
+ * Composition: ONE fixed 144x144 relative box (`.gbl__orbit`) holding every
+ * layer — the theme-coloured ambient glow, the rotating progress halo, the
+ * light sweep and the transparent logo — each pinned with
+ * `position: absolute; inset: 0; margin: auto`. The logo therefore shares the
+ * exact centre of the ring and can never leave it, in any language, direction,
+ * breakpoint or loading phase. There is no caption, percentage or dot row: the
+ * ring and the logo are the whole surface.
  *
- * Where it appears is decided by real state, never by a page reload:
- *  - `isLoading` from the caller, or
- *  - the global loading signal (`loading.js`), which counts every critical
- *    bootstrap job so the overlay only leaves when all of them are done.
+ * It never remounts and never resizes: entering, finishing, a theme arriving or
+ * a second job starting only changes classes and CSS custom properties, and the
+ * only exit motion is the overlay's opacity going 1 -> 0 before it is removed.
  *
- * Short work never flashes it (the store applies a show delay and a minimum
- * visible time), and an initialisation failure turns it into a localised error
- * state with a retry, so a genuine failure is never hidden behind an animation.
+ * Colour is the theme already on the document (applied before React and by the
+ * pre-paint cache in index.html); with no resolved theme it stays neutral
+ * instead of flashing a preset hue and then repainting.
  */
 export default function GlobalBrandedLoader({
   isLoading,
-  variant = 'overlay',
-  size,
   theme,
   message,
-  overlay,
   error = null,
   onRetry,
   logoUrl,
@@ -46,15 +45,7 @@ export default function GlobalBrandedLoader({
   const { t, dir } = useI18n();
   const globalVisible = useSyncExternalStore(subscribeLoading, getLoadingSnapshot, getLoadingSnapshot);
   const active = isLoading ?? globalVisible;
-  const isOverlay = overlay ?? variant === 'overlay';
   const [broken, setBroken] = useState(false);
-
-  /* The dependency-free splash in index.html paints the same mark on the first
-     frame, before React exists. The real loader replaces it as soon as it is on
-     screen, so the two never overlap and no second reload is needed. */
-  useEffect(() => {
-    document.getElementById('boot-splash')?.remove();
-  }, []);
 
   /* Keep the node mounted for the fade-out, then let it go completely — no
      invisible overlay is ever left holding the pointer. */
@@ -65,83 +56,89 @@ export default function GlobalBrandedLoader({
       return undefined;
     }
     if (!mounted) return undefined;
-    const timer = window.setTimeout(() => setMounted(false), 260);
+    const timer = window.setTimeout(() => setMounted(false), EXIT_MS);
     return () => window.clearTimeout(timer);
   }, [active, mounted]);
 
+  /* An error is a state to read, not a state that fades away: only a finished
+     load may play the exit, so a failure never paints invisible. */
+  const showing = active || Boolean(error);
+
+  /* The splash in index.html paints this same mark on the very first frame. It
+     is dropped the instant this overlay paints — an identical composition — or
+     as soon as nothing is loading, so a fast boot never shows it over content. */
+  useEffect(() => {
+    if (showing) {
+      document.getElementById('boot-splash')?.remove();
+      return undefined;
+    }
+    const timer = window.setTimeout(() => {
+      if (!isLoadingPending()) document.getElementById('boot-splash')?.remove();
+    }, 400);
+    return () => window.clearTimeout(timer);
+  }, [showing]);
+
   if (!mounted && !error) return null;
 
-  /* An error is a state to read, not a state that fades away: only a finished
-     load may play the exit animation, so a failure never paints invisible. */
-  const showing = active || Boolean(error);
   const label = error ? t('state_error') : message || t('state_loading');
   const src = broken ? FALLBACK_LOGO : brandLogoUrl(logoUrl);
   /* The accent the document is already showing: an explicit theme, or the one
      the pre-paint cache applied. No cache and no theme means "neutral". */
   const accent = theme || cachedTheme()?.primary || '';
 
-  const stage = (
-    <div
-      className={`gbl__stage ${error ? 'is-error' : ''}`.trim()}
-      data-size={size || 'auto'}
-      data-tone={accent ? 'theme' : 'neutral'}
-      style={accent ? { '--gbl-accent': accent } : undefined}
-      dir={dir}
-    >
-      {/* Ring, glow, reflection and logo share this one box and its centre. */}
-      <div className="gbl__orbit">
-        <span className="gbl__ambient" aria-hidden="true" />
-        <span className="gbl__halo" aria-hidden="true">
-          <svg viewBox="0 0 100 100" focusable="false">
-            <circle className="gbl__halo-track" cx="50" cy="50" r="45" />
-            <circle className="gbl__halo-arc" cx="50" cy="50" r="45" />
-          </svg>
-        </span>
-        <span className="gbl__sweep" aria-hidden="true" />
-        <span className="gbl__logo">
-          {error ? (
-            <span className="gbl__mark">
-              <Icon name="alert" size={30} />
-            </span>
-          ) : (
-            <img
-              src={src}
-              alt=""
-              decoding="async"
-              draggable="false"
-              onError={() => setBroken(true)}
-            />
-          )}
-        </span>
-      </div>
-
-      {/* Loading is logo + ring only. The error state keeps its one readable
-          line and retry, because a failure must stay understandable. */}
-      {error ? (
-        <div className="gbl__error">
-          <span className="gbl__message">{message || t('state_error')}</span>
-          {onRetry ? (
-            <button type="button" className="gbl__retry" onClick={onRetry}>
-              <Icon name="refresh" size={14} />
-              {t('action_retry')}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-    </div>
-  );
-
-  if (!isOverlay) {
-    return (
-      <div className={`gbl gbl--inline ${showing ? '' : 'is-leaving'}`.trim()} role="status" aria-live="polite" aria-label={label}>
-        {stage}
-      </div>
-    );
-  }
-
   return (
-    <div className={`gbl ${showing ? '' : 'is-leaving'}`.trim()} role="status" aria-live="polite" aria-label={label}>
-      {stage}
+    <div
+      className={`gbl ${showing ? '' : 'is-leaving'}`.trim()}
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+    >
+      <div
+        className={`gbl__stage ${error ? 'is-error' : ''}`.trim()}
+        data-tone={accent ? 'theme' : 'neutral'}
+        style={accent ? { '--gbl-accent': accent } : undefined}
+        dir={dir}
+      >
+        {/* Ring, glow, reflection and logo share this one fixed box. */}
+        <div className="gbl__orbit">
+          <span className="gbl__ambient" aria-hidden="true" />
+          <span className="gbl__halo" aria-hidden="true">
+            <svg viewBox="0 0 100 100" focusable="false">
+              <circle className="gbl__halo-track" cx="50" cy="50" r="45" />
+              <circle className="gbl__halo-arc" cx="50" cy="50" r="45" />
+            </svg>
+          </span>
+          <span className="gbl__sweep" aria-hidden="true" />
+          <span className="gbl__logo">
+            {error ? (
+              <span className="gbl__mark">
+                <Icon name="alert" size={30} />
+              </span>
+            ) : (
+              <img
+                src={src}
+                alt=""
+                decoding="async"
+                draggable="false"
+                onError={() => setBroken(true)}
+              />
+            )}
+          </span>
+        </div>
+
+        {/* A failure must stay understandable: one line and its retry. */}
+        {error ? (
+          <div className="gbl__error">
+            <span className="gbl__message">{message || t('state_error')}</span>
+            {onRetry ? (
+              <button type="button" className="gbl__retry" onClick={onRetry}>
+                <Icon name="refresh" size={14} />
+                {t('action_retry')}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -1,114 +1,83 @@
 /*
  * The global branded loader (see GlobalBrandedLoader.jsx).
  *
- * Geometry is direction-blind on purpose. The logo, the ring, the glow and the
- * light sweep all sit in ONE square `--gbl-ring` box and are centred with
- * `inset: 0; margin: auto` — never with `inset-inline-start: 50%` plus a
- * translate, which mirrors under `dir="rtl"` and is what pushed the logo out
- * beside the ring instead of inside it. Nothing here reads the writing
- * direction, so the composition is identical in Kurdish, Persian, Arabic and
- * English, and identical on every breakpoint (only `--gbl-logo` changes size).
+ * The geometry is fixed and direction-blind on purpose. One 144x144 relative
+ * box (`.gbl__orbit`) holds every layer, and each layer is anchored with
+ * `inset: 0; margin: auto` — never `inset-inline-start: 50%` plus a translate,
+ * which mirrors under `dir="rtl"`. Nothing below this line reads the writing
+ * direction or the viewport width, so the composition is byte-for-byte the
+ * same in Kurdish, Persian, Arabic and English, on phones, tablets and
+ * desktops, and at every moment of the loading lifecycle.
+ *
+ * There are no size, scale, translate or transform animations anywhere in this
+ * file: the ring turns and the glow breathes, the logo sits perfectly still.
+ * The only exit motion is the overlay's own opacity, so nothing can shrink,
+ * jump or split apart as loading finishes.
  *
  * Colour comes from the active business theme through the shared `--primary`
- * ramp, so switching theme repaints the glow and the halo immediately and
- * nothing here is a hardcoded brand colour. `data-tone="neutral"` is the one
- * exception: before a theme has ever been resolved there is nothing correct to
- * show, so the loader stays neutral grey instead of flashing a preset hue.
- *
- * Every animation moves `transform` or `opacity` only — no layout, no animated
- * filters — so the loader costs almost nothing while real work runs.
+ * ramp. `data-tone="neutral"` is the one exception: before a theme has ever
+ * been resolved there is nothing correct to show, so the loader stays neutral
+ * grey instead of flashing a preset hue.
  */
 
 .gbl {
   position: fixed;
   inset: 0;
-  z-index: 240;
+  /* `inset: 0` on the document's stable scrollbar gutter (see styles.css) keeps
+     this box the same size whether or not the page behind it scrolls, so the
+     ring can never slide sideways during the final fade. */
+  z-index: 99999;
   display: grid;
   place-items: center;
+  margin: 0;
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
     env(safe-area-inset-left);
   background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(7px) saturate(112%);
   -webkit-backdrop-filter: blur(7px) saturate(112%);
-  animation: gbl-overlay-in 200ms ease both;
+  opacity: 1;
+  transition: opacity 250ms ease;
   overscroll-behavior: contain;
 }
 
-/* The whole loader leaves as one unit: a single fade on the overlay, never one
-   element at a time. */
+/* The whole loader leaves as one unit: one opacity transition on the overlay,
+   no per-element animation, then the component removes the node itself. */
 .gbl.is-leaving {
-  animation: gbl-overlay-out 240ms ease both;
+  opacity: 0;
   pointer-events: none;
-}
-
-.gbl--inline {
-  position: relative;
-  inset: auto;
-  z-index: 0;
-  background: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  min-height: 220px;
-  animation: none;
-}
-
-@keyframes gbl-overlay-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes gbl-overlay-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
 }
 
 /* -------------------------------------------------------------- the stage -- */
 
-/* The stage holds exactly the ring — no caption row, no reserved space below
-   it. Its size is `--gbl-ring` at every moment of the load, so appearing,
-   finishing or changing theme can never resize or reflow it. */
+/* The stage is only the column that holds the ring (and, on a failure, its
+   message). It has no width of its own, so it is exactly as big as the fixed
+   ring box: nothing can reserve, add or reclaim space around the logo. */
 .gbl__stage {
   --gbl-accent: var(--primary);
-  --gbl-logo: 65px;
-  --gbl-ring: calc(var(--gbl-logo) * 1.62);
+  --gbl-logo: 88px;
   position: relative;
   display: grid;
   place-items: center;
-  gap: 0;
-  inline-size: var(--gbl-ring);
-  block-size: var(--gbl-ring);
+  gap: 14px;
   isolation: isolate;
 }
 
 /* No theme has been resolved yet: stay neutral rather than show a preset. */
 .gbl__stage[data-tone='neutral'] { --gbl-accent: #98a1b3; }
 
-.gbl__stage[data-size='sm'] { --gbl-logo: 56px; }
-.gbl__stage[data-size='lg'] { --gbl-logo: 96px; }
-
-@media (min-width: 600px) {
-  .gbl__stage { --gbl-logo: 78px; }
-  .gbl__stage[data-size='sm'] { --gbl-logo: 60px; }
-  .gbl__stage[data-size='lg'] { --gbl-logo: 104px; }
-}
-
-@media (min-width: 1100px) {
-  .gbl__stage { --gbl-logo: 90px; }
-  .gbl__stage[data-size='sm'] { --gbl-logo: 64px; }
-  .gbl__stage[data-size='lg'] { --gbl-logo: 112px; }
-}
-
-/* One square box holding the ring; every layer below shares its centre. */
+/* THE one fixed box. Every layer below is absolute and centred inside it, so
+   the ring and the logo always share the same centre and the same size. */
 .gbl__orbit {
   position: relative;
+  flex-shrink: 0;
+  inline-size: 144px;
+  block-size: 144px;
   display: grid;
   place-items: center;
-  inline-size: var(--gbl-ring);
-  block-size: var(--gbl-ring);
 }
 
 /* The single centring rule: absolute, all four insets pinned, `margin: auto`
-   splits the leftover space evenly — so the layer is centred inside the orbit
+   splits the leftover space evenly — so each layer is centred inside the orbit
    whatever its own size and whatever the writing direction. */
 .gbl__ambient,
 .gbl__halo,
@@ -175,13 +144,13 @@
 .gbl__halo-track {
   fill: none;
   stroke: color-mix(in srgb, var(--gbl-accent) 22%, transparent);
-  stroke-width: 2.4;
+  stroke-width: 2.2;
 }
 
 .gbl__halo-arc {
   fill: none;
   stroke: var(--gbl-accent);
-  stroke-width: 3;
+  stroke-width: 2.8;
   stroke-linecap: round;
   stroke-dasharray: 78 205;
   opacity: 0.9;
@@ -209,13 +178,12 @@
   -webkit-mask-image: radial-gradient(circle, #000 58%, transparent 76%);
 }
 
-/* The logo itself: transparent, uncropped, breathing softly in the centre. */
+/* The logo itself: transparent, uncropped, and completely still — its size and
+   position are identical from the first frame until the overlay is removed. */
 .gbl__logo {
   inline-size: var(--gbl-logo);
   block-size: var(--gbl-logo);
   z-index: 3;
-  animation: gbl-breathe 1.8s ease-in-out infinite;
-  will-change: transform;
 }
 
 .gbl__logo img {
@@ -249,23 +217,8 @@
 
 /* ------------------------------------------------------------- error state -- */
 
-/* Only a failure grows the stage: the ring keeps its own fixed box, and the
-   line and retry sit below it instead of overflowing the square. */
-.gbl__stage.is-error {
-  inline-size: auto;
-  block-size: auto;
-  gap: 14px;
-}
-
-.gbl__message {
-  font-size: 12.5px;
-  font-weight: 650;
-  line-height: 1.4;
-  letter-spacing: 0.01em;
-  text-align: center;
-  color: color-mix(in srgb, var(--muted) 78%, var(--text));
-}
-
+/* Only a failure grows the stage: the ring keeps its own fixed 144px box and
+   the line and retry sit below it. */
 .gbl__stage.is-error .gbl__ambient {
   background: radial-gradient(circle at 50% 45%, color-mix(in srgb, #e05252 26%, transparent), transparent 64%);
   animation: none;
@@ -274,7 +227,6 @@
 
 .gbl__stage.is-error .gbl__halo svg { animation: none; opacity: 0.45; }
 .gbl__stage.is-error .gbl__sweep { display: none; }
-.gbl__stage.is-error .gbl__logo { animation: none; }
 
 .gbl__stage.is-error .gbl__mark {
   inline-size: var(--gbl-logo);
@@ -293,6 +245,15 @@
   justify-items: center;
   gap: 11px;
   text-align: center;
+}
+
+.gbl__message {
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
 }
 
 .gbl__retry {
@@ -330,13 +291,6 @@
 }
 
 /* -------------------------------------------------------------- keyframes -- */
-
-/* Scale only, around the logo's own centre: the mark breathes without ever
-   leaving the exact middle of the ring. */
-@keyframes gbl-breathe {
-  0%, 100% { transform: scale(0.96); }
-  50% { transform: scale(1.04); }
-}
 
 @keyframes gbl-glow {
   0%, 100% { transform: scale(0.96); opacity: 0.7; }
@@ -377,24 +331,16 @@
 /* --------------------------------------------------------- reduced motion -- */
 
 @media (prefers-reduced-motion: reduce) {
-  .gbl,
-  .gbl.is-leaving {
-    animation: gbl-overlay-in 180ms ease both;
-  }
-
-  .gbl.is-leaving {
-    animation: gbl-overlay-out 180ms ease both;
-  }
+  /* No ring spin, no glow pulse, no sweep — and no fade: the overlay simply is
+     there and then is not. Geometry is untouched either way. */
+  .gbl { transition: none; }
 
   .gbl__ambient,
   .gbl__halo svg,
-  .gbl__sweep,
-  .gbl__logo {
+  .gbl__sweep {
     animation: none;
   }
 
-  /* A still, quiet composition: the mark and the halo remain, nothing moves. */
   .gbl__sweep { opacity: 0; }
-  .gbl__logo { transform: scale(1); }
   .gbl__retry { transition: none; }
 }

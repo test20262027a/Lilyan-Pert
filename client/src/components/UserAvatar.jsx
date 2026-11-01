@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Icon from './Icon';
 import AvatarFigure from './AvatarFigure';
 import './userAvatar.css';
@@ -23,6 +23,17 @@ import './userAvatar.css';
 
 const ICONS = { male: 'personMale', female: 'personFemale', default: 'person' };
 
+/*
+ * Photos already decoded in this session.
+ *
+ * A media reference is immutable, so the same URL always means the same pixels.
+ * Remembering it lets a remount (a navigation, a panel reopening) paint the
+ * photo on its very first frame instead of fading it in again from an empty
+ * circle — the avatar never blanks out twice for one image. It holds URLs, not
+ * people: the reference itself is what changes when a photo changes.
+ */
+const DECODED = new Set();
+
 export default function UserAvatar({
   user,
   src,
@@ -30,19 +41,47 @@ export default function UserAvatar({
   size = 40,
   className = '',
   alt = '',
+  priority = false,
 }) {
   const photo = src !== undefined ? src : user?.profile_image_url;
   const type = avatarType !== undefined ? avatarType : user?.avatar_type;
   const kind = ICONS[type] ? type : 'default';
+  const imgRef = useRef(null);
 
-  const [loaded, setLoaded] = useState(false);
+  /* A photo already decoded in this session starts visible: the first paint is
+     the picture, not a placeholder that fades in a moment later. */
+  const [loaded, setLoaded] = useState(Boolean(photo) && DECODED.has(photo));
   const [broken, setBroken] = useState(false);
 
-  // A new reference is a new image: start its loading state over.
+  /*
+   * A new reference is a new image, so it starts over — but an image that is
+   * already complete (served from the browser cache within this same mount)
+   * reports it here instead of waiting for a load event that has already
+   * fired. That gap is what left the frame empty on a fast connection.
+   */
   useEffect(() => {
-    setLoaded(false);
     setBroken(false);
+    if (!photo) {
+      setLoaded(false);
+      return;
+    }
+    if (DECODED.has(photo)) {
+      setLoaded(true);
+      return;
+    }
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0) {
+      DECODED.add(photo);
+      setLoaded(true);
+      return;
+    }
+    setLoaded(false);
   }, [photo]);
+
+  const ready = () => {
+    if (photo) DECODED.add(photo);
+    setLoaded(true);
+  };
 
   const showPhoto = Boolean(photo) && !broken;
 
@@ -54,12 +93,16 @@ export default function UserAvatar({
     >
       {showPhoto ? (
         <img
+          ref={imgRef}
           className={`uavatar__img ${loaded ? 'is-loaded' : ''}`.trim()}
           src={photo}
           alt={alt}
-          loading="lazy"
+          /* The frame is the person's own identity, so it never waits for a
+             scroll position: it is requested with the rest of the shell. */
+          loading="eager"
           decoding="async"
-          onLoad={() => setLoaded(true)}
+          fetchPriority={priority ? 'high' : 'auto'}
+          onLoad={ready}
           onError={() => setBroken(true)}
         />
       ) : kind === 'default' ? (
