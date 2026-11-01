@@ -12,44 +12,32 @@
    it cannot leak into another page.
    ========================================================================== */
 
+/*
+ * ONE card, ONE background. Every decorative tint is painted here, on the card
+ * itself, as softly overlapping radial washes whose stops never line up with
+ * the illustration's column — so the artwork's blush flows into the settings
+ * side with no boundary, in any theme, light or dark. Colours are mixed from
+ * `--theme-primary`, so the wash always complements the chosen global theme
+ * while the bell keeps its own pink and orange.
+ */
 .dash .card.notif-card {
   position: relative;
   display: flex;
   align-items: stretch;
   overflow: hidden;
   border-radius: 20px;
-  /*
-   * The artwork gets its own layer and keeps its own proportions; this wash is
-   * what the rest of the card is painted with, in the picture's own pink and
-   * the selected theme, so the two read as ONE continuous design.
-   */
-  background: linear-gradient(158deg, color-mix(in srgb, var(--theme-primary) 7%, #ffffff), #ffffff 64%);
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(100% 128% at 0% 40%, color-mix(in srgb, var(--theme-primary) 22%, transparent) 0%, transparent 60%),
+    radial-gradient(86% 112% at 30% 106%, color-mix(in srgb, var(--theme-primary) 14%, transparent) 0%, transparent 66%),
+    radial-gradient(92% 124% at 100% -8%, color-mix(in srgb, var(--theme-primary) 9%, transparent) 0%, transparent 68%);
 }
 [data-theme='dark'] .dash .card.notif-card {
-  background: linear-gradient(158deg, color-mix(in srgb, var(--theme-primary) 10%, #1b2030), #171c27 64%);
-}
-
-/*
- * The wash the illustration sits in. Its colour is sampled from the picture's
- * own edges (#fcd8f2), so the artwork blends into the card with no visible
- * rectangle and no faded overlay over the bell itself.
- */
-.dash .card.notif-card::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 42%;
-  height: 100%;
-  background: radial-gradient(72% 52% at 44% 50%, #fcd8f3 0%, #fde9f7 64%, rgba(255, 255, 255, 0) 100%);
-  pointer-events: none;
-}
-[data-theme='dark'] .dash .card.notif-card::before {
-  background: radial-gradient(
-    72% 52% at 44% 50%,
-    color-mix(in srgb, var(--theme-primary) 16%, #2b1c26) 0%,
-    rgba(0, 0, 0, 0) 100%
-  );
+  background-color: var(--surface);
+  background-image:
+    radial-gradient(100% 128% at 0% 40%, color-mix(in srgb, var(--theme-primary) 30%, transparent) 0%, transparent 62%),
+    radial-gradient(86% 112% at 30% 106%, color-mix(in srgb, var(--theme-primary) 18%, transparent) 0%, transparent 68%),
+    radial-gradient(92% 124% at 100% -8%, color-mix(in srgb, var(--theme-primary) 11%, transparent) 0%, transparent 70%);
 }
 
 /* The two stacked sections keep a little more air between them than the
@@ -111,10 +99,14 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  border: 1px solid var(--glass-line);
-  border-radius: 14px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.6));
-  backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in srgb, var(--glass-line) 78%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 62%, transparent),
+    color-mix(in srgb, var(--surface) 40%, transparent)
+  );
+  backdrop-filter: blur(var(--glass-blur));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.8),
     0 8px 18px -16px rgba(16, 22, 38, 0.5);
@@ -129,7 +121,7 @@
     0 10px 22px -16px rgba(16, 22, 38, 0.45);
 }
 [data-theme='dark'] .dash .notif-card .switch-row {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
     0 8px 18px -16px rgba(0, 0, 0, 0.85);
@@ -231,9 +223,13 @@
   gap: 10px;
   padding-block: 8px;
   padding-inline: 10px 8px;
-  border-radius: 13px;
-  border: 1px solid var(--glass-line);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.66));
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--glass-line) 78%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 66%, transparent),
+    color-mix(in srgb, var(--surface) 42%, transparent)
+  );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.75),
     0 8px 18px -16px rgba(16, 22, 38, 0.5);
@@ -312,22 +308,24 @@
 /* --- illustration panel ------------------------------------------------ */
 
 /*
- * Decorative only. The picture the section ships with is drawn here; swapping
- * in an uploaded illustration means replacing the contents of this panel, not
- * the layout — no control ever lives inside it.
- */
-/*
- * Decorative only, and a layer of its own: `contain` keeps the bell, the
- * bubble and every detail at their true proportions — never stretched, never
- * cropped — while the wash above fills whatever is left over.
+ * The artwork is its own proportional layer: `contain` never stretches or
+ * crops it, and a soft radial mask dissolves its outer edge into the card's
+ * wash, so the bell, the waves, the bubble and the pedestal stay untouched and
+ * sharp while the space around them has no visible rectangle. Decorative only —
+ * no control ever lives in here.
  */
 .dash .notif-card__art {
   position: absolute;
-  left: 0;
   top: 0;
+  left: 0;
   height: 100%;
-  width: 36%;
+  width: 38%;
+  padding: 24px 18px;
+  box-sizing: border-box;
   background: url('/headers/notif-bell.webp') no-repeat center / contain;
+  filter: drop-shadow(0 18px 24px color-mix(in srgb, var(--theme-primary) 24%, transparent));
+  -webkit-mask-image: radial-gradient(92% 96% at 50% 50%, #000 48%, transparent 96%);
+  mask-image: radial-gradient(92% 96% at 50% 50%, #000 48%, transparent 96%);
   pointer-events: none;
   z-index: 1;
 }
@@ -341,20 +339,27 @@
    * sit directly under it.
    */
   .dash .card.notif-card { flex-direction: column; }
+  /* The same washes, re-aimed at the top of the card so the decorative band
+     and the settings below it stay one continuous surface. */
+  .dash .card.notif-card {
+    background-image:
+      radial-gradient(130% 62% at 50% 0%, color-mix(in srgb, var(--theme-primary) 20%, transparent) 0%, transparent 64%),
+      radial-gradient(96% 56% at 50% 108%, color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%, transparent 72%);
+  }
+  [data-theme='dark'] .dash .card.notif-card {
+    background-image:
+      radial-gradient(130% 62% at 50% 0%, color-mix(in srgb, var(--theme-primary) 28%, transparent) 0%, transparent 66%),
+      radial-gradient(96% 56% at 50% 108%, color-mix(in srgb, var(--theme-primary) 14%, transparent) 0%, transparent 72%);
+  }
   .dash .notif-card__art {
     position: relative;
     /* The band leads the card, and the settings follow it. */
     order: -1;
     width: 100%;
-    height: 130px;
+    height: 150px;
+    padding: 8px 0;
     background-position: center;
     z-index: 1;
-  }
-  /* The same wash, now behind a full-width band instead of a side column. */
-  .dash .card.notif-card::before {
-    width: 100%;
-    height: 150px;
-    background: radial-gradient(58% 150% at 50% 40%, #fcd8f3 0%, #fde9f7 62%, rgba(255, 255, 255, 0) 100%);
   }
   .dash .notif-card__panel {
     padding: 14px 16px 18px;
@@ -363,7 +368,7 @@
 }
 
 @media (max-width: 767px) {
-  .dash .notif-card__art { height: 96px; }
+  .dash .notif-card__art { height: 112px; padding: 4px 0; }
   .dash .notif-card__panel { padding: 12px 14px 16px; padding-left: 14px; gap: 10px; }
   .dash .notif-card__head { gap: 10px; }
   .dash .notif-card .sound-picker { grid-template-columns: minmax(0, 1fr); gap: 12px; }
@@ -376,10 +381,14 @@
 .dash .notif-card .push-devices,
 .dash .notif-card .sound-picker {
   padding: 12px 14px;
-  border: 1px solid var(--glass-line);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(6px);
+  border: 1px solid color-mix(in srgb, var(--glass-line) 78%, transparent);
+  border-radius: 16px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 60%, transparent),
+    color-mix(in srgb, var(--surface) 38%, transparent)
+  );
+  backdrop-filter: blur(var(--glass-blur));
 }
 .dash .notif-card .sound-picker { margin-top: 0; }
 [data-theme='dark'] .dash .notif-card .push-devices,
@@ -387,35 +396,8 @@
 [data-theme='dark'] .dash .notif-card .switch-row {
   background: rgba(22, 26, 34, 0.72);
 }
-.dash .notif-card__head { text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); }
+.dash .notif-card__head { position: relative; z-index: 2; }
 
-
-/* --- premium 3D finish (visual only) ----------------------------------- */
-
-/* Soft abstract waves behind the bell, in the selected theme. */
-.dash .card.notif-card::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 42%;
-  height: 100%;
-  background:
-    radial-gradient(60% 40% at 15% 95%, color-mix(in srgb, var(--theme-primary) 16%, transparent), transparent 70%),
-    radial-gradient(50% 36% at 90% 8%, rgba(255, 190, 150, 0.28), transparent 70%),
-    radial-gradient(46% 34% at 8% 12%, rgba(196, 170, 255, 0.24), transparent 70%);
-  pointer-events: none;
-}
-@media (max-width: 1199px) {
-  .dash .card.notif-card::after { width: 100%; height: 150px; }
-}
-@media (min-width: 1200px) {
-  .dash .notif-card__art { width: 36%; padding: 28px 12px; box-sizing: border-box; background-origin: content-box; }
-  .dash .notif-card__art { background-clip: content-box; }
-}
-.dash .notif-card__art { filter: drop-shadow(0 18px 22px rgba(214, 40, 120, 0.18)); animation: notif-float 6s ease-in-out infinite; }
-@keyframes notif-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
-@media (prefers-reduced-motion: reduce) { .dash .notif-card__art { animation: none; } }
 
 /* Glossy rows with a lift on hover and a gentle press. */
 .dash .notif-card .switch-row,
