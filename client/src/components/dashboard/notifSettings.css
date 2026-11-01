@@ -320,7 +320,10 @@
   left: 0;
   height: 100%;
   width: 38%;
-  padding: 24px 18px;
+  /* The drawing itself is kept smaller than its column and centred inside it:
+     `contain` with a generous inset shrinks the bell without cropping, while
+     the column stays the same size so the settings side never moves. */
+  padding: 26px 15%;
   box-sizing: border-box;
   background: url('/headers/notif-bell.webp') no-repeat center / contain;
   filter: drop-shadow(0 18px 24px color-mix(in srgb, var(--theme-primary) 24%, transparent));
