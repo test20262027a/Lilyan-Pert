@@ -391,7 +391,9 @@ export default function NotificationSettings({
 
       {/* Open space that keeps the uploaded artwork (drawn as the card's own
           background) clear of every control. */}
-      <div className="notif-card__art" aria-hidden="true" />
+      <div className="notif-card__art" aria-hidden="true">
+        <img className="notif-card__art-img" src="/headers/notif-bell.webp" alt="" draggable="false" />
+      </div>
     </section>
   );
 }
