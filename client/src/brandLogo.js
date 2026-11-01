@@ -115,7 +115,15 @@ let brandPromise = null;
  */
 export function loadPublicBrand() {
   if (!brandPromise) {
-    brandPromise = fetch('/api/public/brand', { credentials: 'include', headers: { Accept: 'application/json' } })
+    /* Bounded: a request that never answers must not pin this promise forever,
+       so a later caller can try again instead of inheriting a hang. */
+    const abort = typeof AbortController === 'function' ? new AbortController() : null;
+    const timer = abort ? window.setTimeout(() => abort.abort(), 8000) : null;
+    brandPromise = fetch('/api/public/brand', {
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+      signal: abort?.signal,
+    })
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error('BRAND_UNAVAILABLE'))))
       .then((brand) => {
         rememberBrandLogo(brand?.logo_url);
@@ -124,6 +132,9 @@ export function loadPublicBrand() {
       .catch((err) => {
         brandPromise = null;
         throw err;
+      })
+      .finally(() => {
+        if (timer) window.clearTimeout(timer);
       });
   }
   return brandPromise;

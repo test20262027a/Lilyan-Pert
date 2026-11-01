@@ -49,7 +49,10 @@ export default function GlobalBrandedLoader({
      is swapped in place, without a remount or a second loader. */
   const rememberedLogo = useSyncExternalStore(subscribeBrandLogo, brandLogoSnapshot, brandLogoSnapshot);
   const active = isLoading ?? globalVisible;
-  const [broken, setBroken] = useState(false);
+  /* The URL that failed, not a boolean: remembering *which* src broke means a
+     later, valid logo is drawn immediately, and the placeholder never fights the
+     real image in a set/re-set loop. */
+  const [failedSrc, setFailedSrc] = useState('');
 
   /* Keep the node mounted for the fade-out, then let it go completely — no
      invisible overlay is ever left holding the pointer. */
@@ -85,12 +88,8 @@ export default function GlobalBrandedLoader({
   if (!mounted && !error) return null;
 
   const label = error ? t('state_error') : message || t('state_loading');
-  const src = broken ? NEUTRAL_LOGO : brandLogoUrl(logoUrl || rememberedLogo);
-  /* A newly resolved logo gets its own chance to load after an unreachable one
-     was remembered. */
-  useEffect(() => {
-    setBroken(false);
-  }, [src]);
+  const candidate = brandLogoUrl(logoUrl || rememberedLogo);
+  const src = failedSrc && failedSrc === candidate ? NEUTRAL_LOGO : candidate;
   /* The accent the document is already showing: an explicit theme, or the one
      the pre-paint cache applied. No cache and no theme means "neutral". */
   const accent = theme || cachedTheme()?.primary || '';
@@ -129,7 +128,7 @@ export default function GlobalBrandedLoader({
                 alt=""
                 decoding="async"
                 draggable="false"
-                onError={() => setBroken(true)}
+                onError={() => setFailedSrc(candidate)}
               />
             )}
           </span>

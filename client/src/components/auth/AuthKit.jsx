@@ -1,10 +1,9 @@
-import { createContext, useContext, useEffect, useId, useState } from 'react';
+import { createContext, useContext, useEffect, useId, useState, useSyncExternalStore } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { applyTheme, cachedTheme, DEFAULT_THEME } from '../../theme';
 import useDocumentMetadata from '../../hooks/useDocumentMetadata';
-import { beginLoading, endLoading } from '../../loading';
-import { loadPublicBrand } from '../../brandLogo';
+import { brandLogoSnapshot, loadPublicBrand, subscribeBrandLogo } from '../../brandLogo';
 import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
@@ -17,24 +16,32 @@ import '../../auth.css';
 
 const BrandContext = createContext(null);
 
+/** How long the sign-in screen waits for its own branding before carrying on. */
+const BRAND_TIMEOUT_MS = 6000;
+
 /**
  * Business name, logo and theme from the public brand endpoint (no login
- * needed). `undefined` means still loading, `null` means the request failed.
+ * needed). `undefined` means still loading, `null` means it is unavailable.
+ *
+ * Branding is decoration, never a gate: this request raises no global loader
+ * and its failure or silence is not something the form can wait on. It is also
+ * bounded, so a request that never answers cannot leave `undefined` behind.
  */
 function useBrand() {
   const [brand, setBrand] = useState(undefined);
   useEffect(() => {
     let live = true;
-    // The screen is blank until the brand answers, so it is blocking work: it
-    // raises the one global overlay, exactly like the session and the business
-    // record, instead of painting a smaller loader of its own.
-    beginLoading('brand');
+    const settle = (value) => {
+      if (live) setBrand(value);
+    };
+    const timer = window.setTimeout(() => settle(null), BRAND_TIMEOUT_MS);
     loadPublicBrand()
-      .then((b) => live && setBrand(b))
-      .catch(() => live && setBrand(null))
-      .finally(() => endLoading('brand'));
+      .then(settle)
+      .catch(() => settle(null))
+      .finally(() => window.clearTimeout(timer));
     return () => {
       live = false;
+      window.clearTimeout(timer);
     };
   }, []);
   return brand;
@@ -64,16 +71,11 @@ export function AuthLayout({ children, footer }) {
         <div className="au__veil" aria-hidden="true" />
         <LanguageMenu />
         <main className="au__main">
-          {/* Nothing of the form is painted until the business appearance is
-              known, so no control is ever drawn in the wrong theme and then
-              repainted — and the wait is covered by the same global overlay the
-              whole app boots behind, never by a smaller copy of it. */}
-          {brand === undefined ? null : (
-            <>
-              {children}
-              {footer}
-            </>
-          )}
+          {/* The form is never held back by branding: the theme is already on
+              the document before React runs (index.html), so the first frame is
+              correct, and a slow or failed logo request only delays the logo. */}
+          {children}
+          {footer}
         </main>
       </div>
     </BrandContext.Provider>
@@ -83,12 +85,15 @@ export function AuthLayout({ children, footer }) {
 export function AuthCard({ title, subtitle, children }) {
   const { t } = useI18n();
   const brand = useContext(BrandContext);
+  /* Remembered/arriving logo first, so the sign-in card never depends on this
+     page's request having finished. */
+  const rememberedLogo = useSyncExternalStore(subscribeBrandLogo, brandLogoSnapshot, brandLogoSnapshot);
   return (
     <section className="au-card">
       {/* The logo sits directly on the glass — no plate, box or tint behind it. */}
       <div className="au-card__logo">
-        {brand === undefined ? null : brand?.logo_url ? (
-          <img src={brand.logo_url} alt={brand.name || t('app_name')} />
+        {brand?.logo_url || rememberedLogo ? (
+          <img src={brand?.logo_url || rememberedLogo} alt={brand?.name || t('app_name')} />
         ) : (
           <span className="au-card__mark" aria-hidden="true">LP</span>
         )}
