@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
-import { EmptyState, Loading, Money, useToast } from '../components/ui';
+import { EmptyState, Money, useToast } from '../components/ui';
+import GlobalBrandedLoader from '../components/brand/GlobalBrandedLoader';
+import { rememberBrandLogo } from '../brandLogo';
 import { localized, useI18n, LOCALES } from '../i18n';
 import { currencyForLanguage, productPrice, setLanguageSettings } from '../languages';
 import { useAuth } from '../context/AuthContext';
@@ -106,7 +108,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
        * just disabled falls back to the configured default immediately.
        */
       setLanguageSettings(payload.language_settings);
+      /* A retry that succeeds must clear the earlier failure, or the page would
+         keep showing the error over perfectly good data. */
+      setError(null);
       setData(payload);
+      /* The loader on this page and in the admin shell draws this same logo, so
+         it is remembered for the next boot instead of being fetched again. */
+      rememberBrandLogo(payload.business?.logo_url);
       applyTheme(payload.business?.theme);
     } catch (err) {
       setError(err.message);
@@ -376,12 +384,20 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     }
   };
 
-  if (loading) return <Loading />;
+  if (loading) return <GlobalBrandedLoader />;
   if (error || !data) {
+    /* A real failure: the same branded surface turns into a localised error with
+       a retry, so the guest is never left watching an endless animation. */
     return (
-      <div className="customer-shell" style={{ display: 'grid', placeItems: 'center', padding: 24 }}>
-        <EmptyState icon="alert" title={t('customer_menu_unavailable')} />
-      </div>
+      <GlobalBrandedLoader
+        isLoading={false}
+        error={error || 'ERROR'}
+        message={t('customer_menu_unavailable')}
+        onRetry={() => {
+          setError(null);
+          load();
+        }}
+      />
     );
   }
 

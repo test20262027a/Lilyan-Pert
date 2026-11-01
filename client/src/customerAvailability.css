@@ -111,22 +111,6 @@
  * — instead of leaving an empty tail under a short sentence. Grid columns follow
  * the document direction, so RTL mirrors without extra rules.
  */
-@media (min-width: 900px) {
-  .cui-closed__text {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'title badges'
-      'hint badges';
-    align-content: center;
-    column-gap: 22px;
-    row-gap: 4px;
-  }
-  .cui-closed__title { grid-area: title; }
-  .cui-closed__hint { grid-area: hint; }
-  .cui-closed__badges { grid-area: badges; margin-top: 0; justify-content: flex-end; }
-}
-
 /* --------------------------------------------------- status badges group -- */
 
 /*
@@ -223,6 +207,48 @@
   text-wrap: pretty;
 }
 
+@media (min-width: 760px) {
+  .cui-closed { padding-inline: 14px; }
+  .cui-closed__main { gap: 12px; }
+  /* Tablet: the message owns the full row and the badges sit in one horizontal
+     group beneath it, so the subtitle is never squeezed into a second line. */
+  .cui-closed__text {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'title'
+      'hint'
+      'badges';
+    min-width: 0;
+    row-gap: 3px;
+  }
+  .cui-closed__title { grid-area: title; min-width: 0; }
+  .cui-closed__hint {
+    grid-area: hint;
+    min-width: 0;
+    max-width: none;
+    /* One line on tablet and desktop: never a wrapped second line, never a
+       truncated one. `clamp` keeps the line inside the card while staying at a
+       comfortable reading size. */
+    white-space: nowrap;
+    text-wrap: nowrap;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: clamp(11.3px, 1.02vw, 13px);
+  }
+  .cui-closed__badges {
+    grid-area: badges;
+    margin-top: 5px;
+    gap: 6px;
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+  }
+  .cui-closed__badge { padding: 3px 9px 3px 4px; }
+  [dir='rtl'] .cui-closed__badge { padding: 3px 4px 3px 9px; }
+}
+
+/* Phones: wrapping is allowed again — here it is the only way to keep the long
+   Kurdish, Arabic and Persian sentences readable without shrinking the type. */
 @media (max-width: 720px) {
   .cui-closed { width: 100%; padding: 12px 13px 13px; margin: 14px 0 0; }
   .cui-closed__main { gap: 11px; align-items: flex-start; }

@@ -20,6 +20,10 @@ import './headers/headerSystem.css';
 // depth and states from here. Imported last so it wins over page skins.
 import './buttons.css';
 
+/* Safety net: the first-paint splash is normally removed by the branded loader.
+   If a route ever paints without it, this keeps the screen usable afterwards. */
+window.setTimeout(() => document.getElementById('boot-splash')?.remove(), 4000);
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import { BusinessProvider, useBusiness } from '../context/BusinessContext';
+import GlobalBrandedLoader from './brand/GlobalBrandedLoader';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import AppHeader from './header/AppHeader';
 import Sidebar from './sidebar/Sidebar';
@@ -13,7 +14,7 @@ import AnimatedBackToTop from './backToTop/AnimatedBackToTop';
  */
 function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const { business } = useBusiness();
+  const { business, loading, error, reload } = useBusiness();
 
   // The tab shows this section and this business, in this language.
   useDocumentMetadata(business);
@@ -39,6 +40,15 @@ function Shell() {
         {/* One control for every admin screen. */}
         <AnimatedBackToTop />
       </div>
+
+      {/* The business record is the theme, the languages and the identity of the
+          whole shell, so the screen waits for it — and a failed read becomes a
+          localised retry instead of an endless animation. */}
+      <GlobalBrandedLoader
+        isLoading={loading && !business}
+        error={error && !business ? error : null}
+        onRetry={() => reload()}
+      />
     </div>
   );
 }

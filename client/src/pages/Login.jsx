@@ -12,6 +12,8 @@ import {
 } from '../components/auth/AuthKit';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
+import { beginLoading, endLoading } from '../loading';
+import GlobalBrandedLoader from '../components/brand/GlobalBrandedLoader';
 
 export default function Login() {
   const { t } = useI18n();
@@ -33,18 +35,27 @@ export default function Login() {
     if (Object.keys(errors).length) return;
 
     setBusy(true);
+    /* Signing in resolves the session *and* the account's permissions, so it is
+       one of the few places that may block the screen. The loader is driven by
+       this real request — nothing is reloaded and a rejected password simply
+       never reaches the overlay. */
+    beginLoading('auth');
     try {
       await login(email, password);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err.code === 'INVALID_CREDENTIALS' ? t('auth_login_failed') : t('error_generic'));
     } finally {
+      endLoading('auth');
       setBusy(false);
     }
   };
 
   return (
     <AuthLayout>
+      {/* Signing in is the one blocking step on this page; it follows the real
+          request through the global loading signal. */}
+      <GlobalBrandedLoader />
       <AuthCard title={t('auth_login')} subtitle={t('auth_login_subtitle')}>
         <form className="au-form" onSubmit={submit} noValidate>
           <AuthInput

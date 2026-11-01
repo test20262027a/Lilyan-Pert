@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { get, put } from '../api';
 import { applyTheme } from '../theme';
 import { setLanguageSettings } from '../languages';
+import { rememberBrandLogo } from '../brandLogo';
 
 const BusinessContext = createContext(null);
 
@@ -31,6 +32,12 @@ export function BusinessProvider({ children }) {
   useEffect(() => {
     if (business?.theme) applyTheme(business.theme);
   }, [business?.theme]);
+
+  /* The loader draws this saved logo on every boot, so the URL is remembered
+     the moment the business is read — before the next refresh, not after it. */
+  useEffect(() => {
+    if (business) rememberBrandLogo(business.logo_url);
+  }, [business]);
 
   // The enabled languages come from the same saved settings record, so every
   // selector and multilingual form follows Menu Settings without a second copy.

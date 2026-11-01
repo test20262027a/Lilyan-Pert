@@ -12,10 +12,93 @@
       for the instant before that runs — never a section that may not apply.
     -->
     <title>Lilyan Pert</title>
+    <!--
+      The first frame, before any script has run: the same branded loader the
+      app then takes over (components/brand/GlobalBrandedLoader.jsx), built from
+      plain CSS the browser can paint immediately. It draws the business logo
+      remembered from the last visit, keeps the theme accent through `--primary`
+      (which the app writes as soon as it knows the theme) and is removed by the
+      React loader on its first paint — no reload, no duplicate overlay.
+    -->
+    <style>
+      #boot-splash {
+        position: fixed;
+        inset: 0;
+        z-index: 240;
+        display: grid;
+        place-items: center;
+        background: var(--bg, #f4f7f6);
+        font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
+      }
+      #boot-splash .bs-stage {
+        position: relative;
+        display: grid;
+        justify-items: center;
+        inline-size: 100px;
+        block-size: 100px;
+      }
+      #boot-splash .bs-glow {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: radial-gradient(circle, color-mix(in srgb, var(--primary, #7c67e4) 26%, transparent), transparent 62%);
+        animation: bs-glow 2.4s ease-in-out infinite;
+      }
+      #boot-splash .bs-halo {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 3px solid color-mix(in srgb, var(--primary, #7c67e4) 20%, transparent);
+        border-top-color: var(--primary, #7c67e4);
+        animation: bs-spin 2.6s linear infinite;
+      }
+      #boot-splash img {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        max-inline-size: 65px;
+        max-block-size: 65px;
+        inline-size: auto;
+        block-size: auto;
+        object-fit: contain;
+        animation: bs-breathe 1.8s ease-in-out infinite;
+      }
+      @keyframes bs-breathe {
+        0%, 100% { transform: scale(0.96); }
+        50% { transform: scale(1.04); }
+      }
+      @keyframes bs-spin { to { transform: rotate(360deg); } }
+      @keyframes bs-glow {
+        0%, 100% { transform: scale(0.96); opacity: 0.7; }
+        50% { transform: scale(1.06); opacity: 0.95; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .bs-glow,
+        #boot-splash .bs-halo,
+        #boot-splash img { animation: none; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <div id="print-root"></div>
+    <!-- Marked aria-hidden: the accessible loading announcement belongs to the
+         React loader (role="status"), never to this first paint. -->
+    <div id="boot-splash" aria-hidden="true">
+      <span class="bs-stage">
+        <span class="bs-glow"></span>
+        <span class="bs-halo"></span>
+        <img id="bs-logo" src="/favicon.svg" alt="" decoding="async" />
+      </span>
+    </div>
+    <script>
+      /* The logo the business saved last time, so the first frame is the brand
+         and not a placeholder. Empty or blocked storage keeps the app's mark. */
+      try {
+        var savedLogo = localStorage.getItem('lilyan.brand.logo.v1');
+        if (savedLogo) document.getElementById('bs-logo').src = savedLogo;
+      } catch (e) {}
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
