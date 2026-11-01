@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Icon from '../components/Icon';
 import { Alert, EmptyState, useToast } from '../components/ui';
 import DeleteConfirmationDialog from '../components/confirm/DeleteConfirmationDialog';
+import DateRangeModal from '../components/dashboard/DateRangeModal';
 import { ENTITY_KEYS, entityLabelText } from '../components/activity/activityMeta';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import ActivityArtwork from '../components/activity/ActivityArtwork';
@@ -11,7 +12,7 @@ import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get } from '../api';
-import { fmtDigits, fmtNumber, zoneFor } from '../format';
+import { fmtDay, fmtDigits, fmtNumber, zoneFor } from '../format';
 import '../menu.css';
 import '../activity.css';
 
@@ -48,6 +49,7 @@ export default function ActivityReports() {
   const [range, setRange] = useState('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [rangePicker, setRangePicker] = useState(false);
 
   const [entries, setEntries] = useState([]);
   const [total, setTotal] = useState(0);
@@ -114,6 +116,20 @@ export default function ActivityReports() {
     setTo('');
   };
 
+  /*
+   * "Custom range" is a destination, not a filter: choosing it opens the shared
+   * range dialog, and only a confirmed pair of days switches the report over.
+   * The select therefore keeps showing the range that is actually applied while
+   * the dialog is open, and a cancelled dialog changes nothing.
+   */
+  const chooseRange = (next) => {
+    if (next === 'custom') {
+      setRangePicker(true);
+      return;
+    }
+    setRange(next);
+  };
+
   const remove = async () => {
     if (!pending) return;
     setBusy(true);
@@ -150,11 +166,10 @@ export default function ActivityReports() {
         actor={actor}
         onActor={setActor}
         range={range}
-        onRange={setRange}
-        from={from}
-        onFrom={setFrom}
-        to={to}
-        onTo={setTo}
+        onRange={chooseRange}
+        fromLabel={from ? fmtDay(from, locale, timeZone) : ''}
+        toLabel={to ? fmtDay(to, locale, timeZone) : ''}
+        onOpenRange={() => setRangePicker(true)}
         actors={actors}
         entities={entities}
         dirty={dirty}
@@ -231,6 +246,23 @@ export default function ActivityReports() {
           ) : null}
         </>
       )}
+
+      {rangePicker ? (
+        <DateRangeModal
+          value={{ from, to }}
+          timeZone={timeZone}
+          locale={locale}
+          section="audit"
+          confirmLabel={t('action_confirm')}
+          onClose={() => setRangePicker(false)}
+          onApply={(next) => {
+            setFrom(next.from);
+            setTo(next.to);
+            setRange('custom');
+            setRangePicker(false);
+          }}
+        />
+      ) : null}
 
       {pending ? (
         <DeleteConfirmationDialog

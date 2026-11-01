@@ -21,7 +21,17 @@ const FOCUSABLE = 'input, button, select, textarea, a[href], [tabindex]:not([tab
  * input, so the day a Persian user reads and picks is the Jalali (Solar Hijri)
  * one, while the value handed back is still the Gregorian calendar day.
  */
-export default function DateRangeModal({ value, timeZone, locale, onApply, onClose }) {
+export default function DateRangeModal({
+  value,
+  timeZone,
+  locale,
+  onApply,
+  onClose,
+  // The header artwork follows the section that opened the dialog, so the same
+  // control reads as part of Business Insights or of the Activity Log.
+  section = 'analytics',
+  confirmLabel,
+}) {
   const { t } = useI18n();
   const [from, setFrom] = useState(value?.from || '');
   const [to, setTo] = useState(value?.to || '');
@@ -129,7 +139,7 @@ export default function DateRangeModal({ value, timeZone, locale, onApply, onClo
     >
       <div className="dash-modal__card" role="dialog" aria-modal="true" aria-labelledby="dash-modal-title" ref={cardRef}>
         <header className="dash-modal__head">
-          <HeaderBackdrop section="analytics" />
+          <HeaderBackdrop section={section} />
           <h2 className="dash-modal__title" id="dash-modal-title">
             {t('dash_range_custom')}
           </h2>
@@ -167,7 +177,7 @@ export default function DateRangeModal({ value, timeZone, locale, onApply, onClo
               {t('action_cancel')}
             </button>
             <button type="submit" className="dash-modal__btn dash-modal__btn--apply">
-              {t('action_apply')}
+              {confirmLabel || t('action_apply')}
             </button>
           </footer>
         </form>

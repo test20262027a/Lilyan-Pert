@@ -26,10 +26,9 @@ export default function ActivityFilters({
   onActor,
   range,
   onRange,
-  from,
-  onFrom,
-  to,
-  onTo,
+  fromLabel,
+  toLabel,
+  onOpenRange,
   actors,
   entities,
   dirty,
@@ -106,16 +105,40 @@ export default function ActivityFilters({
           />
         </label>
 
+        {/* The applied days, read-only here: both reopen the one shared range
+            dialog, so the calendar is never duplicated on this page. */}
         {range === 'custom' ? (
           <>
-            <label className="av-field">
+            <span className="av-field">
               <span className="av-field__label">{t('act_filter_from')}</span>
-              <input className="input" type="date" value={from} onChange={(e) => onFrom(e.target.value)} />
-            </label>
-            <label className="av-field">
+              <button
+                type="button"
+                className="input av-day"
+                onClick={onOpenRange}
+                aria-haspopup="dialog"
+                aria-label={t('act_filter_from')}
+              >
+                <Icon name="calendar" size={14} className="av-day__icon" />
+                <span className={`av-day__value ${fromLabel ? '' : 'is-empty'}`}>
+                  {fromLabel || t('order_select_date')}
+                </span>
+              </button>
+            </span>
+            <span className="av-field">
               <span className="av-field__label">{t('act_filter_to')}</span>
-              <input className="input" type="date" value={to} onChange={(e) => onTo(e.target.value)} />
-            </label>
+              <button
+                type="button"
+                className="input av-day"
+                onClick={onOpenRange}
+                aria-haspopup="dialog"
+                aria-label={t('act_filter_to')}
+              >
+                <Icon name="calendar" size={14} className="av-day__icon" />
+                <span className={`av-day__value ${toLabel ? '' : 'is-empty'}`}>
+                  {toLabel || t('order_select_date')}
+                </span>
+              </button>
+            </span>
           </>
         ) : null}
 

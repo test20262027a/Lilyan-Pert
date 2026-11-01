@@ -175,6 +175,40 @@
   background: var(--av-surface);
 }
 
+/* An applied custom day: same box as a filter input, but it is a button that
+   reopens the shared range dialog — the calendar lives there, once. */
+.av-field .av-day {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: flex-start;
+  text-align: start;
+  cursor: pointer;
+  font-weight: 650;
+}
+
+.av-field .av-day:hover {
+  border-color: color-mix(in srgb, var(--av-green) 42%, var(--av-line));
+  background: var(--av-surface);
+}
+
+.av-day__icon {
+  flex: none;
+  color: var(--av-muted);
+}
+
+.av-day__value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.av-day__value.is-empty {
+  color: var(--av-muted);
+  font-weight: 600;
+}
+
 .av-clear {
   justify-self: start;
   display: inline-flex;
