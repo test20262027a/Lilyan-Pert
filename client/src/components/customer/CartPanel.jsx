@@ -64,6 +64,8 @@ export default function CartPanel({
   const [quote, setQuote] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  /* The synchronous submit lock — see `submit` below. */
+  const inFlight = useRef(false);
 
   const items = useMemo(
     () => lines.map((line) => ({ product_id: line.product.id, quantity: line.qty })),
@@ -189,12 +191,31 @@ export default function CartPanel({
   const isMain = context === 'main';
   const canPickTable = tableList.length > 0;
 
+  /*
+   * Submitting is single-flight. `inFlight` is a ref because it must be true
+   * the moment the click lands — a second tap in the same frame sees it before
+   * React has re-rendered the disabled button, so one tap can never post the
+   * same order twice.
+   *
+   * The form is reset here, and only when the parent reports the order was
+   * saved: the cart lines, the table and everything typed stay exactly as they
+   * were when the request failed, so the guest can simply tap again.
+   */
   const submit = async () => {
-    if (submitted || busy) return;
+    if (inFlight.current) return;
+    inFlight.current = true;
     setSubmitted(true);
     try {
-      await onSubmit({ ...form, promotion_code: appliedCode });
+      const saved = await onSubmit({ ...form, promotion_code: appliedCode });
+      if (saved) {
+        setForm({ customer_name: '', customer_phone: '', notes: '' });
+        setCodeInput('');
+        setAppliedCode('');
+        setPromoError(null);
+        setQuote(null);
+      }
     } finally {
+      inFlight.current = false;
       setSubmitted(false);
     }
   };

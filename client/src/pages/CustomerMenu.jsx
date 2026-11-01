@@ -80,6 +80,8 @@ export default function CustomerMenu({ slug, adminMode = false }) {
      open the same form. */
   const [reviewOpen, setReviewOpen] = useState(false);
   const [reviewBusy, setReviewBusy] = useState(false);
+  /* One order at a time — see `placeOrder`. */
+  const placingRef = useRef(false);
   /* True once the banner has scrolled away: the compact header takes over. */
   const [barred, setBarred] = useState(false);
   const heroRef = useRef(null);
@@ -275,9 +277,17 @@ export default function CustomerMenu({ slug, adminMode = false }) {
      below zero and the card returns to its Add to Cart state. */
   const removeOne = (product) => setQty(product, (cart[product.id] || 0) - 1);
 
+  /*
+   * One order per tap. The lock is a ref, so it closes before React re-renders
+   * the disabled button — a double click or a second submit event in the same
+   * frame can never create two orders. It reports whether the order was really
+   * saved, which is what lets the form reset itself on success alone: on any
+   * failure the cart, the table and everything typed stay exactly as they were.
+   */
   const placeOrder = async ({ customer_name, customer_phone, notes, promotion_code }) => {
     // A line without a price in this language can never be sent to the server.
-    if (cartBlocked) return;
+    if (cartBlocked || placingRef.current) return false;
+    placingRef.current = true;
     setBusy(true);
     try {
       const items = cartLines.map((l) => ({ product_id: l.product.id, quantity: l.qty }));
@@ -328,6 +338,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
        */
       if (!data?.table) setTableId('');
       toast.success(t('customer_menu_order_placed'));
+      // The sheet and the page both stay mounted: only this form's own state
+      // was reset above — no reload, no navigation, nothing remounted.
+      return true;
     } catch (err) {
       if (err.code === 'MENU_DISABLED') toast.error(t('customer_menu_unavailable'));
       else if (err.code === 'ORDERING_DISABLED') toast.error(t('customer_ordering_disabled'));
@@ -337,7 +350,9 @@ export default function CustomerMenu({ slug, adminMode = false }) {
         toast.error(t('customer_menu_price_unavailable'));
       } else if (String(err.code || '').startsWith('PROMO_')) toast.error(t('customer_promo_invalid'));
       else toast.error(t('error_generic'));
+      return false;
     } finally {
+      placingRef.current = false;
       setBusy(false);
     }
   };
