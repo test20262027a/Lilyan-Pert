@@ -42,14 +42,14 @@ export default function DateHours({ hours, timeZone, locale }) {
 
   return (
     <section className="card hours-bar">
-      <div className="hours-bar__group">
+      <div className="hours-bar__group" data-part="title">
         <DashIcon name="calendar" tone="indigo" size={38} />
         <span className="hours-bar__title">{t('dash_date_hours')}</span>
       </div>
 
       <span className="hours-bar__sep" aria-hidden="true" />
 
-      <div className="hours-bar__group">
+      <div className="hours-bar__group" data-part="date">
         <span className="hours-bar__ico" aria-hidden="true">
           <Icon name="calendar" size={15} />
         </span>
@@ -58,7 +58,7 @@ export default function DateHours({ hours, timeZone, locale }) {
 
       <span className="hours-bar__sep" aria-hidden="true" />
 
-      <div className="hours-bar__group">
+      <div className="hours-bar__group" data-part="status">
         <span className={`hours-bar__status ${open ? 'is-open' : 'is-closed'}`}>
           <span className="hours-bar__dot" aria-hidden="true" />
           {status}
@@ -67,7 +67,7 @@ export default function DateHours({ hours, timeZone, locale }) {
 
       <span className="hours-bar__sep" aria-hidden="true" />
 
-      <div className="hours-bar__group">
+      <div className="hours-bar__group" data-part="hours">
         <span className="hours-bar__ico" aria-hidden="true">
           <Icon name="clock" size={15} />
         </span>
@@ -91,7 +91,7 @@ export default function DateHours({ hours, timeZone, locale }) {
 
       <span className="hours-bar__sep" aria-hidden="true" />
 
-      <div className="hours-bar__group">
+      <div className="hours-bar__group" data-part="live">
         <span className="hours-bar__ico" aria-hidden="true">
           <Icon name="clock" size={15} />
         </span>

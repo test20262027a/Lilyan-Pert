@@ -158,31 +158,66 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
 }
 
-/* --- responsive ------------------------------------------------------- */
+/* --- responsive -------------------------------------------------------
+ * Desktop keeps the single distributed row above. Below 1200px the same five
+ * groups are re-laid-out as a grid — two rows on a tablet, three on a phone —
+ * so nothing is squeezed onto a row it does not fit.
+ * ---------------------------------------------------------------------- */
 
-@media (max-width: 1240px) {
-  /* A wrapped row has no single seam left to draw: the gap separates. */
-  .dash .hours-bar {
-    flex-wrap: wrap;
+@media (max-width: 1199px) {
+  /* Same specificity as the desktop rule above, so the grid wins. */
+  .dash .card.hours-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 12px;
     min-height: 0;
-    row-gap: 10px;
-    padding-block: 16px;
+    padding: 16px 18px;
   }
   .dash .hours-bar__sep { display: none; }
   .dash .hours-bar__group,
   .dash .hours-bar__group:first-child,
-  .dash .hours-bar__group:last-child { padding-inline: 0 18px; flex: 0 1 auto; justify-content: flex-start; }
+  .dash .hours-bar__group:last-child {
+    flex: initial;
+    justify-content: flex-start;
+    padding-inline: 0;
+    min-width: 0;
+  }
+  /* Only a value stays unbroken; the label may take a second line. */
+  .dash .hours-bar__title { white-space: normal; }
+  .dash .hours-bar__label { white-space: normal; }
+  /* Today's range owns two columns, so both times keep their width. */
+  .dash .hours-bar__group[data-part='hours'] { grid-column: span 2; }
+  /* Hairline between the cells of one row. */
+  .dash .hours-bar > [data-part='date'],
+  .dash .hours-bar > [data-part='status'],
+  .dash .hours-bar > [data-part='live'] {
+    border-inline-start: 1px solid var(--glass-line);
+    padding-inline-start: 14px;
+  }
 }
 
-@media (max-width: 720px) {
-  .dash .hours-bar {
+@media (max-width: 767px) {
+  .dash .card.hours-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
+    row-gap: 10px;
     padding: 14px 16px;
-    column-gap: 14px;
   }
-  .dash .hours-bar__group {
-    gap: 7px;
-    padding-inline: 0;
+  /* Row 1: the title and its icon, across the whole card. */
+  .dash .hours-bar__group[data-part='title'] { grid-column: 1 / -1; }
+  /* Row 2: date, status. Row 3: today's range, live clock. */
+  .dash .hours-bar__group[data-part='hours'] { grid-column: auto; }
+  .dash .hours-bar__group { flex-wrap: wrap; row-gap: 3px; }
+  .dash .hours-bar > [data-part='date'] {
+    border-inline-start: 0;
+    padding-inline-start: 0;
   }
-  .dash .hours-bar__title { font-size: 13px; }
+  .dash .hours-bar__title { font-size: 13.5px; }
   .dash .hours-bar__label { font-size: 11.5px; }
+  .dash .hours-bar__value { font-size: 14.5px; }
+  .dash .hours-bar__clock { font-size: 15.5px; }
+  /* The pill keeps its whole label even on a 320px screen. */
+  .dash .hours-bar__status { font-size: 11px; padding: 4px 9px; white-space: normal; }
 }
