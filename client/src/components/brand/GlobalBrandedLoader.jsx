@@ -13,9 +13,11 @@ import './globalLoader.css';
  * plate behind it — and draws in four cheap layers that all share ONE square
  * box (`.gbl__orbit`): a theme-coloured ambient glow, a rotating progress halo,
  * the transparent logo breathing in the exact centre of that halo, and a light
- * sweep behind it. The indicator and the localised line sit below the ring.
- * Because every layer is pinned to the same box with `margin: auto`, the logo
- * can never drift out of the ring — in any language, at any size or direction.
+ * sweep behind it. There is no caption, no percentage and no dot row: the ring
+ * and the logo are the whole loading surface, and the stage's only row is that
+ * ring. Because every layer is pinned to the same box with `margin: auto`, the
+ * logo can never drift out of the ring — in any language, at any size or
+ * direction, on any breakpoint, for the whole loading process.
  *
  * Colour is the theme that is already applied to the document. When no theme
  * has ever been resolved on this device there is nothing correct to show, so
@@ -113,6 +115,8 @@ export default function GlobalBrandedLoader({
         </span>
       </div>
 
+      {/* Loading is logo + ring only. The error state keeps its one readable
+          line and retry, because a failure must stay understandable. */}
       {error ? (
         <div className="gbl__error">
           <span className="gbl__message">{message || t('state_error')}</span>
@@ -123,16 +127,7 @@ export default function GlobalBrandedLoader({
             </button>
           ) : null}
         </div>
-      ) : (
-        <div className="gbl__footer">
-          <span className="gbl__dots" aria-hidden="true">
-            <i />
-            <i />
-            <i />
-          </span>
-          <span className="gbl__message">{message || t('state_loading')}</span>
-        </div>
-      )}
+      ) : null}
     </div>
   );
 

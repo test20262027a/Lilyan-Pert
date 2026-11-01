@@ -64,15 +64,19 @@
 
 /* -------------------------------------------------------------- the stage -- */
 
+/* The stage holds exactly the ring — no caption row, no reserved space below
+   it. Its size is `--gbl-ring` at every moment of the load, so appearing,
+   finishing or changing theme can never resize or reflow it. */
 .gbl__stage {
   --gbl-accent: var(--primary);
   --gbl-logo: 65px;
   --gbl-ring: calc(var(--gbl-logo) * 1.62);
   position: relative;
   display: grid;
-  justify-items: center;
-  align-items: start;
-  gap: 16px;
+  place-items: center;
+  gap: 0;
+  inline-size: var(--gbl-ring);
+  block-size: var(--gbl-ring);
   isolation: isolate;
 }
 
@@ -243,35 +247,15 @@
     0 10px 20px -12px color-mix(in srgb, var(--gbl-accent) 70%, transparent);
 }
 
-/* ------------------------------------------------------------- indicator -- */
+/* ------------------------------------------------------------- error state -- */
 
-.gbl__footer {
-  position: relative;
-  z-index: 3;
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  max-inline-size: 78vw;
-  /* Below the ring, never beside it: the footer is the stage's second row. */
-  min-block-size: 34px;
+/* Only a failure grows the stage: the ring keeps its own fixed box, and the
+   line and retry sit below it instead of overflowing the square. */
+.gbl__stage.is-error {
+  inline-size: auto;
+  block-size: auto;
+  gap: 14px;
 }
-
-.gbl__dots {
-  display: inline-flex;
-  gap: 5px;
-}
-
-.gbl__dots i {
-  inline-size: 5px;
-  block-size: 5px;
-  border-radius: 50%;
-  background: var(--gbl-accent);
-  opacity: 0.4;
-  animation: gbl-dot 1.2s ease-in-out infinite;
-}
-
-.gbl__dots i:nth-child(2) { animation-delay: 0.16s; }
-.gbl__dots i:nth-child(3) { animation-delay: 0.32s; }
 
 .gbl__message {
   font-size: 12.5px;
@@ -281,8 +265,6 @@
   text-align: center;
   color: color-mix(in srgb, var(--muted) 78%, var(--text));
 }
-
-/* ------------------------------------------------------------ error state -- */
 
 .gbl__stage.is-error .gbl__ambient {
   background: radial-gradient(circle at 50% 45%, color-mix(in srgb, #e05252 26%, transparent), transparent 64%);
@@ -349,9 +331,11 @@
 
 /* -------------------------------------------------------------- keyframes -- */
 
+/* Scale only, around the logo's own centre: the mark breathes without ever
+   leaving the exact middle of the ring. */
 @keyframes gbl-breathe {
-  0%, 100% { transform: translate3d(0, 0, 0) scale(0.96); }
-  50% { transform: translate3d(0, -2.5px, 0) scale(1.04); }
+  0%, 100% { transform: scale(0.96); }
+  50% { transform: scale(1.04); }
 }
 
 @keyframes gbl-glow {
@@ -368,11 +352,6 @@
   18% { opacity: 0.55; }
   82% { opacity: 0.55; }
   100% { background-position: -30% 0; opacity: 0; }
-}
-
-@keyframes gbl-dot {
-  0%, 100% { opacity: 0.28; transform: translateY(0) scale(0.9); }
-  50% { opacity: 1; transform: translateY(-2px) scale(1); }
 }
 
 /* ------------------------------------------------------- dark mode polish -- */
@@ -410,14 +389,12 @@
   .gbl__ambient,
   .gbl__halo svg,
   .gbl__sweep,
-  .gbl__logo,
-  .gbl__dots i {
+  .gbl__logo {
     animation: none;
   }
 
   /* A still, quiet composition: the mark and the halo remain, nothing moves. */
   .gbl__sweep { opacity: 0; }
-  .gbl__dots i { opacity: 0.55; }
   .gbl__logo { transform: scale(1); }
   .gbl__retry { transition: none; }
 }

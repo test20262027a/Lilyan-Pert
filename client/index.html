@@ -76,11 +76,21 @@
         --boot-surface: #0b0f16;
         --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 60%, #aab3c4);
       }
-      /* One square box: glow, ring and logo all share its centre. */
+      /* One square box: glow, ring and logo all share its centre. Its size
+         matches the React loader exactly (logo × 1.62, same breakpoints), so
+         handing over to it never resizes or shifts the composition. */
       #boot-splash .bs-stage {
+        --bs-logo: 65px;
+        --bs-ring: calc(var(--bs-logo) * 1.62);
         position: relative;
-        inline-size: 104px;
-        block-size: 104px;
+        inline-size: var(--bs-ring);
+        block-size: var(--bs-ring);
+      }
+      @media (min-width: 600px) {
+        #boot-splash .bs-stage { --bs-logo: 78px; }
+      }
+      @media (min-width: 1100px) {
+        #boot-splash .bs-stage { --bs-logo: 90px; }
       }
       #boot-splash .bs-glow {
         position: absolute;
@@ -105,8 +115,8 @@
         position: absolute;
         inset: 0;
         margin: auto;
-        max-inline-size: 62px;
-        max-block-size: 62px;
+        max-inline-size: var(--bs-logo);
+        max-block-size: var(--bs-logo);
         inline-size: auto;
         block-size: auto;
         object-fit: contain;
