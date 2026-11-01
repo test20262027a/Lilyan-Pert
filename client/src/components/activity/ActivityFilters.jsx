@@ -108,8 +108,8 @@ export default function ActivityFilters({
         {/* The applied days, read-only here: both reopen the one shared range
             dialog, so the calendar is never duplicated on this page. */}
         {range === 'custom' ? (
-          <>
-            <span className="av-field">
+          <span className="av-days">
+            <span className="av-field av-field--day">
               <span className="av-field__label">{t('act_filter_from')}</span>
               <button
                 type="button"
@@ -124,7 +124,7 @@ export default function ActivityFilters({
                 </span>
               </button>
             </span>
-            <span className="av-field">
+            <span className="av-field av-field--day">
               <span className="av-field__label">{t('act_filter_to')}</span>
               <button
                 type="button"
@@ -139,12 +139,20 @@ export default function ActivityFilters({
                 </span>
               </button>
             </span>
-          </>
+          </span>
         ) : null}
 
-        <button type="button" className="av-clear" onClick={onClear} disabled={!dirty}>
-          <Icon name="refresh" size={14} />
-          {t('act_clear_filters')}
+        {/* Icon-only: the label lives in the localized tooltip, and both the
+            tooltip and the accessible name come from the same string. */}
+        <button
+          type="button"
+          className="av-clear"
+          onClick={onClear}
+          disabled={!dirty}
+          data-tip={t('act_clear_filters')}
+          aria-label={t('act_clear_filters')}
+        >
+          <Icon name="close" size={16} />
         </button>
       </div>
     </section>
