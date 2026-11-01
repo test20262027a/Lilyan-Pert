@@ -1,9 +1,41 @@
 <!doctype html>
-<html lang="en" dir="ltr" data-theme="light">
+<html lang="en" dir="ltr" data-theme="light" data-boot="pending">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#7C67E4" />
+    <meta name="theme-color" content="#F4F7F6" />
+    <!--
+      THEME BEFORE FIRST PAINT.
+
+      The saved appearance is mirrored to localStorage by client/src/theme.js
+      every time the app applies a business theme. This script is inline and
+      synchronous, so it runs before the browser paints the splash *and* before
+      any module of the app is evaluated: the very first frame already carries
+      the business's own light/dark mode, accent colour and accent ink. That is
+      what removes the flash of the default (or the previous) theme — the app is
+      never painted in one appearance and repainted in another.
+
+      With no usable cache the flag stays `pending` and the splash below paints
+      a deliberately neutral surface with a grey ring, instead of guessing a
+      preset hue and switching it later.
+    -->
+    <script>
+      (function () {
+        var root = document.documentElement;
+        try {
+          var raw = window.localStorage.getItem('lilyan.theme.v1');
+          if (!raw) return;
+          var theme = JSON.parse(raw);
+          if (!theme || !theme.mode || !theme.primary) return;
+          root.dataset.theme = theme.mode === 'dark' ? 'dark' : 'light';
+          root.style.setProperty('--primary', theme.primary);
+          if (theme.ink) root.style.setProperty('--primary-ink', theme.ink);
+          root.dataset.boot = 'cached';
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', theme.primary);
+        } catch (e) {}
+      })();
+    </script>
     <!--
       The tab icon and title are managed by the app (client/src/favicon.js and
       client/src/metadata.js): the icon is drawn from the business logo saved in
@@ -13,51 +45,68 @@
     -->
     <title>Lilyan Pert</title>
     <!--
-      The first frame, before any script has run: the same branded loader the
+      The first frame, before any module has run: the same branded loader the
       app then takes over (components/brand/GlobalBrandedLoader.jsx), built from
       plain CSS the browser can paint immediately. It draws the business logo
-      remembered from the last visit, keeps the theme accent through `--primary`
-      (which the app writes as soon as it knows the theme) and is removed by the
-      React loader on its first paint — no reload, no duplicate overlay.
+      remembered from the last visit, inside the ring (one square stage, one
+      shared centre — never beside it), in the theme the script above just
+      applied. The React loader removes it on its first paint: no reload, no
+      duplicate overlay.
     -->
     <style>
       #boot-splash {
+        /* Neutral by default; the accent only becomes a business colour when
+           the cached theme above was actually applied. */
+        --boot-accent: #98a1b3;
+        --boot-surface: #f4f7f6;
+        --boot-ink: #6b7488;
         position: fixed;
         inset: 0;
         z-index: 240;
         display: grid;
         place-items: center;
-        background: var(--bg, #f4f7f6);
+        background: var(--boot-surface);
         font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
       }
+      html[data-boot='cached'] #boot-splash {
+        --boot-accent: var(--primary, #98a1b3);
+        --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 70%, #4b5364);
+      }
+      html[data-theme='dark'] #boot-splash {
+        --boot-surface: #0b0f16;
+        --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 60%, #aab3c4);
+      }
+      /* One square box: glow, ring and logo all share its centre. */
       #boot-splash .bs-stage {
         position: relative;
-        display: grid;
-        justify-items: center;
-        inline-size: 100px;
-        block-size: 100px;
+        inline-size: 104px;
+        block-size: 104px;
       }
       #boot-splash .bs-glow {
         position: absolute;
-        inset: 0;
+        inset: -32%;
         border-radius: 50%;
-        background: radial-gradient(circle, color-mix(in srgb, var(--primary, #7c67e4) 26%, transparent), transparent 62%);
-        animation: bs-glow 2.4s ease-in-out infinite;
+        background: radial-gradient(
+          circle,
+          color-mix(in srgb, var(--boot-accent) 26%, transparent),
+          transparent 62%
+        );
+        animation: bs-glow 2s ease-in-out infinite;
       }
       #boot-splash .bs-halo {
         position: absolute;
         inset: 0;
         border-radius: 50%;
-        border: 3px solid color-mix(in srgb, var(--primary, #7c67e4) 20%, transparent);
-        border-top-color: var(--primary, #7c67e4);
-        animation: bs-spin 2.6s linear infinite;
+        border: 3px solid color-mix(in srgb, var(--boot-accent) 20%, transparent);
+        border-block-start-color: var(--boot-accent);
+        animation: bs-spin 1.4s linear infinite;
       }
       #boot-splash img {
         position: absolute;
         inset: 0;
         margin: auto;
-        max-inline-size: 65px;
-        max-block-size: 65px;
+        max-inline-size: 62px;
+        max-block-size: 62px;
         inline-size: auto;
         block-size: auto;
         object-fit: contain;

@@ -1395,7 +1395,7 @@ export default {
   customer_closed_today: 'Today',
   customer_closed_before_title: "We're not open yet",
   customer_closed_before_hint:
-    'Ordering starts when we open. Browse the menu in the meantime — the order buttons come back on their own.',
+    'Ordering starts when we open. Browse the menu in the meantime.',
   customer_closed_after_title: "We're closed for now",
   customer_closed_after_hint:
     'Ordering is paused until our next opening time. The whole menu stays available to browse.',

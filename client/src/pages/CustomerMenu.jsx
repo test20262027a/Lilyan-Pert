@@ -111,11 +111,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       /* A retry that succeeds must clear the earlier failure, or the page would
          keep showing the error over perfectly good data. */
       setError(null);
+      /* Appearance is written to the document before the menu is handed to
+         React, so the first painted frame of the panel is already themed. */
+      applyTheme(payload.business?.theme, payload.business?.id);
       setData(payload);
       /* The loader on this page and in the admin shell draws this same logo, so
          it is remembered for the next boot instead of being fetched again. */
       rememberBrandLogo(payload.business?.logo_url);
-      applyTheme(payload.business?.theme);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -384,7 +386,10 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     }
   };
 
-  if (loading) return <GlobalBrandedLoader />;
+  /* The menu is genuinely loading, so the shared loader is told so explicitly —
+     left to the global signal it would render nothing here, and the guest would
+     see the first-paint splash until it is timed out. */
+  if (loading) return <GlobalBrandedLoader isLoading />;
   if (error || !data) {
     /* A real failure: the same branded surface turns into a localised error with
        a retry, so the guest is never left watching an endless animation. */

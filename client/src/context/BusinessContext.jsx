@@ -15,6 +15,10 @@ export function BusinessProvider({ children }) {
     setLoading(true);
     try {
       const data = await get('/business');
+      /* The theme is written to the document *before* the record is handed to
+         React: the shell is gated on `business`, so its first visible frame is
+         already the saved appearance — never a frame of the previous one. */
+      if (data.business?.theme) applyTheme(data.business.theme, data.business.id);
       setBusiness(data.business);
       setError(null);
     } catch (err) {
@@ -29,9 +33,11 @@ export function BusinessProvider({ children }) {
   }, [load]);
 
   // The business theme is the single source of truth for light/dark/primary.
+  // First arrival is applied in `load` above; this keeps later saves (theme
+  // switching, Appearance settings) in step without remounting anything.
   useEffect(() => {
-    if (business?.theme) applyTheme(business.theme);
-  }, [business?.theme]);
+    if (business?.theme) applyTheme(business.theme, business.id);
+  }, [business?.theme, business?.id]);
 
   /* The loader draws this saved logo on every boot, so the URL is remembered
      the moment the business is read — before the next refresh, not after it. */

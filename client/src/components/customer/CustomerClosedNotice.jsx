@@ -1,5 +1,6 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
+import { fmtDigits } from '../../format';
 import '../../customerAvailability.css';
 
 /*
@@ -41,7 +42,7 @@ function todayKey(timeZone) {
 }
 
 export default function CustomerClosedNotice({ status, timeZone }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const copy = COPY[status?.state] || COPY.after;
   const open = status?.open || '';
   const close = status?.close || '';
@@ -71,8 +72,16 @@ export default function CustomerClosedNotice({ status, timeZone }) {
                 {day ? ` · ${t(`settings_day_${day}`)}` : ''}
               </span>
               {hours ? (
-                <span className="cui-closed__badge-time" dir="ltr">
-                  {hours.open} – {hours.close}
+                /* Opening time comes first in reading order. The row follows the
+                   page direction, so it reads right-to-left in Kurdish, Persian
+                   and Arabic (opening on the right, closing on the left) and
+                   left-to-right in English. Each time is its own bidirectional
+                   island with Latin digits, so neither value is ever reversed
+                   and the visual swap never touches the stored schedule. */
+                <span className="cui-closed__badge-time">
+                  <bdi dir="ltr">{fmtDigits(hours.open, locale)}</bdi>
+                  <span className="cui-closed__badge-dash" aria-hidden="true">–</span>
+                  <bdi dir="ltr">{fmtDigits(hours.close, locale)}</bdi>
                 </span>
               ) : null}
             </span>

@@ -33,13 +33,13 @@ export default function AppHeader({ onOpenSidebar, sidebarOpen = false }) {
     // can never flip back from a stale saved value.
     const applied = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     const next = { ...(business.theme || {}), mode: applied === 'dark' ? 'light' : 'dark' };
-    applyTheme(next); // instant feedback, then persisted
+    applyTheme(next, business.id); // instant feedback (and remembered), then persisted
     setBusy(true);
     try {
       const saved = await put('/business', { theme: next });
       if (saved?.business) setBusiness(saved.business);
     } catch {
-      applyTheme(business.theme);
+      applyTheme(business.theme, business.id);
       toast.error(t('error_generic'));
     } finally {
       setBusy(false);

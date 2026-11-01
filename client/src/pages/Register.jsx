@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { Alert, Field } from '../components/ui';
 import { useI18n } from '../i18n';
 import { useAuth } from '../context/AuthContext';
-import { applyTheme, DEFAULT_THEME } from '../theme';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
 
 export default function Register() {
@@ -17,10 +16,9 @@ export default function Register() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    applyTheme(DEFAULT_THEME);
-  }, []);
-
+  // The appearance is not set here: AuthLayout applies the business theme (or
+  // the remembered one) before this form is painted, so forcing the default
+  // palette on mount would be exactly the flash this screen must not have.
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const submit = async (e) => {

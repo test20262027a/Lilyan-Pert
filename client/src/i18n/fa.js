@@ -1393,7 +1393,7 @@ export default {
   customer_closed_today: 'امروز',
   customer_closed_before_title: 'هنوز باز نکرده‌ایم',
   customer_closed_before_hint:
-    'ثبت سفارش از زمان باز شدن شروع می‌شود. تا آن موقع منو را ببینید — دکمه‌های سفارش خودبه‌خود برمی‌گردند.',
+    'ثبت سفارش از زمان باز شدن شروع می‌شود. تا آن موقع منو را ببینید.',
   customer_closed_after_title: 'فعلاً بسته‌ایم',
   customer_closed_after_hint:
     'ثبت سفارش تا زمان باز شدن بعدی متوقف است. همه منو برای دیدن در دسترس است.',

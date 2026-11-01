@@ -171,12 +171,25 @@
 .cui-closed__badge-icon svg { filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22)); }
 
 .cui-closed__badge-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/*
+ * The two times form one row that follows the page direction: opening first in
+ * reading order is the RIGHT slot in RTL and the LEFT slot in LTR. Each value
+ * is a `bdi` island, so the browser never re-orders the digits inside a time.
+ */
 .cui-closed__badge-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 10.5px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: color-mix(in srgb, var(--bc) 55%, var(--muted));
   padding-inline-start: 2px;
+  white-space: nowrap;
+}
+
+.cui-closed__badge-dash {
+  opacity: 0.6;
 }
 
 /* Day: the theme-based blue. Closed: a soft amber. Paused: an elegant coral. */

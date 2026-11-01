@@ -50,8 +50,56 @@ function inkFor(hex) {
   return luminance <= DARK_INK_MAX_LUMINANCE ? '#ffffff' : '#171a12';
 }
 
-/** Applies a business theme to the document root (light/dark + primary color). */
-export function applyTheme(theme) {
+/*
+ * The theme the document is showing right now, mirrored into localStorage.
+ *
+ * `index.html` reads this synchronously in a head script before the first
+ * paint, so a refresh (and the boot splash) already carry the business's real
+ * appearance — the default palette is never painted first and replaced
+ * afterwards. It is a cache, never a source of truth: the business record
+ * stays authoritative and rewrites it on every load.
+ *
+ * `id` is the business the entry belongs to, so a theme remembered for one
+ * business can be recognised as someone else's instead of being trusted.
+ */
+const CACHE_KEY = 'lilyan.theme.v1';
+
+export function rememberTheme(theme, ownerId) {
+  try {
+    const mode = theme?.mode === 'dark' ? 'dark' : 'light';
+    const primary = primaryFor(theme);
+    localStorage.setItem(
+      CACHE_KEY,
+      JSON.stringify({ id: ownerId || null, mode, primary, ink: inkFor(primary) }),
+    );
+  } catch {
+    /* Private mode: the first frame simply paints the neutral splash. */
+  }
+}
+
+/**
+ * The cached theme, or null when nothing usable was ever stored. Pass the
+ * business it is being asked for: an entry remembered for another business is
+ * not that business's appearance and is refused.
+ */
+export function cachedTheme(ownerId) {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const theme = JSON.parse(raw);
+    if (!theme || !theme.mode || !theme.primary) return null;
+    if (ownerId && theme.id && theme.id !== ownerId) return null;
+    return theme;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Applies a business theme to the document root (light/dark + primary color)
+ * and remembers it for the first frame of the next visit.
+ */
+export function applyTheme(theme, ownerId) {
   const root = document.documentElement;
   const mode = theme?.mode === 'dark' ? 'dark' : 'light';
   const primary = primaryFor(theme);
@@ -62,6 +110,7 @@ export function applyTheme(theme) {
   root.style.setProperty('--primary-ink', inkFor(primary));
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) meta.setAttribute('content', primary);
+  rememberTheme({ mode, primary }, ownerId);
 }
 
 export function applyDirection(locale, rtl) {

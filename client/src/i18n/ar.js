@@ -1392,7 +1392,7 @@ export default {
   customer_closed_today: 'اليوم',
   customer_closed_before_title: 'لم نفتح بعد',
   customer_closed_before_hint:
-    'يبدأ الطلب عند وقت الافتتاح. تصفّح القائمة في هذه الأثناء — تعود أزرار الطلب تلقائياً.',
+    'يبدأ الطلب عند وقت الافتتاح. تصفّح القائمة في هذه الأثناء.',
   customer_closed_after_title: 'مغلقون الآن',
   customer_closed_after_hint: 'الطلب متوقف حتى موعد الافتتاح القادم. القائمة كاملة متاحة للتصفح.',
   customer_closed_holiday_title: 'اليوم عطلة لدينا',

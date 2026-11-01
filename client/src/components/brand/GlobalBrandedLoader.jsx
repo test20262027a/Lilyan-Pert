@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { brandLogoUrl, FALLBACK_LOGO } from '../../brandLogo';
+import { cachedTheme } from '../../theme';
 import { getLoadingSnapshot, subscribeLoading } from '../../loading';
 import './globalLoader.css';
 
@@ -9,11 +10,16 @@ import './globalLoader.css';
  * The one loading surface of Lilyan Pert.
  *
  * It is built from the business's own saved logo — never a new mark and never a
- * plate behind it — and draws in four cheap layers: a theme-coloured ambient
- * glow, a slowly rotating progress halo, the transparent logo with a soft
- * breathing motion and a light sweep behind it, then a small indicator and a
- * localised line beneath. Everything animates with `transform`/`opacity` only,
- * so a phone keeps 60fps and the loader never competes with the real work.
+ * plate behind it — and draws in four cheap layers that all share ONE square
+ * box (`.gbl__orbit`): a theme-coloured ambient glow, a rotating progress halo,
+ * the transparent logo breathing in the exact centre of that halo, and a light
+ * sweep behind it. The indicator and the localised line sit below the ring.
+ * Because every layer is pinned to the same box with `margin: auto`, the logo
+ * can never drift out of the ring — in any language, at any size or direction.
+ *
+ * Colour is the theme that is already applied to the document. When no theme
+ * has ever been resolved on this device there is nothing correct to show, so
+ * the loader stays neutral instead of flashing a preset hue and then repainting.
  *
  * Where it appears is decided by real state, never by a page reload:
  *  - `isLoading` from the caller, or
@@ -57,7 +63,7 @@ export default function GlobalBrandedLoader({
       return undefined;
     }
     if (!mounted) return undefined;
-    const timer = window.setTimeout(() => setMounted(false), 220);
+    const timer = window.setTimeout(() => setMounted(false), 260);
     return () => window.clearTimeout(timer);
   }, [active, mounted]);
 
@@ -68,37 +74,44 @@ export default function GlobalBrandedLoader({
   const showing = active || Boolean(error);
   const label = error ? t('state_error') : message || t('state_loading');
   const src = broken ? FALLBACK_LOGO : brandLogoUrl(logoUrl);
+  /* The accent the document is already showing: an explicit theme, or the one
+     the pre-paint cache applied. No cache and no theme means "neutral". */
+  const accent = theme || cachedTheme()?.primary || '';
 
   const stage = (
     <div
       className={`gbl__stage ${error ? 'is-error' : ''}`.trim()}
       data-size={size || 'auto'}
-      style={theme ? { '--gbl-accent': theme } : undefined}
+      data-tone={accent ? 'theme' : 'neutral'}
+      style={accent ? { '--gbl-accent': accent } : undefined}
       dir={dir}
     >
-      <span className="gbl__ambient" aria-hidden="true" />
-      <span className="gbl__halo" aria-hidden="true">
-        <svg viewBox="0 0 100 100" focusable="false">
-          <circle className="gbl__halo-track" cx="50" cy="50" r="45" />
-          <circle className="gbl__halo-arc" cx="50" cy="50" r="45" />
-        </svg>
-      </span>
-      <span className="gbl__sweep" aria-hidden="true" />
-      <span className="gbl__logo">
-        {error ? (
-          <span className="gbl__mark">
-            <Icon name="alert" size={30} />
-          </span>
-        ) : (
-          <img
-            src={src}
-            alt=""
-            decoding="async"
-            draggable="false"
-            onError={() => setBroken(true)}
-          />
-        )}
-      </span>
+      {/* Ring, glow, reflection and logo share this one box and its centre. */}
+      <div className="gbl__orbit">
+        <span className="gbl__ambient" aria-hidden="true" />
+        <span className="gbl__halo" aria-hidden="true">
+          <svg viewBox="0 0 100 100" focusable="false">
+            <circle className="gbl__halo-track" cx="50" cy="50" r="45" />
+            <circle className="gbl__halo-arc" cx="50" cy="50" r="45" />
+          </svg>
+        </span>
+        <span className="gbl__sweep" aria-hidden="true" />
+        <span className="gbl__logo">
+          {error ? (
+            <span className="gbl__mark">
+              <Icon name="alert" size={30} />
+            </span>
+          ) : (
+            <img
+              src={src}
+              alt=""
+              decoding="async"
+              draggable="false"
+              onError={() => setBroken(true)}
+            />
+          )}
+        </span>
+      </div>
 
       {error ? (
         <div className="gbl__error">

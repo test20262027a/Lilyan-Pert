@@ -25,6 +25,23 @@ function Shell() {
     return () => document.body.classList.remove('nav-drawer-open');
   }, [menuOpen]);
 
+  /* The business record is the theme, the languages and the identity of the
+     whole shell. Nothing of it is painted until that record is here — the
+     appearance is already on the document by then (BusinessContext applies it
+     before handing the record over), so the shell's very first frame is the
+     saved theme, never a frame of the previous one behind a translucent
+     overlay. A failed read becomes a localised retry instead of an endless
+     animation. */
+  if (!business) {
+    return (
+      <GlobalBrandedLoader
+        isLoading={Boolean(loading)}
+        error={error || null}
+        onRetry={() => reload()}
+      />
+    );
+  }
+
   return (
     <div className="app-shell">
       {menuOpen ? <div className="sidebar-scrim" onClick={() => setMenuOpen(false)} /> : null}
@@ -40,15 +57,6 @@ function Shell() {
         {/* One control for every admin screen. */}
         <AnimatedBackToTop />
       </div>
-
-      {/* The business record is the theme, the languages and the identity of the
-          whole shell, so the screen waits for it — and a failed read becomes a
-          localised retry instead of an endless animation. */}
-      <GlobalBrandedLoader
-        isLoading={loading && !business}
-        error={error && !business ? error : null}
-        onRetry={() => reload()}
-      />
     </div>
   );
 }

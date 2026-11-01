@@ -2,8 +2,9 @@ import { createContext, useContext, useEffect, useId, useState } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { get } from '../../api';
-import { applyTheme, DEFAULT_THEME } from '../../theme';
+import { applyTheme, cachedTheme, DEFAULT_THEME } from '../../theme';
 import useDocumentMetadata from '../../hooks/useDocumentMetadata';
+import GlobalBrandedLoader from '../brand/GlobalBrandedLoader';
 import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
@@ -43,11 +44,12 @@ export function AuthLayout({ children, footer }) {
 
   // The business picked this appearance for its public pages; the sign-in
   // screen is the first thing anyone sees, so it must not fall back to a
-  // stock palette. Nothing is painted until the brand answers, which avoids a
-  // flash of the default theme on the way in.
+  // stock palette while the answer is on its way. The remembered theme carries
+  // the first frame (index.html reads it before paint); DEFAULT_THEME is only
+  // the last resort when neither the business nor a cache could answer.
   useEffect(() => {
     if (brand === undefined) return;
-    applyTheme(brand?.theme || DEFAULT_THEME);
+    applyTheme(brand?.theme || cachedTheme() || DEFAULT_THEME);
   }, [brand]);
 
   return (
@@ -57,8 +59,18 @@ export function AuthLayout({ children, footer }) {
         <div className="au__veil" aria-hidden="true" />
         <LanguageMenu />
         <main className="au__main">
-          {children}
-          {footer}
+          {/* Nothing of the form is painted until the business appearance is
+              known, so no control is ever drawn in the wrong theme and then
+              repainted. The loader itself uses the theme already applied to the
+              document, so it is correct from its first frame too. */}
+          {brand === undefined ? (
+            <GlobalBrandedLoader variant="inline" />
+          ) : (
+            <>
+              {children}
+              {footer}
+            </>
+          )}
         </main>
       </div>
     </BrandContext.Provider>
