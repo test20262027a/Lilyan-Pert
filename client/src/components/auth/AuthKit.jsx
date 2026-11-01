@@ -1,10 +1,10 @@
 import { createContext, useContext, useEffect, useId, useState } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { get } from '../../api';
 import { applyTheme, cachedTheme, DEFAULT_THEME } from '../../theme';
 import useDocumentMetadata from '../../hooks/useDocumentMetadata';
 import { beginLoading, endLoading } from '../../loading';
+import { loadPublicBrand } from '../../brandLogo';
 import LanguageMenu from './LanguageMenu';
 import '../../auth.css';
 
@@ -29,7 +29,7 @@ function useBrand() {
     // raises the one global overlay, exactly like the session and the business
     // record, instead of painting a smaller loader of its own.
     beginLoading('brand');
-    get('/public/brand')
+    loadPublicBrand()
       .then((b) => live && setBrand(b))
       .catch(() => live && setBrand(null))
       .finally(() => endLoading('brand'));

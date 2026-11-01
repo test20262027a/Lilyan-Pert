@@ -140,15 +140,26 @@
       <span class="bs-stage">
         <span class="bs-glow"></span>
         <span class="bs-halo"></span>
-        <img id="bs-logo" src="/favicon.svg" alt="" decoding="async" />
+        <img
+        id="bs-logo"
+        alt=""
+        decoding="async"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Ccircle cx='44' cy='44' r='26' fill='%2398a1b3' fill-opacity='0.16'/%3E%3Ccircle cx='44' cy='44' r='14' fill='%2398a1b3' fill-opacity='0.12'/%3E%3C/svg%3E"
+      />
       </span>
     </div>
     <script>
       /* The logo the business saved last time, so the first frame is the brand
-         and not a placeholder. Empty or blocked storage keeps the app's mark. */
+         and not a placeholder (see client/src/brandLogo.js for the shape of
+         this record). Empty or blocked storage keeps the neutral disc above —
+         never the application's own icon in place of the business mark. */
       try {
-        var savedLogo = localStorage.getItem('lilyan.brand.logo.v1');
-        if (savedLogo) document.getElementById('bs-logo').src = savedLogo;
+        var rawLogo = localStorage.getItem('lilyan.brand.logo.v1');
+        var savedLogo = rawLogo && rawLogo.charAt(0) === '{' ? JSON.parse(rawLogo) : { url: rawLogo };
+        var logoUrl = savedLogo && savedLogo.url;
+        if (typeof logoUrl === 'string' && /^(\/|https?:)/.test(logoUrl)) {
+          document.getElementById('bs-logo').src = logoUrl;
+        }
       } catch (e) {}
     </script>
     <script type="module" src="/src/main.jsx"></script>

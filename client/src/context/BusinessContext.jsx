@@ -47,7 +47,7 @@ export function BusinessProvider({ children }) {
   /* The loader draws this saved logo on every boot, so the URL is remembered
      the moment the business is read — before the next refresh, not after it. */
   useEffect(() => {
-    if (business) rememberBrandLogo(business.logo_url);
+    if (business) rememberBrandLogo(business.logo_url, business.id);
   }, [business]);
 
   // The enabled languages come from the same saved settings record, so every

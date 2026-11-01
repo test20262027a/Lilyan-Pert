@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { brandLogoUrl, FALLBACK_LOGO } from '../../brandLogo';
+import { brandLogoUrl, brandLogoSnapshot, NEUTRAL_LOGO, subscribeBrandLogo } from '../../brandLogo';
 import { cachedTheme } from '../../theme';
 import { getLoadingSnapshot, isLoadingPending, subscribeLoading } from '../../loading';
 import './globalLoader.css';
@@ -44,6 +44,10 @@ export default function GlobalBrandedLoader({
 }) {
   const { t, dir } = useI18n();
   const globalVisible = useSyncExternalStore(subscribeLoading, getLoadingSnapshot, getLoadingSnapshot);
+  /* The business logo is resolved before and independently of authentication;
+     subscribing here means a logo that arrives while this overlay is already up
+     is swapped in place, without a remount or a second loader. */
+  const rememberedLogo = useSyncExternalStore(subscribeBrandLogo, brandLogoSnapshot, brandLogoSnapshot);
   const active = isLoading ?? globalVisible;
   const [broken, setBroken] = useState(false);
 
@@ -81,7 +85,12 @@ export default function GlobalBrandedLoader({
   if (!mounted && !error) return null;
 
   const label = error ? t('state_error') : message || t('state_loading');
-  const src = broken ? FALLBACK_LOGO : brandLogoUrl(logoUrl);
+  const src = broken ? NEUTRAL_LOGO : brandLogoUrl(logoUrl || rememberedLogo);
+  /* A newly resolved logo gets its own chance to load after an unreachable one
+     was remembered. */
+  useEffect(() => {
+    setBroken(false);
+  }, [src]);
   /* The accent the document is already showing: an explicit theme, or the one
      the pre-paint cache applied. No cache and no theme means "neutral". */
   const accent = theme || cachedTheme()?.primary || '';

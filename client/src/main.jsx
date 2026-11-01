@@ -8,6 +8,7 @@ import { ToastProvider } from './components/ui';
 import TooltipLayer from './components/tooltip/TooltipLayer';
 import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
 import PushBridge from './push/PushBridge';
+import { bootstrapBrand } from './brandLogo';
 import './styles.css';
 import './scrollbars.css';
 // Shared interactive states (hover / press / focus depth). Imported last so the
@@ -25,6 +26,12 @@ import './buttons.css';
 /* Safety net only: the branded loader below removes the first-paint splash the
    moment it paints (or as soon as nothing is loading). */
 window.setTimeout(() => document.getElementById('boot-splash')?.remove(), 4000);
+
+/* Brand before authentication: the public branding payload (name, logo, theme —
+ * no private fields) is requested at startup, so the real business logo is
+ * already fetched and cached when the first loader paints on the login screen,
+ * without waiting for a session or the admin dashboard. */
+bootstrapBrand();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
