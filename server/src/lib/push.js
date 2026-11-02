@@ -103,10 +103,19 @@ function orderTime(value, timeZone) {
  */
 const retryable = (status) => status === 429 || (typeof status === 'number' && status >= 500);
 
-async function sendOnce(subscription, body) {
+/** The push service host — enough to identify a failing device in a log line. */
+function endpointHost(endpoint) {
+  try {
+    return new URL(endpoint).host;
+  } catch {
+    return 'unknown-host';
+  }
+}
+
+async function sendOnce(subscription, body, options) {
   for (let attempt = 0; ; attempt += 1) {
     try {
-      await webpush.sendNotification(subscription, body);
+      await webpush.sendNotification(subscription, body, options);
       return;
     } catch (err) {
       if (!retryable(err?.statusCode) || attempt >= 2) throw err;
@@ -117,20 +126,38 @@ async function sendOnce(subscription, body) {
 
 /**
  * Sends one payload per subscription. Expired endpoints (404/410) are pruned so
- * the registry stays truthful. Returns a delivery report — callers must not
- * claim success when nothing was delivered.
+ * the registry stays truthful, and every other failure is logged with its push
+ * service answer — a silently dropped card is impossible to diagnose on a real
+ * device, so the reason is always on the server's own record.
+ * Returns a delivery report — callers must not claim success when nothing was
+ * delivered.
  */
 async function deliver(subscriptions, build) {
   const report = { total: subscriptions.length, sent: 0, failed: 0, pruned: 0 };
   for (const s of subscriptions) {
+    const { body, options } = build(s);
     try {
-      await sendOnce({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, build(s));
+      await sendOnce({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, body, options);
       report.sent += 1;
     } catch (err) {
       report.failed += 1;
-      if (err?.statusCode === 404 || err?.statusCode === 410) {
+      const status = Number(err?.statusCode) || 0;
+      console.warn(
+        `[push] device ${s.id} (${endpointHost(s.endpoint)}) not delivered: ${
+          status ? `HTTP ${status}` : err?.message || 'no status'
+        }`,
+      );
+      if (status === 404 || status === 410) {
+        // The browser threw this subscription away (app uninstalled, data
+        // cleared, endpoint expired): forget it instead of retrying forever.
         await q('DELETE FROM push_subscriptions WHERE id = $1', [s.id]);
         report.pruned += 1;
+      } else if (status === 401 || status === 403) {
+        // This device subscribed with a different VAPID key (the server's keys
+        // were regenerated). Only a fresh subscribe from the device fixes it.
+        console.warn('[push] this device must re-subscribe: VAPID key mismatch');
+      } else if (status === 413) {
+        console.warn('[push] payload too large for this push service');
       }
     }
   }
@@ -146,22 +173,30 @@ export async function pushNewOrder(business, order) {
   await getVapidKeys();
 
   /*
-   * Only an active member of THIS business who may see orders is woken: a
-   * removed or disabled account keeps no delivery, and a membership without
-   * order access (a customer login on the same device) never receives private
-   * order information.
+   * Every device subscribed to THIS business is considered, then filtered the
+   * same way the panel itself authorizes a request (see attachSession): an
+   * active membership holding `orders.view` receives the order, and the
+   * platform's Super Admin acts as owner of the business it subscribed from —
+   * that account belongs to no membership row, so a JOIN on memberships used to
+   * drop it and every new-order push was addressed to nobody. A removed or
+   * disabled account, and a membership without order access (a customer login
+   * on the same device), still never receive private order information.
    */
   const { rows } = await q(
     `SELECT s.id, s.endpoint, s.p256dh, s.auth, s.locale,
-            u.locale AS user_locale, m.role, m.permissions
+            u.locale AS user_locale, u.is_super_admin,
+            m.role, m.permissions, m.status
        FROM push_subscriptions s
        JOIN users u ON u.id = s.user_id
-       JOIN memberships m ON m.user_id = s.user_id AND m.business_id = s.business_id
-      WHERE s.business_id = $1 AND m.status = 'active'`,
+       LEFT JOIN memberships m ON m.user_id = s.user_id AND m.business_id = s.business_id
+      WHERE s.business_id = $1`,
     [business.id],
   );
-  const recipients = rows.filter((s) =>
-    effectivePermissions(s.role, s.permissions).includes('orders.view'),
+  const recipients = rows.filter(
+    (s) =>
+      s.is_super_admin ||
+      (s.status === 'active' &&
+        effectivePermissions(s.role, s.permissions).includes('orders.view')),
   );
   if (!recipients.length) return { total: 0, sent: 0, failed: 0, pruned: 0 };
 
@@ -180,16 +215,24 @@ export async function pushNewOrder(business, order) {
       itemCount: order.item_count || 0,
       total: money,
     });
-    return JSON.stringify({
-      type: 'new_order',
-      category: 'orders',
-      orderId: order.id,
-      title,
-      body,
-      icon,
-      url,
-      ...languageOf(locale),
-    });
+    return {
+      body: JSON.stringify({
+        type: 'new_order',
+        category: 'orders',
+        orderId: order.id,
+        title,
+        body,
+        icon,
+        url,
+        ...languageOf(locale),
+      }),
+      /*
+       * A new order matters now: `high` urgency asks the push service to wake a
+       * dozing/locked phone immediately instead of batching it, and the one-hour
+       * TTL drops the card rather than delivering a stale order a day later.
+       */
+      options: { TTL: 3600, urgency: 'high', timeout: 8000 },
+    };
   });
 }
 
@@ -211,7 +254,17 @@ export async function pushTest(userId, businessId) {
   return deliver(rows, (s) => {
     const locale = localeOf(business, s.locale, s.user_locale);
     const { title, body } = testMessage(locale, business?.name);
-    return JSON.stringify({ type: 'test', title, body, icon, url: '/', ...languageOf(locale) });
+    return {
+      body: JSON.stringify({
+        type: 'test',
+        title,
+        body,
+        icon,
+        url: '/',
+        ...languageOf(locale),
+      }),
+      options: { TTL: 300, urgency: 'high', timeout: 8000 },
+    };
   });
 }
 
