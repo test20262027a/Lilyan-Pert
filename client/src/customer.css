@@ -59,22 +59,21 @@
 .cui-nav__tools { display: flex; align-items: center; gap: 8px; min-width: 0; }
 
 /*
- * The way back into the admin panel: one raised 3D plate in the active theme.
- * Icon-only on phones and tablets, widening to its label from a desktop width.
- * It is only ever rendered for an authenticated admin, so a guest never sees a
- * door to the back office.
+ * The way back into the admin panel: one raised 3D plate in the active theme,
+ * holding a single dashboard glyph. Icon-only at every width — the localized
+ * tooltip names it on hover and `aria-label` names it on a touch screen.
+ * It is only ever rendered on the main ordering menu of an authenticated admin,
+ * so a QR or public menu never shows a door to the back office.
  */
 .cui-return {
   position: relative;
   isolation: isolate;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 42px;
   block-size: 42px;
-  min-inline-size: 42px;
-  padding-inline: 0;
-  border-radius: 14px;
+  border-radius: 13px;
   text-decoration: none;
   color: var(--primary-ink);
   background:
@@ -107,37 +106,8 @@
   pointer-events: none;
 }
 
-.cui-return__stage {
-  position: relative;
-  display: grid;
-  place-items: center;
-  inline-size: 20px;
-  block-size: 20px;
-}
-.cui-return__glyph { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.16)); }
-
-/* The return arrow rides in the glyph's leading corner and slides back on hover. */
-.cui-return__arrow {
-  position: absolute;
-  inset-block-start: -6px;
-  inset-inline-start: -9px;
-  display: grid;
-  place-items: center;
-  inline-size: 14px;
-  block-size: 14px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 42%, #ffffff);
-  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
-  box-shadow: 0 1px 2px rgba(16, 34, 25, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  transition: transform 220ms cubic-bezier(0.22, 0.8, 0.28, 1);
-}
-
-.cui-return__label {
-  display: none;
-  font-size: 12.5px;
-  font-weight: 800;
-  white-space: nowrap;
-}
+/* The single dashboard glyph: a hint of relief, never a second symbol. */
+.cui-return__glyph { filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.18)); }
 
 @media (hover: hover) {
   .cui-return:hover {
@@ -156,16 +126,13 @@
       0 16px 26px -12px color-mix(in srgb, var(--primary) 92%, transparent),
       0 4px 9px rgba(16, 34, 25, 0.2);
   }
-  .cui-return:hover .cui-return__arrow { transform: translateX(-3px); }
-  .cui-return[dir='rtl']:hover .cui-return__arrow { transform: translateX(3px); }
 }
 
 .cui-return:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--primary) 70%, #ffffff);
   outline-offset: 3px;
 }
-.cui-return:focus-visible .cui-return__arrow { transform: translateX(-3px); }
-.cui-return[dir='rtl']:focus-visible .cui-return__arrow { transform: translateX(3px); }
+
 
 /* Pressed: the plate sinks into its own shadow. */
 .cui-return:active {
@@ -176,10 +143,7 @@
     0 3px 7px -4px color-mix(in srgb, var(--primary) 70%, transparent);
 }
 
-@media (min-width: 1024px) {
-  .cui-return { padding-inline: 15px 16px; }
-  .cui-return__label { display: inline; }
-}
+
 
 
 /* The app's own language dropdown, framed as a glass pill. */
@@ -1493,7 +1457,6 @@
   .cui-link__icon,
   .cui-nav__cart,
   .cui-return,
-  .cui-return__arrow,
   .cui-hero__logo,
   .cui-stickybar,
   .cui-hero__bg {

@@ -436,12 +436,18 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     );
   }
 
-  /* The way back to the admin panel is drawn only for an authenticated user who
-     may actually open it — the same permission the admin routes check — and only
-     while the owner has left the return control enabled. A guest reading a
-     public link never receives a door to the back office. */
+  /* The way back into the admin panel belongs to the MAIN ordering menu only.
+     The context is the one the server actually served this payload in, not the
+     URL: a scanned table token makes it `qr`, so a QR ordering session never
+     shows the control — not even to an admin signed in on that device. On top
+     of the context the user must hold the permission the admin routes check,
+     and the owner must have left the return control enabled. The page renders
+     nothing until this payload is here, so the button can never flash in
+     during load or a route change. */
   const showAdminReturn =
-    Boolean(user)
+    adminMode
+    && data.menu?.context === 'main'
+    && Boolean(user)
     && can('dashboard.view')
     && biz.menu_settings?.show_admin_return !== false
     && biz.menu_settings?.show_customer_menu !== false;

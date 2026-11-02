@@ -1,45 +1,34 @@
 import { Link } from 'react-router-dom';
 import Icon from '../Icon';
-import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n';
-import { adminReturnRoute } from '../../adminReturn';
 
 /*
- * The way back from the customer ordering menu into the admin panel.
+ * The way back from the main ordering menu into the admin dashboard.
  *
- * One control, three widths: label beside the icon from a desktop width, a
- * compact icon plate on a tablet and a small rounded-square icon on a phone.
- * It is a router link, so returning keeps the running app — the language, the
- * theme, the session and the guest's basket are never lost to a reload — and it
- * lands on the last admin screen the user was on when they may still open it,
- * otherwise on the dashboard.
+ * One compact 3D plate holding a single LayoutDashboard glyph — no arrow, no
+ * label: the localized tooltip explains it on hover and `aria-label` explains
+ * it to a screen reader on a touch screen. It is a router link, so returning
+ * keeps the running app: the language, the theme, the session and the guest's
+ * basket are never lost to a reload.
  *
- * The parent decides whether it exists at all: it is only rendered for an
- * authenticated user who may open the admin panel, so a guest never receives a
- * door to the back office. The destination route checks the same permission
- * again on its own.
+ * The parent decides whether it exists at all — only the main ordering menu
+ * renders it, and only for a signed-in user who may open the admin panel. The
+ * dashboard route checks the same permission again on its own.
  */
 export default function AdminReturnButton() {
   const { t, dir } = useI18n();
-  const { can } = useAuth();
   const label = t('customer_menu_return_to_admin');
 
   return (
     <Link
-      to={adminReturnRoute(can)}
+      to="/"
       className="cui-return"
       dir={dir}
       data-tip={label}
       data-tip-side="bottom"
       aria-label={label}
     >
-      <span className="cui-return__stage" aria-hidden="true">
-        <Icon name="dashboard" size={17} className="cui-return__glyph" />
-        <span className="cui-return__arrow">
-          <Icon name="arrowLeft" size={9} />
-        </span>
-      </span>
-      <span className="cui-return__label">{label}</span>
+      <Icon name="dashboard" size={18} className="cui-return__glyph" />
     </Link>
   );
 }
