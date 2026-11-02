@@ -717,14 +717,11 @@
   color: var(--theme-primary-strong);
 }
 
-.bk-pill--violet {
-  border-color: #d9d1fb;
-  color: #6b5bd6;
-}
-
+/* Blue and violet share the one accent colour of the panel. */
+.bk-pill--violet,
 .bk-pill--blue {
-  border-color: #cfe0f8;
-  color: #3b7fd4;
+  border-color: var(--accent-one-line);
+  color: var(--accent-one-ink);
 }
 
 .bk-status {
@@ -1275,9 +1272,9 @@
 .bk-tone--green { background: var(--theme-primary-soft); color: var(--theme-primary-strong); border-color: var(--theme-primary-line); }
 .bk-tone--slate { background: #f2f4f3; color: #65705f; border-color: #e3e7e3; }
 .bk-tone--orange { background: #fff2e6; color: #d9822b; border-color: #f8ddc2; }
-.bk-tone--blue { background: #eaf2ff; color: #3b7fd4; border-color: #cfe0f8; }
-.bk-tone--purple { background: #f1ecff; color: var(--theme-primary); border-color: #ddd2ff; }
-.bk-tone--violet { background: #f0ecff; color: #6b5bd6; border-color: #dcd3fb; }
+.bk-tone--blue,
+.bk-tone--purple,
+.bk-tone--violet { background: var(--accent-one-soft); color: var(--accent-one-ink); border-color: var(--accent-one-line); }
 .bk-tone--teal { background: #e6f7f4; color: #1f9d8b; border-color: #c3e9e2; }
 .bk-tone--pink { background: #fdecf4; color: #d6539a; border-color: #f8cee2; }
 .bk-tone--cyan { background: #e7f6fb; color: #2196b5; border-color: #c6e8f2; }

@@ -1522,6 +1522,9 @@ router.put(
   perm('settings.edit'),
   ah(async (req, res) => {
     const logoUrl = String(req.body?.logo_url || '').slice(0, 500) || null;
+    // The plate the client drew the set on (`white-plate-v1`), so a later
+    // client can tell whether the stored pictures are still the current style.
+    const style = String(req.body?.style || '').slice(0, 40) || null;
     const submitted = Array.isArray(req.body?.icons) ? req.body.icons : [];
     const rows = [];
     for (const icon of submitted) {
@@ -1550,9 +1553,9 @@ router.put(
       await c.query('DELETE FROM brand_icons');
       for (const row of rows) {
         await c.query(
-          `INSERT INTO brand_icons (size, maskable, logo_url, mime, byte_size, data, updated_at)
-           VALUES ($1,$2,$3,'image/png',$4,$5,now())`,
-          [row.size, row.maskable, logoUrl, row.byteSize, row.data],
+          `INSERT INTO brand_icons (size, maskable, logo_url, style, mime, byte_size, data, updated_at)
+           VALUES ($1,$2,$3,$4,'image/png',$5,$6,now())`,
+          [row.size, row.maskable, logoUrl, style, row.byteSize, row.data],
         );
       }
     });

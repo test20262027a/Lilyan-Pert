@@ -117,6 +117,23 @@
   --pastel-lavender-ink: var(--theme-primary-strong);
   --pastel-lavender-line: color-mix(in srgb, var(--primary) 27%, var(--border));
 
+  /*
+   * ----------------------------------------------------- one unified accent --
+   * Blue and purple used to be two separate accent families, so one screen
+   * could carry a blue "orders" tile next to a purple "visitors" one. They are
+   * ONE accent now — the active theme's primary — at three strengths, so a
+   * filled 3D tile, a tinted card and an inline glyph still read apart without
+   * ever introducing a second hue. Every blue / purple / violet / indigo tone
+   * in the app resolves through these tokens, which is why a theme switch
+   * repaints all of them at once.
+   */
+  --accent-one: var(--primary);
+  --accent-one-hi: color-mix(in srgb, var(--primary) 62%, #ffffff);
+  --accent-one-lo: color-mix(in srgb, var(--primary) 78%, #10141f);
+  --accent-one-ink: var(--theme-primary-strong);
+  --accent-one-soft: var(--pastel-blue);
+  --accent-one-line: var(--pastel-blue-line);
+
   --bg: #fafbf9;
   --bg-soft: #f3f5f3;
   --surface: #ffffff;

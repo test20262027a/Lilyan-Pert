@@ -401,8 +401,8 @@
 /* ------------------------------------------------------- module icon tones */
 
 .rs-tone--orange { background: #fff2e6; color: #d9822b; border-color: #f8ddc2; }
-.rs-tone--blue { background: #eaf2ff; color: #3b7fd4; border-color: #cfe0f8; }
-.rs-tone--purple { background: #f1ecff; color: var(--theme-primary); border-color: #ddd2ff; }
+.rs-tone--blue,
+.rs-tone--purple { background: var(--accent-one-soft); color: var(--accent-one-ink); border-color: var(--accent-one-line); }
 .rs-tone--amber { background: #fff6e0; color: #cf8b16; border-color: #f6e2b4; }
 .rs-tone--teal { background: #e6f7f4; color: #1f9d8b; border-color: #c3e9e2; }
 .rs-tone--pink { background: #fdecf4; color: #d6539a; border-color: #f8cee2; }

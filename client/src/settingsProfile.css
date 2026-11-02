@@ -173,7 +173,7 @@
    tint, rim and glow is mixed with the theme surface tokens, so the plates
    follow all five presets and light/dark mode on their own. */
 .set-tab__icon {
-  --tab-color: #3b82f6;
+  --tab-color: var(--accent-one);
   position: relative;
   flex: none;
   display: grid;
@@ -213,18 +213,20 @@
 }
 .set-tab__icon svg { position: relative; }
 
-/* Per-tab hue identity — every icon keeps its own colour. */
-.set-tab__icon[data-tone='azure'] { --tab-color: #3b82f6; }
+/* Per-tab hue identity. The blue, purple, violet and indigo tabs are the same
+   accent now — the active theme's primary — so no tab strip shows both blues
+   and purples; the remaining hues are the semantic ones. */
+.set-tab__icon[data-tone='azure'],
+.set-tab__icon[data-tone='violet'],
+.set-tab__icon[data-tone='indigo'],
+.set-tab__icon[data-tone='fuchsia'] { --tab-color: var(--accent-one); }
 .set-tab__icon[data-tone='teal'] { --tab-color: #0d9488; }
 .set-tab__icon[data-tone='emerald'] { --tab-color: #16a34a; }
-.set-tab__icon[data-tone='violet'] { --tab-color: #8b5cf6; }
 .set-tab__icon[data-tone='amber'] { --tab-color: #f59e0b; }
 .set-tab__icon[data-tone='cyan'] { --tab-color: #0891b2; }
 .set-tab__icon[data-tone='gold'] { --tab-color: #d9a406; }
-.set-tab__icon[data-tone='indigo'] { --tab-color: #4f46e5; }
 .set-tab__icon[data-tone='rose'] { --tab-color: #e11d48; }
 .set-tab__icon[data-tone='copper'] { --tab-color: #b45309; }
-.set-tab__icon[data-tone='fuchsia'] { --tab-color: #c026d3; }
 
 /* Hover: the same hue a shade deeper, lifted on a soft coloured glow. */
 .set-tab:hover .set-tab__icon {

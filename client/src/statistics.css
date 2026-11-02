@@ -13,7 +13,8 @@
   --stats-mint: #f3fbf5;
   --stats-primary: var(--theme-primary);
   --stats-purple: var(--theme-primary);
-  --stats-blue: #4f8df7;
+  /* Blue and purple are one accent here too: the theme primary. */
+  --stats-blue: var(--accent-one);
   --stats-orange: #f2a12b;
   --stats-ink: #242824;
   --stats-muted: #898f89;
@@ -138,7 +139,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.95);
 }
 /* Each card keeps its own hue, and only the hovered card deepens into it. */
-.stats-kpi--purple { --stats-tone: #7c3aed; }
+.stats-kpi--purple { --stats-tone: var(--accent-one); }
 .stats-kpi--turquoise { --stats-tone: #0d9ea8; }
 .stats-kpi--cyan { --stats-tone: #0891b2; }
 .stats-kpi--emerald { --stats-tone: #059669; }

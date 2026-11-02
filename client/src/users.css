@@ -318,10 +318,12 @@
   color: var(--theme-primary-strong);
   border-color: var(--theme-primary-line);
 }
+/* Staff used a second blue of its own; it is the same accent family as the
+   other role badges now, one step lighter so the two still read apart. */
 .um-badge--staff {
-  background: color-mix(in srgb, #3b62b8 12%, var(--surface));
-  color: color-mix(in srgb, #3b62b8 70%, var(--text));
-  border-color: color-mix(in srgb, #3b62b8 26%, var(--surface));
+  background: var(--accent-one-soft);
+  color: var(--accent-one-ink);
+  border-color: var(--accent-one-line);
 }
 .um-badge--customer {
   background: var(--surface-3);

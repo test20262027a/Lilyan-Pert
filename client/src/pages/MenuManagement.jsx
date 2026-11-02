@@ -284,7 +284,7 @@ export default function MenuManagement() {
   const summary = results
     ? {
         icon: 'search',
-        color: '#7c5cf0',
+        color: 'var(--accent-one)',
         title: t('menu_search_results'),
         subtitle: activeQuery,
       }

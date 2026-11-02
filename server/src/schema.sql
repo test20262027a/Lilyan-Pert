@@ -282,12 +282,19 @@ CREATE TABLE IF NOT EXISTS brand_icons (
   size        integer NOT NULL,
   maskable    boolean NOT NULL DEFAULT false,
   logo_url    text,
+  -- Which plate the set was drawn on (`white-plate-v1`). The admin client
+  -- redraws a stored set whose style is not the one it draws today, so the
+  -- installed icon never keeps an old tinted or transparent background.
+  style       text,
   mime        text NOT NULL DEFAULT 'image/png',
   byte_size   integer NOT NULL DEFAULT 0,
   data        text NOT NULL,
   updated_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (size, maskable)
 );
+
+/* Existing databases gain the column without losing the icon set. */
+ALTER TABLE brand_icons ADD COLUMN IF NOT EXISTS style text;
 
 CREATE TABLE IF NOT EXISTS backups (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),

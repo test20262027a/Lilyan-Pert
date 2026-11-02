@@ -91,7 +91,7 @@ router.get(
  */
 async function storedIcons() {
   const { rows } = await q(
-    'SELECT size, maskable, logo_url, updated_at FROM brand_icons ORDER BY size, maskable',
+    'SELECT size, maskable, logo_url, style, updated_at FROM brand_icons ORDER BY size, maskable',
   );
   const version = rows.reduce(
     (max, row) => Math.max(max, new Date(row.updated_at).getTime()),
@@ -108,6 +108,7 @@ router.get(
     res.set('Cache-Control', 'no-cache');
     res.json({
       logo_url: rows[0]?.logo_url || null,
+      style: rows[0]?.style || null,
       version,
       sizes: rows.map((row) => (row.maskable ? `maskable-${row.size}` : row.size)),
     });
@@ -185,7 +186,9 @@ router.get(
       display_override: ['standalone'],
       handle_links: 'preferred',
       prefer_related_applications: false,
-      background_color: '#F4F7F6',
+      // The splash screen paints this behind the icon, so it is plain white to
+      // match the icon plate the client draws.
+      background_color: '#FFFFFF',
       theme_color: themeColor,
       icons,
     });

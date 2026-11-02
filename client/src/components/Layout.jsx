@@ -26,8 +26,8 @@ function Shell() {
      decides whether anything actually has to be redrawn. */
   useEffect(() => {
     if (!business?.logo_url) return;
-    syncBrandIcons(business.logo_url, { theme: business.theme }).catch(() => {});
-  }, [business?.logo_url, business?.theme]);
+    syncBrandIcons(business.logo_url).catch(() => {});
+  }, [business?.logo_url]);
 
   // An open mobile drawer owns the screen, so the page behind it must not scroll.
   useEffect(() => {

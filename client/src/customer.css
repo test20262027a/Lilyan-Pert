@@ -1269,10 +1269,12 @@
   max-width: 100%;
   overflow-wrap: anywhere;
 }
+/* Blue and violet were two accents on the same contact row; both are the one
+   theme accent now. Brand marks below keep their own colours on purpose. */
 .cui-link__icon--blue,
-.cui-link__icon--phone { background: linear-gradient(180deg, #56a6f7, #2f7fe0); }
+.cui-link__icon--phone,
 .cui-link__icon--violet,
-.cui-link__icon--email { background: linear-gradient(180deg, #9d7bf3, #7655e0); }
+.cui-link__icon--email { background: linear-gradient(180deg, var(--accent-one-hi), var(--accent-one)); }
 .cui-link__icon--rose,
 .cui-link__icon--address { background: linear-gradient(180deg, #f58496, #e05a72); }
 .cui-link__icon--whatsapp { background: linear-gradient(180deg, #4fdb86, #22b45d); }

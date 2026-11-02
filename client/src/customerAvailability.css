@@ -42,7 +42,7 @@
 }
 
 .cui-closed--soon { --nc: #e08a1e; }
-.cui-closed--holiday { --nc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
+.cui-closed--holiday { --nc: var(--accent-one); }
 
 /* A single soft glow in the corner gives the card its depth without adding any
    box, and it stays behind the content in both themes. */
@@ -190,8 +190,8 @@
   padding-inline-start: 2px;
 }
 
-/* Day: the theme-based blue. Closed: a soft amber. Paused: an elegant coral. */
-.cui-closed__badge--day { --bc: color-mix(in srgb, #3b7bf0 80%, var(--primary)); }
+/* Day: the one theme accent. Closed: a soft amber. Paused: an elegant coral. */
+.cui-closed__badge--day { --bc: var(--accent-one); }
 .cui-closed__badge--closed { --bc: #e0952b; }
 .cui-closed__badge--paused { --bc: #ec6a5c; }
 
@@ -280,7 +280,7 @@
 .cui-hours.is-open { --hc: #16a34a; }
 .cui-hours.is-soon { --hc: #e08a1e; }
 .cui-hours.is-closed { --hc: #e05252; }
-.cui-hours.is-holiday { --hc: color-mix(in srgb, var(--primary) 82%, #6b5bd2); }
+.cui-hours.is-holiday { --hc: var(--accent-one); }
 
 .cui-hours.is-soon .cui-hours__head {
   background: linear-gradient(180deg, color-mix(in srgb, #e08a1e 14%, var(--surface)), color-mix(in srgb, #e08a1e 6%, var(--surface)));

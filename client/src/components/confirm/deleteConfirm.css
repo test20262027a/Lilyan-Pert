@@ -78,11 +78,11 @@
 /* Entity tones — meaning, never the business theme. */
 .dcd--tone-pink { --dcd-ink: #e04c7c; }
 .dcd--tone-coral { --dcd-ink: #ef5a5a; }
-.dcd--tone-violet { --dcd-ink: #7c5cf0; }
+.dcd--tone-violet { --dcd-ink: var(--accent-one); }
 .dcd--tone-green { --dcd-ink: #16a34a; }
 .dcd--tone-teal { --dcd-ink: #0d9488; }
 .dcd--tone-cyan { --dcd-ink: #0891b2; }
-.dcd--tone-blue { --dcd-ink: #2563eb; }
+.dcd--tone-blue { --dcd-ink: var(--accent-one); }
 .dcd--tone-amber { --dcd-ink: #d97706; }
 
 /* ---------------------------------------------------------------- close ---

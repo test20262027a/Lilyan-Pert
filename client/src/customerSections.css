@@ -170,15 +170,15 @@
 }
 
 .cui-sect--violet {
-  --sect-hi: #a78bfa;
-  --sect-lo: #6d3fe0;
-  --sect-wash: #6d3fe0;
+  --sect-hi: var(--accent-one-hi);
+  --sect-lo: var(--accent-one);
+  --sect-wash: var(--accent-one);
 }
 
 .cui-sect--sky {
-  --sect-hi: #74b9ff;
-  --sect-lo: #2a6fd6;
-  --sect-wash: #2a6fd6;
+  --sect-hi: var(--accent-one-hi);
+  --sect-lo: var(--accent-one);
+  --sect-wash: var(--accent-one);
 }
 
 .cui-sect--teal {

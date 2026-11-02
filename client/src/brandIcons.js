@@ -1,5 +1,4 @@
 import { get, put } from './api';
-import { primaryFor } from './theme';
 
 /*
  * The installed application's icon set, drawn from the REAL business logo.
@@ -17,9 +16,11 @@ import { primaryFor } from './theme';
  * The drawing follows the same rules as the tab icon: the artwork's visible box
  * (not its empty margin) is centred, proportions are never distorted, and
  * nothing is repainted — the original colours, shapes and transparency survive.
- * A separate maskable variant keeps the mark inside Android's safe zone on a
- * plate of the business's own accent, so a circular or rounded mask can never
- * cut a letter off.
+ * Every icon — plain and maskable — is drawn on a pure white plate, so Chrome's
+ * install icon, the Android home screen, the launcher and the splash screen all
+ * show the same thing: the mark alone on white, never a themed or tinted
+ * background. The maskable variant keeps the mark inside Android's safe zone,
+ * so a circular or rounded mask can never cut a letter off.
  */
 
 /** Every square Chrome or Android asks for, plus the 1024 master. */
@@ -36,6 +37,20 @@ const MASKABLE_SIZE = 512;
  */
 const PLAIN_PADDING = 0.06;
 const MASKABLE_SCALE = 0.56;
+
+/*
+ * Every install icon sits on the same plate: pure white.
+ *
+ * A launcher, the Chrome install dialog and the Android splash each paint the
+ * picture over a background of their own choosing, so a transparent icon or a
+ * tinted one ends up on a plate nobody picked. Painting white here makes the
+ * installed mark identical everywhere — the brand logo alone, centred, with
+ * nothing but white behind it, whatever the business theme is.
+ */
+const ICON_PLATE = '#ffffff';
+
+/** Identifies the plate the stored set was drawn on, so a change redraws it. */
+const ICON_STYLE = 'white-plate-v1';
 
 /** The logo, decoded. Fetched as a blob so a cross-origin picture cannot taint the canvas. */
 async function loadLogo(url) {
@@ -112,7 +127,7 @@ function drawSquare(img, box, size, { background, scale }) {
 }
 
 /** Every icon of the set, as the API expects them. */
-async function buildIconSet(logoUrl, theme) {
+async function buildIconSet(logoUrl) {
   const img = await loadLogo(logoUrl);
   const box = visibleBox(img);
   if (!box) throw new Error('LOGO_EMPTY');
@@ -120,24 +135,32 @@ async function buildIconSet(logoUrl, theme) {
   const icons = SIZES.map((size) => ({
     size,
     maskable: false,
-    data_url: drawSquare(img, box, size, { scale: 1 - PLAIN_PADDING * 2 }),
+    data_url: drawSquare(img, box, size, {
+      background: ICON_PLATE,
+      scale: 1 - PLAIN_PADDING * 2,
+    }),
   }));
   icons.push({
     size: MASKABLE_SIZE,
     maskable: true,
-    // The plate carries the business's own accent, so the icon still belongs to
-    // this brand when a launcher masks it into a circle.
+    // The same white plate, with the mark inside Android's safe zone so a
+    // circular or rounded mask can never crop a letter off.
     data_url: drawSquare(img, box, MASKABLE_SIZE, {
-      background: primaryFor(theme),
+      background: ICON_PLATE,
       scale: MASKABLE_SCALE,
     }),
   });
   return icons;
 }
 
-/* The logo this page already synced, and the sync in flight for it. */
+/* The logo + plate this page already synced, and the sync in flight for it. */
 let synced;
 let running;
+
+/** What a stored set has to match to be current: the same logo on the same plate. */
+function signatureFor(logoUrl) {
+  return logoUrl ? `${ICON_STYLE}|${logoUrl}` : null;
+}
 
 /**
  * Brings the stored icon set in line with the saved logo.
@@ -148,9 +171,10 @@ let running;
  * including after a backup restore or a logo uploaded from another device.
  * A failure is never fatal: the tab icon and the bundled PWA icons stay in use.
  */
-export function syncBrandIcons(logoUrl, { theme, force = false } = {}) {
+export function syncBrandIcons(logoUrl, { force = false } = {}) {
   if (typeof window === 'undefined') return Promise.resolve(null);
-  if (!force && synced === (logoUrl || null)) return Promise.resolve(null);
+  const signature = signatureFor(logoUrl);
+  if (!force && synced === signature) return Promise.resolve(null);
   if (running) return running;
 
   running = (async () => {
@@ -163,13 +187,21 @@ export function syncBrandIcons(logoUrl, { theme, force = false } = {}) {
         synced = null;
         return 0;
       }
-      if (!force && status?.logo_url === logoUrl && status.sizes?.length) {
-        synced = logoUrl;
+      // A set drawn on another plate (the old accent-tinted maskable icon, or a
+      // transparent one) is stale even when the logo is the same, so the style
+      // the server reports is compared too.
+      if (
+        !force
+        && status?.logo_url === logoUrl
+        && status?.style === ICON_STYLE
+        && status.sizes?.length
+      ) {
+        synced = signature;
         return null;
       }
-      const icons = await buildIconSet(logoUrl, theme);
-      await put('/manage/brand-icons', { logo_url: logoUrl, icons });
-      synced = logoUrl;
+      const icons = await buildIconSet(logoUrl);
+      await put('/manage/brand-icons', { logo_url: logoUrl, style: ICON_STYLE, icons });
+      synced = signature;
       return icons.length;
     } finally {
       running = null;

@@ -5,13 +5,18 @@
    container (`.dash-ic`) whose skin comes from a per-tone token table below,
    so each category keeps ONE colour across the whole dashboard:
 
-     orders / carts .... blue      revenue ......... emerald
-     visitors / views .. purple    completed ....... teal
-     cancelled ......... red       new orders ...... orange
-     pending ........... amber     preparing ....... violet
-     ready ............. cyan      notification .... pink
-     hours / calendar .. indigo    analytics ....... turquoise
-     best sellers ...... gold      growth .......... green
+     orders / carts, visitors / views, pending, preparing, hours / calendar
+       and every other slot that used blue, purple, violet or indigo .... accent
+     revenue ......... emerald    completed ....... teal
+     cancelled ......... red      new orders ...... orange
+     ready ............. cyan     notification .... pink
+     analytics ....... turquoise best sellers .... gold
+     growth .......... green
+
+   "Accent" is ONE colour — the active theme's primary (see `--accent-one` in
+   styles.css) — so blue and purple can no longer appear side by side in the
+   same panel. The other hues stay: they are the semantic ones (money, success,
+   cancellation, alert), not two versions of the brand accent.
 
    A tile is three painted layers, never a flat fill:
      1. a soft radial highlight in the upper-left (the light source),
@@ -28,34 +33,34 @@
 
 /* Bare (untiled) inline dashboard glyphs read this ink. */
 :root {
-  --dashic-blue-ink: #1d4ed8;
+  --dashic-blue-ink: var(--accent-one-ink);
   --dashic-emerald-ink: #047857;
-  --dashic-purple-ink: #6d28d9;
+  --dashic-purple-ink: var(--accent-one-ink);
   --dashic-teal-ink: #0f766e;
   --dashic-red-ink: #b91c1c;
   --dashic-orange-ink: #c2410c;
   --dashic-amber-ink: #b45309;
-  --dashic-violet-ink: #7c3aed;
+  --dashic-violet-ink: var(--accent-one-ink);
   --dashic-cyan-ink: #0e7490;
   --dashic-pink-ink: #be185d;
-  --dashic-indigo-ink: #4338ca;
+  --dashic-indigo-ink: var(--accent-one-ink);
   --dashic-turquoise-ink: #0f8f97;
   --dashic-gold-ink: #8a5a06;
   --dashic-green-ink: #15803d;
 }
 
 [data-theme='dark'] {
-  --dashic-blue-ink: #9dbcff;
+  --dashic-blue-ink: var(--accent-one-ink);
   --dashic-emerald-ink: #6fd6a7;
-  --dashic-purple-ink: #c0a4ff;
+  --dashic-purple-ink: var(--accent-one-ink);
   --dashic-teal-ink: #5fd3c4;
   --dashic-red-ink: #f7a1a8;
   --dashic-orange-ink: #ffb083;
   --dashic-amber-ink: #f5c86a;
-  --dashic-violet-ink: #c9a6ff;
+  --dashic-violet-ink: var(--accent-one-ink);
   --dashic-cyan-ink: #62cfe4;
   --dashic-pink-ink: #f79bc4;
-  --dashic-indigo-ink: #a5afff;
+  --dashic-indigo-ink: var(--accent-one-ink);
   --dashic-turquoise-ink: #5fd8d0;
   --dashic-gold-ink: #e8c66a;
   --dashic-green-ink: #74dd95;
@@ -116,21 +121,33 @@
 
 /* --------------------------------------------------------- tone table */
 
-.dash-ic--blue { --ic-a: #6aa4ff; --ic-b: #2563eb; --ic-glow: #2563eb; --ic-a-dark: #4f8cf7; --ic-b-dark: #1e40af; }
 .dash-ic--emerald { --ic-a: #45d6a0; --ic-b: #059669; --ic-glow: #059669; --ic-a-dark: #34c98f; --ic-b-dark: #04724f; }
-.dash-ic--purple { --ic-a: #b291fa; --ic-b: #7c3aed; --ic-glow: #7c3aed; --ic-a-dark: #9d7bf5; --ic-b-dark: #6d28d9; }
 .dash-ic--teal { --ic-a: #3fd3c2; --ic-b: #0d9488; --ic-glow: #0d9488; --ic-a-dark: #2ec4b4; --ic-b-dark: #0f766e; }
 .dash-ic--red { --ic-a: #fb7f8f; --ic-b: #dc2626; --ic-glow: #dc2626; --ic-a-dark: #ef6b7c; --ic-b-dark: #b91c1c; }
 .dash-ic--orange { --ic-a: #ffa061; --ic-b: #ea580c; --ic-glow: #ea580c; --ic-a-dark: #f79052; --ic-b-dark: #c2410c; }
-.dash-ic--violet { --ic-a: #c393fb; --ic-b: #8b5cf6; --ic-glow: #8b5cf6; --ic-a-dark: #b183f5; --ic-b-dark: #7c3aed; }
 .dash-ic--pink { --ic-a: #f88ec0; --ic-b: #db2777; --ic-glow: #db2777; --ic-a-dark: #ef7cb2; --ic-b-dark: #be185d; }
-.dash-ic--indigo { --ic-a: #8f9cfa; --ic-b: #4f46e5; --ic-glow: #4f46e5; --ic-a-dark: #7b8af5; --ic-b-dark: #4338ca; }
 .dash-ic--green { --ic-a: #63df8c; --ic-b: #16a34a; --ic-glow: #16a34a; --ic-a-dark: #4fd07d; --ic-b-dark: #15803d; }
 /* Lighter hues carry a deep glyph so the mark stays legible on the gradient. */
 .dash-ic--amber { --ic-a: #fbc44a; --ic-b: #d97706; --ic-glow: #d97706; --ic-a-dark: #f0b437; --ic-b-dark: #b45309; --ic-ink: #43290a; }
 .dash-ic--gold { --ic-a: #f0c750; --ic-b: #a16207; --ic-glow: #a16207; --ic-a-dark: #e2b73c; --ic-b-dark: #854d0e; --ic-ink: #3d2803; }
 .dash-ic--cyan { --ic-a: #3ad4ec; --ic-b: #0891b2; --ic-glow: #0891b2; --ic-a-dark: #29c1d6; --ic-b-dark: #0e7490; --ic-ink: #04303a; }
 .dash-ic--turquoise { --ic-a: #33ded0; --ic-b: #0d9ea8; --ic-glow: #0d9ea8; --ic-a-dark: #26c9bd; --ic-b-dark: #0f8f97; --ic-ink: #04312f; }
+
+/*
+ * Blue, purple, violet and indigo are ONE accent now — the active theme's
+ * primary — so a dashboard never shows a blue tile beside a purple one. The
+ * class names stay (callers keep their tone), the paint is shared.
+ */
+.dash-ic--blue,
+.dash-ic--purple,
+.dash-ic--violet,
+.dash-ic--indigo {
+  --ic-a: var(--accent-one-hi);
+  --ic-b: var(--accent-one);
+  --ic-glow: var(--accent-one);
+  --ic-a-dark: color-mix(in srgb, var(--accent-one) 70%, #ffffff);
+  --ic-b-dark: var(--accent-one-lo);
+}
 
 /* Dark mode: the same hues, one step deeper, with a softer highlight. */
 [data-theme='dark'] .dash-ic {
@@ -203,35 +220,38 @@
  * hue for their pastel surface, hairline and figure. Scoped to `.dash` so the
  * shared `.kpi` / `.fstat` / `.status-tile` defaults never leak elsewhere.
  */
-.dash .dash-tone-blue { --tone: #eef4ff; --tone-ink: #1d4ed8; --tone-line: #d3e2ff; }
 .dash .dash-tone-emerald { --tone: #e9f9f0; --tone-ink: #047857; --tone-line: #c5ecd8; }
-.dash .dash-tone-purple { --tone: #f4efff; --tone-ink: #6d28d9; --tone-line: #e3d6ff; }
 .dash .dash-tone-teal { --tone: #e6f8f5; --tone-ink: #0f766e; --tone-line: #c2ebe3; }
 .dash .dash-tone-red { --tone: #fdeef0; --tone-ink: #b91c1c; --tone-line: #f8d5d8; }
 .dash .dash-tone-orange { --tone: #fff2e9; --tone-ink: #c2410c; --tone-line: #ffdcc5; }
 .dash .dash-tone-amber { --tone: #fff6e3; --tone-ink: #b45309; --tone-line: #ffe6b9; }
-.dash .dash-tone-violet { --tone: #f6efff; --tone-ink: #7c3aed; --tone-line: #e8d9ff; }
 .dash .dash-tone-cyan { --tone: #e7f8fc; --tone-ink: #0e7490; --tone-line: #c6ebf4; }
 .dash .dash-tone-pink { --tone: #fdeef6; --tone-ink: #be185d; --tone-line: #f9d7e7; }
-.dash .dash-tone-indigo { --tone: #eef0ff; --tone-ink: #4338ca; --tone-line: #d8dcff; }
 .dash .dash-tone-turquoise { --tone: #e6faf6; --tone-ink: #0f8f97; --tone-line: #c5efe9; }
 .dash .dash-tone-gold { --tone: #fdf6e4; --tone-ink: #8a5a06; --tone-line: #f4e5bb; }
 .dash .dash-tone-green { --tone: #ecfcef; --tone-ink: #15803d; --tone-line: #cbefcf; }
 
-[data-theme='dark'] .dash .dash-tone-blue { --tone: #17233a; --tone-ink: #9dbcff; --tone-line: #27395a; }
 [data-theme='dark'] .dash .dash-tone-emerald { --tone: #112a22; --tone-ink: #6fd6a7; --tone-line: #1e4136; }
-[data-theme='dark'] .dash .dash-tone-purple { --tone: #211a35; --tone-ink: #c0a4ff; --tone-line: #332a4f; }
 [data-theme='dark'] .dash .dash-tone-teal { --tone: #0f2a28; --tone-ink: #5fd3c4; --tone-line: #1b403c; }
 [data-theme='dark'] .dash .dash-tone-red { --tone: #33161a; --tone-ink: #f7a1a8; --tone-line: #4b2429; }
 [data-theme='dark'] .dash .dash-tone-orange { --tone: #331f14; --tone-ink: #ffb083; --tone-line: #4a2f21; }
 [data-theme='dark'] .dash .dash-tone-amber { --tone: #32270f; --tone-ink: #f5c86a; --tone-line: #473716; }
-[data-theme='dark'] .dash .dash-tone-violet { --tone: #241a35; --tone-ink: #c9a6ff; --tone-line: #362a4f; }
 [data-theme='dark'] .dash .dash-tone-cyan { --tone: #102a33; --tone-ink: #62cfe4; --tone-line: #1c3f4b; }
 [data-theme='dark'] .dash .dash-tone-pink { --tone: #331826; --tone-ink: #f79bc4; --tone-line: #4a2739; }
-[data-theme='dark'] .dash .dash-tone-indigo { --tone: #1a1e3a; --tone-ink: #a5afff; --tone-line: #2b3157; }
 [data-theme='dark'] .dash .dash-tone-turquoise { --tone: #0e2b2b; --tone-ink: #5fd8d0; --tone-line: #1a4241; }
 [data-theme='dark'] .dash .dash-tone-gold { --tone: #2c230f; --tone-ink: #e8c66a; --tone-line: #443617; }
 [data-theme='dark'] .dash .dash-tone-green { --tone: #122b18; --tone-ink: #74dd95; --tone-line: #1f4127; }
+
+/* The four blue/purple tones are the same accent now, so they share one pastel
+   surface — the theme-tinted family the rest of the panel already uses. */
+.dash .dash-tone-blue,
+.dash .dash-tone-purple,
+.dash .dash-tone-violet,
+.dash .dash-tone-indigo {
+  --tone: var(--accent-one-soft);
+  --tone-ink: var(--accent-one-ink);
+  --tone-line: var(--accent-one-line);
+}
 
 /* ------------------------------------------------------------ motion */
 
