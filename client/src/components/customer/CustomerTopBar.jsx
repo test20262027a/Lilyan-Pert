@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import LanguageSelect from '../header/LanguageSelect';
+import AdminReturnButton from './AdminReturnButton';
 // The one language dropdown of the app, so the public menu's control looks and
 // behaves exactly like the admin panel's.
 import '../header/header.css';
@@ -69,12 +69,7 @@ export default function CustomerTopBar({
       ) : null}
 
       <div className="cui-nav__tools">
-        {adminReturn ? (
-          <Link className="cui-nav__back" to="/" dir={dir}>
-            <Icon name="arrowLeft" size={15} />
-            <span>{t('customer_menu_return_to_admin')}</span>
-          </Link>
-        ) : null}
+        {adminReturn ? <AdminReturnButton /> : null}
         <span className="cui-nav__lang" dir={dir}>
           <LanguageSelect />
         </span>

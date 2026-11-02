@@ -1018,7 +1018,7 @@ export default {
   customer_menu_review_thanks: 'شكراً لتقييمك',
   customer_menu_no_products: 'لا منتجات متاحة حالياً',
   customer_menu_order_status: 'حالة الطلب',
-  customer_menu_return_to_admin: 'الرجوع إلى الإدارة',
+  customer_menu_return_to_admin: 'الرجوع إلى لوحة الإدارة',
   customer_menu_all: 'الكل',
   customer_menu_closed_notice: 'النشاط مغلق حالياً',
   customer_menu_promo: 'عرض',

@@ -60,7 +60,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
   const params = useParams();
   const key = slug || params.key;
   const { t, locale, languageSettings } = useI18n();
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const toast = useToast();
 
   const [data, setData] = useState(null);
@@ -436,11 +436,13 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     );
   }
 
-  /* The way back to the admin panel exists only for an authenticated admin in
-     the in-store menu — a guest on the public link never receives it. */
+  /* The way back to the admin panel is drawn only for an authenticated user who
+     may actually open it — the same permission the admin routes check — and only
+     while the owner has left the return control enabled. A guest reading a
+     public link never receives a door to the back office. */
   const showAdminReturn =
-    adminMode
-    && Boolean(user)
+    Boolean(user)
+    && can('dashboard.view')
     && biz.menu_settings?.show_admin_return !== false
     && biz.menu_settings?.show_customer_menu !== false;
 

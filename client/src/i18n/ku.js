@@ -1020,7 +1020,7 @@ export default {
   customer_menu_review_thanks: 'سوپاس بۆ هەڵسەنگاندنەکەت',
   customer_menu_no_products: 'ئێستا هیچ بەرهەمێک بەردەست نییە',
   customer_menu_order_status: 'دۆخی داواکاری',
-  customer_menu_return_to_admin: 'گەڕانەوە بۆ ئەدمین',
+  customer_menu_return_to_admin: 'گەڕانەوە بۆ پانێڵی بەڕێوەبردن',
   customer_menu_all: 'هەموو',
   customer_menu_closed_notice: 'کارەکە ئێستا داخراوە',
   customer_menu_promo: 'پێشکەشکردن',

@@ -1021,7 +1021,7 @@ export default {
   customer_menu_review_thanks: 'Thank you for your review',
   customer_menu_no_products: 'No products available right now',
   customer_menu_order_status: 'Order status',
-  customer_menu_return_to_admin: 'Return to Admin',
+  customer_menu_return_to_admin: 'Back to Admin Panel',
   customer_menu_all: 'All',
   customer_menu_closed_notice: 'The business is currently closed',
   customer_menu_promo: 'Offer',

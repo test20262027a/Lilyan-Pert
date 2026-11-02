@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import { rememberAdminRoute } from '../adminReturn';
 import { BusinessProvider, useBusiness } from '../context/BusinessContext';
 import GlobalBrandedLoader from './brand/GlobalBrandedLoader';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
@@ -15,9 +16,14 @@ import AnimatedBackToTop from './backToTop/AnimatedBackToTop';
 function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { business, error, reload } = useBusiness();
+  const location = useLocation();
 
   // The tab shows this section and this business, in this language.
   useDocumentMetadata(business);
+
+  /* The customer menu's "back to admin" control returns the user to the admin
+     screen they left, so the shell keeps that screen on record. */
+  useEffect(() => rememberAdminRoute(location.pathname), [location.pathname]);
 
   // An open mobile drawer owns the screen, so the page behind it must not scroll.
   useEffect(() => {
