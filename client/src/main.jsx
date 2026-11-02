@@ -9,6 +9,7 @@ import TooltipLayer from './components/tooltip/TooltipLayer';
 import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
 import PushBridge from './push/PushBridge';
 import { bootstrapBrand } from './brandLogo';
+import { applyDisplayMode, registerServiceWorker } from './pwa';
 import './styles.css';
 import './scrollbars.css';
 // Shared interactive states (hover / press / focus depth). Imported last so the
@@ -32,6 +33,12 @@ window.setTimeout(() => document.getElementById('boot-splash')?.remove(), 4000);
  * already fetched and cached when the first loader paints on the login screen,
  * without waiting for a session or the admin dashboard. */
 bootstrapBrand();
+
+/* Installed app: own the manifest's display mode and register the worker that
+ * makes the installation (and background notifications) real. Both are no-ops
+ * in an ordinary browser tab. */
+applyDisplayMode();
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

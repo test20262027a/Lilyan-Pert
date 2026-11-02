@@ -16,6 +16,15 @@
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
+/*
+ * A deliberate pass-through: nothing is cached and nothing is intercepted, so
+ * every request still goes straight to the network and a deploy is never held
+ * behind a stale copy. Its presence is what makes this worker the installed
+ * app's worker — the condition a browser checks before it offers a real
+ * Home Screen installation instead of a shortcut that opens in a browser tab.
+ */
+self.addEventListener('fetch', () => {});
+
 async function readPayload(event) {
   try {
     return event.data ? event.data.json() : {};

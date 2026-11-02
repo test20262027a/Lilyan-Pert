@@ -5,6 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#F4F7F6" />
     <!--
+      INSTALLED APP IDENTITY.
+
+      The manifest is what makes a Home Screen install a real application
+      window instead of a browser shortcut: `display: "standalone"`, `/` as both
+      start URL and scope, and the 192/512 icons Android requires. Without it an
+      Android install opens as a tab with a visible URL bar, which is the issue
+      this link fixes. The theme colour here matches the first-paint meta above;
+      the app then re-tints that meta from the business theme, so a standalone
+      status bar follows the restaurant's own accent.
+    -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="application-name" content="Lilyan Pert" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lilyan Pert" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!--
       THEME BEFORE FIRST PAINT.
 
       The saved appearance is mirrored to localStorage by client/src/theme.js

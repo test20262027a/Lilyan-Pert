@@ -432,11 +432,21 @@
 .ostatus__caret.is-open { transform: rotate(180deg); }
 .ostatus__spinner { width: 15px; height: 15px; border-width: 2px; }
 
-/* The status list uses the shared selection popup surface (see select.css). */
+/* The status list uses the shared selection popup surface (see select.css).
+   Its coordinates are computed against the viewport by StatusMenu.jsx, which
+   also clamps and flips it; these two bounds are the hard safety net that keeps
+   the panel on screen even on the narrowest phone, and let a long status list
+   scroll inside itself instead of running past the bottom edge. */
 .ostatus__menu {
   position: fixed;
   z-index: 70;
   min-width: 176px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 7px;
   display: flex;
   flex-direction: column;
@@ -453,6 +463,8 @@
   display: flex;
   align-items: center;
   gap: 9px;
+  /* Never squeezed by the menu's own scroll container. */
+  flex: none;
   min-height: 40px;
   padding: 0 12px;
   border: 0;
@@ -651,7 +663,11 @@
   color: var(--muted);
 }
 .ocard__foot { display: flex; align-items: center; gap: 10px; }
-.ocard__foot .orow-actions { justify-content: start; }
+/* The status control sits on the card's inline-END edge: the right in English,
+   the left in Kurdish, Persian and Arabic — always away from the number and
+   amount above it. One logical margin gives both directions, so no locale can
+   leave the button on the crowded side. */
+.ocard__foot .orow-actions { margin-inline-start: auto; }
 
 /* ------------------------------------------------------------ responsive */
 

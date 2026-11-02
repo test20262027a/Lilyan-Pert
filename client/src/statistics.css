@@ -529,20 +529,6 @@
   .stats-page {
     gap: 12px;
   }
-  /* Phone: one full-width card per row, icon → title → figure, all centred. */
-  .stats-kpis {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 10px;
-  }
-  .stats-kpi {
-    min-height: 0;
-    padding: 18px 14px;
-    gap: 9px;
-  }
-  .stats-kpi__top {
-    flex-direction: column;
-    gap: 8px;
-  }
   .stats-page .mhero {
     min-height: 0;
     padding: 14px;
@@ -598,12 +584,51 @@
   }
 }
 
-@media (max-width: 380px) {
+/*
+ * Phone: the four headline figures stay a 2 × 2 grid — two equal columns, two
+ * even rows, never one stretched card per row. Every cell is compact: the tone
+ * icon centred on top, its title directly under it, the figure below. Labels
+ * wrap instead of truncating and the figure scales with the viewport, so a long
+ * amount such as `IQD 353,275` stays whole on a 320px screen. Stretch alignment
+ * keeps all four cards exactly the same height whatever the label lengths.
+ */
+@media (max-width: 767px) {
+  .stats-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
   .stats-kpi {
-    padding: 16px 12px;
+    min-height: 0;
+    gap: 6px;
+    padding: 12px 8px 13px;
+  }
+  .stats-kpi__top {
+    flex-direction: column;
+    gap: 6px;
   }
   .stats-kpi__label {
-    font-size: 12px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    font-size: 11.5px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .stats-kpi__value {
+    font-size: clamp(15px, 4.4vw, 21px);
+  }
+}
+
+@media (max-width: 380px) {
+  .stats-kpi {
+    padding: 11px 7px 12px;
+    gap: 5px;
+  }
+  .stats-kpi__label {
+    font-size: 11px;
+  }
+  .stats-kpi__value {
+    font-size: clamp(14px, 4.2vw, 17px);
   }
 }
 
