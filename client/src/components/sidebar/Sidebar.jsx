@@ -7,6 +7,7 @@ import { useBusiness } from '../../context/BusinessContext';
 import SidebarNav from './SidebarNav';
 import SidebarProfile from './SidebarProfile';
 import { NAV, groupFor, titleKeyFor } from '../nav/navConfig';
+import { mainMenuPath } from '../tables/menuUrl';
 
 const COLLAPSE_KEY = 'lilyan.sidebar.collapsed';
 const EXPANDED_WIDTH = '280px';
@@ -105,7 +106,7 @@ export default function Sidebar({ open = false, onNavigate }) {
             collapsed={railCollapsed}
             expandedGroup={expandedGroup}
             onToggleGroup={toggleGroup}
-            previewHref={business ? `/m/${business.slug}` : ''}
+            previewHref={mainMenuPath(business?.slug)}
             onNavigate={onNavigate}
           />
         </nav>

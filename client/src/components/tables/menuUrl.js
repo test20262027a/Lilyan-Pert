@@ -7,10 +7,22 @@
  * carries a secret or an admin permission.
  */
 
+/**
+ * The main ordering menu's own route, without an origin: `/menu/<slug>`.
+ *
+ * This is the canonical address of the main menu (see App.jsx) and the single
+ * source every "open the menu" control builds its link from — same tab or new
+ * one, sandbox or production, the destination is always this route.
+ */
+export function mainMenuPath(slug) {
+  if (!slug) return '';
+  return `/menu/${slug}`;
+}
+
 /** The main ordering menu: `/menu/<slug>` — no table selected. */
 export function publicMenuUrl(origin, slug) {
   if (!origin || !slug) return '';
-  return `${origin}/menu/${slug}`;
+  return `${origin}${mainMenuPath(slug)}`;
 }
 
 /**
