@@ -22,15 +22,20 @@ const BUSINESS_TYPES = ['cafe', 'restaurant', 'fast_food', 'bakery', 'juice_bar'
 const CURRENCY_BY_LANGUAGE = { ku: 'IQD', ar: 'IQD', fa: 'IRR', en: 'USD' };
 
 export default function BusinessInfoTab({ draft, setField, setVal, canManage }) {
-  const { t, enabledLanguages, locale } = useI18n();
+  const { t, enabledLanguages, locale, languageSettings } = useI18n();
   const locales = NAME_ORDER
     .filter((code) => enabledLanguages.includes(code))
     .map((code) => LOCALES.find((l) => l.code === code))
     .filter(Boolean);
 
-  /* The active language's currency, falling back to the configured one when a
-     language has no mapping or is no longer enabled. */
-  const activeLanguage = enabledLanguages.includes(locale) ? locale : enabledLanguages[0];
+  /* The active language's currency. A language that is no longer enabled (or
+     was switched off while this page was open) resolves to the configured
+     default enabled language, and a language without a mapping falls back to
+     the business's own stored currency. */
+  const fallbackLanguage = enabledLanguages.includes(languageSettings?.default_language)
+    ? languageSettings.default_language
+    : enabledLanguages[0];
+  const activeLanguage = enabledLanguages.includes(locale) ? locale : fallbackLanguage;
   const currency = CURRENCY_BY_LANGUAGE[activeLanguage] || draft.currency || '';
 
   return (

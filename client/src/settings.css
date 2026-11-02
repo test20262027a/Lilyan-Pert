@@ -211,8 +211,11 @@
 }
 .set-field__hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
 
-/* A value the owner may read but not edit (the language-driven currency). */
-.set-locked { position: relative; display: block; min-width: 0; }
+/* A value the owner may read but not edit (the language-driven currency). The
+   wrapper stays left-to-right so the lock always sits at the field's own end
+   edge: on a right-to-left page it would otherwise land on the side where the
+   left-to-right currency code starts — on top of the code itself. */
+.set-locked { position: relative; display: block; min-width: 0; direction: ltr; }
 .set-locked .input {
   padding-inline-end: 38px;
   cursor: default;
