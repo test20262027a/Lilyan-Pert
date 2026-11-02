@@ -7,6 +7,9 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone"],
+  "handle_links": "preferred",
+  "prefer_related_applications": false,
   "background_color": "#F4F7F6",
   "theme_color": "#F4F7F6",
   "icons": [

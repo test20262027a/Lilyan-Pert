@@ -15,11 +15,12 @@ export function registerServiceWorker() {
   if (typeof navigator === 'undefined' || !('serviceWorker' in navigator)) return;
   if (!window.isSecureContext) return;
 
-  const register = () => {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
-  };
-  if (document.readyState === 'complete') register();
-  else window.addEventListener('load', register, { once: true });
+  // Registered as soon as this module runs, not after `load`: Chrome only offers
+  // a genuine standalone installation (and never a browser shortcut) once the
+  // origin owns a worker, so the worker must already exist when the user opens
+  // Chrome's menu on their very first visit. The call is asynchronous and never
+  // blocks rendering.
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
 }
 
 /**
