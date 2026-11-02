@@ -136,6 +136,30 @@ router.get(
   }),
 );
 
+/*
+ * The system-bar colour a Chrome WebAPK bakes into its installed window.
+ *
+ * It MUST name the same colour the page publishes at runtime as
+ * `theme-color` (client/src/theme.js → `systemBarColor`): Android's bottom
+ * navigation bar is not readable by the page, so the manifest is the only
+ * place that can describe it, and Chrome reads it when it generates or
+ * refreshes the WebAPK rather than on every theme switch. Light mode is the
+ * accent itself; dark mode is that accent pulled toward the night canvas —
+ * the identical formula, so an installed app's bars are never a different
+ * theme from the one the interface is showing.
+ */
+function systemBarColor(primary, mode) {
+  const match = /^#?([0-9a-f]{6})$/i.exec(String(primary || '').trim());
+  if (!match) return '#F4F7F6';
+  if (mode !== 'dark') return `#${match[1].toUpperCase()}`;
+  const dark = [0x0e, 0x10, 0x17];
+  const value = parseInt(match[1], 16);
+  const channels = [value >> 16 & 255, value >> 8 & 255, value & 255].map((light, index) =>
+    Math.round(light * 0.45 + dark[index] * 0.55),
+  );
+  return `#${channels.map((n) => n.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
 /**
  * The web app manifest.
  *
@@ -153,8 +177,9 @@ router.get(
     const { rows: brand } = await q(
       `SELECT theme FROM businesses ORDER BY is_sample DESC, created_at LIMIT 1`,
     );
-    const accent = String(brand[0]?.theme?.primary || '');
-    const themeColor = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '#F4F7F6';
+    // The theme the app is actually showing, light or dark — never a raw accent
+    // that would disagree with the page's own status bar.
+    const themeColor = systemBarColor(brand[0]?.theme?.primary, brand[0]?.theme?.mode);
     const icons = rows.length
       ? rows.map((row) => ({
           src: `/api/public/brand/icons/${row.maskable ? 'maskable-' : ''}${row.size}.png?v=${version}`,

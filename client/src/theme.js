@@ -79,6 +79,17 @@ const CACHE_KEY = 'lilyan.theme.v1';
  * the operating system's light status icons keep their contrast on it. Android
  * decides the icon colour from the bar's luminance, so the two modes are kept
  * far enough apart for that decision to come out right in both.
+ *
+ * PLATFORM LIMIT — the bottom Android navigation bar (Back / Home / Recents) is
+ * not a web surface. Chrome paints it from the manifest's colours captured when
+ * it generated the installed WebAPK, and it does NOT follow this runtime
+ * `theme-color`; there is no web API to recolour it (Chromium issue 571867195).
+ * The page can only reach it where Android lets content draw under a
+ * transparent bar, which is what `--system-bar` and the safe-area strip in
+ * index.html do — and only when `env(safe-area-inset-bottom)` is really
+ * positive. The manifest publishes the same colour (server/routes/public.js →
+ * `systemBarColor`) so the native bar matches the theme after Chrome refreshes
+ * the WebAPK. Do not try to fix the native bar with CSS on top of it.
  */
 export function systemBarColor(primary, mode) {
   const match = /^#?([0-9a-f]{6})$/i.exec(String(primary || '').trim());
