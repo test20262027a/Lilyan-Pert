@@ -65,7 +65,13 @@ function inkFor(hex) {
 const CACHE_KEY = 'lilyan.theme.v1';
 
 /*
- * The Android status-bar colour for a theme (meta[name="theme-color"]).
+ * The ONE colour of the Android system bars, derived from the active theme.
+ *
+ * Both bars read this: the top status bar through `meta[name="theme-color"]`
+ * and the bottom navigation bar through the `--system-bar` strip the page draws
+ * in the inset Android reserves for it (see index.html). Because it is a pure
+ * function of the theme — and it is written to both places in the same pass of
+ * `applyTheme` — the two bars can never hold different, let alone older, colours.
  *
  * Light mode paints the accent itself, so the system status bar carries the
  * business colour the staff picked. Dark mode keeps the same hue but brings it
@@ -74,7 +80,7 @@ const CACHE_KEY = 'lilyan.theme.v1';
  * decides the icon colour from the bar's luminance, so the two modes are kept
  * far enough apart for that decision to come out right in both.
  */
-function statusBarColor(primary, mode) {
+export function systemBarColor(primary, mode) {
   const match = /^#?([0-9a-f]{6})$/i.exec(String(primary || '').trim());
   if (!match) return PRESETS.midnight.primary;
   if (mode !== 'dark') return `#${match[1].toUpperCase()}`;
@@ -137,10 +143,18 @@ export function applyTheme(theme, ownerId) {
   // Foreground for every filled accent surface; the design tokens derive the
   // rest of the theme layer from these two values.
   root.style.setProperty('--primary-ink', inkFor(primary));
-  // The Android status bar follows the theme live: no reload, no restart of the
-  // installed app — the browser repaints its system bar from this meta.
+  /*
+   * The Android system bars follow the theme live — no reload, no restart of
+   * the installed app. One colour, written twice in this same pass: the meta
+   * the browser paints the TOP bar (and, inside an installed app, the status
+   * bar) from, and `--system-bar`, which the bottom navigation-bar strip in
+   * index.html reads. Neither can be updated without the other, which is what
+   * used to leave the bottom bar on the previous theme.
+   */
+  const bar = systemBarColor(primary, mode);
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', statusBarColor(primary, mode));
+  if (meta) meta.setAttribute('content', bar);
+  root.style.setProperty('--system-bar', bar);
   rememberTheme({ mode, primary }, ownerId);
 }
 

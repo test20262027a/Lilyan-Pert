@@ -49,6 +49,12 @@
     <script>
       (function () {
         var root = document.documentElement;
+        /* Android is the only platform where the page itself can paint the
+           bottom navigation-bar area (see #system-bar-bottom below): Android
+           reserves it with env(safe-area-inset-bottom) and draws the system
+           navigation bar over the page in edge-to-edge. On iOS the same inset is
+           the home indicator, which is left to the page surface as before. */
+        if (/Android/i.test(navigator.userAgent)) root.dataset.android = 'true';
         try {
           var raw = window.localStorage.getItem('lilyan.theme.v1');
           if (!raw) return;
@@ -58,11 +64,14 @@
           root.style.setProperty('--primary', theme.primary);
           if (theme.ink) root.style.setProperty('--primary-ink', theme.ink);
           root.dataset.boot = 'cached';
-          /* The cached status-bar colour, already varied for the saved
-             light/dark mode, so a cold start never flashes the wrong tint
-             and the system bar is correct before any module runs. */
+          /* The cached system-bar colour, already varied for the saved
+             light/dark mode, so a cold start never flashes the wrong tint.
+             The SAME value is published to the top bar (the meta) and to the
+             bottom strip (--system-bar) right here, before any module runs. */
+          var bar = theme.bar || theme.primary;
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', theme.bar || theme.primary);
+          if (meta) meta.setAttribute('content', bar);
+          root.style.setProperty('--system-bar', bar);
         } catch (e) {}
       })();
     </script>
@@ -159,11 +168,41 @@
         #boot-splash .bs-halo,
         #boot-splash img { animation: none; }
       }
+      /*
+       * THE BOTTOM SYSTEM BAR.
+       *
+       * Android lets the page draw under the bottom navigation bar in
+       * edge-to-edge, and reserves exactly that space for it. This strip paints
+       * only that reserved space — never content — with `--system-bar`, the same
+       * single colour the theme publishes for the top bar. It therefore follows
+       * a theme change in the same frame as the status bar, and carries the
+       * saved theme on the very first paint.
+       *
+       * Where Android reserves nothing (a desktop browser, a tab without
+       * edge-to-edge, iOS) the inset is 0, the strip has no height and nothing
+       * is drawn. The system navigation bar of an installed app whose colour is
+       * baked by Android at install time is not page-controllable; that limit is
+       * documented in client/src/theme.js.
+       */
+      #system-bar-bottom {
+        display: none;
+        position: fixed;
+        inset-inline: 0;
+        inset-block-end: 0;
+        block-size: env(safe-area-inset-bottom, 0px);
+        background: var(--system-bar, transparent);
+        pointer-events: none;
+        z-index: 2147483000;
+      }
+      html[data-android='true'] #system-bar-bottom { display: block; }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <div id="print-root"></div>
+    <!-- The bottom system-bar strip: paints only the space Android reserves for
+         the navigation bar, in the live theme colour (see the style above). -->
+    <div id="system-bar-bottom" aria-hidden="true"></div>
     <!-- Marked aria-hidden: the accessible loading announcement belongs to the
          React loader (role="status"), never to this first paint. -->
     <div id="boot-splash" aria-hidden="true">
