@@ -7,7 +7,7 @@ import { fmtDigits } from '../../format';
 import { useBusiness } from '../../context/BusinessContext';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationsContext';
-import { compactCount, priorityOf, unreadSlices } from '../../notifications';
+import { compactCount, priorityOf } from '../../notifications';
 import NotificationPanel from './NotificationPanel';
 
 /*
@@ -18,10 +18,9 @@ import NotificationPanel from './NotificationPanel';
  * badge and the panel can never disagree, and an order that arrives while the
  * administrator is on another page updates this bell without a remount.
  *
- * The badge plate is split into the three category colours in proportion to
- * each one's unread rows — green orders, gold reviews, coral activity — and
- * the bell button behind it takes the priority tint (orders first, then
- * reviews, then activity). Nothing is shown once everything has been read.
+ * The badge and the bell button behind it both take ONE colour, chosen by
+ * priority — green while new orders are unread, gold once only reviews are,
+ * coral once only activity is. Nothing is shown once everything has been read.
  */
 export default function NotificationBell() {
   const { t, locale } = useI18n();
@@ -34,8 +33,8 @@ export default function NotificationBell() {
   const wrapRef = useRef(null);
 
   const priority = useMemo(() => priorityOf(unread), [unread]);
-  // The two gradient boundaries that give each category its share of the plate.
-  const slices = useMemo(() => unreadSlices(unread), [unread]);
+  // 99+ is three characters wide; it gets a tighter figure so the circle holds.
+  const count = compactCount(priority.total);
 
   // Opening the panel reads the newest rows, so a notification created while
   // this tab was in the background is here the moment it is looked at.
@@ -113,11 +112,12 @@ export default function NotificationBell() {
         <Icon name="bell" size={18} />
         {priority.total > 0 ? (
           <span
-            className={`hdr-bell__badge hdr-bell__badge--${priority.tone}`}
-            style={{ '--ntm-s1': slices.s1, '--ntm-s2': slices.s2 }}
+            className={`hdr-bell__badge hdr-bell__badge--${priority.tone} ${
+              count.length > 2 ? 'hdr-bell__badge--compact' : ''
+            }`}
             aria-hidden="true"
           >
-            {fmtDigits(compactCount(priority.total), locale)}
+            {fmtDigits(count, locale)}
           </span>
         ) : null}
       </button>

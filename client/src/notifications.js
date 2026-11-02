@@ -1,16 +1,16 @@
 /*
  * Notification priorities.
  *
- * One place decides the badge's colour, its three-colour proportions and the
- * number on it, so the header bell can never disagree with the panel:
+ * One place decides the badge's colour, the panel's three-colour proportions
+ * and the number on it, so the header bell can never disagree with the panel:
  *   unread orders   → green (highest)
  *   unread reviews  → gold
  *   unread activity → red
  *   nothing unread  → no badge
- * The count is always the total unread across all three categories. The bell's
- * plate splits itself into those three colours by each category's share of
- * that total, and the bell button behind it follows the highest-priority
- * category that still has unread rows.
+ * The count is always the total unread across all three categories. The bell
+ * badge and the button behind it take ONE colour: the highest-priority category
+ * that still has unread rows. The proportional three-colour mix is used only by
+ * the Unread tab inside the panel.
  */
 
 import { fmtDateTime, fmtDigits } from './format';
@@ -42,13 +42,12 @@ export function priorityOf(unread) {
 }
 
 /**
- * Proportions of the summary badge's three colours, as the two boundaries a
- * single linear-gradient needs: green (orders) owns everything before `s1`,
- * gold (reviews) everything up to `s2`, coral (activity) the rest. Each slice
- * is its category's share of the unread total, so a category with nothing
- * unread collapses to zero width and one busy category fills the plate alone.
- * With nothing unread the plate is one solid green — the badge itself is not
- * shown in that state.
+ * Proportions of the Unread tab's three colours, as the two boundaries a single
+ * linear-gradient needs: green (orders) owns everything before `s1`, gold
+ * (reviews) everything up to `s2`, coral (activity) the rest. Each slice is its
+ * category's share of the unread total, so a category with nothing unread
+ * collapses to zero width and one busy category fills the plate alone.
+ * The header bell badge never uses this mix — it is always one colour.
  */
 export function unreadSlices(unread) {
   const orders = Number(unread?.orders) || 0;

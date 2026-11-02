@@ -496,28 +496,16 @@
 .hdr-bell__btn.is-red { color: #c93b41; border-color: color-mix(in srgb, #e94e55 32%, var(--border-strong)); }
 
 /*
- * Count badge. The unread total sits on a raised pill split into three
- * proportional slices — green orders, gold reviews, coral activity — each sized
- * by its category's share of the unread rows, so the plate shows at a glance
- * what is waiting. One busy category fills the whole pill, a category with
- * nothing unread collapses to zero width, and the bell button behind it still
- * takes the priority tint. The two slice boundaries are registered percentages,
- * so a new count slides them across in 220ms instead of jumping, and the white
- * figure keeps a dark halo so it stays readable on every slice, theme and
- * appearance.
- */
-/*
- * The three-slice plate. One recipe, shared by the header count badge and by
- * the Unread tab with its count pill, so all of them always show the same live
- * proportions: green orders, gold reviews, coral activity. The two boundaries
- * come from the notification feed (see unreadSlices) and are registered as
- * percentages, so a count arriving or being read slides them across in 220ms
- * instead of jumping.
+ * The three-slice plate. Used ONLY by the Unread tab inside the panel and its
+ * count pill, so both always show the same live proportions: green orders, gold
+ * reviews, coral activity. The two boundaries come from the notification feed
+ * (see unreadSlices) and are registered as percentages, so a count arriving or
+ * being read slides them across in 220ms instead of jumping. The header bell
+ * badge never uses this mix — it is one colour, chosen by priority.
  */
 @property --ntm-s1 { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
 @property --ntm-s2 { syntax: '<percentage>'; inherits: true; initial-value: 100%; }
 
-.hdr-bell__badge,
 .notif-tab--sliced {
   --ntm-orders: #2fc276;
   --ntm-reviews: #e3a61b;
@@ -532,40 +520,66 @@
       var(--ntm-activity) var(--ntm-s2) 100%);
 }
 
+/*
+ * Count badge. ONE colour, chosen by priority — green while any new order is
+ * unread, gold once only reviews are, coral once only activity is — never the
+ * three-slice mix, which belongs to the Unread tab in the panel. The plate is a
+ * perfect circle: fixed equal width and height with a 50% radius and no side
+ * padding, so 1, 12 or 99+ can never stretch it into an oval, and the figure is
+ * centred on both axes. Every shade comes from the badge's own tone variables,
+ * so the ring, the raised edge and the glow can never drift to another colour.
+ */
 .hdr-bell__badge {
   position: absolute; top: -4px; inset-inline-end: -4px;
-  min-width: 19px; height: 19px; padding: 0 5px;
+  width: 20px; height: 20px; padding: 0;
   display: grid; place-items: center;
-  border-radius: var(--radius-pill);
+  border-radius: 50%;
   border: 2px solid var(--surface);
-  font-size: 10.5px; font-weight: 800; line-height: 1;
+  font-size: 10px; font-weight: 800; line-height: 1;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  color: #ffffff;
-  text-shadow: 0 1px 2px rgba(6, 32, 20, 0.66), 0 0 1px rgba(6, 32, 20, 0.5);
-  background-image: var(--ntm-plate);
+  font-feature-settings: 'tnum' 1;
+  color: var(--ntm-on);
+  text-shadow: var(--ntm-shadow);
+  background-image: linear-gradient(180deg, var(--ntm-a), var(--ntm-b));
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2px 4px rgba(6, 32, 20, 0.36),
-    0 2px 0 rgba(10, 74, 40, 0.34),
-    0 6px 12px -4px rgba(16, 110, 62, 0.45);
-  transition:
-    --ntm-s1 0.22s ease, --ntm-s2 0.22s ease,
-    transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    inset 0 -2px 4px color-mix(in srgb, var(--ntm-b) 42%, transparent),
+    0 2px 0 color-mix(in srgb, var(--ntm-b) 62%, transparent),
+    0 6px 12px -4px var(--ntm-glow);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
   animation: bell-badge-in 0.22s ease;
 }
-/* Read right to left, the order slice starts at the trailing edge. */
-[dir='rtl'] .hdr-bell__badge,
+/* The three tones, taken from the panel's own category palette. */
+.hdr-bell__badge--green {
+  --ntm-a: #34c97a; --ntm-b: #12833f; --ntm-on: #ffffff;
+  --ntm-glow: rgba(18, 131, 63, 0.45);
+  --ntm-shadow: 0 1px 2px rgba(6, 32, 20, 0.6);
+}
+.hdr-bell__badge--gold {
+  --ntm-a: #ffd066; --ntm-b: #f5bc37; --ntm-on: #5a3c05;
+  --ntm-glow: rgba(245, 188, 55, 0.5);
+  --ntm-shadow: 0 1px 1px rgba(255, 255, 255, 0.45);
+}
+.hdr-bell__badge--red {
+  --ntm-a: #f4696f; --ntm-b: #e94e55; --ntm-on: #ffffff;
+  --ntm-glow: rgba(233, 78, 85, 0.45);
+  --ntm-shadow: 0 1px 2px rgba(60, 10, 14, 0.55);
+}
+/* A three-character count (99+) gets a tighter figure so it still fits. */
+.hdr-bell__badge--compact { font-size: 8.5px; letter-spacing: -0.04em; }
+/* Read right to left, the Unread tab's slices start at the trailing edge. */
 [dir='rtl'] .notif-tab--sliced { --ntm-dir: 270deg; }
-/* Hover deepens every slice a step and lifts the plate off the bell. */
+/* Hover deepens the tone a step and lifts the plate off the bell. */
 .hdr-bell__btn:hover .hdr-bell__badge,
 .hdr-bell__badge:hover {
   transform: translateY(-1px) scale(1.04);
-  filter: saturate(1.1) brightness(0.9);
+  filter: saturate(1.06) brightness(0.96);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -2px 4px rgba(4, 26, 16, 0.46),
-    0 3px 0 rgba(7, 60, 34, 0.46),
-    0 10px 18px -6px rgba(12, 90, 48, 0.6);
+    inset 0 -2px 4px color-mix(in srgb, var(--ntm-b) 55%, transparent),
+    0 3px 0 color-mix(in srgb, var(--ntm-b) 72%, transparent),
+    0 10px 18px -6px var(--ntm-glow);
 }
 @keyframes bell-badge-in { from { transform: scale(0.72); opacity: 0; } }
 
