@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import Icon from '../components/Icon';
 import {
   AuthCard,
@@ -18,6 +18,10 @@ export default function Login() {
   const { t } = useI18n();
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // A protected page that sent the visitor here — for example the order a
+  // tapped notification points at — is where signing in continues.
+  const target = location.state?.from || '/';
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
@@ -41,7 +45,7 @@ export default function Login() {
     beginLoading('auth');
     try {
       await login(email, password);
-      navigate('/', { replace: true });
+      navigate(target, { replace: true });
     } catch (err) {
       setError(err.code === 'INVALID_CREDENTIALS' ? t('auth_login_failed') : t('error_generic'));
     } finally {

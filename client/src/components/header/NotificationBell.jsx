@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { useToast } from '../ui';
@@ -6,108 +6,42 @@ import { useI18n } from '../../i18n';
 import { fmtDigits } from '../../format';
 import { useBusiness } from '../../context/BusinessContext';
 import { useAuth } from '../../context/AuthContext';
-import { get, post } from '../../api';
-import { playSound } from '../../sound';
+import { useNotifications } from '../../context/NotificationsContext';
 import { compactCount, priorityOf, unreadSlices } from '../../notifications';
 import NotificationPanel from './NotificationPanel';
 
 /*
- * Bell + panel. The list, the three unread counts and the alert sound all come
- * from the backend feed, so nothing here is faked client-side.
+ * Bell + panel.
+ *
+ * The feed itself lives in NotificationsProvider at the application root, so
+ * this component only renders what that one listener already loaded — the
+ * badge and the panel can never disagree, and an order that arrives while the
+ * administrator is on another page updates this bell without a remount.
  *
  * The badge plate is split into the three category colours in proportion to
  * each one's unread rows — green orders, gold reviews, coral activity — and
  * the bell button behind it takes the priority tint (orders first, then
  * reviews, then activity). Nothing is shown once everything has been read.
  */
-const POLL_MS = 20000;
-const EMPTY_COUNTS = { orders: 0, reviews: 0, activities: 0, total: 0 };
-
 export default function NotificationBell() {
   const { t, locale } = useI18n();
   const toast = useToast();
   const navigate = useNavigate();
   const { business } = useBusiness();
   const { can } = useAuth();
+  const { items, lists, unread, loading, failed, refresh, markAll, markRead } = useNotifications();
   const [open, setOpen] = useState(false);
-  const [items, setItems] = useState([]);
-  const [lists, setLists] = useState({ orders: [], reviews: [], activities: [] });
-  const [unread, setUnread] = useState(EMPTY_COUNTS);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
-  const seenRef = useRef(null);
   const wrapRef = useRef(null);
-  const soundEnabled = business?.notification_settings?.sound_enabled !== false;
-  const soundKey = business?.notification_settings?.sound_key;
-  const soundVolume = business?.notification_settings?.sound_volume;
+
   const priority = useMemo(() => priorityOf(unread), [unread]);
   // The two gradient boundaries that give each category its share of the plate.
   const slices = useMemo(() => unreadSlices(unread), [unread]);
 
-  const load = useCallback(async (options) => {
-    // A background push that the OS already announced only refreshes the badge.
-    const silent = options?.silent === true;
-    try {
-      const data = await get('/manage/notifications');
-      const list = data.notifications || [];
-      setItems(list);
-      setLists(data.lists || { orders: [], reviews: [], activities: [] });
-      setUnread({ ...EMPTY_COUNTS, ...(data.unread || {}) });
-      setFailed(false);
-
-      // Only a newly created order alerts; status changes never make a sound.
-      const newestOrder = (data.lists?.orders || []).find((n) => n.type === 'new_order');
-      if (newestOrder) {
-        if (seenRef.current === null) {
-          seenRef.current = newestOrder.id; // first load establishes the baseline
-        } else if (newestOrder.id !== seenRef.current) {
-          seenRef.current = newestOrder.id;
-          // One alert per genuinely new order, whatever the poll interval did.
-          if (!silent) {
-            if (soundEnabled) playSound(soundKey, soundVolume);
-            toast.success(`${t('dash_new_orders')} · ${newestOrder.title || ''}`.trim());
-          }
-        }
-      }
-    } catch {
-      setFailed(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [soundEnabled, soundKey, soundVolume, t, toast]);
-
+  // Opening the panel reads the newest rows, so a notification created while
+  // this tab was in the background is here the moment it is looked at.
   useEffect(() => {
-    load();
-    const id = setInterval(() => {
-      if (!document.hidden) load();
-    }, POLL_MS);
-    return () => clearInterval(id);
-  }, [load]);
-
-  // Returning to the tab refreshes immediately instead of waiting for the poll.
-  useEffect(() => {
-    const onVisible = () => {
-      if (!document.hidden) load();
-    };
-    document.addEventListener('visibilitychange', onVisible);
-    return () => document.removeEventListener('visibilitychange', onVisible);
-  }, [load]);
-
-  /*
-   * A background push arrives through the service worker (PushBridge). While
-   * this tab is visible it is the one place that rings; when another tab or a
-   * minimised window got the system alert instead, the badge only catches up.
-   */
-  useEffect(() => {
-    const alert = () => load();
-    const refresh = () => load({ silent: true });
-    window.addEventListener('lilyan:new-order', alert);
-    window.addEventListener('lilyan:order-arrived', refresh);
-    return () => {
-      window.removeEventListener('lilyan:new-order', alert);
-      window.removeEventListener('lilyan:order-arrived', refresh);
-    };
-  }, [load]);
+    if (open) refresh();
+  }, [open, refresh]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -125,10 +59,9 @@ export default function NotificationBell() {
     };
   }, [open]);
 
-  const markAll = async () => {
+  const markAllRead = async () => {
     try {
-      await post('/manage/notifications/read', {});
-      await load();
+      await markAll();
     } catch {
       toast.error(t('error_generic'));
     }
@@ -146,8 +79,7 @@ export default function NotificationBell() {
     setOpen(false);
     if (!item.read_at) {
       try {
-        await post('/manage/notifications/read', { id: item.id });
-        await load();
+        await markRead(item.id);
       } catch {
         /* the row stays unread, which is the honest state */
       }
@@ -199,7 +131,7 @@ export default function NotificationBell() {
           failed={failed}
           canOpen={canOpen}
           onOpenItem={openItem}
-          onMarkAll={markAll}
+          onMarkAll={markAllRead}
           locale={locale}
           timeZone={business?.timezone}
           anchorRef={wrapRef}

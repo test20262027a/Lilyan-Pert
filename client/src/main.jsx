@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { I18nProvider } from './i18n';
 import { AuthProvider } from './context/AuthContext';
+import { NotificationsProvider } from './context/NotificationsContext';
 import { ToastProvider } from './components/ui';
 import TooltipLayer from './components/tooltip/TooltipLayer';
 import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
@@ -46,10 +47,14 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <I18nProvider>
         <ToastProvider>
           <AuthProvider>
-            <App />
-            {/* Service-worker messages: a tapped notification opens its order,
-                an arriving push refreshes the badge. */}
-            <PushBridge />
+            {/* The app's ONE notification listener: mounted above every route,
+                so an order is announced on any page, not only the dashboard. */}
+            <NotificationsProvider>
+              <App />
+              {/* Service-worker messages: a tapped notification opens its order,
+                  an arriving push refreshes the badge. */}
+              <PushBridge />
+            </NotificationsProvider>
             {/* The app's ONE loader: mounted once, here, above every route, so
                 no page can swap it for a different size, position or variant
                 and it never remounts between loading phases. */}

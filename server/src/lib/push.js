@@ -10,6 +10,7 @@
 import webpush from 'web-push';
 import { q } from '../db.js';
 import { resolveLanguage } from './languages.js';
+import { effectivePermissions } from './permissions.js';
 import { newOrderMessage, testMessage } from './notification-text.js';
 
 let cachedKeys = null;
@@ -94,6 +95,26 @@ function orderTime(value, timeZone) {
   }
 }
 
+/*
+ * A push service can answer 429 or 5xx for a moment; those are worth retrying.
+ * A 404/410 means the browser really threw the subscription away, and any
+ * other answer (403 = this server's VAPID key is not the one the browser
+ * subscribed to) is not fixed by repeating the send.
+ */
+const retryable = (status) => status === 429 || (typeof status === 'number' && status >= 500);
+
+async function sendOnce(subscription, body) {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      await webpush.sendNotification(subscription, body);
+      return;
+    } catch (err) {
+      if (!retryable(err?.statusCode) || attempt >= 2) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 300 * 2 ** attempt));
+    }
+  }
+}
+
 /**
  * Sends one payload per subscription. Expired endpoints (404/410) are pruned so
  * the registry stays truthful. Returns a delivery report — callers must not
@@ -103,10 +124,7 @@ async function deliver(subscriptions, build) {
   const report = { total: subscriptions.length, sent: 0, failed: 0, pruned: 0 };
   for (const s of subscriptions) {
     try {
-      await webpush.sendNotification(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        build(s),
-      );
+      await sendOnce({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, build(s));
       report.sent += 1;
     } catch (err) {
       report.failed += 1;
@@ -127,20 +145,32 @@ async function deliver(subscriptions, build) {
 export async function pushNewOrder(business, order) {
   await getVapidKeys();
 
+  /*
+   * Only an active member of THIS business who may see orders is woken: a
+   * removed or disabled account keeps no delivery, and a membership without
+   * order access (a customer login on the same device) never receives private
+   * order information.
+   */
   const { rows } = await q(
-    `SELECT s.id, s.endpoint, s.p256dh, s.auth, s.locale, u.locale AS user_locale
-       FROM push_subscriptions s JOIN users u ON u.id = s.user_id
-      WHERE s.business_id = $1`,
+    `SELECT s.id, s.endpoint, s.p256dh, s.auth, s.locale,
+            u.locale AS user_locale, m.role, m.permissions
+       FROM push_subscriptions s
+       JOIN users u ON u.id = s.user_id
+       JOIN memberships m ON m.user_id = s.user_id AND m.business_id = s.business_id
+      WHERE s.business_id = $1 AND m.status = 'active'`,
     [business.id],
   );
-  if (!rows.length) return { total: 0, sent: 0, failed: 0, pruned: 0 };
+  const recipients = rows.filter((s) =>
+    effectivePermissions(s.role, s.permissions).includes('orders.view'),
+  );
+  if (!recipients.length) return { total: 0, sent: 0, failed: 0, pruned: 0 };
 
   const icon = iconUrl(business);
   const time = orderTime(order.created_at, business.timezone);
   const money = `${Number(order.total || 0).toLocaleString('en-US')} ${business.currency || ''}`.trim();
   const url = `/orders?order=${order.id}`;
 
-  return deliver(rows, (s) => {
+  return deliver(recipients, (s) => {
     const locale = localeOf(business, s.locale, s.user_locale);
     const { title, body } = newOrderMessage(locale, {
       businessName: business.name,
@@ -152,6 +182,7 @@ export async function pushNewOrder(business, order) {
     });
     return JSON.stringify({
       type: 'new_order',
+      category: 'orders',
       orderId: order.id,
       title,
       body,

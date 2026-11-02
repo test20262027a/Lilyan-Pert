@@ -29,7 +29,12 @@ function RequireAuth({ children }) {
      loading signal, so a gate renders nothing at all rather than a second,
      differently-sized copy of it. */
   if (loading) return null;
-  if (!user) return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  // The whole target travels with the redirect, so a notification that was
+  // tapped after the session expired still lands on its own order once the
+  // administrator signs in again.
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: `${location.pathname}${location.search}` }} />;
+  }
   return children;
 }
 

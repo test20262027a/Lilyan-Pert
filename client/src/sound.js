@@ -142,6 +142,25 @@ function audioContext() {
   return sharedCtx;
 }
 
+/**
+ * Opens the shared audio context on the first real gesture.
+ *
+ * Browsers keep a context suspended until the user touches the page, so a
+ * ringtone for an order that arrives later could not start on its own. The
+ * notification provider calls this once from the first pointer/key event,
+ * which is the only thing that lifts the restriction — no fake state and no
+ * silent background context.
+ */
+export function unlockAudio() {
+  const ctx = audioContext();
+  if (!ctx) return Promise.resolve('unsupported');
+  if (ctx.state === 'running') return Promise.resolve('ok');
+  return ctx
+    .resume()
+    .then(() => (ctx.state === 'running' ? 'ok' : 'blocked'))
+    .catch(() => 'blocked');
+}
+
 /** The user's saved level (0–100) as a mastered output gain. */
 function masterGainFor(volume) {
   const level = Math.min(100, Math.max(0, Number(volume)));

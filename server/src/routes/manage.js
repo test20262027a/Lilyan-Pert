@@ -1541,7 +1541,7 @@ router.get(
   '/notifications',
   withBusiness('staff'),
   ah(async (req, res) => {
-    const [orders, reviews, activities, counts] = await Promise.all([
+    const [orders, reviews, activities, counts, business] = await Promise.all([
       q(
         `SELECT n.*, o.order_number FROM notifications n
            LEFT JOIN orders o ON o.id = n.order_id
@@ -1571,6 +1571,13 @@ router.get(
          FROM notifications WHERE business_id = $1`,
         [req.businessId],
       ),
+      // The name and the alert settings travel with the feed, so the global
+      // listener can label a toast and ring the saved tone straight away.
+      q(
+        `SELECT name, name_en, name_ku, name_fa, name_ar, notification_settings
+           FROM businesses WHERE id = $1`,
+        [req.businessId],
+      ),
     ]);
 
     const lists = { orders: orders.rows, reviews: reviews.rows, activities: activities.rows };
@@ -1584,6 +1591,16 @@ router.get(
       ),
       lists,
       unread: { ...unread, total },
+      name: business.rows[0]
+        ? {
+            name: business.rows[0].name,
+            name_en: business.rows[0].name_en,
+            name_ku: business.rows[0].name_ku,
+            name_fa: business.rows[0].name_fa,
+            name_ar: business.rows[0].name_ar,
+          }
+        : null,
+      settings: business.rows[0]?.notification_settings || {},
     });
   }),
 );

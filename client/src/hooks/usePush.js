@@ -1,14 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { del, get, post } from '../api';
-
-function urlBase64ToUint8Array(base64String) {
-  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = window.atob(base64);
-  const output = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i += 1) output[i] = raw.charCodeAt(i);
-  return output;
-}
+import { subscribeDevice, unsubscribeDevice } from '../push/pushClient';
 
 /**
  * What this browser context can actually do about system notifications.
@@ -63,7 +55,6 @@ export function usePush(locale) {
     busy: false,
     testing: false,
   });
-  const regRef = useRef(null);
 
   /*
    * The browser is the authority on this device's subscription; the server is
@@ -75,17 +66,15 @@ export function usePush(locale) {
     const ctx = notificationContext();
 
     let thisEndpoint = '';
-    if (ctx.supported) {
+    if (ctx.supported && ctx.permission === 'granted') {
+      // The shared client re-posts an existing subscription (and stores the
+      // VAPID key for the worker), so this device stays registered after a
+      // reload or an endpoint rotation without asking for anything new.
+      await subscribeDevice(localeRef.current).catch(() => {});
       try {
         const reg = await navigator.serviceWorker.getRegistration();
         const sub = reg ? await reg.pushManager.getSubscription() : null;
-        if (sub) {
-          thisEndpoint = sub.endpoint;
-          await post('/manage/push/subscribe', {
-            subscription: sub.toJSON(),
-            locale: localeRef.current,
-          }).catch(() => {});
-        }
+        thisEndpoint = sub ? sub.endpoint : '';
       } catch {
         thisEndpoint = '';
       }
@@ -153,33 +142,15 @@ export function usePush(locale) {
 
     setState((s) => ({ ...s, ...ctx, busy: true }));
     try {
-      // Called straight from the click — nothing is awaited before it.
-      const permission =
-        ctx.permission === 'granted' ? 'granted' : await Notification.requestPermission();
-      if (permission !== 'granted') {
+      // Called straight from the click — the helper asks for the permission
+      // before it awaits anything else, which is what the browser requires.
+      const result = await subscribeDevice(localeRef.current, { prompt: true });
+      if (!result.ok) {
+        const permission = 'Notification' in window ? Notification.permission : ctx.permission;
         setState((s) => ({ ...s, permission, busy: false }));
-        return { ok: false, reason: permission === 'denied' ? 'denied' : 'dismissed' };
+        return result;
       }
-
-      const reg = regRef.current || (await navigator.serviceWorker.register('/sw.js'));
-      regRef.current = reg;
-      await navigator.serviceWorker.ready;
-
-      const { public_key } = await get('/manage/push/public-key');
-      if (!public_key) throw new Error('NO_VAPID_KEY');
-
-      let sub = await reg.pushManager.getSubscription();
-      if (!sub) {
-        sub = await reg.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(public_key),
-        });
-      }
-      await post('/manage/push/subscribe', {
-        subscription: sub.toJSON(),
-        locale: localeRef.current,
-      });
-      setState((s) => ({ ...s, permission, subscribed: true, busy: false }));
+      setState((s) => ({ ...s, permission: 'granted', subscribed: true, busy: false }));
       await refreshStatus();
       return { ok: true };
     } catch (err) {
@@ -191,12 +162,8 @@ export function usePush(locale) {
   const disable = useCallback(async () => {
     setState((s) => ({ ...s, busy: true }));
     try {
-      const reg = await navigator.serviceWorker.getRegistration();
-      const sub = reg ? await reg.pushManager.getSubscription() : null;
-      if (sub) {
-        await post('/manage/push/unsubscribe', { endpoint: sub.endpoint });
-        await sub.unsubscribe();
-      }
+      const result = await unsubscribeDevice();
+      if (!result.ok) throw new Error(result.error || 'UNSUBSCRIBE_FAILED');
       setState((s) => ({ ...s, subscribed: false, busy: false }));
       await refreshStatus();
       return { ok: true };
