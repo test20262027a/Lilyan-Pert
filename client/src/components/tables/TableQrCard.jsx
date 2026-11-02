@@ -61,6 +61,37 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
     }
   };
 
+  /*
+   * The same code as a vector file, for a print shop that wants to scale it.
+   * SVG carries no pixels at all, so a card, a poster or a window sticker all
+   * stay crisp; the quiet zone is part of the drawing, as it is in the PNG.
+   */
+  const downloadSvg = async () => {
+    if (!menuUrl || downloading) return;
+    setDownloading(true);
+    try {
+      const svg = await QRCode.toString(menuUrl, {
+        type: 'svg',
+        errorCorrectionLevel: 'M',
+        margin: 2,
+        color: { dark: '#000000', light: '#ffffff' },
+      });
+      const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = qrFileName(businessSlug, label).replace(/\.png$/, '.svg');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      toast.success(t('table_download_done'));
+    } catch {
+      toast.error(t('table_qr_failed'));
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const share = async () => {
     if (!menuUrl) return;
     try {
@@ -120,6 +151,17 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
           aria-label={`${t('table_download_qr')} — ${label}`}
         >
           {downloading ? <span className="spinner" /> : <Icon name="download" size={16} />}
+        </button>
+
+        <button
+          type="button"
+          className="tcard__act tcard__act--icon"
+          onClick={downloadSvg}
+          disabled={downloading || !menuUrl}
+          title={t('table_download_svg')}
+          aria-label={`${t('table_download_svg')} — ${label}`}
+        >
+          <Icon name="qr" size={16} />
         </button>
 
         {canManage ? (

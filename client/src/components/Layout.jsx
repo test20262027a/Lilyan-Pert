@@ -6,6 +6,7 @@ import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import AppHeader from './header/AppHeader';
 import Sidebar from './sidebar/Sidebar';
 import AnimatedBackToTop from './backToTop/AnimatedBackToTop';
+import { syncBrandIcons } from '../brandIcons';
 
 /*
  * The authenticated shell: the admin rail (its own component, so navigation
@@ -18,6 +19,15 @@ function Shell() {
 
   // The tab shows this section and this business, in this language.
   useDocumentMetadata(business);
+
+  /* The installed app's icon follows the saved logo. The shell is the one place
+     every administrator passes through, so a logo uploaded on another device (or
+     restored from a backup) still reaches the Home Screen icon — the server
+     decides whether anything actually has to be redrawn. */
+  useEffect(() => {
+    if (!business?.logo_url) return;
+    syncBrandIcons(business.logo_url, { theme: business.theme }).catch(() => {});
+  }, [business?.logo_url, business?.theme]);
 
   // An open mobile drawer owns the screen, so the page behind it must not scroll.
   useEffect(() => {

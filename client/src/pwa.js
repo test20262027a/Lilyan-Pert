@@ -1,10 +1,11 @@
 /**
  * Installation and display-mode wiring.
  *
- * The installed app is a real PWA, not a browser shortcut: `/manifest.webmanifest`
- * declares `display: "standalone"` with `/` as both start URL and scope, so
- * Android Chrome installs it as its own application with no address bar, and
- * every in-app route stays inside the installed window.
+ * The installed app is a real PWA, not a browser shortcut: the manifest served
+ * by the API (`/api/public/manifest.webmanifest`, built from the business logo's
+ * icon set) declares `display: "standalone"` with `/` as both start URL and
+ * scope, so Android Chrome installs it as its own application with no address
+ * bar, and every in-app route stays inside the installed window.
  *
  * Registering the service worker at startup is the other half of installability —
  * the browser only offers a genuine installation for a site that already owns a

@@ -20,6 +20,7 @@ import Users from './pages/Users';
 import Settings from './pages/Settings';
 import TextEditor from './pages/TextEditor';
 import CustomerMenu from './pages/CustomerMenu';
+import TableMenu from './pages/TableMenu';
 import AdminOrderMenu from './pages/AdminOrderMenu';
 
 function RequireAuth({ children }) {
@@ -60,8 +61,14 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      {/* Public customer menu — deliberately outside the authenticated shell. */}
+      {/* Public customer menu — deliberately outside the authenticated shell.
+          `/menu/<slug>` is the address to share; `/m/<slug>` is the same page and
+          stays the alias already-printed QR codes and old links carry. */}
       <Route path="/m/:key" element={<CustomerMenu />} />
+      <Route path="/menu/:key" element={<CustomerMenu />} />
+      {/* The short table QR address: the token resolves the business, then the
+          menu opens with that table already identified. */}
+      <Route path="/t/:token" element={<TableMenu />} />
       <Route
         element={
           <RequireAuth>
@@ -96,6 +103,10 @@ export default function App() {
         <Route path="/menu-settings" element={<RequirePermission perm="menu_settings.view"><Settings initialTab="menu" /></RequirePermission>} />
         <Route path="/text-editor" element={<RequirePermission perm="text_editor.view"><TextEditor /></RequirePermission>} />
       </Route>
+      {/* The admin panel's short hand-typed address. The dashboard itself stays
+          on `/` — the address every existing link, bookmark and notification
+          already points at — so this is an alias, not a second front door. */}
+      <Route path="/admin" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

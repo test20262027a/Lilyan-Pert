@@ -56,7 +56,7 @@ function businessNameIn(business, locale, fallback) {
   return read(locale) || read(fallback) || business?.name || '';
 }
 
-export default function CustomerMenu({ slug, adminMode = false }) {
+export default function CustomerMenu({ slug, adminMode = false, tableToken: scannedToken }) {
   const params = useParams();
   const key = slug || params.key;
   /*
@@ -67,7 +67,11 @@ export default function CustomerMenu({ slug, adminMode = false }) {
    * context — which is also what keeps the admin return control honest.
    */
   const { search } = useLocation();
-  const tableToken = new URLSearchParams(search).get('table') || '';
+  /* A short `/t/<token>` link hands the token in directly (the page resolves the
+     business first); the longer `/m/<slug>?table=<token>` form — what already
+     printed codes carry — still reads it from the address. Same token, same QR
+     context, so neither link can drift from the other. */
+  const tableToken = scannedToken || new URLSearchParams(search).get('table') || '';
   const { t, locale, languageSettings } = useI18n();
   const { user, can } = useAuth();
   const toast = useToast();

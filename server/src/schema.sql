@@ -270,6 +270,25 @@ CREATE TABLE IF NOT EXISTS media (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
+-- The installed application's own icon set, drawn from the REAL business logo.
+--
+-- The admin client rasterises the square PNGs (48 … 1024 plus a maskable 512)
+-- from the picture saved in Business Branding, posts them here, and the public
+-- manifest serves them to Chrome — so the Home Screen icon, the install dialog
+-- and the splash use the restaurant's own mark, and replacing the logo replaces
+-- the icon set without a deploy. One global set: the application installed on a
+-- device is Lilyan Pert itself, never one business's copy of it.
+CREATE TABLE IF NOT EXISTS brand_icons (
+  size        integer NOT NULL,
+  maskable    boolean NOT NULL DEFAULT false,
+  logo_url    text,
+  mime        text NOT NULL DEFAULT 'image/png',
+  byte_size   integer NOT NULL DEFAULT 0,
+  data        text NOT NULL,
+  updated_at  timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (size, maskable)
+);
+
 CREATE TABLE IF NOT EXISTS backups (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,

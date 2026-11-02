@@ -82,6 +82,143 @@ router.get(
   }),
 );
 
+/* ------------------------------------------------- installed app identity */
+
+/**
+ * The application's icon set, as stored by the admin client from the business
+ * logo. `version` is the newest row's timestamp, so the manifest can address
+ * each picture with a URL that changes only when the logo does.
+ */
+async function storedIcons() {
+  const { rows } = await q(
+    'SELECT size, maskable, logo_url, updated_at FROM brand_icons ORDER BY size, maskable',
+  );
+  const version = rows.reduce(
+    (max, row) => Math.max(max, new Date(row.updated_at).getTime()),
+    0,
+  );
+  return { rows, version };
+}
+
+/** What the admin client asks before it regenerates: whose logo is installed? */
+router.get(
+  '/brand/icons/status',
+  ah(async (_req, res) => {
+    const { rows, version } = await storedIcons();
+    res.set('Cache-Control', 'no-cache');
+    res.json({
+      logo_url: rows[0]?.logo_url || null,
+      version,
+      sizes: rows.map((row) => (row.maskable ? `maskable-${row.size}` : row.size)),
+    });
+  }),
+);
+
+/** One stored icon. A versioned URL is immutable; a bare one always revalidates. */
+router.get(
+  '/brand/icons/:file',
+  ah(async (req, res) => {
+    const match = /^(maskable-)?(\d{2,4})\.png$/i.exec(String(req.params.file || ''));
+    if (!match) throw notFound('ICON_NOT_FOUND');
+    const size = Number(match[2]);
+    const { rows } = await q(
+      'SELECT data FROM brand_icons WHERE size = $1 AND maskable = $2',
+      [size, Boolean(match[1])],
+    );
+    if (!rows[0]) throw notFound('ICON_NOT_FOUND');
+    res.set('Content-Type', 'image/png');
+    res.set(
+      'Cache-Control',
+      req.query.v ? 'public, max-age=31536000, immutable' : 'no-cache',
+    );
+    res.send(Buffer.from(rows[0].data, 'base64'));
+  }),
+);
+
+/**
+ * The web app manifest.
+ *
+ * Served from the database rather than a static file so the installed app's
+ * icon is the business's own logo — the same picture the tab, the customer menu
+ * and the receipts use. Until an icon set exists the bundled Lilyan Pert icons
+ * are advertised, so the app is installable either way; `start_url`, `scope` and
+ * `display` are relative, so the same manifest is correct on the preview host
+ * and on the published origin without hardcoding either one.
+ */
+router.get(
+  '/manifest.webmanifest',
+  ah(async (_req, res) => {
+    const { rows, version } = await storedIcons();
+    const { rows: brand } = await q(
+      `SELECT theme FROM businesses ORDER BY is_sample DESC, created_at LIMIT 1`,
+    );
+    const accent = String(brand[0]?.theme?.primary || '');
+    const themeColor = /^#[0-9a-f]{6}$/i.test(accent) ? accent : '#F4F7F6';
+    const icons = rows.length
+      ? rows.map((row) => ({
+          src: `/api/public/brand/icons/${row.maskable ? 'maskable-' : ''}${row.size}.png?v=${version}`,
+          sizes: `${row.size}x${row.size}`,
+          type: 'image/png',
+          purpose: row.maskable ? 'maskable' : 'any',
+        }))
+      : [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          {
+            src: '/icons/icon-maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ];
+    res.set('Content-Type', 'application/manifest+json');
+    res.set('Cache-Control', 'no-cache');
+    res.json({
+      id: '/',
+      name: 'Lilyan Pert',
+      short_name: 'Lilyan Pert',
+      lang: 'en',
+      dir: 'auto',
+      start_url: '/',
+      scope: '/',
+      display: 'standalone',
+      display_override: ['standalone'],
+      handle_links: 'preferred',
+      prefer_related_applications: false,
+      background_color: '#F4F7F6',
+      theme_color: themeColor,
+      icons,
+    });
+  }),
+);
+
+/**
+ * The business a scanned table QR belongs to.
+ *
+ * `/t/<token>` is the short address printed on the table card: it carries the
+ * table's own opaque `qr_token` and nothing else, so the guest's URL names no
+ * business, no table number and no database id. This resolves it to the menu
+ * address the customer panel already serves — a token that is unknown or whose
+ * table was removed is simply not found.
+ */
+router.get(
+  '/table/:token',
+  ah(async (req, res) => {
+    const token = String(req.params.token || '').slice(0, 64);
+    if (!token) throw notFound('TABLE_NOT_FOUND');
+    const { rows } = await q(
+      `SELECT b.slug
+         FROM tables t JOIN businesses b ON b.id = t.business_id
+        WHERE t.qr_token = $1 AND t.active = true
+        LIMIT 1`,
+      [token],
+    );
+    if (!rows[0]) throw notFound('TABLE_NOT_FOUND');
+    res.set('Cache-Control', 'no-cache');
+    res.json({ slug: rows[0].slug });
+  }),
+);
+
 /**
  * Public menu payload. Only customer-safe fields leave the server: no member
  * emails, no user ids, no internal settings.

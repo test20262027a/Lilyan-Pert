@@ -7,17 +7,25 @@
  * carries a secret or an admin permission.
  */
 
-/** The main ordering menu: `/m/<slug>` — no table selected. */
+/** The main ordering menu: `/menu/<slug>` — no table selected. */
 export function publicMenuUrl(origin, slug) {
   if (!origin || !slug) return '';
-  return `${origin}/m/${slug}`;
+  return `${origin}/menu/${slug}`;
 }
 
-/** A single table's menu: `/m/<slug>?table=<qr_token>`. */
+/**
+ * A single table's menu — the short branded address a printed card carries:
+ * `/t/<qr_token>`. The token alone opens the menu in that table's QR context,
+ * so the code says nothing about the business and stays short enough to read.
+ *
+ * The older `/m/<slug>?table=<token>` form is still served, which is what makes
+ * every code printed before this change keep working; without a token there is
+ * nothing table-specific to link to, so the main menu address is returned.
+ */
 export function tableMenuUrl(origin, slug, token) {
-  const base = publicMenuUrl(origin, slug);
-  if (!base || !token) return base;
-  return `${base}?table=${token}`;
+  if (!origin) return '';
+  if (token) return `${origin}/t/${token}`;
+  return publicMenuUrl(origin, slug);
 }
 
 /**

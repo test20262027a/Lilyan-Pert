@@ -1503,6 +1503,63 @@ router.post(
   }),
 );
 
+/* ------------------------------------------------- installed app icons */
+
+/*
+ * The PNG set Chrome shows for the installed application.
+ *
+ * The admin client rasterises every required square from the logo saved in
+ * Business Branding (it already draws the tab icon from the same picture), so
+ * the Home Screen icon is the restaurant's own mark instead of a placeholder.
+ * A post replaces the whole set: a replaced logo can never leave a stale size
+ * behind, and the manifest addresses the new rows with a new version.
+ */
+const APP_ICON_SIZES = [48, 72, 96, 144, 192, 384, 512, 1024];
+
+router.put(
+  '/brand-icons',
+  withBusiness('manager'),
+  perm('settings.edit'),
+  ah(async (req, res) => {
+    const logoUrl = String(req.body?.logo_url || '').slice(0, 500) || null;
+    const submitted = Array.isArray(req.body?.icons) ? req.body.icons : [];
+    const rows = [];
+    for (const icon of submitted) {
+      const size = Number(icon?.size);
+      const maskable = icon?.maskable === true;
+      // The maskable variant is 512 only, as Android's own guidance asks.
+      if (!APP_ICON_SIZES.includes(size) || (maskable && size !== 512)) {
+        throw bad('INVALID_ICON_SIZE');
+      }
+      const match = /^data:image\/png;base64,(.+)$/i.exec(String(icon?.data_url || ''));
+      if (!match) throw bad('INVALID_IMAGE');
+      const buffer = Buffer.from(match[1], 'base64');
+      if (buffer.length > 2 * 1024 * 1024) throw bad('IMAGE_TOO_LARGE');
+      rows.push({ size, maskable, data: match[1], byteSize: buffer.length });
+    }
+    // An empty set is only meaningful when the logo was removed: the installed
+    // app then falls back to the bundled Lilyan Pert icons instead of keeping a
+    // mark the business no longer uses.
+    if (!rows.length) {
+      if (logoUrl) throw bad('NO_ICONS');
+      await q('DELETE FROM brand_icons');
+      return res.json({ ok: true, count: 0 });
+    }
+
+    await tx(async (c) => {
+      await c.query('DELETE FROM brand_icons');
+      for (const row of rows) {
+        await c.query(
+          `INSERT INTO brand_icons (size, maskable, logo_url, mime, byte_size, data, updated_at)
+           VALUES ($1,$2,$3,'image/png',$4,$5,now())`,
+          [row.size, row.maskable, logoUrl, row.byteSize, row.data],
+        );
+      }
+    });
+    res.json({ ok: true, count: rows.length });
+  }),
+);
+
 /** Images are immutable, so they are cached hard. */
 router.get(
   '/media/:id',

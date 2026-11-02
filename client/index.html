@@ -15,7 +15,16 @@
       the app then re-tints that meta from the business theme, so a standalone
       status bar follows the restaurant's own accent.
     -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!--
+      The manifest is served by the API rather than from a static file: it is
+      built from the icon set the administrator's logo produced, so the icon
+      Chrome shows on the Home Screen, in the install dialog and on the splash is
+      the business's own mark. `start_url`, `scope` and `display` inside it are
+      relative, so the same manifest is correct at the preview host and at the
+      published origin. The static /manifest.webmanifest remains as the bundled
+      fallback the API quotes until a logo has produced an icon set.
+    -->
+    <link rel="manifest" href="/api/public/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="application-name" content="Lilyan Pert" />
     <meta name="mobile-web-app-capable" content="yes" />

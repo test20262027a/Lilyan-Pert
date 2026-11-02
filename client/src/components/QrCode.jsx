@@ -16,7 +16,12 @@ export default function QrCode({ value, size = 170, label }) {
         alive = false;
       };
     }
-    QRCode.toDataURL(value, { margin: 1, width: size * 2, errorCorrectionLevel: 'M' })
+    /*
+     * Three device pixels per displayed pixel plus the standard quiet zone:
+     * the code stays sharp on a high-density screen and in the print stylesheet
+     * rather than being upscaled from a phone-sized bitmap.
+     */
+    QRCode.toDataURL(value, { margin: 2, width: size * 3, errorCorrectionLevel: 'M' })
       .then((url) => {
         if (alive) setSrc(url);
       })
