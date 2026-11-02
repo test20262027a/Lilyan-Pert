@@ -61,7 +61,7 @@ router.get(
   '/brand',
   ah(async (_req, res) => {
     const { rows } = await q(
-      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url, theme, menu_settings
+      `SELECT name, name_ku, name_fa, name_ar, name_en, logo_url, login_bg_url, theme, menu_settings
          FROM businesses ORDER BY is_sample DESC, created_at LIMIT 1`,
     );
     const b = rows[0];
@@ -74,6 +74,8 @@ router.get(
       name_ar: b?.name_ar || null,
       name_en: b?.name_en || null,
       logo_url: b ? publicMediaUrl(b.logo_url) : null,
+      // The backdrop the administrator chose for this business's sign-in page.
+      login_bg_url: b ? publicMediaUrl(b.login_bg_url) : null,
       // The sign-in pages paint themselves in the business's own appearance.
       theme: b?.theme || null,
     });
@@ -678,7 +680,7 @@ router.get(
             OR EXISTS (SELECT 1 FROM advertisements a
                         WHERE a.business_id = m.business_id AND a.image_url = $2)
             OR EXISTS (SELECT 1 FROM businesses b
-                        WHERE b.id = m.business_id AND (b.logo_url = $2 OR b.cover_url = $2))
+                        WHERE b.id = m.business_id AND (b.logo_url = $2 OR b.cover_url = $2 OR b.login_bg_url = $2))
           )`,
       [req.params.id, `/api/manage/media/${req.params.id}`],
     );

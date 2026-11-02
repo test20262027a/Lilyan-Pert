@@ -17,6 +17,7 @@ const PROFILE_FIELDS = {
   description: 'text',
   logo_url: 'text',
   cover_url: 'text',
+  login_bg_url: 'text',
   phone: 'text',
   email: 'text',
   website: 'text',

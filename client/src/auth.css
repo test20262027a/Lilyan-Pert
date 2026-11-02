@@ -44,6 +44,20 @@
   transform: scale(1.02);
 }
 
+/* The business's own photograph, once it has decoded: the identical fixed cover
+   geometry as the default, so the swap is invisible except for the image, and
+   the vignette below keeps the form readable over it. */
+.au__bg--custom {
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  animation: au-bg-in 420ms ease both;
+}
+@keyframes au-bg-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Warm vignette for readability plus a soft glow in the theme colour. */
 .au__veil {
   position: fixed;

@@ -171,6 +171,7 @@ export default function Settings({ initialTab }) {
         description: draft.description || '',
         logo_url: draft.logo_url || null,
         cover_url: draft.cover_url || null,
+        login_bg_url: draft.login_bg_url || null,
         phone: draft.phone || '',
         email: draft.email || '',
         website: draft.website || '',

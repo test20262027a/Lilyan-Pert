@@ -49,6 +49,32 @@ function useBrand() {
 
 export function AuthLayout({ children, footer }) {
   const brand = useBrand();
+  /*
+   * The business's own sign-in backdrop. It is shown only once the picture has
+   * decoded, layered over the shipped default behind the same vignette — so a
+   * slow request never paints a half-drawn frame, the layout never shifts, and
+   * a business that has not chosen one keeps the stock photograph.
+   */
+  const loginBg = brand?.login_bg_url || '';
+  const [bgReady, setBgReady] = useState(false);
+  useEffect(() => {
+    if (!loginBg) {
+      setBgReady(false);
+      return undefined;
+    }
+    let live = true;
+    const img = new Image();
+    img.onload = () => {
+      if (live) setBgReady(true);
+    };
+    img.onerror = () => {
+      if (live) setBgReady(false);
+    };
+    img.src = loginBg;
+    return () => {
+      live = false;
+    };
+  }, [loginBg]);
 
   // The tab of the sign-in family names this screen and the business, in the
   // language the visitor is reading.
@@ -68,6 +94,13 @@ export function AuthLayout({ children, footer }) {
     <BrandContext.Provider value={brand}>
       <div className="au">
         <div className="au__bg" aria-hidden="true" />
+        {bgReady && loginBg ? (
+          <div
+            className="au__bg au__bg--custom"
+            style={{ backgroundImage: `url("${loginBg}")` }}
+            aria-hidden="true"
+          />
+        ) : null}
         <div className="au__veil" aria-hidden="true" />
         <LanguageMenu />
         <main className="au__main">

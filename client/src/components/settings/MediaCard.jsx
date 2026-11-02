@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
+import DashIcon from '../dashboard/DashIcon';
 import { useToast } from '../ui';
 import DeleteConfirmationDialog from '../confirm/DeleteConfirmationDialog';
 import { useI18n } from '../../i18n';
@@ -9,8 +10,14 @@ import { uploadImage } from '../../api';
 const MAX_BYTES = 8 * 1024 * 1024;
 
 /**
- * One image card (logo or cover) with a shared four-region structure — label,
- * preview, upload control, guidance — so both cards line up region for region.
+ * One image card with a shared four-region structure — identity, preview,
+ * upload control, guidance — so every card in the branding row lines up region
+ * for region whatever shape its preview keeps.
+ *
+ * `shape` picks the frame: `logo` and `cover` show the whole picture, `login`
+ * shows it exactly as the sign-in page will (a full-bleed cover fit under the
+ * frosted card), because a login backdrop is judged on how it looks behind the
+ * form, not in isolation.
  *
  * The chosen file is shown immediately through a local object URL, then stored
  * through the existing media endpoint and only its final URL enters the draft:
@@ -19,8 +26,11 @@ const MAX_BYTES = 8 * 1024 * 1024;
  */
 export default function MediaCard({
   shape,
+  icon = 'image',
+  tone = 'blue',
   label,
   hint,
+  dims,
   uploadLabel,
   value,
   onChange,
@@ -28,7 +38,7 @@ export default function MediaCard({
   removeTitle,
   removeMessage,
 }) {
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
   const [dragging, setDragging] = useState(false);
@@ -79,9 +89,16 @@ export default function MediaCard({
   const showImage = Boolean(source) && !broken;
 
   return (
-    <section className={`set-media-card set-media-card--${shape} ${dragging ? 'is-dragging' : ''}`}>
+    <section
+      className={`set-media-card set-media-card--${shape} ${dragging ? 'is-dragging' : ''}`}
+      dir={dir}
+    >
       <header className="set-media-card__head">
-        <span className="set-media-card__label">{label}</span>
+        <DashIcon name={icon} tone={tone} size={34} />
+        <div className="set-media-card__titles">
+          <span className="set-media-card__label">{label}</span>
+          {hint ? <span className="set-media-card__desc">{hint}</span> : null}
+        </div>
         {value && canManage ? (
           <button
             type="button"
@@ -126,6 +143,12 @@ export default function MediaCard({
             </span>
           </span>
         )}
+        {/* The login frame is judged behind the frosted card it will sit under. */}
+        {shape === 'login' && showImage ? (
+          <span className="set-media-card__login-mock" aria-hidden="true">
+            <span className="set-media-card__login-form" />
+          </span>
+        ) : null}
         {busy ? <span className="set-media-card__loading" aria-hidden="true" /> : null}
       </div>
 
@@ -133,7 +156,7 @@ export default function MediaCard({
         <label
           className={`set-media-card__upload app-action-button ${canManage && !busy ? '' : 'is-disabled'}`}
         >
-          <span className="button-label">{uploadLabel}</span>
+          <span className="button-label">{value ? t('settings_replace_image') : uploadLabel}</span>
           {busy ? (
             <span className="spinner button-icon" />
           ) : (
@@ -141,7 +164,7 @@ export default function MediaCard({
           )}
           <input
             type="file"
-            accept="image/*"
+            accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"
             hidden
             disabled={!canManage || busy}
             aria-label={value ? t('settings_replace_image') : uploadLabel}
@@ -152,7 +175,7 @@ export default function MediaCard({
             }}
           />
         </label>
-        <p className="set-media-card__note">{hint}</p>
+        {dims ? <p className="set-media-card__dims">{dims}</p> : null}
       </div>
 
       {confirm ? (

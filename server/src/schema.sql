@@ -30,6 +30,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_email text;
 -- Last successful sign-in, written by the login route only.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at timestamptz;
 
+-- The administrator's own sign-in backdrop, beside the logo and the menu cover.
+ALTER TABLE businesses ADD COLUMN IF NOT EXISTS login_bg_url text;
+
 CREATE TABLE IF NOT EXISTS businesses (
   id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   slug          text UNIQUE NOT NULL,

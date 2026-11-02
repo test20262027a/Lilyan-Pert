@@ -327,38 +327,59 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
-/* ------------------------------------------------------- media cards (logo/cover) */
+/* ------------------------------------- media cards (logo / cover / login) */
 
+/* One row of three equal cards. Every card is built from the same four regions
+   (identity, preview, action, guidance), so headers, frames and buttons share
+   one baseline across the row whatever image they hold. */
 .set-media-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
   align-items: stretch;
 }
 
 .set-media-card {
   display: grid;
-  grid-template-rows: auto minmax(200px, 1fr) auto;
+  grid-template-rows: auto auto 1fr;
   gap: 12px;
   height: 100%;
   min-width: 0;
-  padding: 14px;
-  border-radius: 18px;
+  padding: 15px;
+  border-radius: 20px;
   border: 1px solid var(--border);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--surface) 90%, var(--theme-primary-soft)),
-    var(--surface)
-  );
+  background:
+    radial-gradient(125% 88% at 50% -34%, color-mix(in srgb, var(--theme-primary) 12%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 92%, var(--theme-primary-soft)), var(--surface));
   box-shadow:
-    0 1px 2px rgba(23, 26, 43, 0.04),
-    0 10px 24px rgba(23, 26, 43, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.75);
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+    0 1px 2px rgba(23, 26, 43, 0.05),
+    0 10px 24px rgba(23, 26, 43, 0.07),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  transition:
+    transform 220ms cubic-bezier(0.22, 0.8, 0.28, 1),
+    border-color 200ms ease,
+    box-shadow 220ms ease;
 }
 [data-theme='dark'] .set-media-card {
-  background: linear-gradient(180deg, var(--surface-2), var(--surface));
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 26px rgba(0, 0, 0, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  background:
+    radial-gradient(125% 88% at 50% -34%, color-mix(in srgb, var(--theme-primary) 18%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--surface-2), var(--surface));
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.4),
+    0 12px 26px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+@media (hover: hover) {
+  .set-media-card:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--theme-primary) 34%, var(--border));
+    box-shadow:
+      0 2px 4px rgba(23, 26, 43, 0.06),
+      0 20px 34px -16px color-mix(in srgb, var(--theme-primary) 34%, transparent),
+      0 10px 24px rgba(23, 26, 43, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  }
+  .set-media-card:hover .dash-ic { transform: translateY(-1px) scale(1.04); }
 }
 .set-media-card.is-dragging {
   border-color: var(--theme-primary);
@@ -367,62 +388,67 @@
     0 12px 26px color-mix(in srgb, var(--theme-primary) 14%, transparent);
 }
 
+/* Identity: the colored 3D tile, the title and one line of orientation. The
+   remove control sits flush to the inline end of every header. */
 .set-media-card__head {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 10px;
-  min-height: 24px;
+  min-height: 38px;
 }
-.set-media-card__label { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.set-media-card__titles {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.set-media-card__label { font-size: 13px; font-weight: 800; color: var(--text); }
+.set-media-card__desc { font-size: 11.5px; line-height: 1.55; color: var(--muted); }
 .set-media-card__remove {
   flex: none;
+  margin-inline-start: auto;
   width: 26px;
   height: 26px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
+  border-radius: 9px;
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--muted);
   cursor: pointer;
-  transition: background 160ms ease, color 160ms ease, border-color 160ms ease;
+  transition: background 160ms ease, color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 .set-media-card__remove:hover {
   background: var(--danger-soft, #fdeaea);
   border-color: color-mix(in srgb, var(--danger) 35%, transparent);
   color: var(--danger);
+  transform: rotate(90deg);
 }
 .set-media-card__remove:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
+/* All three frames keep one landscape ratio, so the three cards stay the same
+   height on every screen and no preview is squashed. `min-height: 0` on
+   purpose: a minimum height on an aspect-ratio box resolves into a minimum
+   WIDTH, which is what used to push the frame out of the card on a phone. */
 .set-media-card__preview {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Never wider than the card it sits in, whatever shape it is asked to keep. */
   width: 100%;
   max-width: 100%;
   min-width: 0;
+  min-height: 0;
   box-sizing: border-box;
-  min-height: 200px;
+  aspect-ratio: 16 / 9;
   border-radius: 14px;
   border: 1px solid var(--border);
-  background: var(--surface-2);
+  background:
+    radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--theme-primary) 8%, transparent), transparent 70%),
+    var(--surface-2);
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
-}
-/* The cover is a wide landscape frame; the logo card stretches to match it.
-   `min-height: 0` on purpose: a minimum height on an aspect-ratio box resolves
-   into a minimum WIDTH, which is what used to push the frame out of the card on
-   a phone. The frame keeps its ratio from its own width instead. */
-.set-media-card--cover { grid-template-rows: auto auto auto; }
-.set-media-card--cover .set-media-card__preview { aspect-ratio: 16 / 9; min-height: 0; }
-.set-media-card--logo .set-media-card__preview {
-  background:
-    radial-gradient(120% 120% at 50% 0%, color-mix(in srgb, var(--theme-primary) 7%, transparent), transparent 70%),
-    var(--surface-2);
 }
 .set-media-card.is-dragging .set-media-card__preview {
   border-style: dashed;
@@ -430,7 +456,8 @@
   background: var(--theme-primary-soft);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 15%, transparent);
 }
-/* Both previews show the whole picture, un-cropped and un-stretched. */
+/* The logo and the cover show the whole picture; the login frame shows exactly
+   what the sign-in page does with it — a full-bleed cover fit. */
 .set-media-card__preview img {
   width: 100%;
   height: 100%;
@@ -441,6 +468,35 @@
 .set-media-card--logo .set-media-card__preview img {
   object-fit: contain;
   padding: 16px;
+}
+.set-media-card--login .set-media-card__preview img { object-fit: cover; }
+
+/* The login page as the visitor will meet it: the chosen photograph, the same
+   warm vignette, and the frosted card standing where the form sits. */
+.set-media-card__login-mock {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(58% 46% at 50% 44%, color-mix(in srgb, var(--theme-primary) 18%, transparent), transparent 72%),
+    radial-gradient(120% 85% at 50% 42%, rgba(12, 8, 5, 0.1), rgba(12, 8, 5, 0.66) 78%);
+  pointer-events: none;
+}
+.set-media-card__login-form {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  width: 30%;
+  max-width: 92px;
+  aspect-ratio: 3 / 4;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.42);
+  background: linear-gradient(158deg, rgba(58, 42, 32, 0.52), rgba(20, 15, 12, 0.72));
+  box-shadow:
+    0 14px 24px -12px rgba(0, 0, 0, 0.75),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
 }
 
 .set-media-card__empty {
@@ -499,6 +555,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
+  min-width: 0;
 }
 .set-media-card__upload {
   display: inline-flex;
@@ -538,13 +595,13 @@
 .set-media-card__upload:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
 .set-media-card__upload.is-disabled { opacity: 0.55; cursor: not-allowed; box-shadow: none; }
 .set-media-card__upload .spinner { border-color: color-mix(in srgb, var(--theme-primary) 35%, transparent); border-top-color: var(--theme-primary-strong); }
-/* Two guidance lines are reserved in both cards, so the upload buttons sit on
-   one shared baseline even when one hint wraps further than the other. */
-.set-media-card__note {
+/* The recommendation under the control. Both lines are reserved in every card,
+   so the three cards finish on the same height even when one wraps further. */
+.set-media-card__dims {
   margin: 0;
-  min-height: 36px;
-  font-size: 11.5px;
-  line-height: 1.55;
+  min-height: 32px;
+  font-size: 11px;
+  line-height: 1.5;
   color: var(--muted);
 }
 
@@ -560,8 +617,9 @@
 
 /* -------------------------------------------------------------- responsive */
 
-@media (max-width: 960px) {
-  .set-media-grid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+/* Tablet: two balanced columns rather than three squeezed previews. */
+@media (max-width: 1100px) {
+  .set-media-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 760px) {
@@ -571,16 +629,14 @@
   .set-tab__icon { width: 24px; height: 24px; border-radius: 7px; }
   .set-tabs__fade { width: 26px; }
 
-  /* Both media cards stack; the cover keeps its landscape frame on top. */
+  /* Phone: one full-width card at a time, compact spacing, no sideways scroll. */
   .set-media-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; width: 100%; min-width: 0; }
-  .set-media-card { grid-template-rows: auto auto auto; min-width: 0; }
-  .set-media-card--cover .set-media-card__preview { aspect-ratio: 16 / 9; min-height: 0; }
-  .set-media-card--logo .set-media-card__preview { min-height: 180px; max-height: 240px; }
+  .set-media-card { grid-template-rows: auto auto auto; min-width: 0; padding: 12px; }
   /* The footer never pushes past the card: the button shrinks and the guidance
      line wraps instead of forcing the row wider than the screen. */
   .set-media-card__foot { width: 100%; min-width: 0; }
   .set-media-card__upload { max-width: 100%; }
-  .set-media-card__note { min-height: 0; width: 100%; }
+  .set-media-card__dims { min-height: 0; width: 100%; }
   .set-media-card__empty { padding: 14px; }
   .set-media-card__empty-text { max-width: 100%; }
 }
@@ -591,6 +647,7 @@
   .set-media-card { padding: 10px; gap: 10px; }
   .set-media-card__preview { border-radius: 12px; }
   .set-media-card--logo .set-media-card__preview img { padding: 10px; }
+  .set-media-card__head { gap: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

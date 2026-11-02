@@ -31,13 +31,13 @@ const MODULE_DEFS = {
     table: 'businesses',
     columns: [
       'id', 'slug', 'name', 'name_ku', 'name_fa', 'name_ar', 'name_en',
-      'description', 'logo_url', 'cover_url', 'phone', 'email', 'website',
+      'description', 'logo_url', 'cover_url', 'login_bg_url', 'phone', 'email', 'website',
       'address', 'addresses', 'city', 'latitude', 'longitude', 'socials',
       'business_type', 'timezone', 'currency',
     ],
     restoreColumns: [
       'name', 'name_ku', 'name_fa', 'name_ar', 'name_en',
-      'description', 'logo_url', 'cover_url', 'phone', 'email', 'website',
+      'description', 'logo_url', 'cover_url', 'login_bg_url', 'phone', 'email', 'website',
       'address', 'addresses', 'city', 'latitude', 'longitude', 'socials',
       'business_type', 'timezone', 'currency',
     ],

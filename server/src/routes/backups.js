@@ -208,7 +208,7 @@ async function loadBackup(req) {
 /* ------------------------------------------------------------ image references */
 
 const IMAGE_FIELDS = {
-  business_profile: ['logo_url', 'cover_url'],
+  business_profile: ['logo_url', 'cover_url', 'login_bg_url'],
   menu_products: ['image_url'],
   advertisements: ['image_url'],
 };
