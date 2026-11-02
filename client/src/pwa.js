@@ -28,12 +28,15 @@ export function registerServiceWorker() {
  * It reflects the browser's own answer, so a normal browser tab is never dressed
  * up as an installed app; CSS can key on `[data-display-mode='standalone']`.
  */
-export function applyDisplayMode() {
-  const standalone =
-    typeof window !== 'undefined' &&
+export function isStandalone() {
+  if (typeof window === 'undefined') return false;
+  const displayMode =
     typeof window.matchMedia === 'function' &&
     window.matchMedia('(display-mode: standalone)').matches;
   const iosStandalone = typeof navigator !== 'undefined' && navigator.standalone === true;
-  document.documentElement.dataset.displayMode =
-    standalone || iosStandalone ? 'standalone' : 'browser';
+  return Boolean(displayMode || iosStandalone);
+}
+
+export function applyDisplayMode() {
+  document.documentElement.dataset.displayMode = isStandalone() ? 'standalone' : 'browser';
 }

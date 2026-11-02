@@ -49,8 +49,11 @@
           root.style.setProperty('--primary', theme.primary);
           if (theme.ink) root.style.setProperty('--primary-ink', theme.ink);
           root.dataset.boot = 'cached';
+          /* The cached status-bar colour, already varied for the saved
+             light/dark mode, so a cold start never flashes the wrong tint
+             and the system bar is correct before any module runs. */
           var meta = document.querySelector('meta[name="theme-color"]');
-          if (meta) meta.setAttribute('content', theme.primary);
+          if (meta) meta.setAttribute('content', theme.bar || theme.primary);
         } catch (e) {}
       })();
     </script>

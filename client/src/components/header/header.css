@@ -10,7 +10,13 @@
   z-index: 30;
   /* Same small inline margin as the page canvas, so the header card and the
      page content share one edge at every width. */
-  padding-block: 12px 8px;
+  /*
+   * In the installed app the page is painted edge to edge under the Android
+   * status bar (viewport-fit=cover), so the header card starts below the inset
+   * instead of underneath it. In a browser tab the inset is 0 and the header
+   * keeps exactly its original spacing.
+   */
+  padding-block: calc(12px + env(safe-area-inset-top, 0px)) 8px;
   padding-inline: clamp(10px, 1.15vw, 20px);
   background: var(--bg);
 }

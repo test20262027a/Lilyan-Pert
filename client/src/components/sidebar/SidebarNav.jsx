@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { canSee } from '../nav/navConfig';
+import { isStandalone } from '../../pwa';
 
 /*
  * The navigation tree itself. Direct destinations are real links; an expandable
@@ -66,14 +67,17 @@ export default function SidebarNav({
   return items
     .filter((item) => canSee(item, roles))
     .map((item) => {
-      // The customer menu is a public page of this business — opened in its own tab.
+      // The customer menu is a public page of this business — opened in its own
+      // tab from a browser. Inside the installed app a new tab would leave the
+      // standalone window and show a browser address bar, so there it opens in
+      // the app itself (the customer panel carries a Back to Admin control).
       if (item.preview) {
         return (
           <a
             key={item.key}
             className="nav-link"
             href={previewHref || '#'}
-            target="_blank"
+            target={isStandalone() ? undefined : '_blank'}
             rel="noreferrer"
             data-tip={collapsed ? t(item.key) : undefined}
             data-tip-side="inline-end"

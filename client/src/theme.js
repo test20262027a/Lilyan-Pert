@@ -64,13 +64,42 @@ function inkFor(hex) {
  */
 const CACHE_KEY = 'lilyan.theme.v1';
 
+/*
+ * The Android status-bar colour for a theme (meta[name="theme-color"]).
+ *
+ * Light mode paints the accent itself, so the system status bar carries the
+ * business colour the staff picked. Dark mode keeps the same hue but brings it
+ * down toward the night canvas: the bar then belongs to the dark interface and
+ * the operating system's light status icons keep their contrast on it. Android
+ * decides the icon colour from the bar's luminance, so the two modes are kept
+ * far enough apart for that decision to come out right in both.
+ */
+function statusBarColor(primary, mode) {
+  const match = /^#?([0-9a-f]{6})$/i.exec(String(primary || '').trim());
+  if (!match) return PRESETS.midnight.primary;
+  if (mode !== 'dark') return `#${match[1].toUpperCase()}`;
+  // The night canvas is #0e1017; the bar keeps 45% of the accent in it.
+  const dark = [0x0e, 0x10, 0x17];
+  const value = parseInt(match[1], 16);
+  const channels = [value >> 16 & 255, value >> 8 & 255, value & 255].map((light, index) =>
+    Math.round(light * 0.45 + dark[index] * 0.55),
+  );
+  return `#${channels.map((n) => n.toString(16).padStart(2, '0')).join('')}`.toUpperCase();
+}
+
 export function rememberTheme(theme, ownerId) {
   try {
     const mode = theme?.mode === 'dark' ? 'dark' : 'light';
     const primary = primaryFor(theme);
     localStorage.setItem(
       CACHE_KEY,
-      JSON.stringify({ id: ownerId || null, mode, primary, ink: inkFor(primary) }),
+      JSON.stringify({
+        id: ownerId || null,
+        mode,
+        primary,
+        ink: inkFor(primary),
+        bar: statusBarColor(primary, mode),
+      }),
     );
   } catch {
     /* Private mode: the first frame simply paints the neutral splash. */
@@ -108,8 +137,10 @@ export function applyTheme(theme, ownerId) {
   // Foreground for every filled accent surface; the design tokens derive the
   // rest of the theme layer from these two values.
   root.style.setProperty('--primary-ink', inkFor(primary));
+  // The Android status bar follows the theme live: no reload, no restart of the
+  // installed app — the browser repaints its system bar from this meta.
   const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.setAttribute('content', primary);
+  if (meta) meta.setAttribute('content', statusBarColor(primary, mode));
   rememberTheme({ mode, primary }, ownerId);
 }
 

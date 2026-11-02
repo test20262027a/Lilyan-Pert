@@ -5,6 +5,7 @@ import { Alert, Select, SwitchRow } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDigits } from '../../format';
 import { playSound, soundSupported, SOUND_OPTIONS, DEFAULT_SOUND, DEFAULT_VOLUME } from '../../sound';
+import { isStandalone } from '../../pwa';
 import './notifSettings.css';
 
 /* The app's own address, so "open in a new tab" leaves the preview frame. */
@@ -221,7 +222,7 @@ export default function NotificationSettings({
                 <a
                   className="btn btn--sm btn--primary notif-note__action"
                   href={appHref()}
-                  target="_blank"
+                  target={isStandalone() ? undefined : '_blank'}
                   rel="noopener noreferrer"
                 >
                   <Icon name="link" size={14} />

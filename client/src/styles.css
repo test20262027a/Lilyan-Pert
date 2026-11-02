@@ -455,10 +455,12 @@ a { color: var(--primary); }
   overflow: hidden;
 }
 
-/* Branding stays pinned at the top while the tree below it scrolls. */
+/* Branding stays pinned at the top while the tree below it scrolls.
+   The top padding carries the installed app's status-bar inset, so the mark is
+   never drawn under the Android status bar inside the mobile drawer. */
 .sidebar .brand {
   flex: none;
-  padding: 14px 14px 11px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 14px 11px;
   border-bottom: 1px solid var(--navy-line);
   background: var(--navy);
 }
@@ -1774,7 +1776,7 @@ table.data tr:hover td { background: var(--surface-2); }
      * first navigation row (the tree's own 8px top padding). It therefore never
      * covers the Dashboard row or its active plate, in either rail state.
      */
-    inset-block-start: calc(var(--sidebar-header-height) - 32px);
+    inset-block-start: calc(var(--sidebar-header-height) + env(safe-area-inset-top, 0px) - 32px);
     z-index: 3;
   }
 

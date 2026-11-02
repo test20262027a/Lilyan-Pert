@@ -5,6 +5,7 @@ import QrCode from '../QrCode';
 import { useToast } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { copyText, qrFileName } from './menuUrl';
+import { isStandalone } from '../../pwa';
 import { fmtDigits } from '../../format';
 
 /*
@@ -93,7 +94,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
       <a
         className="tcard__qr"
         href={menuUrl}
-        target="_blank"
+        target={isStandalone() ? undefined : '_blank'}
         rel="noreferrer"
         title={t('table_open_menu')}
       >
