@@ -4,6 +4,7 @@ import Icon from '../Icon';
 import { Alert, Select } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import ModalActions from '../ModalActions';
+import GlobalDatePicker from '../date/GlobalDatePicker';
 import { promotionsErrorText } from './errorText';
 import { PromotionModalArtwork } from './PromotionsArtwork';
 
@@ -183,32 +184,31 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
             </label>
           </div>
 
-          {/* 4 — validity window */}
+          {/* 4 — validity window. The app's own calendar opens here, never the
+              operating system's date dialog. */}
           <div className="promo-row">
-            <label className="promo-field">
+            <div className="promo-field">
               <span className="promo-label">{t('disc_starts_at')}</span>
-              <span className="promo-date">
-                <input
-                  className="promo-input"
-                  type="date"
-                  value={values.starts_at || ''}
-                  onChange={(event) => set('starts_at', event.target.value)}
-                />
-                <Icon name="calendar" size={16} />
-              </span>
-            </label>
-            <label className="promo-field">
+              <GlobalDatePicker
+                value={values.starts_at || ''}
+                onChange={(next) => set('starts_at', next)}
+                max={values.ends_at || undefined}
+                fieldClassName="promo-input"
+                ariaLabel={t('disc_starts_at')}
+                placeholder={t('order_select_date')}
+              />
+            </div>
+            <div className="promo-field">
               <span className="promo-label">{t('disc_ends_at')}</span>
-              <span className="promo-date">
-                <input
-                  className="promo-input"
-                  type="date"
-                  value={values.ends_at || ''}
-                  onChange={(event) => set('ends_at', event.target.value)}
-                />
-                <Icon name="calendar" size={16} />
-              </span>
-            </label>
+              <GlobalDatePicker
+                value={values.ends_at || ''}
+                onChange={(next) => set('ends_at', next)}
+                min={values.starts_at || undefined}
+                fieldClassName="promo-input"
+                ariaLabel={t('disc_ends_at')}
+                placeholder={t('order_select_date')}
+              />
+            </div>
           </div>
 
           {/* 5 — active switch */}

@@ -963,6 +963,7 @@ export default {
   settings_status_alerts: 'ئاگادارکردنەوەی گۆڕینی دۆخ (تەنها ناوەوە)',
   settings_daily_summary: 'کورتەی ڕۆژانە',
   settings_currency: 'دراو',
+  settings_currency_auto: 'بەپێی زمانی چالاک بە شێوەی خۆکار دیاری دەکرێت.',
   settings_timezone: 'ناوچەی کات',
   settings_tax_rate: 'باج (%)',
   settings_service_charge_rate: 'خزمەتگوزاری (%)',

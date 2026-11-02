@@ -3,6 +3,9 @@ import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { addDaysToDay, fmtWeekdayShort } from '../../format';
+// The calendar's own stylesheet travels with the component, so every form that
+// opens a date (not only the Orders page) gets the same calendar.
+import './datePickerPopover.css';
 
 /*
  * The Orders calendar.

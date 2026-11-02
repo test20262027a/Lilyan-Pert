@@ -61,6 +61,7 @@
 
 .au__main {
   width: min(100%, 430px);
+  min-width: 0;
   display: grid;
   /* Same bound one level down, so the card can never inherit that max-content. */
   grid-template-columns: minmax(0, 1fr);
@@ -161,6 +162,8 @@
   position: relative;
   isolation: isolate;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   padding: 28px 30px 22px;
   border-radius: 30px;
   border: 1px solid var(--au-line);
@@ -243,6 +246,10 @@
 .au-card__title {
   margin: 0;
   text-align: center;
+  /* Kurdish/Arabic ascenders and descenders need more than the Latin default,
+     or a wrapped title crowds its own lines. */
+  line-height: 1.35;
+  overflow-wrap: break-word;
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.015em;
@@ -259,11 +266,28 @@
   color: var(--au-ink-soft);
 }
 
-.au-form { display: grid; gap: 14px; }
+/*
+ * Every level of the form is bounded on purpose. A grid item's default
+ * `min-width: auto` takes its widest content — here a text input's intrinsic
+ * width — as a floor, so without these lines the fields grow wider than the
+ * card on a phone and are cropped by the viewport edge (in RTL the whole left
+ * side, icon and rounded corner included, falls off-screen).
+ */
+.au-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  min-width: 0;
+}
 
 /* --------------------------------------------------------------- fields */
 
-.au-field { display: grid; gap: 7px; }
+.au-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+  min-width: 0;
+}
 
 .au-field__label {
   font-size: 12.5px;
@@ -276,6 +300,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
   min-height: 54px;
   padding: 0 14px;
   border-radius: 16px;
@@ -367,6 +393,8 @@
   justify-content: center;
   gap: 10px;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 55px;
   margin-top: 4px;
   border: 0;
@@ -449,8 +477,10 @@
 .au-note {
   display: flex;
   gap: 7px;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
   margin: 14px 0 0;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.09);
@@ -490,10 +520,41 @@
   .au-card__sub { margin-bottom: 18px; }
 }
 
+/* Phones: a card that fills the screen with a real margin on both sides, a
+   calmer type scale, and fields that never depend on their own intrinsic
+   width. */
+@media (max-width: 480px) {
+  .au { padding: 76px 14px 28px; }
+  .au-card {
+    padding: 24px 18px 18px;
+    border-radius: 24px;
+  }
+  .au-card__title { font-size: clamp(19px, 5.6vw, 22px); }
+  .au-card__sub { font-size: 13px; line-height: 1.65; margin-bottom: 16px; }
+  .au-field__box { min-height: 50px; padding: 0 12px; }
+  .au-field__box input { height: 48px; font-size: 14.5px; }
+  .au-btn { min-height: 50px; border-radius: 15px; font-size: 15px; }
+  .au-note { font-size: 11px; }
+}
+
 @media (max-width: 380px) {
   .au { padding-inline: 12px; }
   .au-card { padding: 22px 16px 20px; }
   .au__lang .lysel__trigger { padding: 0 10px; font-size: 12px; }
+}
+
+/* Small phones (320–360px): the tightest this card is ever drawn. */
+@media (max-width: 360px) {
+  .au { padding-inline: 10px; }
+  .au-card { padding: 20px 14px 16px; border-radius: 20px; }
+  .au-card__logo img { max-height: 54px; }
+  .au-field { gap: 6px; }
+  .au-field__label { font-size: 12px; }
+  .au-field__box { min-height: 46px; padding: 0 10px; gap: 8px; }
+  .au-field__box input { height: 44px; font-size: 14px; }
+  .au-field__toggle { width: 30px; height: 30px; }
+  .au-btn { min-height: 46px; }
+  .au-note { font-size: 10.5px; }
 }
 
 /* A short viewport should scroll the card rather than crop it. */

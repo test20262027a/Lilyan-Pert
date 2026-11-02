@@ -718,27 +718,6 @@
 .ad-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .ad-field__label { font-size: 12px; font-weight: 700; color: var(--text-soft); }
 
-.ad-date { position: relative; display: block; }
-.ad-date .ad-input { padding-inline-end: 36px; }
-.ad-date > svg {
-  position: absolute;
-  inset-inline-end: 11px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--ad-muted);
-  pointer-events: none;
-}
-/* The native picker glyph is replaced by the calendar icon above; the field
-   stays clickable and still opens the browser's picker. */
-.ad-date .ad-input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
 .ad-switch {
   display: flex;
   align-items: center;

@@ -356,6 +356,20 @@
 * { box-sizing: border-box; }
 
 html, body, #root { margin: 0; padding: 0; }
+#root { min-width: 0; }
+
+/*
+ * Responsive floor for the whole app.
+ *
+ * Media can never be wider than the column that holds it, a form control can
+ * never be wider than its field, and no shell region may establish a min-width
+ * that a 320px screen cannot satisfy. Everything below is a cap, never a fixed
+ * size, so the desktop layout is untouched.
+ */
+img, svg, video, canvas, iframe { max-width: 100%; }
+input, select, textarea, button { max-width: 100%; }
+.app-shell, .main, .page, .content { min-width: 0; }
+img { height: auto; }
 
 /*
  * The scrollbar gutter is always reserved, never gained or lost mid-session.
@@ -373,6 +387,10 @@ body {
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
   overflow-x: hidden;
+  /* A long word — a URL, an email, an order code — wraps instead of pushing
+     its card wider than the phone. Truncation (`nowrap` + ellipsis) still wins
+     where a row is designed to clip. */
+  overflow-wrap: break-word;
 }
 
 h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.01em; }

@@ -5,6 +5,7 @@ import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
 import { toZonedInput } from '../../format';
 import ModalActions from '../ModalActions';
+import GlobalDatePicker from '../date/GlobalDatePicker';
 import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import AdImageField from './AdImageField';
 import { adErrorText } from './errorText';
@@ -285,30 +286,36 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
 
           {/* 5 — schedule */}
           <div className="ad-row">
-            <label className="ad-field">
+            <div className="ad-field">
               <span className="ad-field__label">{t('ads_start_date')}</span>
-              <span className="ad-date">
-                <input
-                  className="ad-input"
-                  type="datetime-local"
-                  value={values.starts_at}
-                  onChange={(event) => set('starts_at', event.target.value)}
-                />
-                <Icon name="calendar" size={15} />
-              </span>
-            </label>
-            <label className="ad-field">
+              <GlobalDatePicker
+                value={values.starts_at}
+                onChange={(next) => set('starts_at', next)}
+                max={values.ends_at || undefined}
+                withTime
+                timeZone={timeZone}
+                fieldClassName="ad-input"
+                ariaLabel={t('ads_start_date')}
+                placeholder={t('order_select_date')}
+              />
+            </div>
+            <div className="ad-field">
               <span className="ad-field__label">{t('ads_end_date')}</span>
-              <span className="ad-date">
-                <input
-                  className="ad-input"
-                  type="datetime-local"
-                  value={values.ends_at}
-                  onChange={(event) => set('ends_at', event.target.value)}
-                />
-                <Icon name="calendar" size={15} />
-              </span>
-            </label>
+              <GlobalDatePicker
+                value={values.ends_at}
+                onChange={(next) => set('ends_at', next)}
+                min={
+                  // The end day may share the start day, so only a later start
+                  // day is blocked — the same rule the server validates.
+                  values.starts_at ? String(values.starts_at).slice(0, 10) : undefined
+                }
+                withTime
+                timeZone={timeZone}
+                fieldClassName="ad-input"
+                ariaLabel={t('ads_end_date')}
+                placeholder={t('order_select_date')}
+              />
+            </div>
           </div>
 
           {/* 6 — placement and priority */}

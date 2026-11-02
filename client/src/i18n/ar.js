@@ -961,6 +961,7 @@ export default {
   settings_status_alerts: 'تنبيهات تغيير الحالة (داخلية فقط)',
   settings_daily_summary: 'ملخص يومي',
   settings_currency: 'العملة',
+  settings_currency_auto: 'يُختار تلقائيًا حسب اللغة النشطة.',
   settings_timezone: 'المنطقة الزمنية',
   settings_tax_rate: 'الضريبة (٪)',
   settings_service_charge_rate: 'رسم الخدمة (٪)',

@@ -456,27 +456,6 @@
   gap: 12px;
 }
 
-.promo-date { position: relative; display: block; }
-.promo-date .promo-input { padding-inline-end: 38px; }
-.promo-date > svg {
-  position: absolute;
-  inset-inline-end: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--pr-muted);
-  pointer-events: none;
-}
-/* The native picker glyph is replaced by the calendar icon above; the whole
-   field stays clickable and still opens the browser's date picker. */
-.promo-date .promo-input::-webkit-calendar-picker-indicator {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
 .promo-switch-row {
   display: flex;
   align-items: center;

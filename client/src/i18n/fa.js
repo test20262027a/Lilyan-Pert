@@ -962,6 +962,7 @@ export default {
   settings_status_alerts: 'هشدار تغییر وضعیت (فقط درون‌برنامه)',
   settings_daily_summary: 'خلاصه روزانه',
   settings_currency: 'واحد پول',
+  settings_currency_auto: 'به‌صورت خودکار از زبان فعال انتخاب می‌شود.',
   settings_timezone: 'منطقه زمانی',
   settings_tax_rate: 'مالیات (٪)',
   settings_service_charge_rate: 'حق سرویس (٪)',

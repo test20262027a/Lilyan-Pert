@@ -1,5 +1,6 @@
 import { LOCALES, useI18n } from '../../i18n';
 import { Select } from '../ui';
+import Icon from '../Icon';
 import { SettingsCard } from './SettingsCard';
 import { SetField } from './fields';
 import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
@@ -12,12 +13,25 @@ import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
 const NAME_ORDER = ['en', 'ku', 'fa', 'ar'];
 const BUSINESS_TYPES = ['cafe', 'restaurant', 'fast_food', 'bakery', 'juice_bar'];
 
+/*
+ * The business currency follows the interface language: a Kurdish or Arabic
+ * owner works in Iraqi Dinar, a Persian owner in Rial, an English owner in US
+ * Dollars. It is displayed only — the record's accounting currency is never
+ * rewritten here, and no stored price or past order is ever converted.
+ */
+const CURRENCY_BY_LANGUAGE = { ku: 'IQD', ar: 'IQD', fa: 'IRR', en: 'USD' };
+
 export default function BusinessInfoTab({ draft, setField, setVal, canManage }) {
-  const { t, enabledLanguages } = useI18n();
+  const { t, enabledLanguages, locale } = useI18n();
   const locales = NAME_ORDER
     .filter((code) => enabledLanguages.includes(code))
     .map((code) => LOCALES.find((l) => l.code === code))
     .filter(Boolean);
+
+  /* The active language's currency, falling back to the configured one when a
+     language has no mapping or is no longer enabled. */
+  const activeLanguage = enabledLanguages.includes(locale) ? locale : enabledLanguages[0];
+  const currency = CURRENCY_BY_LANGUAGE[activeLanguage] || draft.currency || '';
 
   return (
     <>
@@ -69,8 +83,24 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
               disabled={!canManage}
             />
           </SetField>
-          <SetField label={t('settings_currency')}>
-            <input className="input" dir="ltr" value={draft.currency || ''} onChange={setField('currency')} disabled={!canManage} />
+          {/* Read-only on purpose: the currency is chosen by the language, so it
+              is shown in a locked field rather than a disabled control — the
+              value stays visible and readable in any theme. */}
+          <SetField label={t('settings_currency')} hint={t('settings_currency_auto')}>
+            <span className="set-locked">
+              <input
+                className="input"
+                dir="ltr"
+                value={currency}
+                readOnly
+                aria-readonly="true"
+                tabIndex={-1}
+                aria-label={t('settings_currency')}
+              />
+              <span className="set-locked__icon" aria-hidden="true">
+                <Icon name="lock" size={15} />
+              </span>
+            </span>
           </SetField>
           <SetField label={t('settings_timezone')}>
             <Select

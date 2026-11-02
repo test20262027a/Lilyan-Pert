@@ -964,6 +964,7 @@ export default {
   settings_status_alerts: 'Status change alerts (in-app only)',
   settings_daily_summary: 'Daily summary',
   settings_currency: 'Currency',
+  settings_currency_auto: 'Chosen automatically from the active language.',
   settings_timezone: 'Timezone',
   settings_tax_rate: 'Tax rate (%)',
   settings_service_charge_rate: 'Service charge (%)',

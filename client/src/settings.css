@@ -210,6 +210,28 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-primary) 20%, transparent);
 }
 .set-field__hint { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+/* A value the owner may read but not edit (the language-driven currency). */
+.set-locked { position: relative; display: block; min-width: 0; }
+.set-locked .input {
+  padding-inline-end: 38px;
+  cursor: default;
+  background: color-mix(in srgb, var(--surface-2) 70%, var(--surface));
+  color: var(--text-soft);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.set-locked .input:focus { box-shadow: none; border-color: var(--border-strong); }
+.set-locked__icon {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  pointer-events: none;
+}
 .set-field__error { font-size: 11.5px; color: var(--danger); font-weight: 600; }
 
 .set-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
