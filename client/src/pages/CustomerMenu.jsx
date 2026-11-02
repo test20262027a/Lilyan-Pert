@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import Icon from '../components/Icon';
 import { EmptyState, Money, useToast } from '../components/ui';
 import GlobalBrandedLoader from '../components/brand/GlobalBrandedLoader';
@@ -59,6 +59,15 @@ function businessNameIn(business, locale, fallback) {
 export default function CustomerMenu({ slug, adminMode = false }) {
   const params = useParams();
   const key = slug || params.key;
+  /*
+   * The scanned table token decides the ordering context with the server: a
+   * menu carrying one is a QR table session. Read from the router, not from a
+   * one-off `window.location` look, so switching to (or away from) a table link
+   * inside the running app re-reads the menu instead of keeping the previous
+   * context — which is also what keeps the admin return control honest.
+   */
+  const { search } = useLocation();
+  const tableToken = new URLSearchParams(search).get('table') || '';
   const { t, locale, languageSettings } = useI18n();
   const { user, can } = useAuth();
   const toast = useToast();
@@ -102,7 +111,6 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       const url = new URL(`/api/public/menu/${key}`, window.location.origin);
       // The in-store ordering menu is the "main" context; a public visitor is "qr".
       if (adminMode) url.searchParams.set('context', 'main');
-      const tableToken = new URLSearchParams(window.location.search).get('table');
       if (tableToken) url.searchParams.set('table', tableToken);
       const res = await fetch(url.toString(), { credentials: 'include' });
       const payload = await res.json();
@@ -130,7 +138,7 @@ export default function CustomerMenu({ slug, adminMode = false }) {
       setLoading(false);
       if (!silent) endLoading('menu');
     }
-  }, [key, adminMode]);
+  }, [key, adminMode, tableToken]);
 
   useEffect(() => {
     load();
@@ -436,17 +444,19 @@ export default function CustomerMenu({ slug, adminMode = false }) {
     );
   }
 
-  /* The way back into the admin panel belongs to the MAIN ordering menu only.
-     The context is the one the server actually served this payload in, not the
-     URL: a scanned table token makes it `qr`, so a QR ordering session never
-     shows the control — not even to an admin signed in on that device. On top
-     of the context the user must hold the permission the admin routes check,
-     and the owner must have left the return control enabled. The page renders
-     nothing until this payload is here, so the button can never flash in
-     during load or a route change. */
+  /* The way back into the admin panel belongs to the MAIN ordering menu, and
+     that menu is the same address whether it is opened from the admin panel or
+     typed directly — so the decision is taken from the payload the server
+     resolved plus the live session, never from the route that led here, a
+     referrer or navigation history. A menu carrying a scanned table token is
+     the `qr` context, so a QR ordering session never shows the control, not
+     even to an admin signed in on that device. The user must also hold the
+     permission the admin routes check, and the owner must have left the return
+     control enabled. Nothing renders until this payload is here, so the button
+     cannot flash in during load or a route change. */
   const showAdminReturn =
-    adminMode
-    && data.menu?.context === 'main'
+    data.menu?.context === 'main'
+    && !tableToken
     && Boolean(user)
     && can('dashboard.view')
     && biz.menu_settings?.show_admin_return !== false
