@@ -328,74 +328,121 @@
 
 /*
  * The action cell keeps one fixed, centred column now that the row itself opens
- * the order: every row carries the same 38px square button, so a status change,
- * the saving spinner or a locked order can never resize the column or push the
- * neighbouring cells.
+ * the order: every row carries the same compact square button, so a status
+ * change, the saving spinner or a locked order can never resize the column or
+ * push the neighbouring cells.
  */
 .orow-actions {
   display: grid;
-  grid-template-columns: 38px;
+  grid-template-columns: var(--ost-size);
   align-items: center;
   justify-content: center;
 }
-.orow-actions .ostatus { grid-column: 1; width: 38px; }
+.orow-actions .ostatus { grid-column: 1; width: var(--ost-size); }
 
 /* ---------------------------------------------------------- status dropdown */
+
+/*
+ * The ONE size of the status control, per breakpoint: a compact square on
+ * desktop that steps down a little on a tablet and on a phone. Everything that
+ * has to agree with it — the button, the Actions grid cell, the chevron — reads
+ * these three values, so the plate can never be one size in the table and
+ * another in a phone card, and nothing is ever measured by hand.
+ */
+:root {
+  --ost-size: 36px;
+  --ost-icon: 15px;
+  --ost-radius: 10px;
+}
+
+@media (max-width: 1023px) {
+  :root {
+    --ost-size: 34px;
+    --ost-icon: 14px;
+    --ost-radius: 9.5px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --ost-size: 32px;
+    --ost-icon: 13px;
+    --ost-radius: 9px;
+  }
+}
 
 .ostatus { display: inline-flex; vertical-align: middle; }
 
 /*
- * One square status button — 38×38 in every row, every language, every
- * breakpoint, and icon-only so no translation can stretch it. The plate wears
- * the order's OWN status colour (blue new, amber preparing, violet ready, green
- * completed, red cancelled) as a glossy 3D gradient: a hairline of white along
- * the top edge, a contact edge under it, and a soft glow in the same hue.
- * Hover darkens that same colour and lifts the button one step; a locked order
- * keeps the identical footprint with a quiet plate and a lock glyph, so an
- * unavailable action never looks available.
+ * One compact square status button — the size comes from `--ost-size` in every
+ * row, every language and every breakpoint, and it is icon-only so no
+ * translation can stretch it. The plate is a small raised glass tile built from
+ * THREE tones of the ONE active theme accent: the light tone along the upper
+ * edge, the accent itself through the middle, and a deeper shade at the bottom,
+ * under a lit top hairline, a contact edge and one soft cast shadow. Nothing
+ * here is a fixed brand colour, so switching the business theme recolours the
+ * whole control in the same frame.
+ *
+ * The order's own status is named by the `StatusBadge` beside it; the control
+ * itself stays the theme colour like every other action in the app. A locked
+ * order keeps the identical footprint with a quiet plate and a lock glyph, so
+ * an unavailable action never looks available.
  */
 .ostatus .ostatus__btn {
-  /* The fallback plate is the one theme accent; a known status overrides it
-     with its own semantic colour below. */
   --ost-a: var(--accent-one-hi);
   --ost-b: var(--accent-one);
   --ost-hover: var(--accent-one-lo);
-  width: 38px;
-  height: 38px;
-  min-width: 38px;
+  position: relative;
+  width: var(--ost-size);
+  height: var(--ost-size);
+  min-width: var(--ost-size);
   padding: 0;
   display: inline-grid;
   place-items: center;
-  border-radius: 12px;
-  border: 1px solid color-mix(in srgb, var(--ost-b) 60%, #ffffff);
-  background-image: linear-gradient(180deg, var(--ost-a), var(--ost-b));
+  border-radius: var(--ost-radius);
+  border: 1px solid color-mix(in srgb, var(--ost-b) 58%, #ffffff);
+  background-image: linear-gradient(
+    180deg,
+    var(--ost-a) 0%,
+    var(--ost-b) 54%,
+    color-mix(in srgb, var(--ost-b) 86%, var(--ost-hover)) 100%
+  );
   color: #ffffff;
   cursor: pointer;
   white-space: nowrap;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 5px rgba(8, 16, 34, 0.26),
-    0 2px 0 color-mix(in srgb, var(--ost-b) 76%, #0b1020),
-    0 7px 14px -6px color-mix(in srgb, var(--ost-b) 72%, transparent);
+    inset 0 -1px 2px rgba(8, 16, 34, 0.2),
+    0 1.5px 0 color-mix(in srgb, var(--ost-hover) 72%, #0b1020),
+    0 5px 10px -5px color-mix(in srgb, var(--ost-b) 68%, transparent);
   transition:
     background-image 0.2s ease, box-shadow 0.2s ease,
     transform 0.18s ease, border-color 0.2s ease;
 }
-.ostatus .ostatus__btn--pending { --ost-a: #63a2ff; --ost-b: #2563eb; --ost-hover: #1d4ed8; }
-.ostatus .ostatus__btn--preparing { --ost-a: #f7ab4b; --ost-b: #d97706; --ost-hover: #b45309; }
-.ostatus .ostatus__btn--ready { --ost-a: #a985fb; --ost-b: #7c3aed; --ost-hover: #6d28d9; }
-.ostatus .ostatus__btn--completed { --ost-a: #45d68a; --ost-b: #16a34a; --ost-hover: #15803d; }
-.ostatus .ostatus__btn--cancelled { --ost-a: #f5767c; --ost-b: #dc2626; --ost-hover: #b91c1c; }
+
+/* The accessible touch target: the visible plate stays compact, but the hit
+   area is never smaller than 44×44 — an invisible square centred on the button,
+   inside the row's own cell, so a thumb still lands comfortably. */
+.ostatus .ostatus__btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
+  border-radius: var(--ost-radius);
+}
 
 .ostatus .ostatus__btn:hover:not(:disabled) {
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--ost-b) 74%, #ffffff), var(--ost-hover));
-  border-color: color-mix(in srgb, var(--ost-hover) 68%, #ffffff);
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--ost-b) 70%, #ffffff), var(--ost-hover));
+  border-color: color-mix(in srgb, var(--ost-hover) 66%, #ffffff);
   transform: translateY(-1px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.42),
-    inset 0 -2px 5px rgba(8, 16, 34, 0.32),
-    0 3px 0 color-mix(in srgb, var(--ost-hover) 80%, #0b1020),
-    0 12px 20px -8px color-mix(in srgb, var(--ost-hover) 78%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.44),
+    inset 0 -1px 2px rgba(8, 16, 34, 0.24),
+    0 2px 0 color-mix(in srgb, var(--ost-hover) 78%, #0b1020),
+    0 9px 16px -7px color-mix(in srgb, var(--ost-hover) 74%, transparent);
 }
 .ostatus .ostatus__btn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--ost-b) 62%, transparent);
@@ -403,10 +450,15 @@
 }
 .ostatus .ostatus__btn:active:not(:disabled) {
   transform: translateY(0);
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ost-b) 88%, var(--ost-hover)),
+    var(--ost-hover)
+  );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 2px 6px rgba(8, 16, 34, 0.36),
-    0 1px 0 color-mix(in srgb, var(--ost-hover) 70%, #0b1020);
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 2px 5px rgba(8, 16, 34, 0.34),
+    0 1px 0 color-mix(in srgb, var(--ost-hover) 66%, #0b1020);
 }
 .ostatus .ostatus__btn:disabled { cursor: not-allowed; }
 /* A button that is only saving keeps its status colour; the spinner says why
@@ -429,10 +481,22 @@
   color: color-mix(in srgb, var(--ost-b) 40%, var(--muted));
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
-.ostatus__icon { color: currentColor; }
-.ostatus__caret { transition: transform 0.16s ease; }
+/* The glyph is sized by the same token as the plate, so the chevron stays
+   centred and keeps its stroke weight at every breakpoint. */
+.ostatus__icon {
+  color: currentColor;
+  display: block;
+  width: var(--ost-icon);
+  height: var(--ost-icon);
+  flex: none;
+}
+.ostatus__caret { transition: transform 0.18s ease; }
 .ostatus__caret.is-open { transform: rotate(180deg); }
-.ostatus__spinner { width: 15px; height: 15px; border-width: 2px; }
+.ostatus__spinner {
+  width: calc(var(--ost-icon) - 1px);
+  height: calc(var(--ost-icon) - 1px);
+  border-width: 2px;
+}
 
 /* The status list uses the shared selection popup surface (see select.css).
    Its coordinates are computed against the viewport by StatusMenu.jsx, which
