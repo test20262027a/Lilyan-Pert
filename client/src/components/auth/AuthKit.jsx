@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useId, useState, useSyncExternalStore } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
-import { applyTheme, cachedTheme, DEFAULT_THEME } from '../../theme';
+import { applyTheme, cachedTheme } from '../../theme';
 import useDocumentMetadata from '../../hooks/useDocumentMetadata';
 import { brandLogoSnapshot, loadPublicBrand, subscribeBrandLogo } from '../../brandLogo';
 import LanguageMenu from './LanguageMenu';
@@ -81,13 +81,33 @@ export function AuthLayout({ children, footer }) {
   useDocumentMetadata(brand);
 
   // The business picked this appearance for its public pages; the sign-in
-  // screen is the first thing anyone sees, so it must not fall back to a
-  // stock palette while the answer is on its way. The remembered theme carries
-  // the first frame (index.html reads it before paint); DEFAULT_THEME is only
-  // the last resort when neither the business nor a cache could answer.
+  // screen is the first thing anyone sees, so it carries the real one from the
+  // first frame: the remembered theme (index.html reads it before paint) until
+  // the business's own record answers, then that record.
+  //
+  // With neither, NOTHING is applied on purpose. A stock palette written here
+  // would not only tint this screen — it would be mirrored into the cache and
+  // painted as if it were the business's own theme on the next boot, which is
+  // exactly the previous-theme flash the loader must never show. The neutral
+  // tokens in styles.css hold the surface, and the loader keeps its neutral
+  // glass disc until a real appearance is known.
   useEffect(() => {
     if (brand === undefined) return;
-    applyTheme(brand?.theme || cachedTheme() || DEFAULT_THEME);
+    // The mirror first, and on purpose: it is exactly what `index.html` painted
+    // on the first frame, and it is rewritten every time the app applies an
+    // appearance — including a theme the owner just saved. This page's own
+    // branding payload is fetched once per page load and is therefore older
+    // than the mirror inside the same visit, which is how a sign-out used to
+    // repaint the sign-in screen in the theme the owner had just replaced.
+    const cached = cachedTheme();
+    if (cached) {
+      applyTheme(cached, cached.id || undefined, 'cached');
+      return;
+    }
+    // Nothing remembered: the business's own record, if it has one. With
+    // neither, nothing is applied — a stock palette written here would tint
+    // this screen and be remembered as if it were the business's appearance.
+    if (brand?.theme) applyTheme(brand.theme);
   }, [brand]);
 
   return (

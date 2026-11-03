@@ -64,6 +64,9 @@
           root.style.setProperty('--primary', theme.primary);
           if (theme.ink) root.style.setProperty('--primary-ink', theme.ink);
           root.dataset.boot = 'cached';
+          /* The appearance is now known — see theme.js. The mark only takes a
+             colour while this is present, in this first paint and in React. */
+          root.dataset.themeSource = 'cached';
           /* The cached system-bar colour, already varied for the saved
              light/dark mode, so a cold start never flashes the wrong tint.
              The SAME value is published to the top bar (the meta) and to the
@@ -97,6 +100,10 @@
         /* Neutral by default; the accent only becomes a business colour when
            the cached theme above was actually applied. */
         --boot-accent: #98a1b3;
+        /* The three tones of the one accent: LIGHT → MEDIUM → DEEP. */
+        --boot-light: color-mix(in oklab, var(--boot-accent) 38%, #ffffff);
+        --boot-mid: var(--boot-accent);
+        --boot-deep: color-mix(in oklab, var(--boot-accent) 66%, #14120f);
         --boot-surface: #f4f7f6;
         --boot-ink: #6b7488;
         position: fixed;
@@ -107,10 +114,12 @@
         background: var(--boot-surface);
         font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
       }
-      html[data-boot='cached'] #boot-splash {
+      html[data-theme-source] #boot-splash {
         --boot-accent: var(--primary, #98a1b3);
         --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 70%, #4b5364);
       }
+      /* No known appearance yet: no coloured ring, only the neutral glass. */
+      html:not([data-theme-source]) #boot-splash .bs-spin { opacity: 0; }
       html[data-theme='dark'] #boot-splash {
         --boot-surface: #0b0f16;
         --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 60%, #aab3c4);
@@ -134,36 +143,102 @@
       }
       #boot-splash .bs-glow {
         position: absolute;
-        inset: 6%;
+        inset: 4%;
         margin: auto;
         border-radius: 50%;
         background: radial-gradient(
-          circle at 50% 52%,
-          color-mix(in srgb, var(--boot-accent) 30%, transparent),
-          color-mix(in srgb, var(--boot-accent) 10%, transparent) 52%,
-          transparent 74%
+          circle at 50% 50%,
+          color-mix(in oklab, var(--boot-mid) 26%, transparent),
+          color-mix(in oklab, var(--boot-mid) 9%, transparent) 56%,
+          transparent 76%
         );
-        opacity: 0.8;
-        animation: bs-breathe 2.6s ease-in-out infinite;
+        opacity: 0.75;
       }
       #boot-splash .bs-track {
         position: absolute;
         inset: 0;
         margin: auto;
         border-radius: 50%;
-        border: var(--bs-ring) solid color-mix(in srgb, var(--boot-accent) 14%, transparent);
+        border: var(--bs-ring) solid color-mix(in oklab, var(--boot-mid) 13%, transparent);
         box-shadow:
-          inset 0 0 0 1px rgba(255, 255, 255, 0.22),
-          0 0 0 1px color-mix(in srgb, var(--boot-accent) 10%, transparent);
-        filter: drop-shadow(0 8px 13px color-mix(in srgb, var(--boot-accent) 26%, transparent));
+          inset 0 0 0 1px color-mix(in oklab, #ffffff 20%, transparent),
+          inset 0 1px 2px color-mix(in oklab, var(--boot-light) 32%, transparent),
+          0 0 0 1px color-mix(in oklab, var(--boot-deep) 12%, transparent);
+        filter: drop-shadow(0 7px 11px color-mix(in oklab, var(--boot-deep) 26%, transparent));
       }
+      /* The frosted glass disc the logo sits on — the same disc the React mark
+         draws, so the handover between the two never changes the picture. */
+      #boot-splash .bs-glass {
+        position: absolute;
+        inset: 15%;
+        margin: auto;
+        border-radius: 50%;
+        background:
+          radial-gradient(
+            circle at 32% 22%,
+            rgba(255, 255, 255, 0.72),
+            rgba(255, 255, 255, 0.12) 42%,
+            rgba(255, 255, 255, 0.02) 70%
+          ),
+          radial-gradient(circle at 50% 118%, rgba(18, 26, 40, 0.085), rgba(18, 26, 40, 0) 62%),
+          linear-gradient(
+            155deg,
+            rgba(255, 255, 255, 0.42),
+            rgba(255, 255, 255, 0.1) 52%,
+            rgba(255, 255, 255, 0.28)
+          );
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.95),
+          inset 0 -8px 14px rgba(255, 255, 255, 0.3),
+          inset 0 10px 18px rgba(255, 255, 255, 0.22),
+          0 0 0 1px color-mix(in oklab, var(--boot-deep) 10%, transparent),
+          0 16px 26px -18px color-mix(in oklab, var(--boot-deep) 62%, transparent);
+        -webkit-backdrop-filter: blur(3px) saturate(115%);
+        backdrop-filter: blur(3px) saturate(115%);
+      }
+      #boot-splash .bs-glass::after {
+        content: '';
+        position: absolute;
+        inset: 9% 15% 54% 13%;
+        border-radius: 50%;
+        background: radial-gradient(
+          72% 100% at 46% 0%,
+          rgba(255, 255, 255, 0.8),
+          rgba(255, 255, 255, 0) 74%
+        );
+        opacity: 0.75;
+      }
+      html[data-theme='dark'] #boot-splash .bs-glass {
+        border-color: rgba(255, 255, 255, 0.22);
+        background:
+          radial-gradient(
+            circle at 34% 24%,
+            rgba(255, 255, 255, 0.28),
+            rgba(255, 255, 255, 0.06) 46%,
+            rgba(255, 255, 255, 0.02) 74%
+          ),
+          linear-gradient(
+            155deg,
+            rgba(255, 255, 255, 0.16),
+            rgba(255, 255, 255, 0.03) 54%,
+            rgba(255, 255, 255, 0.09)
+          );
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.42),
+          inset 0 -7px 12px rgba(255, 255, 255, 0.09),
+          inset 0 9px 16px rgba(255, 255, 255, 0.07),
+          0 16px 26px -18px rgba(0, 0, 0, 0.75);
+      }
+      html[data-theme='dark'] #boot-splash .bs-glass::after { opacity: 0.5; }
       #boot-splash .bs-spin {
         position: absolute;
         inset: 0;
         margin: auto;
         border-radius: 50%;
         transform-origin: 50% 50%;
-        animation: bs-spin 1.6s linear infinite;
+        transform: translateZ(0);
+        animation: bs-spin 1.4s linear infinite;
       }
       #boot-splash .bs-arc,
       #boot-splash .bs-sheen {
@@ -171,16 +246,20 @@
         inset: 0;
         border-radius: 50%;
       }
+      /* One hue in three tones: light at the tail, the accent itself through
+         the middle, the deep tone at the head, and a small white glint. */
       #boot-splash .bs-arc {
         background: conic-gradient(
           from 0deg,
           transparent 0deg,
-          color-mix(in srgb, var(--boot-accent) 0%, transparent) 4deg,
-          color-mix(in srgb, var(--boot-accent) 48%, transparent) 128deg,
-          color-mix(in srgb, var(--boot-accent) 90%, transparent) 248deg,
-          var(--boot-accent) 320deg,
-          color-mix(in srgb, var(--boot-accent) 48%, #ffffff) 347deg,
-          #ffffff 358deg,
+          color-mix(in oklab, var(--boot-light) 55%, transparent) 26deg,
+          var(--boot-light) 92deg,
+          color-mix(in oklab, var(--boot-mid) 92%, transparent) 168deg,
+          var(--boot-mid) 214deg,
+          color-mix(in oklab, var(--boot-deep) 96%, transparent) 286deg,
+          var(--boot-deep) 322deg,
+          color-mix(in oklab, var(--boot-deep) 62%, #ffffff) 350deg,
+          rgba(255, 255, 255, 0.9) 357deg,
           transparent 360deg
         );
         -webkit-mask: radial-gradient(
@@ -201,9 +280,8 @@
       #boot-splash .bs-sheen {
         background: conic-gradient(
           from 0deg,
-          transparent 292deg,
-          rgba(255, 255, 255, 0.85) 353deg,
-          rgba(255, 255, 255, 0.25) 359deg,
+          transparent 300deg,
+          rgba(255, 255, 255, 0.7) 352deg,
           transparent 360deg
         );
         -webkit-mask: radial-gradient(
@@ -229,16 +307,11 @@
         inline-size: 48%;
         block-size: 48%;
         object-fit: contain;
-        z-index: 2;
-        filter: drop-shadow(0 2px 6px rgba(10, 16, 24, 0.16));
+        z-index: 3;
+        filter: drop-shadow(0 2px 5px rgba(10, 16, 24, 0.14));
       }
       @keyframes bs-spin { to { transform: rotate(360deg); } }
-      @keyframes bs-breathe {
-        0%, 100% { transform: scale(0.97); opacity: 0.66; }
-        50% { transform: scale(1.05); opacity: 0.92; }
-      }
       @media (prefers-reduced-motion: reduce) {
-        #boot-splash .bs-glow,
         #boot-splash .bs-spin { animation: none; }
       }
       /*
@@ -282,6 +355,7 @@
       <span class="bs-stage">
         <span class="bs-glow"></span>
         <span class="bs-track"></span>
+        <span class="bs-glass"></span>
         <span class="bs-spin"><span class="bs-arc"></span><span class="bs-sheen"></span></span>
         <img
         id="bs-logo"

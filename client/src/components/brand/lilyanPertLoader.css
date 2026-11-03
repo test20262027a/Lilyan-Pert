@@ -9,17 +9,36 @@
  * same geometry inline for the first frame (before this file can load) — keep
  * the two in step.
  *
- * Motion is transform/opacity only: the arc layer rotates, the glow breathes by
- * a few percent inside its own box, and the logo has no animation at all.
+ * Layers, bottom to top (the numbers are the z-index values below):
+ *   0  .lpl__glow   soft theme light behind the ring, inside the box
+ *   1  .lpl__track  the quiet full ring and its bevel
+ *   2  .lpl__glass  the frosted glass disc the logo sits on
+ *   3  .lpl__logo   the business's own artwork, completely still
+ *   4  .lpl__spin   the glossy three-tone arc + its moving reflection (rotates)
+ *
+ * ONE colour. `--lpl-accent` is the active theme's accent and nothing else;
+ * the ring's light, medium and deep tones are all mixed from it here, so the
+ * gradient, the glow, the bevel, the sheen and the cast shadow can only ever
+ * move together. Until the document actually carries a known appearance
+ * (`data-theme-source`, written by theme.js / index.html) the accent stays a
+ * neutral grey and the arc is hidden: the mark shows a plain glass disc with a
+ * quiet ring instead of flashing a stock or previous palette.
+ *
+ * Motion is transform/opacity only, on the arc layer alone: it turns at a
+ * constant 1.4s per revolution. Nothing else moves — not the glass, not the
+ * logo, not the light — so the mark can never resize, jump or shift.
  */
 
 .lpl {
   --lpl-size: 160px;
   --lpl-ring: max(2px, calc(var(--lpl-size) * 0.055));
-  /* The active business theme, live: `--primary` is written before React runs
-     and rewritten on every theme change, so the ring is never a stale colour.
-     An explicit `accent` (a failure) is set inline and wins over this. */
-  --lpl-accent: var(--primary, #98a1b3);
+  /* Neutral until the theme is known; rewritten from `--primary` just below. */
+  --lpl-accent: #98a1b3;
+  /* The three tones of the one accent: LIGHT → MEDIUM → DEEP. `oklab` keeps
+     the hue of the accent intact as it is mixed toward white and near-black. */
+  --lpl-light: color-mix(in oklab, var(--lpl-accent) 38%, #ffffff);
+  --lpl-mid: var(--lpl-accent);
+  --lpl-deep: color-mix(in oklab, var(--lpl-accent) 66%, #14120f);
   position: relative;
   flex: none;
   inline-size: var(--lpl-size);
@@ -28,6 +47,18 @@
   display: grid;
   place-items: center;
   isolation: isolate;
+}
+
+/* The theme is known — a cached mirror of the last visit or the business's own
+   record — so the mark may take its colour. An explicit `accent` (a failure)
+   is set inline and still wins over this. */
+:root[data-theme-source] .lpl {
+  --lpl-accent: var(--primary, #98a1b3);
+}
+
+/* No known appearance yet: no coloured ring, only the neutral glass surface. */
+:root:not([data-theme-source]) .lpl__spin {
+  opacity: 0;
 }
 
 .lpl--full { --lpl-size: 160px; }
@@ -46,6 +77,7 @@
 
 .lpl__glow,
 .lpl__track,
+.lpl__glass,
 .lpl__spin,
 .lpl__logo {
   position: absolute;
@@ -56,35 +88,85 @@
 
 /* --------------------------------------------------------------- lighting -- */
 
-/* Ambient light under the ring — one soft pool, no colour bleeding: it fades to
-   fully transparent well inside the box. */
+/* Ambient light under the ring — one soft pool in the medium tone that fades to
+   fully transparent well inside the box, so nothing bleeds past the mark. */
 .lpl__glow {
-  inset: 6%;
+  inset: 4%;
+  z-index: 0;
   border-radius: 50%;
   background: radial-gradient(
-    circle at 50% 52%,
-    color-mix(in srgb, var(--lpl-accent) 30%, transparent),
-    color-mix(in srgb, var(--lpl-accent) 10%, transparent) 52%,
-    transparent 74%
+    circle at 50% 50%,
+    color-mix(in oklab, var(--lpl-mid) 26%, transparent),
+    color-mix(in oklab, var(--lpl-mid) 9%, transparent) 56%,
+    transparent 76%
   );
-  opacity: 0.8;
-  will-change: transform, opacity;
-  animation: lpl-breathe 2.6s ease-in-out infinite;
+  opacity: 0.75;
 }
 
 /* The quiet full ring: a translucent track with a lit inner edge and a hairline
-   outer edge, so it reads as a bevelled plate rather than a stroke. */
+   outer edge, so it reads as a bevelled plate rather than a stroke. Its cast
+   shadow is the deep tone, kept soft and inside the box. */
 .lpl__track {
+  z-index: 1;
   border-radius: 50%;
-  border: var(--lpl-ring) solid color-mix(in srgb, var(--lpl-accent) 14%, transparent);
+  border: var(--lpl-ring) solid color-mix(in oklab, var(--lpl-mid) 13%, transparent);
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, #ffffff 22%, transparent),
-    0 0 0 1px color-mix(in srgb, var(--lpl-accent) 10%, transparent);
-  /* The floating cast shadow: soft, theme-tinted, and kept inside the box. */
+    inset 0 0 0 1px color-mix(in oklab, #ffffff 20%, transparent),
+    inset 0 1px 2px color-mix(in oklab, var(--lpl-light) 32%, transparent),
+    0 0 0 1px color-mix(in oklab, var(--lpl-deep) 12%, transparent);
   filter: drop-shadow(
-    0 calc(var(--lpl-size) * 0.05) calc(var(--lpl-size) * 0.08)
-      color-mix(in srgb, var(--lpl-accent) 26%, transparent)
+    0 calc(var(--lpl-size) * 0.045) calc(var(--lpl-size) * 0.07)
+      color-mix(in oklab, var(--lpl-deep) 26%, transparent)
   );
+}
+
+/* ------------------------------------------------------------ glass disc -- */
+
+/* A real translucent glass disc, not a white circle: a faint milky tint, a
+   radial reflection in the upper left, a thin lit bevel and a soft inner
+   shadow. The blur is small and static — it sits behind the logo, never on it. */
+.lpl__glass {
+  inset: 15%;
+  z-index: 2;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 32% 22%,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.12) 42%,
+      rgba(255, 255, 255, 0.02) 70%
+    ),
+    /* the inner shade at the bottom: what gives the disc its real depth */
+      radial-gradient(circle at 50% 118%, rgba(18, 26, 40, 0.085), rgba(18, 26, 40, 0) 62%),
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.42),
+      rgba(255, 255, 255, 0.1) 52%,
+      rgba(255, 255, 255, 0.28)
+    );
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -8px 14px rgba(255, 255, 255, 0.3),
+    inset 0 10px 18px rgba(255, 255, 255, 0.22),
+    0 0 0 1px color-mix(in oklab, var(--lpl-deep) 10%, transparent),
+    0 16px 26px -18px color-mix(in oklab, var(--lpl-deep) 62%, transparent);
+  -webkit-backdrop-filter: blur(3px) saturate(115%);
+  backdrop-filter: blur(3px) saturate(115%);
+}
+
+/* The delicate radial reflection across the top of the disc. */
+.lpl__glass::after {
+  content: '';
+  position: absolute;
+  inset: 9% 15% 54% 13%;
+  border-radius: 50%;
+  background: radial-gradient(
+    72% 100% at 46% 0%,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0) 74%
+  );
+  opacity: 0.75;
 }
 
 /* ---------------------------------------------------------------- the arc -- */
@@ -92,14 +174,14 @@
 /* Only this layer turns: a constant rotation of a perfectly circular gradient,
    so thickness, radius and shape can never change while it spins. */
 .lpl__spin {
+  z-index: 4;
   border-radius: 50%;
   transform-origin: 50% 50%;
+  transform: translateZ(0);
   will-change: transform;
-  animation: lpl-spin 1.6s linear infinite;
+  animation: lpl-spin 1.4s linear infinite;
 }
 
-/* The illuminated progress arc: a theme-coloured comet that thins to nothing
-   behind its head, with a white-hot tip as the reflection. */
 .lpl__arc,
 .lpl__sheen {
   position: absolute;
@@ -107,16 +189,21 @@
   border-radius: 50%;
 }
 
+/* The illuminated arc, one hue in three tones: it leaves the tail in the light
+   tone, passes through the theme colour itself, deepens to the rich tone at the
+   head, and ends on a small white-hot glint. */
 .lpl__arc {
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    color-mix(in srgb, var(--lpl-accent) 0%, transparent) 4deg,
-    color-mix(in srgb, var(--lpl-accent) 48%, transparent) 128deg,
-    color-mix(in srgb, var(--lpl-accent) 90%, transparent) 248deg,
-    var(--lpl-accent) 320deg,
-    color-mix(in srgb, var(--lpl-accent) 48%, #ffffff) 347deg,
-    #ffffff 358deg,
+    color-mix(in oklab, var(--lpl-light) 55%, transparent) 26deg,
+    var(--lpl-light) 92deg,
+    color-mix(in oklab, var(--lpl-mid) 92%, transparent) 168deg,
+    var(--lpl-mid) 214deg,
+    color-mix(in oklab, var(--lpl-deep) 96%, transparent) 286deg,
+    var(--lpl-deep) 322deg,
+    color-mix(in oklab, var(--lpl-deep) 62%, #ffffff) 350deg,
+    rgba(255, 255, 255, 0.9) 357deg,
     transparent 360deg
   );
   -webkit-mask: radial-gradient(
@@ -140,9 +227,8 @@
 .lpl__sheen {
   background: conic-gradient(
     from 0deg,
-    transparent 292deg,
-    rgba(255, 255, 255, 0.85) 353deg,
-    rgba(255, 255, 255, 0.25) 359deg,
+    transparent 300deg,
+    rgba(255, 255, 255, 0.7) 352deg,
     transparent 360deg
   );
   -webkit-mask: radial-gradient(
@@ -157,29 +243,55 @@
     #000 calc(100% - var(--lpl-ring) * 0.62),
     transparent calc(100% - 1px)
   );
-  opacity: 0.65;
+  opacity: 0.5;
 }
 
 /* ------------------------------------------------------------------ logo -- */
 
 /* The business's own artwork: original colours, exact proportions, and no
    animation whatsoever — it is in the same place at the same size from the
-   first frame until the surface is removed. */
+   first frame until the surface is removed. It sits above the glass, unblurred. */
 .lpl__logo {
   inline-size: 48%;
   block-size: 48%;
   object-fit: contain;
-  z-index: 2;
+  z-index: 3;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 2px 6px rgba(10, 16, 24, 0.16));
+  filter: drop-shadow(0 2px 5px rgba(10, 16, 24, 0.14));
 }
+
+/* --------------------------------------------------------- dark mode polish -- */
+
+[data-theme='dark'] .lpl__glass {
+  border-color: rgba(255, 255, 255, 0.22);
+  background:
+    radial-gradient(
+      circle at 34% 24%,
+      rgba(255, 255, 255, 0.28),
+      rgba(255, 255, 255, 0.06) 46%,
+      rgba(255, 255, 255, 0.02) 74%
+    ),
+    linear-gradient(
+      155deg,
+      rgba(255, 255, 255, 0.16),
+      rgba(255, 255, 255, 0.03) 54%,
+      rgba(255, 255, 255, 0.09)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -7px 12px rgba(255, 255, 255, 0.09),
+    inset 0 9px 16px rgba(255, 255, 255, 0.07),
+    0 16px 26px -18px rgba(0, 0, 0, 0.75);
+}
+
+[data-theme='dark'] .lpl__glass::after { opacity: 0.5; }
 
 [data-theme='dark'] .lpl__logo {
-  filter: drop-shadow(0 3px 9px rgba(0, 0, 0, 0.5));
+  filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.45));
 }
 
-[data-theme='dark'] .lpl__sheen { opacity: 0.45; }
+[data-theme='dark'] .lpl__sheen { opacity: 0.38; }
 
 /* -------------------------------------------------------------- keyframes -- */
 
@@ -187,19 +299,12 @@
   to { transform: rotate(360deg); }
 }
 
-/* A breath, not a pulse: the pool never leaves its own 6%-inset box. */
-@keyframes lpl-breathe {
-  0%, 100% { transform: scale(0.97); opacity: 0.66; }
-  50% { transform: scale(1.05); opacity: 0.92; }
-}
-
 /* --------------------------------------------------------- reduced motion -- */
 
 @media (prefers-reduced-motion: reduce) {
-  /* No spin, no breath: the mark is simply present, unchanged in size,
-     position or colour. */
-  .lpl__spin,
-  .lpl__glow {
+  /* No spin: the mark is simply present, unchanged in size, position or
+     colour. */
+  .lpl__spin {
     animation: none;
   }
 }

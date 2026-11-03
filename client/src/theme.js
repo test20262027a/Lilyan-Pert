@@ -145,12 +145,23 @@ export function cachedTheme(ownerId) {
  * Applies a business theme to the document root (light/dark + primary color)
  * and remembers it for the first frame of the next visit.
  */
-export function applyTheme(theme, ownerId) {
+export function applyTheme(theme, ownerId, source = 'resolved') {
   const root = document.documentElement;
   const mode = theme?.mode === 'dark' ? 'dark' : 'light';
   const primary = primaryFor(theme);
   root.dataset.theme = mode;
   root.style.setProperty('--primary', primary);
+  /*
+   * THE APPEARANCE IS KNOWN.
+   *
+   * `data-theme-source` says where the accent on the document came from —
+   * `resolved` for the business's own record, `cached` for the mirror the first
+   * frame is painted from. The loader only colours its ring while this is
+   * present (see components/brand/lilyanPertLoader.css), so a cold start with
+   * no remembered theme shows its neutral glass disc instead of the stock
+   * palette, and no mark can ever flash a colour that is not the real one.
+   */
+  root.dataset.themeSource = source;
   // Foreground for every filled accent surface; the design tokens derive the
   // rest of the theme layer from these two values.
   root.style.setProperty('--primary-ink', inkFor(primary));

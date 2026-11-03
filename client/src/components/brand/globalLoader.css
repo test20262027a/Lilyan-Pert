@@ -68,6 +68,8 @@
   place-items: center;
   inline-size: 48%;
   block-size: 48%;
+  /* Above the glass disc, like the logo it replaces. */
+  z-index: 3;
   border-radius: 30%;
   color: var(--primary-ink, #ffffff);
   background: linear-gradient(
