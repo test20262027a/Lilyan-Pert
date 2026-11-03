@@ -2,7 +2,40 @@ import Icon from '../Icon';
 import { useI18n, localized } from '../../i18n';
 import { appearanceOf } from './categoryIcons';
 import CategoryIdentityIcon from './CategoryIdentityIcon';
+import StatLabel from './StatLabel';
 import { fmtNumber } from '../../format';
+
+/*
+ * The three category counters in display order: each names its own colour
+ * family (`kind`), glyph, the figure it reads from the server summary, and the
+ * three localized lengths of its title.
+ */
+const COUNTERS = [
+  {
+    kind: 'total',
+    glyph: 'layers',
+    value: 'total',
+    fullKey: 'menu_total_categories',
+    compactKey: 'menu_total_categories_compact',
+    shortKey: 'menu_total_categories_short',
+  },
+  {
+    kind: 'active',
+    glyph: 'checkCircle',
+    value: 'active',
+    fullKey: 'menu_active_categories',
+    compactKey: 'menu_active_categories_compact',
+    shortKey: 'menu_active_categories_short',
+  },
+  {
+    kind: 'inactive',
+    glyph: 'xCircle',
+    value: 'inactive',
+    fullKey: 'menu_inactive_categories',
+    compactKey: 'menu_inactive_categories_compact',
+    shortKey: 'menu_inactive_categories_short',
+  },
+];
 
 /*
  * The category management panel: heading, the three compact statistic cards and
@@ -60,33 +93,17 @@ export default function CategoryPanel({
       </header>
 
       <div className="mcstats">
-        <div className="mcstat mcstat--total">
-          <span className="mcstat__icon">
-            <Icon name="layers" size={14} />
-          </span>
-          <span className="mcstat__body">
-            <span className="mcstat__value">{fmtNumber(stats.total, locale)}</span>
-            <span className="mcstat__label">{t('menu_total_categories')}</span>
-          </span>
-        </div>
-        <div className="mcstat mcstat--active">
-          <span className="mcstat__icon">
-            <Icon name="checkCircle" size={14} />
-          </span>
-          <span className="mcstat__body">
-            <span className="mcstat__value">{fmtNumber(stats.active, locale)}</span>
-            <span className="mcstat__label">{t('menu_active_categories')}</span>
-          </span>
-        </div>
-        <div className="mcstat mcstat--inactive">
-          <span className="mcstat__icon">
-            <Icon name="xCircle" size={14} />
-          </span>
-          <span className="mcstat__body">
-            <span className="mcstat__value">{fmtNumber(stats.inactive, locale)}</span>
-            <span className="mcstat__label">{t('menu_inactive_categories')}</span>
-          </span>
-        </div>
+        {COUNTERS.map(({ kind, glyph, value, fullKey, compactKey, shortKey }) => (
+          <div key={kind} className={`mcstat mcstat--${kind}`}>
+            <span className="mcstat__top">
+              <span className="mcstat__icon">
+                <Icon name={glyph} size={14} />
+              </span>
+              <span className="mcstat__value">{fmtNumber(stats[value], locale)}</span>
+            </span>
+            <StatLabel fullKey={fullKey} compactKey={compactKey} shortKey={shortKey} />
+          </div>
+        ))}
       </div>
 
       {categories.length === 0 ? (

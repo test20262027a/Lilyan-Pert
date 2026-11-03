@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useBusiness } from '../context/BusinessContext';
 import { del, get, post, put } from '../api';
 import '../menu.css';
+import '../statCards.css';
 
 const emptyCategory = () => ({
   name_ku: '', name_fa: '', name_ar: '', name_en: '',

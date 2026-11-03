@@ -196,7 +196,12 @@ export default function SidebarNav({
                   style={{ '--nav-icon': child.tone }}
                   onClick={navigate}
                 >
-                  <Icon name={child.icon} size={16} />
+                  {/* The flyout row uses the same layered icon slot as the
+                      rail, so the active strip is mounted on the icon's own
+                      container and can never cross the glyph. */}
+                  <span className="nav-link__icon nav-link__icon--flyout">
+                    <Icon name={child.icon} size={16} />
+                  </span>
                   <span>{t(child.key)}</span>
                   {child.danger ? <span className="nav-danger" aria-hidden="true" /> : null}
                 </NavLink>

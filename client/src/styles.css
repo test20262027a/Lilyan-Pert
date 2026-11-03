@@ -885,7 +885,8 @@ a { color: var(--primary); }
    destination in the tree carries the strongest mark. */
 .sidebar .nav-group.is-current .nav-link__icon::before {
   opacity: 0.5;
-  inset-inline-start: -5px;
+  /* Clear of the glyph's strokes, which begin at the slot's own edge. */
+  inset-inline-start: -7px;
   block-size: 18px;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--nav-accent) 24%, transparent),
@@ -894,7 +895,8 @@ a { color: var(--primary); }
 .sidebar .nav-group.is-current .nav-link__icon::after { opacity: 0.24; }
 /* Submenu rows: the same system, one step smaller behind the 16px mark. */
 .sidebar .nav-children .nav-link.is-active .nav-link__icon::before {
-  inset-inline-start: -5px;
+  /* The 16px slot leaves 4px of clear space between the strip and the mark. */
+  inset-inline-start: -7px;
   block-size: 18px;
 }
 /* Hovering an active submenu row only warms the tint — nothing moves or grows. */
@@ -2139,30 +2141,121 @@ table.data tr:hover td { background: var(--surface-2); }
     transition: background 0.14s ease, color 0.14s ease, border-color 0.14s ease;
   }
   .nav-flyout__link:hover { background: rgba(255, 255, 255, 0.07); color: #ffffff; }
-  /* The same quiet treatment as an expanded submenu row: a faint tint and a
-     hairline ring, never a heavier or larger shape than its siblings. */
+  /*
+   * Selected flyout destination: the same quiet tint and hairline ring as an
+   * expanded submenu row, plus a whisper of glass along the top edge so the
+   * plate reads as raised without getting brighter than its siblings.
+   */
   .nav-flyout__link.is-active {
-    background: color-mix(in srgb, var(--primary) 18%, var(--navy-2));
+    background:
+      linear-gradient(180deg, color-mix(in srgb, #ffffff 9%, transparent), transparent 62%),
+      linear-gradient(
+        170deg,
+        color-mix(in srgb, var(--primary) 24%, var(--navy-2)),
+        color-mix(in srgb, var(--primary) 15%, var(--navy-2))
+      );
     border-color: color-mix(in srgb, var(--primary) 34%, transparent);
     color: #ffffff;
-    position: relative;
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent),
+      0 6px 14px -12px rgba(3, 8, 14, 0.9);
   }
-  /* The collapsed rail's submenu flyout carries the same small light strip. */
-  .nav-flyout__link.is-active::before {
+  /*
+   * The flyout's icon slot — the positioning reference for everything the
+   * selected row paints. `isolation: isolate` gives it its own stacking
+   * context, so the layers can be ordered explicitly and the glyph is always
+   * the topmost one:
+   *
+   *   row plate → ambient glow (::after, 1) → light strip (::before, 2) → glyph (3)
+   *
+   * The strip sits on the slot's logical start edge and the 16px glyph is
+   * centred inside the 28px slot, which leaves a clear gap between the two —
+   * it never crosses, cuts or touches the artwork. Logical properties mirror
+   * the whole arrangement between RTL and LTR with no offsets to maintain.
+   */
+  .sidebar .nav-flyout__link .nav-link__icon {
+    position: relative;
+    isolation: isolate;
+    flex: none;
+    display: grid;
+    place-items: center;
+    inline-size: 28px;
+    block-size: 28px;
+    overflow: visible;
+    border-radius: 9px;
+    transition: background 0.16s ease;
+  }
+  .sidebar .nav-flyout__link .nav-link__icon > .icon {
+    position: relative;
+    z-index: 3;
+    color: var(--nav-icon, var(--nav-accent));
+    filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 18%, transparent))
+      drop-shadow(0 1px 1.5px rgba(3, 8, 14, 0.6));
+    transition: color 0.2s ease, filter 0.2s ease;
+  }
+  /* Ambient glow in the icon's OWN colour, painted under the strip. */
+  .sidebar .nav-flyout__link .nav-link__icon::after {
     content: '';
     position: absolute;
-    inset-block: 26%;
-    inset-inline-start: 19px;
-    inline-size: 2.5px;
+    z-index: 1;
+    inset: -2px;
+    border-radius: 11px;
+    background: radial-gradient(
+      closest-side,
+      color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 34%, transparent),
+      transparent 82%
+    );
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+  }
+  /* The 3D light strip: 3px wide, 20px tall, three tones mixed out of the live
+     theme, with a lit top edge, a darker lower edge and a restrained glow. */
+  .sidebar .nav-flyout__link .nav-link__icon::before {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    inset-block-start: 50%;
+    inset-inline-start: -1px;
+    translate: 0 -50%;
+    inline-size: 3px;
+    block-size: 20px;
     border-radius: 999px;
     background: linear-gradient(
       to bottom,
-      var(--nav-accent-light) 0%,
+      color-mix(in srgb, var(--nav-accent-light) 62%, #ffffff) 0%,
       var(--nav-accent) 52%,
       var(--nav-accent-deep) 100%
     );
-    box-shadow: 0 0 6px color-mix(in srgb, var(--nav-accent) 50%, transparent);
+    box-shadow:
+      inset 1px 0 0 color-mix(in srgb, #ffffff 58%, transparent),
+      inset -1px 0 0 rgba(3, 8, 14, 0.32),
+      0 0 0 1px color-mix(in srgb, var(--nav-accent) 30%, transparent),
+      0 0 8px color-mix(in srgb, var(--nav-accent) 62%, transparent);
+    opacity: 0;
+    transition: opacity 0.2s ease, box-shadow 0.2s ease;
     pointer-events: none;
+  }
+  /* Selected: the glow and strip fade in, the icon keeps its own vivid hue and
+     lifts a little — one destination, one strong mark. */
+  .sidebar .nav-flyout__link.is-active .nav-link__icon {
+    background: color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 13%, transparent);
+  }
+  .sidebar .nav-flyout__link.is-active .nav-link__icon::after { opacity: 1; }
+  .sidebar .nav-flyout__link.is-active .nav-link__icon::before { opacity: 1; }
+  .sidebar .nav-flyout__link.is-active .nav-link__icon > .icon {
+    color: color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 62%, #ffffff);
+    filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 26%, transparent))
+      drop-shadow(0 0 6px color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 76%, transparent))
+      drop-shadow(0 1px 2px rgba(3, 8, 14, 0.5));
+  }
+  .sidebar .nav-flyout__link.is-active:hover .nav-link__icon::before,
+  .sidebar .nav-flyout__link.is-active:focus-visible .nav-link__icon::before {
+    box-shadow:
+      inset 1px 0 0 color-mix(in srgb, #ffffff 66%, transparent),
+      inset -1px 0 0 rgba(3, 8, 14, 0.28),
+      0 0 0 1px color-mix(in srgb, var(--nav-accent) 38%, transparent),
+      0 0 11px color-mix(in srgb, var(--nav-accent) 76%, transparent);
   }
 }
 
