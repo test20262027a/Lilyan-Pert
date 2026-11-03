@@ -816,7 +816,12 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
           returned after saving it, never the click that started the request.
           The order carries the currency it was actually saved in. */}
       {placed ? (
-        <OrderSuccessModal order={placed} currency={placed.currency || currency} onClose={() => setPlaced(null)} />
+        <OrderSuccessModal
+          key={placed.id}
+          order={placed}
+          currency={placed.currency || currency}
+          onClose={() => setPlaced(null)}
+        />
       ) : null}
     </div>
   );

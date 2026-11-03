@@ -138,6 +138,19 @@ const GLYPH_ALIASES = {
   dessert: 'cake',
   desserts: 'cake',
   waffle: 'waffle',
+  crepes: 'crepe',
+  'crêpe': 'crepe',
+  kanafeh: 'kunafa',
+  knafeh: 'kunafa',
+  kunefe: 'kunafa',
+  mahallebi: 'muhallebi',
+  'milk-pudding': 'muhallebi',
+  icedcoffee: 'icedCoffee',
+  'iced-coffee': 'icedCoffee',
+  coldCoffee: 'icedCoffee',
+  falooda: 'faloodeh',
+  faluda: 'faloodeh',
+  smoothiealt: 'smoothieAlt',
   pancake: 'pancake',
   crepe: 'pancake',
   sandwich: 'sandwich',
@@ -209,17 +222,78 @@ export const CATEGORY_ICONS = [
  * tie-break, so the specific meanings come before the generic ones.
  */
 const MEANINGS = [
+  /*
+   * The regional desserts and cold drinks lead the list: their names are the
+   * most specific ones the platform knows, and a category called "Kunafa" must
+   * not fall through to a generic cake or ice cream because it lists last.
+   */
+  {
+    id: 'crepe',
+    icon: 'crepe',
+    color: 'copper',
+    keys: ['crepe', 'crepes', 'کرپ', 'کرێپ', 'کریپ', 'كريب', 'كريبان'],
+  },
+  {
+    id: 'kunafa',
+    icon: 'kunafa',
+    color: 'orange',
+    keys: ['kunafa', 'kanafeh', 'knafeh', 'kunefe', 'konafa', 'کنافه', 'کونافه', 'کونافە', 'كنافة', 'كنافه', 'كنفہ'],
+  },
+  {
+    id: 'muhallebi',
+    icon: 'muhallebi',
+    color: 'rose',
+    keys: [
+      'muhallebi', 'mahallebi', 'muhallabia', 'milk pudding', 'محلبی', 'مهلبية', 'محەلبی',
+      'محلبية', 'مهلبيه', 'puding', 'pudding',
+    ],
+  },
+  {
+    id: 'dondurma',
+    icon: 'dondurma',
+    color: 'coral',
+    keys: [
+      'dondurma', 'dondurmas', 'turkish ice cream', 'دوندورما', 'دۆندۆرما',
+      'دندرمة', 'دندرمه', 'دوندرمة',
+    ],
+  },
+  {
+    id: 'faloodeh',
+    icon: 'faloodeh',
+    color: 'cyan',
+    keys: ['faloodeh', 'falooda', 'faluda', 'فالوده', 'فالودە', 'فالودة', 'فالودا', 'فالودہ'],
+  },
+  {
+    id: 'icedCoffee',
+    icon: 'icedCoffee',
+    color: 'teal',
+    keys: [
+      'iced coffee', 'ice coffee', 'cold brew', 'iced latte', 'iced americano', 'cafe glace',
+      'قهوه سرد', 'قهوه سرد و یخ', 'قاوه سارد', 'قاوەی سارد', 'قهوة مثلجة', 'قهوة مثلجه',
+      'قهوة باردة', 'آیس کۆفی', 'کافه سرد',
+    ],
+  },
+  {
+    id: 'smoothie',
+    icon: 'smoothieAlt',
+    color: 'lime',
+    keys: [
+      'smoothie', 'smoothies', 'fruit smoothie', 'berry smoothie',
+      'اسموتی', 'اسموتی میوه', 'اسموتی توت', 'سموذي', 'سموذي فواكه',
+      'سمۆزی', 'سمۆزی میوە', 'سمۆزی میوه',
+    ],
+  },
   {
     id: 'juice',
     icon: 'citrus',
     color: 'orange',
     keys: [
       'juice', 'juices', 'fresh juice', 'fresh juices', 'orange juice', 'apple juice',
-      'carrot juice', 'fruit juice', 'smoothie', 'smoothies',
+      'carrot juice', 'fruit juice',
       'ابمیوه', 'اب میوه', 'ابمیوه تازه', 'اب میوه تازه', 'ابپرتقال', 'اب پرتقال',
-      'اب سیب', 'اب هویج', 'اسموتی', 'اسموتی ها',
+      'اب سیب', 'اب هویج',
       'عصير', 'عصائر', 'عصير طازج', 'عصائر طازجة', 'عصير فواكه', 'عصير برتقال',
-      'شهربت', 'شهربتی', 'شهربتی نوێ', 'شهربتی میوه', 'اوی میوه', 'ئاوی میوه', 'ئیسمووزی',
+      'شهربت', 'شهربتی', 'شهربتی نوێ', 'شهربتی میوه', 'اوی میوه', 'ئاوی میوه',
     ],
   },
   {
@@ -239,7 +313,7 @@ const MEANINGS = [
     color: 'copper',
     keys: [
       'coffee', 'coffees', 'espresso', 'cappuccino', 'latte', 'americano', 'mocha',
-      'macchiato', 'frappe', 'frappuccino', 'flat white', 'cortado',
+      'macchiato', 'frappuccino', 'flat white', 'cortado',
       'قهوه', 'قهوه خانه', 'اسپرسو', 'کاپوچینو', 'لاته', 'امریکانو', 'موکا', 'فراپه', 'ماکیاتو',
       'قهوة', 'اسبريسو', 'كابتشينو', 'لاتيه', 'امريكانو', 'موكا', 'فرابيه',
       'قاوه', 'ئیسپرسۆ', 'کاپوچینۆ', 'لاتێ', 'ئەمریکانۆ', 'قاوەخانه',
@@ -573,6 +647,12 @@ const LEGACY_COLORS = {
   dessert: INK.magenta,
   desserts: INK.magenta,
   waffle: INK.amber,
+  crepe: INK.copper,
+  kunafa: INK.orange,
+  muhallebi: INK.rose,
+  dondurma: INK.coral,
+  smoothieAlt: INK.lime,
+  faloodeh: INK.cyan,
   pancake: INK.amber,
   crepe: INK.teal,
   sandwich: INK.amber,

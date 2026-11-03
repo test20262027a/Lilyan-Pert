@@ -22,7 +22,6 @@
   -webkit-backdrop-filter: blur(7px) saturate(0.96);
   animation: osx-fade 220ms ease-out both;
 }
-.osx-overlay.is-leaving { animation: osx-fade 240ms ease-in reverse both; }
 
 @keyframes osx-fade {
   from { opacity: 0; }
@@ -61,15 +60,10 @@
   outline: none;
   animation: osx-in 420ms cubic-bezier(0.2, 0.85, 0.25, 1) both;
 }
-.osx-overlay.is-leaving .osx-card { animation: osx-out 240ms ease-in both; }
 
 @keyframes osx-in {
   from { opacity: 0; transform: translateY(14px) scale(0.94); }
   to { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes osx-out {
-  from { opacity: 1; transform: translateY(0) scale(1); }
-  to { opacity: 0; transform: translateY(6px) scale(0.96); }
 }
 
 /* A single diagonal light reflection across the glass. */
@@ -241,34 +235,10 @@
 
 /* ------------------------------------------------------------ countdown -- */
 
-.osx-progress {
-  display: block;
-  width: 100%;
-  height: 3px;
-  margin-top: 16px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 12%, transparent);
-  overflow: hidden;
-}
-.osx-progress__fill {
-  display: block;
-  height: 100%;
-  width: 100%;
-  border-radius: inherit;
-  background: linear-gradient(
-    90deg,
-    color-mix(in srgb, var(--primary) 55%, transparent),
-    var(--primary)
-  );
-  transform-origin: left center;
-  animation: osx-countdown 5500ms linear both;
-}
-[dir='rtl'] .osx-progress__fill { transform-origin: right center; }
-.osx-progress[data-paused='true'] .osx-progress__fill { animation-play-state: paused; }
-
-@keyframes osx-countdown {
-  from { transform: scaleX(1); }
-  to { transform: scaleX(0); }
+/* The shared burning fuse (burningFuseTimer.css) fills the card's width; the
+   variant already carries its own top margin. */
+.osx-fuse {
+  align-self: stretch;
 }
 
 /* ----------------------------------------------------------- responsive -- */
@@ -294,14 +264,11 @@
   .osx-emoji .emoji3d { width: 70px; height: 70px; }
   .osx-facts { margin-top: 10px; }
   .osx-total { margin-top: 10px; padding-top: 10px; }
-  .osx-progress { margin-top: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .osx-overlay,
-  .osx-overlay.is-leaving,
   .osx-card,
-  .osx-overlay.is-leaving .osx-card,
   .osx-emoji,
   .osx-emoji .emoji3d,
   .osx-spark {
@@ -310,6 +277,4 @@
   }
   .osx-emoji .emoji3d { animation: none; }
   .osx-spark { display: none; }
-  /* The bar still shows the remaining time, it just does not glide. */
-  .osx-progress__fill { animation-timing-function: steps(12, end); }
 }

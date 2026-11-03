@@ -4,6 +4,8 @@ import { Money } from '../ui';
 import { useI18n } from '../../i18n';
 import { fmtDigits } from '../../format';
 import Emoji3D, { ORDER_EMOJI_IDS } from './Emoji3D';
+import BurningFuseTimer from '../notifications/BurningFuseTimer';
+import useOrderNotification from '../../hooks/useOrderNotification';
 import './orderSuccess.css';
 
 /*
@@ -11,18 +13,19 @@ import './orderSuccess.css';
  * the API actually saved. It is mounted only after the server answered with
  * the created order, so it can show the real number, status and total.
  *
- * It has no close button by design — it leaves on its own after ~5.5s, or the
- * moment the guest taps the dimmed area, and Escape works for keyboards. The
- * countdown pauses while the pointer is over the card or focus is inside it,
- * so nobody loses the details mid-read, and dismissing never touches the order.
+ * It has no close button by design — it leaves on the SHARED 3-second deadline
+ * of its order event, the same `notificationLifecycle` record the small alert
+ * at the top of the screen joins, so the two always burn down together and
+ * disappear in one coordinated transition. Nothing pauses it: hovering, moving
+ * the pointer across it, focusing it or re-rendering never moves the deadline.
+ * Escape and a tap on the dimmed area still dismiss it by hand, and dismissing
+ * never touches the order.
  *
  * Every confirmation draws a different celebration illustration through a
  * shuffle bag kept in sessionStorage: nothing repeats until the set is spent,
  * and a reshuffle never opens with the picture that just showed.
  */
 
-const HOLD_MS = 5500;
-const EXIT_MS = 240;
 const BAG_KEY = 'lilyan.order.emoji';
 
 function shuffle(ids) {
@@ -66,43 +69,23 @@ function takeEmoji() {
 export default function OrderSuccessModal({ order, currency, onClose }) {
   const { t, locale } = useI18n();
   const [emoji] = useState(takeEmoji);
-  const [paused, setPaused] = useState(false);
-  const [leaving, setLeaving] = useState(false);
   const cardRef = useRef(null);
-  /* The card focuses itself so keyboards land on the announcement; that first
-     focus must not count as "the guest is reading" and freeze the timer. */
-  const autoFocusRef = useRef(false);
-  const closedRef = useRef(false);
-  const leftRef = useRef(HOLD_MS);
-  const startedRef = useRef(0);
 
+  /* One dismissal path: the shared deadline, Escape and the dimmed area all
+     close the card immediately — no exit animation holds the overlay open. */
   const dismiss = useCallback(() => {
-    if (closedRef.current) return;
-    closedRef.current = true;
-    setLeaving(true);
-    window.setTimeout(() => onClose?.(), EXIT_MS);
+    onClose?.();
   }, [onClose]);
 
-  /* The countdown: paused time is returned to the clock, so hovering or
-     tabbing into the card never eats into the reading time. */
-  useEffect(() => {
-    if (paused || leaving) return undefined;
-    startedRef.current = Date.now();
-    const timer = window.setTimeout(dismiss, leftRef.current);
-    return () => {
-      window.clearTimeout(timer);
-      leftRef.current = Math.max(0, leftRef.current - (Date.now() - startedRef.current));
-    };
-  }, [paused, leaving, dismiss]);
+  const record = useOrderNotification(
+    order?.id || null,
+    dismiss,
+  );
 
   /* Focus moves onto the card (never trapped) and Escape dismisses it. */
   useEffect(() => {
     const opener = document.activeElement;
-    autoFocusRef.current = true;
     cardRef.current?.focus?.({ preventScroll: true });
-    const clearAuto = window.setTimeout(() => {
-      autoFocusRef.current = false;
-    }, 80);
     const onKeyDown = (event) => {
       if (event.key !== 'Escape') return;
       event.preventDefault();
@@ -110,7 +93,6 @@ export default function OrderSuccessModal({ order, currency, onClose }) {
     };
     document.addEventListener('keydown', onKeyDown);
     return () => {
-      window.clearTimeout(clearAuto);
       document.removeEventListener('keydown', onKeyDown);
       if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true });
     };
@@ -120,24 +102,12 @@ export default function OrderSuccessModal({ order, currency, onClose }) {
 
   return createPortal(
     <div
-      className={`osx-overlay ${leaving ? 'is-leaving' : ''}`}
+      className="osx-overlay"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) dismiss();
       }}
     >
-      <div
-        className="osx-card"
-        ref={cardRef}
-        role="status"
-        aria-live="polite"
-        tabIndex={-1}
-        onPointerEnter={() => setPaused(true)}
-        onPointerLeave={() => setPaused(false)}
-        onFocus={() => {
-          if (!autoFocusRef.current) setPaused(true);
-        }}
-        onBlur={() => setPaused(false)}
-      >
+      <div className="osx-card" ref={cardRef} role="status" aria-live="polite" tabIndex={-1}>
         <span className="osx-sheen" aria-hidden="true" />
 
         <span className="osx-emoji">
@@ -167,9 +137,13 @@ export default function OrderSuccessModal({ order, currency, onClose }) {
           </strong>
         </div>
 
-        <span className="osx-progress" data-paused={paused || leaving ? 'true' : 'false'} aria-hidden="true">
-          <span className="osx-progress__fill" />
-        </span>
+        {/* The same burning fuse as the small alert, on the same deadline. */}
+        <BurningFuseTimer
+          expiresAt={record?.expiresAt}
+          durationMs={record?.durationMs}
+          variant="popup"
+          className="osx-fuse"
+        />
       </div>
     </div>,
     document.body,

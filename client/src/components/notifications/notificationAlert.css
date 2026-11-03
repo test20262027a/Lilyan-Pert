@@ -7,12 +7,13 @@
  * control behind it. Cards keep the product's 3D language — layered depth, a
  * soft sheen and a category-green edge — and reflow to full width on phones.
  *
- * The countdown at the bottom is a burning fuse: a recessed track, a glossy
- * thread that is consumed from one end to the other, and a small glowing ember
- * riding the burn point. Everything is coloured from the active `--primary`
- * (light → main → deep) and animated with transforms only, so it stays cheap
- * on low-end Android. The burn is linear and lasts exactly as long as the
- * card's dismissal deadline (`--fuse-ms`, written by the component).
+ * The card carries no close button: it leaves on the shared 3-second deadline
+ * of its order event, together with the large "order received" popup, and a
+ * click anywhere on it opens that order.
+ *
+ * The countdown at the bottom is the shared `BurningFuseTimer` (see
+ * burningFuseTimer.css): one design for both notifications, coloured from the
+ * active `--primary` into light → main → deep.
  */
 .notif-alert-stack {
   position: fixed;
@@ -103,154 +104,6 @@
   overflow-wrap: anywhere;
 }
 
-.notif-alert__close {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  margin-inline-start: 2px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--surface-2);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.notif-alert__close:hover {
-  color: var(--text);
-}
-
-/* --------------------------------------------------------------- fuse --- */
-
-.notif-alert__fuse {
-  /*
-   * LTR burns left → right: the ember travels forward and the remaining
-   * thread stays anchored at the far (right) end. RTL mirrors both.
-   */
-  --fuse-ms: 4000ms;
-  --fuse-travel: 100%;
-  --fuse-origin: right;
-  position: relative;
-  display: block;
-  flex: 0 0 auto;
-  height: 8px;
-  /* Room for the ember's glow so it never touches the card edge. */
-  margin-inline: 3px;
-  pointer-events: none;
-}
-
-[dir='rtl'] .notif-alert__fuse {
-  --fuse-travel: -100%;
-  --fuse-origin: left;
-}
-
-/* The recessed groove left behind by the burnt thread. */
-.notif-alert__fuse-track {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: 50%;
-  height: 3px;
-  margin-block-start: -1.5px;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 18%, var(--surface-2)),
-    color-mix(in srgb, var(--primary) 7%, var(--surface))
-  );
-  box-shadow:
-    0 1px 1px color-mix(in srgb, var(--text) 14%, transparent) inset,
-    0 -1px 0 color-mix(in srgb, var(--surface) 90%, #ffffff) inset,
-    0 1px 0 rgba(255, 255, 255, 0.35);
-}
-
-/* The luminous thread that is consumed as time runs out. */
-.notif-alert__fuse-line {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: 50%;
-  height: 3px;
-  margin-block-start: -1.5px;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 46%, #ffffff) 0%,
-    var(--primary) 58%,
-    color-mix(in srgb, var(--primary) 78%, #10141f) 100%
-  );
-  box-shadow:
-    0 0 5px color-mix(in srgb, var(--primary) 48%, transparent),
-    0 1px 0 rgba(255, 255, 255, 0.34) inset;
-  transform: scaleX(1);
-  transform-origin: var(--fuse-origin);
-  will-change: transform;
-}
-
-/* The carrier of the ember: a full-width rail moved along the track. */
-.notif-alert__fuse-run {
-  position: absolute;
-  inset-block: 0;
-  inset-inline: 0;
-  transform: translateX(0);
-  will-change: transform;
-}
-
-.notif-alert__fuse-ember {
-  position: absolute;
-  inset-block-start: 50%;
-  inset-inline-start: 0;
-  width: 6px;
-  height: 6px;
-  margin-block-start: -3px;
-  margin-inline-start: -3px;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 50% 38%,
-    color-mix(in srgb, var(--primary) 24%, #ffffff) 0%,
-    color-mix(in srgb, var(--primary) 62%, #ffffff) 46%,
-    var(--primary) 100%
-  );
-  box-shadow:
-    0 0 4px color-mix(in srgb, var(--primary) 82%, transparent),
-    0 0 9px color-mix(in srgb, var(--primary) 42%, transparent),
-    0 1px 0 rgba(255, 255, 255, 0.55) inset;
-}
-
-/* Started by the component only after it has measured the real deadline. */
-.notif-alert__fuse.is-running .notif-alert__fuse-line {
-  animation: notif-fuse-burn var(--fuse-ms) linear forwards;
-}
-
-.notif-alert__fuse.is-running .notif-alert__fuse-run {
-  animation: notif-fuse-travel var(--fuse-ms) linear forwards;
-}
-
-.notif-alert__fuse.is-running .notif-alert__fuse-ember {
-  animation: notif-fuse-glow 1.1s ease-in-out infinite alternate;
-}
-
-@keyframes notif-fuse-burn {
-  to {
-    transform: scaleX(0);
-  }
-}
-
-@keyframes notif-fuse-travel {
-  to {
-    transform: translateX(var(--fuse-travel));
-  }
-}
-
-@keyframes notif-fuse-glow {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0.72;
-  }
-}
-
 @keyframes notif-alert-in {
   from {
     opacity: 0;
@@ -258,26 +111,10 @@
   }
 }
 
-/*
- * Reduced motion: the ember is dropped and its glow removed; the thread still
- * shrinks linearly to the same deadline, which stays the honest indicator.
- */
 @media (prefers-reduced-motion: reduce) {
   .notif-alert {
     animation: none;
     transition: none;
-  }
-
-  .notif-alert__fuse-run {
-    display: none;
-  }
-
-  .notif-alert__fuse-line {
-    box-shadow: none;
-  }
-
-  .notif-alert__fuse.is-running .notif-alert__fuse-ember {
-    animation: none;
   }
 }
 

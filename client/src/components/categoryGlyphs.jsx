@@ -109,4 +109,19 @@ export const EXTRA_GLYPHS = {
   wheat: <><path d="M12 22V8" /><path d="M12 8c-2.500 0-4-1.500-4-4 2.500 0 4 1.500 4 4zM12 8c2.500 0 4-1.500 4-4-2.500 0-4 1.500-4 4z" /><path d="M12 14c-2.500 0-4-1.500-4-4 2.500 0 4 1.500 4 4zM12 14c2.500 0 4-1.500 4-4-2.500 0-4 1.500-4 4z" /><path d="M12 19.500c-2.500 0-4-1.500-4-4 2.500 0 4 1.500 4 4zM12 19.500c2.500 0 4-1.500 4-4-2.500 0-4 1.500-4 4z" /></>,
   shapes: <><path d="M8.500 3 13 11H4z" /><circle cx="17" cy="7" r="3.500" /><rect x="4" y="14" width="7" height="7" rx="1.500" /><path d="m17 14.500 3.500 3.500-3.500 3.500-3.500-3.500z" /></>,
   hash: <path d="M5 9h15M4 15h15M10 3 8 21M16 3l-2 18" />,
+  /* ---- desserts of the region -------------------------------------- */
+  /* A folded crêpe: the triangular fold, its curled edge and one crease. */
+  crepe: <><path d="M3.4 8.2 12 20.8 20.6 8.2z" /><path d="M3.4 8.2c1.3-1.1 2.7-1.1 4 0s2.7 1.1 4 0 2.7-1.1 4 0 2.6 1.1 3.2 0" /><path d="M8.6 13.6 12 9.6l3.4 4" /></>,
+  /* Kunafa: a round nest of shredded pastry under its pistachio topping. */
+  kunafa: <><circle cx="12" cy="12.4" r="8.4" /><path d="M7.4 8.8c1.3 2.3 1.3 4.9 0 7.2" /><path d="M12 7.6c1.1 2.7 1.1 5.5 0 8.2" /><path d="M16.6 8.8c-1.3 2.3-1.3 4.9 0 7.2" /><path d="M8.2 18.6c2.5 1 5.1 1 7.6 0" /><circle cx="10" cy="7" r=".8" /><circle cx="13.6" cy="6.6" r=".6" /></>,
+  /* Iced coffee: a transparent cup, its lid, the straw and an ice cube. */
+  icedCoffee: <><path d="M6.4 8.6h11.2l-1.3 11.8a1.6 1.6 0 0 1-1.6 1.4H9.3a1.6 1.6 0 0 1-1.6-1.4z" /><path d="M5.4 8.6h13.2" /><path d="M13.8 8.6 16.4 3" /><path d="M8.6 13.2h6.8" /><path d="m10.4 16.2 1.6-1.6 1.6 1.6-1.6 1.6z" /></>,
+  /* Muhallebi: a wide dessert bowl of milk pudding with one pistachio. */
+  muhallebi: <><path d="M4.4 11.6h15.2a7.6 7.6 0 0 1-7.6 7.2 7.6 7.6 0 0 1-7.6-7.2z" /><path d="M3.2 11.6h17.6" /><path d="M9.2 21.4h5.6" /><circle cx="12" cy="9.4" r="1.1" /><path d="M10.2 7.2c.5-.6 1.1-.9 1.8-.9s1.3.3 1.8.9" /></>,
+  /* Dondurma: the stretched scoop on a stick, not a cone. */
+  dondurma: <><path d="M7.4 11.8h9.2l-1 7.8a1.6 1.6 0 0 1-1.6 1.4h-4a1.6 1.6 0 0 1-1.6-1.4z" /><path d="M7.4 11.8c0-2.6 2.1-4.6 4.6-4.6s4.6 2 4.6 4.6" /><path d="M9.5 11.8c0-1.4 1.1-2.5 2.5-2.5s2.5 1.1 2.5 2.5" /><path d="M12 7.1V4.8" /></>,
+  /* A second smoothie cup: domed lid, straw and fruit pieces inside. */
+  smoothieAlt: <><path d="M6.6 10.2h10.8l-1.2 9.6a1.6 1.6 0 0 1-1.6 1.4H9.4a1.6 1.6 0 0 1-1.6-1.4z" /><path d="M6.6 10.2a5.4 3.6 0 0 1 10.8 0" /><path d="M13.4 8.4 16 3.4" /><circle cx="9.8" cy="14.2" r="1.5" /><circle cx="13.6" cy="16.6" r="1.1" /></>,
+  /* Faloodeh: a chilled cup of fine strands, crushed ice and a lime slice. */
+  faloodeh: <><path d="M5.8 9h12.4l-1.4 10.4a1.6 1.6 0 0 1-1.6 1.4H8.8a1.6 1.6 0 0 1-1.6-1.4z" /><path d="M4.8 9h14.4" /><path d="M8.6 12.4c1 1 2 1 3 0s2-1 3 0" /><path d="M8.9 15.4c1 1 2 1 3 0s2-1 3 0" /><circle cx="17.2" cy="7" r="2" /><path d="M17.2 5v4M15.2 7h4" /></>,
 };
