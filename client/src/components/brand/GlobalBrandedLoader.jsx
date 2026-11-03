@@ -23,7 +23,6 @@ const EXIT_MS = 250;
  */
 export default function GlobalBrandedLoader({
   isLoading,
-  theme,
   message,
   error = null,
   onRetry,
@@ -69,9 +68,10 @@ export default function GlobalBrandedLoader({
   const label = error ? t('state_error') : message || t('state_loading');
   /* The mark always follows the document's live accent (`--primary`), which is
      already the saved business theme before React runs and changes with it
-     afterwards — so the ring can never keep an older theme's colour. Only a
-     failure (or an explicitly supplied business theme) overrides it. */
-  const accent = error ? '#e05252' : theme || '';
+     afterwards — so the ring can never keep an older theme's colour. It is the
+     ONLY source of the ring's three tones. A failure is the one exception: its
+     ring turns the danger hue and stops. */
+  const accent = error ? '#e05252' : '';
 
   return (
     <div

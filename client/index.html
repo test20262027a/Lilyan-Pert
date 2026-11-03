@@ -119,7 +119,8 @@
         --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 70%, #4b5364);
       }
       /* No known appearance yet: no coloured ring, only the neutral glass. */
-      html:not([data-theme-source]) #boot-splash .bs-spin { opacity: 0; }
+      html:not([data-theme-source]) #boot-splash .bs-spin,
+      html:not([data-theme-source]) #boot-splash .bs-glow { opacity: 0; }
       html[data-theme='dark'] #boot-splash {
         --boot-surface: #0b0f16;
         --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 60%, #aab3c4);
@@ -128,12 +129,28 @@
        * The Mark — the exact geometry of `components/brand/LilyanPertLoader`
        * (components/brand/lilyanPertLoader.css), repeated here so it paints on
        * the very first frame without waiting for a stylesheet request. Keep the
-       * two in step: one 160x160 box, the ring drawn from its edge, the theme's
-       * own arc turning inside it, and the logo still at 48% of the box.
+       * two in step: one 160x160 box, the band of the ring along its edge, the
+       * theme's own arc turning inside it, ONE static overhead light over the
+       * band, and a clear glass disc with the logo at 48% of the box.
        */
       #boot-splash .bs-stage {
         --bs-size: 160px;
-        --bs-ring: 8.8px;
+        --bs-ring: 10px;
+        --bs-hair: 2.1px;
+        --bs-band: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) - 0.6px),
+          #000 calc(100% - var(--bs-ring) + 0.4px),
+          #000 calc(100% - 0.5px),
+          transparent 100%
+        );
+        --bs-hairline: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-hair) - 0.6px),
+          #000 calc(100% - var(--bs-hair) + 0.4px),
+          #000 calc(100% - 0.6px),
+          transparent 100%
+        );
         position: relative;
         inline-size: var(--bs-size);
         block-size: var(--bs-size);
@@ -143,16 +160,16 @@
       }
       #boot-splash .bs-glow {
         position: absolute;
-        inset: 4%;
+        inset: 3%;
         margin: auto;
         border-radius: 50%;
         background: radial-gradient(
-          circle at 50% 50%,
-          color-mix(in oklab, var(--boot-mid) 26%, transparent),
-          color-mix(in oklab, var(--boot-mid) 9%, transparent) 56%,
-          transparent 76%
+          circle at 50% 52%,
+          color-mix(in oklab, var(--boot-mid) 20%, transparent),
+          color-mix(in oklab, var(--boot-mid) 7%, transparent) 58%,
+          transparent 78%
         );
-        opacity: 0.75;
+        opacity: 0.9;
       }
       #boot-splash .bs-track {
         position: absolute;
@@ -160,88 +177,111 @@
         margin: auto;
         border-radius: 50%;
         border: var(--bs-ring) solid color-mix(in oklab, var(--boot-mid) 13%, transparent);
-        box-shadow:
-          inset 0 0 0 1px color-mix(in oklab, #ffffff 20%, transparent),
-          inset 0 1px 2px color-mix(in oklab, var(--boot-light) 32%, transparent),
-          0 0 0 1px color-mix(in oklab, var(--boot-deep) 12%, transparent);
-        filter: drop-shadow(0 7px 11px color-mix(in oklab, var(--boot-deep) 26%, transparent));
       }
-      /* The frosted glass disc the logo sits on — the same disc the React mark
-         draws, so the handover between the two never changes the picture. */
-      #boot-splash .bs-glass {
+      /* The light never moves, even though the arc under it does: white where
+         the band faces up, nothing through the middle, the deep tone where it
+         turns away at the bottom. This is the whole 3D read of the ring. */
+      #boot-splash .bs-shade {
         position: absolute;
-        inset: 15%;
+        inset: 0;
         margin: auto;
         border-radius: 50%;
-        background:
-          radial-gradient(
-            circle at 32% 22%,
-            rgba(255, 255, 255, 0.72),
-            rgba(255, 255, 255, 0.12) 42%,
-            rgba(255, 255, 255, 0.02) 70%
-          ),
-          radial-gradient(circle at 50% 118%, rgba(18, 26, 40, 0.085), rgba(18, 26, 40, 0) 62%),
-          linear-gradient(
-            155deg,
-            rgba(255, 255, 255, 0.42),
-            rgba(255, 255, 255, 0.1) 52%,
-            rgba(255, 255, 255, 0.28)
-          );
-        border: 1px solid rgba(255, 255, 255, 0.55);
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.34) 0%,
+          rgba(255, 255, 255, 0.12) 20%,
+          rgba(255, 255, 255, 0) 46%,
+          color-mix(in oklab, var(--boot-deep) 12%, transparent) 70%,
+          color-mix(in oklab, var(--boot-deep) 34%, transparent) 100%
+        );
+        -webkit-mask: var(--bs-band);
+        mask: var(--bs-band);
+      }
+      /* The hairline catching the top outer edge. */
+      #boot-splash .bs-rim {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.72) 0%,
+          rgba(255, 255, 255, 0.26) 26%,
+          rgba(255, 255, 255, 0) 48%
+        );
+        -webkit-mask: var(--bs-hairline);
+        mask: var(--bs-hairline);
+      }
+      /* The CLEAR glass disc the logo sits on — barely-there milky tint, one
+         fine reflection, a thin lit rim and the faintest inner shade, so it
+         reads as polished glass rather than a white button. The same disc the
+         React mark draws, so the handover never changes the picture. */
+      #boot-splash .bs-glass {
+        position: absolute;
+        inset: 18%;
+        margin: auto;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 32% 22%,
+          rgba(255, 255, 255, 0.17),
+          rgba(255, 255, 255, 0.04) 56%,
+          rgba(255, 255, 255, 0.012)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.24);
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.95),
-          inset 0 -8px 14px rgba(255, 255, 255, 0.3),
-          inset 0 10px 18px rgba(255, 255, 255, 0.22),
-          0 0 0 1px color-mix(in oklab, var(--boot-deep) 10%, transparent),
-          0 16px 26px -18px color-mix(in oklab, var(--boot-deep) 62%, transparent);
-        -webkit-backdrop-filter: blur(3px) saturate(115%);
-        backdrop-filter: blur(3px) saturate(115%);
+          inset 0 1px 0 rgba(255, 255, 255, 0.3),
+          inset 0 -1px 3px rgba(0, 0, 0, 0.04),
+          0 5px 16px rgba(0, 0, 0, 0.06);
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
       }
       #boot-splash .bs-glass::after {
         content: '';
         position: absolute;
-        inset: 9% 15% 54% 13%;
+        inset: 9% 15% 56% 13%;
         border-radius: 50%;
         background: radial-gradient(
           72% 100% at 46% 0%,
-          rgba(255, 255, 255, 0.8),
-          rgba(255, 255, 255, 0) 74%
+          rgba(255, 255, 255, 0.42),
+          rgba(255, 255, 255, 0) 76%
         );
-        opacity: 0.75;
+        opacity: 0.7;
       }
       html[data-theme='dark'] #boot-splash .bs-glass {
-        border-color: rgba(255, 255, 255, 0.22);
-        background:
-          radial-gradient(
-            circle at 34% 24%,
-            rgba(255, 255, 255, 0.28),
-            rgba(255, 255, 255, 0.06) 46%,
-            rgba(255, 255, 255, 0.02) 74%
-          ),
-          linear-gradient(
-            155deg,
-            rgba(255, 255, 255, 0.16),
-            rgba(255, 255, 255, 0.03) 54%,
-            rgba(255, 255, 255, 0.09)
-          );
+        background: radial-gradient(
+          circle at 32% 22%,
+          rgba(255, 255, 255, 0.14),
+          rgba(255, 255, 255, 0.035) 58%,
+          rgba(255, 255, 255, 0.012)
+        );
+        border-color: rgba(255, 255, 255, 0.18);
         box-shadow:
-          inset 0 1px 0 rgba(255, 255, 255, 0.42),
-          inset 0 -7px 12px rgba(255, 255, 255, 0.09),
-          inset 0 9px 16px rgba(255, 255, 255, 0.07),
-          0 16px 26px -18px rgba(0, 0, 0, 0.75);
+          inset 0 1px 0 rgba(255, 255, 255, 0.22),
+          inset 0 -1px 3px rgba(0, 0, 0, 0.12),
+          0 6px 16px rgba(0, 0, 0, 0.3);
       }
       html[data-theme='dark'] #boot-splash .bs-glass::after { opacity: 0.5; }
+      html[data-theme='dark'] #boot-splash .bs-shade {
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.26) 0%,
+          rgba(255, 255, 255, 0.08) 20%,
+          rgba(255, 255, 255, 0) 46%,
+          color-mix(in oklab, var(--boot-deep) 14%, transparent) 70%,
+          color-mix(in oklab, var(--boot-deep) 40%, transparent) 100%
+        );
+      }
       #boot-splash .bs-spin {
         position: absolute;
         inset: 0;
         margin: auto;
         border-radius: 50%;
         transform-origin: 50% 50%;
-        transform: translateZ(0);
-        animation: bs-spin 1.4s linear infinite;
+        transform: translateZ(0) rotate(0deg);
+        animation: bs-spin 1.35s linear infinite;
       }
       #boot-splash .bs-arc,
-      #boot-splash .bs-sheen {
+      #boot-splash .bs-glint {
         position: absolute;
         inset: 0;
         border-radius: 50%;
@@ -252,51 +292,40 @@
         background: conic-gradient(
           from 0deg,
           transparent 0deg,
-          color-mix(in oklab, var(--boot-light) 55%, transparent) 26deg,
-          var(--boot-light) 92deg,
-          color-mix(in oklab, var(--boot-mid) 92%, transparent) 168deg,
-          var(--boot-mid) 214deg,
-          color-mix(in oklab, var(--boot-deep) 96%, transparent) 286deg,
-          var(--boot-deep) 322deg,
-          color-mix(in oklab, var(--boot-deep) 62%, #ffffff) 350deg,
-          rgba(255, 255, 255, 0.9) 357deg,
+          color-mix(in oklab, var(--boot-light) 52%, transparent) 24deg,
+          var(--boot-light) 88deg,
+          color-mix(in oklab, var(--boot-mid) 92%, transparent) 162deg,
+          var(--boot-mid) 208deg,
+          color-mix(in oklab, var(--boot-deep) 96%, transparent) 280deg,
+          var(--boot-deep) 318deg,
+          color-mix(in oklab, var(--boot-deep) 58%, #ffffff) 346deg,
+          rgba(255, 255, 255, 0.42) 356deg,
           transparent 360deg
         );
-        -webkit-mask: radial-gradient(
-          circle closest-side,
-          transparent calc(100% - var(--bs-ring) - 0.75px),
-          #000 calc(100% - var(--bs-ring) + 0.25px),
-          #000 calc(100% - 0.5px),
-          transparent 100%
-        );
-        mask: radial-gradient(
-          circle closest-side,
-          transparent calc(100% - var(--bs-ring) - 0.75px),
-          #000 calc(100% - var(--bs-ring) + 0.25px),
-          #000 calc(100% - 0.5px),
-          transparent 100%
-        );
+        -webkit-mask: var(--bs-band);
+        mask: var(--bs-band);
       }
-      #boot-splash .bs-sheen {
+      #boot-splash .bs-glint {
         background: conic-gradient(
           from 0deg,
-          transparent 300deg,
-          rgba(255, 255, 255, 0.7) 352deg,
+          transparent 246deg,
+          rgba(255, 255, 255, 0.28) 318deg,
+          rgba(255, 255, 255, 0.62) 352deg,
           transparent 360deg
         );
         -webkit-mask: radial-gradient(
           circle closest-side,
-          transparent calc(100% - var(--bs-ring) * 1.15),
-          #000 calc(100% - var(--bs-ring) * 0.62),
+          transparent calc(100% - var(--bs-ring) * 1.06),
+          #000 calc(100% - var(--bs-ring) * 0.66),
           transparent calc(100% - 1px)
         );
         mask: radial-gradient(
           circle closest-side,
-          transparent calc(100% - var(--bs-ring) * 1.15),
-          #000 calc(100% - var(--bs-ring) * 0.62),
+          transparent calc(100% - var(--bs-ring) * 1.06),
+          #000 calc(100% - var(--bs-ring) * 0.66),
           transparent calc(100% - 1px)
         );
-        opacity: 0.65;
+        opacity: 0.6;
       }
       /* The logo never moves: same size, same place, from the first frame until
          the React loader takes over. */
@@ -355,8 +384,10 @@
       <span class="bs-stage">
         <span class="bs-glow"></span>
         <span class="bs-track"></span>
+        <span class="bs-spin"><span class="bs-arc"></span><span class="bs-glint"></span></span>
+        <span class="bs-shade"></span>
+        <span class="bs-rim"></span>
         <span class="bs-glass"></span>
-        <span class="bs-spin"><span class="bs-arc"></span><span class="bs-sheen"></span></span>
         <img
         id="bs-logo"
         alt=""
