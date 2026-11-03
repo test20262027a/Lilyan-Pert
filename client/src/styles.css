@@ -626,9 +626,11 @@ a { color: var(--primary); }
     0 18px 30px -20px color-mix(in srgb, var(--primary) 100%, transparent),
     0 2px 7px -4px rgba(0, 0, 0, 0.55);
 }
+/* The selected icon stays fully sharp: a theme glow behind it, never a blur. */
 .sidebar .nav-link.is-active .icon {
   color: #ffffff;
-  filter: drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
+  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--nav-accent) 80%, transparent))
+    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
 }
 /*
  * A submenu row that is the current page.
@@ -671,129 +673,200 @@ a { color: var(--primary); }
 
 /*
  * The boundary between the three direct destinations and the management
- * sections. A single 1px line: a lit gradient fading into the rail at both
- * ends, a hairline highlight along its top edge, a soft shadow underneath and
- * a small polished diamond at its centre — centred at 88% of the rail's inner
- * width, with breathing room above and below.
+ * sections. A long, near-full-width rule (93% of the rail's inner width): a
+ * three-tone lit gradient dissolving into the rail at both ends, a metallic
+ * hairline along its top edge, a soft glow band and a lower shadow for depth,
+ * plus a small polished diamond at its centre. Spacing above and below is equal
+ * so it reads as part of the tree, not as a decorative banner.
  */
 .nav-divider {
   position: relative;
   flex: none;
   display: grid;
   place-items: center;
-  inline-size: 88%;
-  block-size: 8px;
-  margin: 10px auto 9px;
+  inline-size: 93%;
+  block-size: 10px;
+  margin: 12px auto;
   pointer-events: none;
 }
+/* The main line: 1.5px of lit gradient, thin enough to stay a hairline. */
 .nav-divider::before {
   content: '';
   position: absolute;
+  z-index: 2;
   inset-inline: 0;
   inset-block-start: 50%;
-  block-size: 1px;
+  block-size: 1.5px;
   translate: 0 -50%;
+  border-radius: 999px;
   background: linear-gradient(
     to right,
     transparent 0%,
-    color-mix(in srgb, var(--nav-accent) 30%, transparent) 16%,
+    color-mix(in srgb, var(--nav-accent) 24%, transparent) 9%,
+    color-mix(in srgb, var(--nav-accent) 68%, transparent) 30%,
     var(--nav-accent-light) 50%,
-    color-mix(in srgb, var(--nav-accent) 30%, transparent) 84%,
+    color-mix(in srgb, var(--nav-accent) 68%, transparent) 70%,
+    color-mix(in srgb, var(--nav-accent) 24%, transparent) 91%,
     transparent 100%
   );
   box-shadow:
-    0 -1px 0 color-mix(in srgb, #ffffff 12%, transparent),
-    0 1px 2px rgba(3, 8, 14, 0.6),
-    0 0 6px color-mix(in srgb, var(--nav-accent) 40%, transparent);
+    0 -1px 0 color-mix(in srgb, #ffffff 16%, transparent),
+    0 1px 2px rgba(3, 8, 14, 0.62),
+    0 0 8px color-mix(in srgb, var(--nav-accent) 38%, transparent);
 }
+/* A 3px halo band hugging the line, painted underneath it. */
+.nav-divider::after {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset-inline: 14%;
+  inset-block-start: 50%;
+  block-size: 3px;
+  translate: 0 -50%;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--nav-accent) 30%, transparent);
+  filter: blur(1.5px);
+  opacity: 0.6;
+}
+/* The centre ornament: a small polished diamond with a theme halo. */
 .nav-divider__gem {
   position: relative;
-  inline-size: 7px;
-  block-size: 7px;
+  z-index: 3;
+  inline-size: 8px;
+  block-size: 8px;
   rotate: 45deg;
-  border-radius: 1.5px;
+  border-radius: 2px;
   background: linear-gradient(
     135deg,
     var(--nav-accent-light) 0%,
-    var(--nav-accent) 52%,
+    var(--nav-accent) 46%,
     var(--nav-accent-deep) 100%
   );
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--nav-accent) 34%, transparent),
-    0 1px 2px rgba(3, 8, 14, 0.55),
-    0 0 7px color-mix(in srgb, var(--nav-accent) 55%, transparent);
+    inset 0 1px 0 color-mix(in srgb, #ffffff 68%, transparent),
+    inset 0 -1px 0 rgba(3, 8, 14, 0.38),
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 30%, transparent),
+    0 1px 2px rgba(3, 8, 14, 0.6),
+    0 0 9px color-mix(in srgb, var(--nav-accent) 60%, transparent);
 }
 
 /*
- * The illuminated light strip that marks the selected row: 3px wide, 58% of
- * the row, rounded ends, three-tone gradient with a hairline ring, outer glow
- * and a soft drop shadow. It sits at the logical start of the title — just past
- * the row's icon, inside the existing gap — so it touches neither the icon nor
- * the label, and mirrors by itself between RTL and LTR.
+ * The selected destination is marked by an illuminated light strip mounted on
+ * the icon itself — never beside the label. Each row's icon sits in its own
+ * `.nav-link__icon` slot, and that slot is the positioning reference: the strip
+ * is centred on it, so it follows the icon through RTL/LTR, the collapsed rail
+ * and every submenu indent without a single magic offset.
+ *
+ * Layer order inside the slot: ambient halo (1) → 3D light strip (2) → icon (3).
  */
-.sidebar .nav-link.is-active::before {
+.sidebar .nav-link__icon {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 18px;
+  block-size: 18px;
+  /* The row's shared `span` rule clips text; the slot must overflow so the
+     strip's bevel and halo are never cut. */
+  overflow: visible;
+}
+.sidebar .nav-link__icon--child { inline-size: 16px; block-size: 16px; }
+.sidebar .nav-link__icon > .icon {
+  position: relative;
+  z-index: 3;
+  transition: color 0.2s ease, filter 0.2s ease;
+}
+/* Ambient halo behind the selected icon. */
+.sidebar .nav-link__icon::after {
   content: '';
   position: absolute;
-  /* Offsets are measured from the row's padding box: the strip is centred in
-     the 10px gap between an 18px icon and the label, with its 1px ring and
-     glow still clear of both. */
-  inset-block: 21%;
-  inset-inline-start: 21px;
-  inline-size: 3px;
+  z-index: 1;
+  inset: -8px -7px;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--nav-accent) 62%, transparent),
+    transparent 78%
+  );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+}
+/* The 3D light strip: 4px wide, 26px tall, rounded ends, beveled edges. */
+.sidebar .nav-link__icon::before {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  inset-block-start: 50%;
+  inset-inline-start: 50%;
+  margin-inline-start: -2px;
+  translate: 0 -50%;
+  inline-size: 4px;
+  block-size: 26px;
   border-radius: 999px;
+  /* Light → main → deep, all mixed out of the live theme; the lit end is
+     pushed toward white so the strip still reads on the copper active plate. */
   background: linear-gradient(
     to bottom,
-    var(--nav-accent-light) 0%,
-    var(--nav-accent) 52%,
+    color-mix(in srgb, var(--nav-accent-light) 62%, #ffffff) 0%,
+    var(--nav-accent) 50%,
     var(--nav-accent-deep) 100%
   );
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--nav-accent) 30%, transparent),
-    0 0 7px color-mix(in srgb, var(--nav-accent) 62%, transparent),
-    1px 1px 2px rgba(3, 8, 14, 0.5);
-  animation: nav-accent-in 0.22s ease both;
+    inset 1px 0 0 color-mix(in srgb, #ffffff 62%, transparent),
+    inset -1px 0 0 rgba(3, 8, 14, 0.34),
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 38%, transparent),
+    0 0 11px color-mix(in srgb, var(--nav-accent) 76%, transparent),
+    1px 1px 3px rgba(3, 8, 14, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s ease, box-shadow 0.2s ease;
   pointer-events: none;
 }
-/* Selecting a row fades the strip in; hovering only brightens its glow. */
+/* Selection: the halo and the strip fade in together, nothing moves. */
+.sidebar .nav-link.is-active .nav-link__icon::after { opacity: 0.5; }
+.sidebar .nav-link.is-active .nav-link__icon::before {
+  opacity: 1;
+  animation: nav-accent-in 0.2s ease both;
+}
 @keyframes nav-accent-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
-.sidebar .nav-link.is-active:hover::before,
-.sidebar .nav-link.is-active:focus-visible::before {
+/* Hovering or focusing the selected row only brightens the strip. */
+.sidebar .nav-link.is-active:hover .nav-link__icon::before,
+.sidebar .nav-link.is-active:focus-visible .nav-link__icon::before {
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--nav-accent) 42%, transparent),
-    0 0 10px color-mix(in srgb, var(--nav-accent) 82%, transparent),
-    1px 1px 2px rgba(3, 8, 14, 0.5);
+    inset 1px 0 0 color-mix(in srgb, #ffffff 62%, transparent),
+    inset -1px 0 0 rgba(3, 8, 14, 0.3),
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 44%, transparent),
+    0 0 13px color-mix(in srgb, var(--nav-accent) 88%, transparent),
+    1px 1px 3px rgba(3, 8, 14, 0.55);
 }
-/* A closed group that holds the current page shows the same strip on its
-   header, so the parent stays identifiable while its submenu is collapsed. */
-.sidebar .nav-group.is-current:not(.is-open)::before {
-  content: '';
-  position: absolute;
-  inset-block: 24%;
-  inset-inline-start: 21px;
-  inline-size: 2.5px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to bottom,
-    var(--nav-accent-light) 0%,
-    var(--nav-accent) 55%,
-    var(--nav-accent-deep) 100%
-  );
-  box-shadow: 0 0 6px color-mix(in srgb, var(--nav-accent) 45%, transparent);
-  animation: nav-accent-in 0.22s ease both;
-  pointer-events: none;
+/* Hovering any row lifts its icon a touch — no other row reacts. */
+.sidebar .nav-link:hover .nav-link__icon > .icon { filter: brightness(1.18); }
+.sidebar .nav-link.is-active:hover .nav-link__icon > .icon,
+.sidebar .nav-link.is-active:focus-visible .nav-link__icon > .icon {
+  filter: brightness(1.1)
+    drop-shadow(0 0 7px color-mix(in srgb, var(--nav-accent) 85%, transparent))
+    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
 }
-/* Submenu rows: the same strip, two steps quieter and aligned to the title. */
-.sidebar:not(.is-collapsed) .nav-children .nav-link.is-active::before {
-  inset-block: 26%;
-  inset-inline-start: 19px;
-  inline-size: 2.5px;
+/* A group that holds the current page: the same strip, quieter, so exactly one
+   destination in the tree carries the strongest mark. */
+.sidebar .nav-group.is-current .nav-link__icon::before {
+  opacity: 0.55;
+  inline-size: 3px;
+  margin-inline-start: -1.5px;
+  block-size: 20px;
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--nav-accent) 26%, transparent),
-    0 0 6px color-mix(in srgb, var(--nav-accent) 50%, transparent),
-    1px 1px 2px rgba(3, 8, 14, 0.45);
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 24%, transparent),
+    0 0 6px color-mix(in srgb, var(--nav-accent) 48%, transparent);
+}
+.sidebar .nav-group.is-current .nav-link__icon::after { opacity: 0.24; }
+/* Submenu rows: the same system, one step smaller behind the 16px mark. */
+.sidebar .nav-children .nav-link.is-active .nav-link__icon::before {
+  inline-size: 3.5px;
+  margin-inline-start: -1.75px;
+  block-size: 22px;
 }
 /* Hovering an active submenu row only warms the tint — nothing moves or grows. */
 .sidebar .nav-children .nav-link.is-active:hover,
@@ -812,7 +885,7 @@ a { color: var(--primary); }
 }
 .sidebar .nav-children .nav-link.is-active .icon {
   color: color-mix(in srgb, #ffffff 90%, var(--primary));
-  filter: none;
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--nav-accent) 70%, transparent));
 }
 .nav-children .nav-link.is-active .nav-child-icon { opacity: 1; }
 
@@ -1964,18 +2037,16 @@ table.data tr:hover td { background: var(--surface-2); }
   /* The icon rail has no outer edge to bend into: the active tile keeps a
      compact rounded square and drops the shoulders, but keeps the lit ring and
      accent halo so the selection still reads as a raised plate. */
-  /* No label to sit beside on the icon rail, so the text-adjacent strip is
-     retired and the active tile's own lit ring carries the selection. */
-  .sidebar.is-collapsed .nav-link.is-active::before,
-  .sidebar.is-collapsed .nav-group.is-current:not(.is-open)::before {
-    content: none;
-  }
+  /* The strip is mounted on the icon, so the icon rail keeps it — only trimmed
+     so it stays inside the 38px tile. */
+  .sidebar.is-collapsed .nav-link__icon::before { block-size: 24px; }
   /* The divider stays inside the narrow rail, with a smaller centre gem. */
   .sidebar.is-collapsed .nav-divider {
     inline-size: 44px;
-    margin-block: 9px 8px;
+    margin-block: 10px 9px;
   }
-  .sidebar.is-collapsed .nav-divider__gem { inline-size: 5px; block-size: 5px; }
+  .sidebar.is-collapsed .nav-divider::after { inset-inline: 8%; }
+  .sidebar.is-collapsed .nav-divider__gem { inline-size: 6px; block-size: 6px; }
 
   .sidebar.is-collapsed .nav-link.is-active {
     border-radius: 13px;
@@ -2075,8 +2146,9 @@ table.data tr:hover td { background: var(--surface-2); }
   .nav-collapse__chev,
   .nav-children,
   .nav-flyout,
-  .sidebar .nav-link.is-active::before,
-  .sidebar .nav-group.is-current:not(.is-open)::before {
+  .sidebar .nav-link__icon::before,
+  .sidebar .nav-link__icon::after,
+  .sidebar .nav-link__icon > .icon {
     transition: none !important;
     animation: none !important;
   }

@@ -91,7 +91,9 @@ export default function SidebarNav({
             navigate(e);
           }}
         >
-          <Icon name={item.icon} size={18} />
+          <span className="nav-link__icon">
+            <Icon name={item.icon} size={18} />
+          </span>
           <span className="nav-link__label">{t(item.key)}</span>
         </a>
       );
@@ -108,7 +110,9 @@ export default function SidebarNav({
           data-tip-side="inline-end"
           onClick={navigate}
         >
-          <Icon name={item.icon} size={18} />
+          <span className="nav-link__icon">
+            <Icon name={item.icon} size={18} />
+          </span>
           <span className="nav-link__label">{t(item.key)}</span>
         </NavLink>
       );
@@ -149,7 +153,9 @@ export default function SidebarNav({
               onToggleGroup(item);
             }}
           >
-            <Icon name={item.icon} size={18} />
+            <span className="nav-link__icon">
+              <Icon name={item.icon} size={18} />
+            </span>
             <span className="nav-link__label">{t(item.key)}</span>
             <Icon name="chevronDown" size={14} className={`nav-group__caret ${isOpen ? 'is-open' : ''}`} />
           </button>
@@ -164,7 +170,9 @@ export default function SidebarNav({
                   onClick={navigate}
                 >
                   {/* Submenu rows carry their own small outlined mark. */}
-                  <Icon name={child.icon} size={16} className="nav-child-icon" />
+                  <span className="nav-link__icon nav-link__icon--child">
+                    <Icon name={child.icon} size={16} className="nav-child-icon" />
+                  </span>
                   <span className="nav-link__label">{t(child.key)}</span>
                   {child.danger ? <span className="nav-danger" aria-hidden="true" /> : null}
                 </NavLink>
