@@ -115,58 +115,131 @@
         --boot-surface: #0b0f16;
         --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 60%, #aab3c4);
       }
-      /* One square box: glow, ring and logo all share its centre. Fixed 144px
-         with an 88px logo — the exact geometry of the React loader at every
-         breakpoint, so handing over to it never resizes or shifts anything. */
+      /*
+       * The Mark — the exact geometry of `components/brand/LilyanPertLoader`
+       * (components/brand/lilyanPertLoader.css), repeated here so it paints on
+       * the very first frame without waiting for a stylesheet request. Keep the
+       * two in step: one 160x160 box, the ring drawn from its edge, the theme's
+       * own arc turning inside it, and the logo still at 48% of the box.
+       */
       #boot-splash .bs-stage {
-        --bs-logo: 88px;
+        --bs-size: 160px;
+        --bs-ring: 8.8px;
         position: relative;
-        inline-size: 144px;
-        block-size: 144px;
+        inline-size: var(--bs-size);
+        block-size: var(--bs-size);
+        display: grid;
+        place-items: center;
+        isolation: isolate;
       }
       #boot-splash .bs-glow {
         position: absolute;
-        inset: -32%;
+        inset: 6%;
+        margin: auto;
         border-radius: 50%;
         background: radial-gradient(
-          circle,
-          color-mix(in srgb, var(--boot-accent) 26%, transparent),
-          transparent 62%
+          circle at 50% 52%,
+          color-mix(in srgb, var(--boot-accent) 30%, transparent),
+          color-mix(in srgb, var(--boot-accent) 10%, transparent) 52%,
+          transparent 74%
         );
-        animation: bs-glow 2s ease-in-out infinite;
+        opacity: 0.8;
+        animation: bs-breathe 2.6s ease-in-out infinite;
       }
-      #boot-splash .bs-halo {
+      #boot-splash .bs-track {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        border: var(--bs-ring) solid color-mix(in srgb, var(--boot-accent) 14%, transparent);
+        box-shadow:
+          inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+          0 0 0 1px color-mix(in srgb, var(--boot-accent) 10%, transparent);
+        filter: drop-shadow(0 8px 13px color-mix(in srgb, var(--boot-accent) 26%, transparent));
+      }
+      #boot-splash .bs-spin {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        transform-origin: 50% 50%;
+        animation: bs-spin 1.6s linear infinite;
+      }
+      #boot-splash .bs-arc,
+      #boot-splash .bs-sheen {
         position: absolute;
         inset: 0;
         border-radius: 50%;
-        border: 3px solid color-mix(in srgb, var(--boot-accent) 20%, transparent);
-        border-block-start-color: var(--boot-accent);
-        animation: bs-spin 1.4s linear infinite;
       }
+      #boot-splash .bs-arc {
+        background: conic-gradient(
+          from 0deg,
+          transparent 0deg,
+          color-mix(in srgb, var(--boot-accent) 0%, transparent) 4deg,
+          color-mix(in srgb, var(--boot-accent) 48%, transparent) 128deg,
+          color-mix(in srgb, var(--boot-accent) 90%, transparent) 248deg,
+          var(--boot-accent) 320deg,
+          color-mix(in srgb, var(--boot-accent) 48%, #ffffff) 347deg,
+          #ffffff 358deg,
+          transparent 360deg
+        );
+        -webkit-mask: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) - 0.75px),
+          #000 calc(100% - var(--bs-ring) + 0.25px),
+          #000 calc(100% - 0.5px),
+          transparent 100%
+        );
+        mask: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) - 0.75px),
+          #000 calc(100% - var(--bs-ring) + 0.25px),
+          #000 calc(100% - 0.5px),
+          transparent 100%
+        );
+      }
+      #boot-splash .bs-sheen {
+        background: conic-gradient(
+          from 0deg,
+          transparent 292deg,
+          rgba(255, 255, 255, 0.85) 353deg,
+          rgba(255, 255, 255, 0.25) 359deg,
+          transparent 360deg
+        );
+        -webkit-mask: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) * 1.15),
+          #000 calc(100% - var(--bs-ring) * 0.62),
+          transparent calc(100% - 1px)
+        );
+        mask: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) * 1.15),
+          #000 calc(100% - var(--bs-ring) * 0.62),
+          transparent calc(100% - 1px)
+        );
+        opacity: 0.65;
+      }
+      /* The logo never moves: same size, same place, from the first frame until
+         the React loader takes over. */
       #boot-splash img {
         position: absolute;
         inset: 0;
         margin: auto;
-        max-inline-size: var(--bs-logo);
-        max-block-size: var(--bs-logo);
-        inline-size: auto;
-        block-size: auto;
+        inline-size: 48%;
+        block-size: 48%;
         object-fit: contain;
-        animation: bs-breathe 1.8s ease-in-out infinite;
-      }
-      @keyframes bs-breathe {
-        0%, 100% { transform: scale(0.96); }
-        50% { transform: scale(1.04); }
+        z-index: 2;
+        filter: drop-shadow(0 2px 6px rgba(10, 16, 24, 0.16));
       }
       @keyframes bs-spin { to { transform: rotate(360deg); } }
-      @keyframes bs-glow {
-        0%, 100% { transform: scale(0.96); opacity: 0.7; }
-        50% { transform: scale(1.06); opacity: 0.95; }
+      @keyframes bs-breathe {
+        0%, 100% { transform: scale(0.97); opacity: 0.66; }
+        50% { transform: scale(1.05); opacity: 0.92; }
       }
       @media (prefers-reduced-motion: reduce) {
         #boot-splash .bs-glow,
-        #boot-splash .bs-halo,
-        #boot-splash img { animation: none; }
+        #boot-splash .bs-spin { animation: none; }
       }
       /*
        * THE BOTTOM SYSTEM BAR.
@@ -208,7 +281,8 @@
     <div id="boot-splash" aria-hidden="true">
       <span class="bs-stage">
         <span class="bs-glow"></span>
-        <span class="bs-halo"></span>
+        <span class="bs-track"></span>
+        <span class="bs-spin"><span class="bs-arc"></span><span class="bs-sheen"></span></span>
         <img
         id="bs-logo"
         alt=""

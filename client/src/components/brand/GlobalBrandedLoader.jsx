@@ -1,38 +1,25 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import Icon from '../Icon';
+import LilyanPertLoader from './LilyanPertLoader';
 import { useI18n } from '../../i18n';
-import { brandLogoUrl, brandLogoSnapshot, NEUTRAL_LOGO, subscribeBrandLogo } from '../../brandLogo';
-import { cachedTheme } from '../../theme';
 import { getLoadingSnapshot, isLoadingPending, subscribeLoading } from '../../loading';
 import './globalLoader.css';
 
-/* Exit is opacity only, and this is the only duration the loader has. */
+/* Exit is opacity only, and this is the only duration the overlay has. */
 const EXIT_MS = 250;
 
 /*
- * The one loading surface of Lilyan Pert.
+ * The one full-screen loading surface of Lilyan Pert.
  *
  * One instance, mounted once at the app root (main.jsx) and driven by the
  * global loading signal, so the same DOM node covers the whole boot: session,
- * business record, sign-in family brand and the customer menu. Nothing about it
- * is variant, size or route dependent — a failure is the only thing that adds a
- * second row, and even then the ring keeps its own 144px box.
+ * business record, sign-in family brand and the customer menu. Its whole visual
+ * is `LilyanPertLoader` at the full size — the same mark the section loaders
+ * and the pre-paint splash draw — so no loading phase can show a different
+ * loader, a different size or a different position.
  *
- * Composition: ONE fixed 144x144 relative box (`.gbl__orbit`) holding every
- * layer — the theme-coloured ambient glow, the rotating progress halo, the
- * light sweep and the transparent logo — each pinned with
- * `position: absolute; inset: 0; margin: auto`. The logo therefore shares the
- * exact centre of the ring and can never leave it, in any language, direction,
- * breakpoint or loading phase. There is no caption, percentage or dot row: the
- * ring and the logo are the whole surface.
- *
- * It never remounts and never resizes: entering, finishing, a theme arriving or
- * a second job starting only changes classes and CSS custom properties, and the
- * only exit motion is the overlay's opacity going 1 -> 0 before it is removed.
- *
- * Colour is the theme already on the document (applied before React and by the
- * pre-paint cache in index.html); with no resolved theme it stays neutral
- * instead of flashing a preset hue and then repainting.
+ * The overlay only adds the frosted backdrop, the fade-out (opacity, nothing
+ * else) and, on a real failure, one line of text with its retry.
  */
 export default function GlobalBrandedLoader({
   isLoading,
@@ -44,15 +31,7 @@ export default function GlobalBrandedLoader({
 }) {
   const { t, dir } = useI18n();
   const globalVisible = useSyncExternalStore(subscribeLoading, getLoadingSnapshot, getLoadingSnapshot);
-  /* The business logo is resolved before and independently of authentication;
-     subscribing here means a logo that arrives while this overlay is already up
-     is swapped in place, without a remount or a second loader. */
-  const rememberedLogo = useSyncExternalStore(subscribeBrandLogo, brandLogoSnapshot, brandLogoSnapshot);
   const active = isLoading ?? globalVisible;
-  /* The URL that failed, not a boolean: remembering *which* src broke means a
-     later, valid logo is drawn immediately, and the placeholder never fights the
-     real image in a set/re-set loop. */
-  const [failedSrc, setFailedSrc] = useState('');
 
   /* Keep the node mounted for the fade-out, then let it go completely — no
      invisible overlay is ever left holding the pointer. */
@@ -88,11 +67,11 @@ export default function GlobalBrandedLoader({
   if (!mounted && !error) return null;
 
   const label = error ? t('state_error') : message || t('state_loading');
-  const candidate = brandLogoUrl(logoUrl || rememberedLogo);
-  const src = failedSrc && failedSrc === candidate ? NEUTRAL_LOGO : candidate;
-  /* The accent the document is already showing: an explicit theme, or the one
-     the pre-paint cache applied. No cache and no theme means "neutral". */
-  const accent = theme || cachedTheme()?.primary || '';
+  /* The mark always follows the document's live accent (`--primary`), which is
+     already the saved business theme before React runs and changes with it
+     afterwards — so the ring can never keep an older theme's colour. Only a
+     failure (or an explicitly supplied business theme) overrides it. */
+  const accent = error ? '#e05252' : theme || '';
 
   return (
     <div
@@ -101,38 +80,21 @@ export default function GlobalBrandedLoader({
       aria-live="polite"
       aria-label={label}
     >
-      <div
-        className={`gbl__stage ${error ? 'is-error' : ''}`.trim()}
-        data-tone={accent ? 'theme' : 'neutral'}
-        style={accent ? { '--gbl-accent': accent } : undefined}
-        dir={dir}
-      >
-        {/* Ring, glow, reflection and logo share this one fixed box. */}
-        <div className="gbl__orbit">
-          <span className="gbl__ambient" aria-hidden="true" />
-          <span className="gbl__halo" aria-hidden="true">
-            <svg viewBox="0 0 100 100" focusable="false">
-              <circle className="gbl__halo-track" cx="50" cy="50" r="45" />
-              <circle className="gbl__halo-arc" cx="50" cy="50" r="45" />
-            </svg>
-          </span>
-          <span className="gbl__sweep" aria-hidden="true" />
-          <span className="gbl__logo">
-            {error ? (
-              <span className="gbl__mark">
-                <Icon name="alert" size={30} />
-              </span>
-            ) : (
-              <img
-                src={src}
-                alt=""
-                decoding="async"
-                draggable="false"
-                onError={() => setFailedSrc(candidate)}
-              />
-            )}
-          </span>
-        </div>
+      <div className="gbl__stage" dir={dir}>
+        <LilyanPertLoader
+          variant="full"
+          logoUrl={logoUrl}
+          accent={accent || undefined}
+          label={label}
+          className={error ? 'is-error' : ''}
+          decorative
+        >
+          {error ? (
+            <span className="gbl__mark">
+              <Icon name="alert" size={30} />
+            </span>
+          ) : null}
+        </LilyanPertLoader>
 
         {/* A failure must stay understandable: one line and its retry. */}
         {error ? (

@@ -10,6 +10,7 @@ import {
 import Icon from './Icon';
 import DashIcon from './dashboard/DashIcon';
 import ModalActions from './ModalActions';
+import LilyanPertLoader from './brand/LilyanPertLoader';
 import SectionHeader from '../headers/SectionHeader';
 import { useI18n } from '../i18n';
 import { fmtMoney } from '../format';
@@ -206,12 +207,16 @@ export function Spinner({ size = 20 }) {
   return <span className="spinner" style={{ width: size, height: size }} />;
 }
 
+/* The section/page loading state: the app's one loader mark at section size,
+   with the label the page already showed. No background of its own — the
+   surface it sits on stays visible. */
 export function Loading({ label }) {
   const { t } = useI18n();
+  const text = label || t('state_loading');
   return (
-    <div className="loading-block">
-      <Spinner size={26} />
-      <span style={{ fontSize: 13 }}>{label || t('state_loading')}</span>
+    <div className="loading-block" role="status" aria-live="polite">
+      <LilyanPertLoader variant="section" decorative />
+      <span style={{ fontSize: 13 }}>{text}</span>
     </div>
   );
 }

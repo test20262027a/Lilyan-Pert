@@ -1,23 +1,13 @@
 /*
- * The global branded loader (see GlobalBrandedLoader.jsx).
+ * The full-screen loading surface (see GlobalBrandedLoader.jsx).
  *
- * The geometry is fixed and direction-blind on purpose. One 144x144 relative
- * box (`.gbl__orbit`) holds every layer, and each layer is anchored with
- * `inset: 0; margin: auto` — never `inset-inline-start: 50%` plus a translate,
- * which mirrors under `dir="rtl"`. Nothing below this line reads the writing
- * direction or the viewport width, so the composition is byte-for-byte the
- * same in Kurdish, Persian, Arabic and English, on phones, tablets and
- * desktops, and at every moment of the loading lifecycle.
+ * This file owns the overlay only — the backdrop, the centring column and the
+ * failure line. The mark itself is `LilyanPertLoader`, the app's one loader
+ * (components/brand/lilyanPertLoader.css), used here at the full size.
  *
- * There are no size, scale, translate or transform animations anywhere in this
- * file: the ring turns and the glow breathes, the logo sits perfectly still.
- * The only exit motion is the overlay's own opacity, so nothing can shrink,
- * jump or split apart as loading finishes.
- *
- * Colour comes from the active business theme through the shared `--primary`
- * ramp. `data-tone="neutral"` is the one exception: before a theme has ever
- * been resolved there is nothing correct to show, so the loader stays neutral
- * grey instead of flashing a preset hue.
+ * Nothing in the overlay animates size or position: entering and leaving are
+ * one opacity transition on `.gbl`, so the mark can never shrink, jump or
+ * split apart as loading finishes.
  */
 
 .gbl {
@@ -25,7 +15,7 @@
   inset: 0;
   /* `inset: 0` on the document's stable scrollbar gutter (see styles.css) keeps
      this box the same size whether or not the page behind it scrolls, so the
-     ring can never slide sideways during the final fade. */
+     mark can never slide sideways during the final fade. */
   z-index: 99999;
   display: grid;
   place-items: center;
@@ -47,14 +37,8 @@
   pointer-events: none;
 }
 
-/* -------------------------------------------------------------- the stage -- */
-
-/* The stage is only the column that holds the ring (and, on a failure, its
-   message). It has no width of its own, so it is exactly as big as the fixed
-   ring box: nothing can reserve, add or reclaim space around the logo. */
+/* The stage only stacks the mark and, on a failure, its message. */
 .gbl__stage {
-  --gbl-accent: var(--primary);
-  --gbl-logo: 88px;
   position: relative;
   display: grid;
   place-items: center;
@@ -62,180 +46,39 @@
   isolation: isolate;
 }
 
-/* No theme has been resolved yet: stay neutral rather than show a preset. */
-.gbl__stage[data-tone='neutral'] { --gbl-accent: #98a1b3; }
+/* ------------------------------------------------------------- error state -- */
 
-/* THE one fixed box. Every layer below is absolute and centred inside it, so
-   the ring and the logo always share the same centre and the same size. */
-.gbl__orbit {
-  position: relative;
-  flex-shrink: 0;
-  inline-size: 144px;
-  block-size: 144px;
-  display: grid;
-  place-items: center;
+/* A failure keeps the exact same ring, in the danger hue and still: no second
+   loader design, no size change. */
+.gbl .lpl.is-error .lpl__spin {
+  animation: none;
+  opacity: 0.5;
 }
 
-/* The single centring rule: absolute, all four insets pinned, `margin: auto`
-   splits the leftover space evenly — so each layer is centred inside the orbit
-   whatever its own size and whatever the writing direction. */
-.gbl__ambient,
-.gbl__halo,
-.gbl__sweep,
-.gbl__logo {
+.gbl .lpl.is-error .lpl__glow {
+  animation: none;
+  opacity: 0.7;
+}
+
+.gbl__mark {
   position: absolute;
   inset: 0;
   margin: auto;
   display: grid;
   place-items: center;
-  pointer-events: none;
-}
-
-/* Soft ambient light behind the mark — the only "surface" the logo sits on. */
-.gbl__ambient {
-  inline-size: 186%;
-  block-size: 186%;
-  border-radius: 50%;
-  background:
-    radial-gradient(
-      circle at 50% 45%,
-      color-mix(in srgb, var(--gbl-accent) 26%, transparent),
-      transparent 62%
-    ),
-    radial-gradient(
-      circle at 50% 60%,
-      color-mix(in srgb, var(--gbl-accent) 12%, transparent),
-      transparent 72%
-    );
-  opacity: 0.85;
-  animation: gbl-glow 2s ease-in-out infinite;
-  will-change: transform, opacity;
-  z-index: 0;
-}
-
-/* The progress halo: a faint full ring plus a rounded theme arc that turns. */
-.gbl__halo {
-  inline-size: 100%;
-  block-size: 100%;
-  border-radius: 50%;
-  z-index: 1;
-  filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--gbl-accent) 26%, transparent));
-}
-
-/* A quiet inner gloss, so the ring reads as a raised plate and not a line. */
-.gbl__halo::after {
-  content: '';
-  position: absolute;
-  inset: 13%;
-  border-radius: 50%;
-  box-shadow:
-    inset 0 2px 5px color-mix(in srgb, var(--gbl-accent) 20%, transparent),
-    inset 0 -2px 6px color-mix(in srgb, #ffffff 32%, transparent);
-  opacity: 0.75;
-}
-
-.gbl__halo svg {
-  inline-size: 100%;
-  block-size: 100%;
-  transform-origin: 50% 50%;
-  animation: gbl-spin 1.4s linear infinite;
-}
-
-.gbl__halo-track {
-  fill: none;
-  stroke: color-mix(in srgb, var(--gbl-accent) 22%, transparent);
-  stroke-width: 2.2;
-}
-
-.gbl__halo-arc {
-  fill: none;
-  stroke: var(--gbl-accent);
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  stroke-dasharray: 78 205;
-  opacity: 0.9;
-}
-
-/* A gentle diagonal reflection that drifts *behind* the artwork, so the logo
-   itself is never tinted or duplicated. */
-.gbl__sweep {
-  inline-size: 84%;
-  block-size: 84%;
-  border-radius: 50%;
-  overflow: hidden;
-  z-index: 2;
-  background: linear-gradient(
-    100deg,
-    transparent 38%,
-    rgba(255, 255, 255, 0.5) 50%,
-    transparent 62%
-  );
-  background-size: 260% 100%;
-  background-position: 130% 0;
-  opacity: 0.55;
-  animation: gbl-sweep 2s ease-in-out infinite;
-  mask-image: radial-gradient(circle, #000 58%, transparent 76%);
-  -webkit-mask-image: radial-gradient(circle, #000 58%, transparent 76%);
-}
-
-/* The logo itself: transparent, uncropped, and completely still — its size and
-   position are identical from the first frame until the overlay is removed. */
-.gbl__logo {
-  inline-size: var(--gbl-logo);
-  block-size: var(--gbl-logo);
-  z-index: 3;
-}
-
-.gbl__logo img {
-  max-inline-size: 100%;
-  max-block-size: 100%;
-  inline-size: auto;
-  block-size: auto;
-  object-fit: contain;
-  /* A soft cast shadow gives the mark depth without touching its pixels. */
-  filter: drop-shadow(0 8px 14px color-mix(in srgb, var(--gbl-accent) 34%, rgba(10, 16, 24, 0.28)));
-  user-select: none;
-}
-
-.gbl__mark {
-  display: grid;
-  place-items: center;
-  inline-size: 100%;
-  block-size: 100%;
+  inline-size: 48%;
+  block-size: 48%;
   border-radius: 30%;
   color: var(--primary-ink, #ffffff);
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--gbl-accent) 62%, #ffffff),
-    color-mix(in srgb, var(--gbl-accent) 88%, #241c14)
+    color-mix(in srgb, #e05252 62%, #ffffff),
+    color-mix(in srgb, #e05252 88%, #2a1414)
   );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -3px 8px color-mix(in srgb, var(--gbl-accent) 55%, #000000),
-    0 10px 20px -12px color-mix(in srgb, var(--gbl-accent) 70%, transparent);
-}
-
-/* ------------------------------------------------------------- error state -- */
-
-/* Only a failure grows the stage: the ring keeps its own fixed 144px box and
-   the line and retry sit below it. */
-.gbl__stage.is-error .gbl__ambient {
-  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, #e05252 26%, transparent), transparent 64%);
-  animation: none;
-  opacity: 0.9;
-}
-
-.gbl__stage.is-error .gbl__halo svg { animation: none; opacity: 0.45; }
-.gbl__stage.is-error .gbl__sweep { display: none; }
-
-.gbl__stage.is-error .gbl__mark {
-  inline-size: var(--gbl-logo);
-  block-size: var(--gbl-logo);
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, #e05252 58%, #ffffff),
-    color-mix(in srgb, #e05252 88%, #2a1414)
-  );
+    inset 0 -3px 8px color-mix(in srgb, #e05252 55%, #000000),
+    0 10px 20px -12px color-mix(in srgb, #e05252 70%, transparent);
 }
 
 .gbl__error {
@@ -244,6 +87,7 @@
   display: grid;
   justify-items: center;
   gap: 11px;
+  max-inline-size: min(320px, calc(100vw - 48px));
   text-align: center;
 }
 
@@ -290,57 +134,17 @@
     0 3px 0 color-mix(in srgb, var(--primary) 60%, #241c14);
 }
 
-/* -------------------------------------------------------------- keyframes -- */
-
-@keyframes gbl-glow {
-  0%, 100% { transform: scale(0.96); opacity: 0.7; }
-  50% { transform: scale(1.06); opacity: 0.95; }
-}
-
-@keyframes gbl-spin {
-  to { transform: rotate(360deg); }
-}
-
-@keyframes gbl-sweep {
-  0% { background-position: 130% 0; opacity: 0; }
-  18% { opacity: 0.55; }
-  82% { opacity: 0.55; }
-  100% { background-position: -30% 0; opacity: 0; }
-}
-
 /* ------------------------------------------------------- dark mode polish -- */
 
 [data-theme='dark'] .gbl {
   background: color-mix(in srgb, #0b0f16 88%, transparent);
 }
 
-[data-theme='dark'] .gbl__logo img {
-  filter: drop-shadow(0 10px 18px color-mix(in srgb, var(--gbl-accent) 40%, rgba(0, 0, 0, 0.6)));
-}
-
-[data-theme='dark'] .gbl__sweep {
-  opacity: 0.4;
-  background: linear-gradient(
-    100deg,
-    transparent 38%,
-    rgba(255, 255, 255, 0.28) 50%,
-    transparent 62%
-  );
-}
-
 /* --------------------------------------------------------- reduced motion -- */
 
 @media (prefers-reduced-motion: reduce) {
-  /* No ring spin, no glow pulse, no sweep — and no fade: the overlay simply is
-     there and then is not. Geometry is untouched either way. */
+  /* No fade: the overlay simply is there and then is not. Geometry is
+     untouched either way. */
   .gbl { transition: none; }
-
-  .gbl__ambient,
-  .gbl__halo svg,
-  .gbl__sweep {
-    animation: none;
-  }
-
-  .gbl__sweep { opacity: 0; }
   .gbl__retry { transition: none; }
 }
