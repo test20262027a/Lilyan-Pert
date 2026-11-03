@@ -1,101 +1,110 @@
 /*
- * The burning fuse — one countdown component for both order notifications.
+ * The burning fuse — ONE countdown line for both order notifications.
  *
- * A thin glowing thread is consumed from one end to the other along a recessed
- * track, with a small ember riding the burn point. Every colour is mixed from
- * the ACTIVE theme (`--primary`) into three tones — light, main, deep — so the
- * fuse follows whichever theme is selected and can never keep a previous one.
+ * A thin glowing thread is consumed along a recessed groove, with a small ember
+ * riding the burn front. The thread is the only progress line: the groove is a
+ * 2px recess with inset shading only, so it can never be mistaken for a second,
+ * unfilled timer bar (no outer highlight line under it either).
+ *
+ * Direction follows the language the guest/staff is reading:
+ *   • LTR — the lit thread stays anchored LEFT and the burn front travels
+ *     right → left, so the last lit point disappears at the left edge.
+ *   • RTL — the lit thread stays anchored RIGHT and the burn front travels
+ *     left → right, so the last lit point disappears at the right edge.
+ * Both are a straight scaleX + translateX, both linear, both transform-only, so
+ * they stay on the compositor and never drift apart.
+ *
+ * Every colour is mixed from the ACTIVE theme (`--primary`) into three tones —
+ * light, main, deep — so the fuse follows whichever theme is selected and can
+ * never keep a previous one.
  *
  * Timing comes from the component: `--fuse-ms` is the full duration and
  * `--fuse-offset` a negative delay equal to the time already spent, which is
- * what makes a late-mounting surface join the shared countdown at its real
- * progress instead of restarting. Both animations are linear and transform
- * only, so they stay on the compositor and never drift apart.
- *
- * Only the line's physical width/height differs between the two placements
- * (`--alert` inside the toast, `--popup` inside the success card).
+ * what makes a surface joining late show the real remaining progress instead of
+ * restarting from full. Only the line's thickness differs between the two
+ * placements (`--alert` inside the toast, `--popup` inside the success card).
  */
 .fuse-timer {
   /* Light → Main → Deep, from the one active theme colour. */
   --fuse-light: color-mix(in srgb, var(--primary) 44%, #ffffff);
   --fuse-main: var(--primary);
   --fuse-deep: color-mix(in srgb, var(--primary) 72%, #10141f);
-  /*
-   * LTR burns left → right: the ember travels forward while the remaining
-   * thread stays anchored at the far (right) end. RTL mirrors both.
-   */
-  --fuse-origin: right;
-  --fuse-travel: 100%;
-  --fuse-height: 8px;
+
+  /* LTR: lit side anchored left, burn front right → left. */
+  --fuse-anchor: left;
+  --fuse-front-from: 100%;
+  --fuse-front-to: 0%;
+
+  --fuse-height: 9px;
   --fuse-thickness: 3px;
+  --fuse-track: 2px;
   --fuse-ember: 6px;
+  /* Air for the ember's glow, kept inside the box by padding (not margins) so
+     a scrolling card can neither clip it nor grow a sideways scrollbar. */
+  --fuse-inset: 3px;
+
   position: relative;
   display: block;
+  box-sizing: border-box;
   width: 100%;
   height: var(--fuse-height);
-  /* Room for the ember's glow so it never touches the container edge. */
-  margin-inline: 3px;
+  padding-inline: var(--fuse-inset);
   pointer-events: none;
 }
 
 [dir='rtl'] .fuse-timer {
-  --fuse-origin: left;
-  --fuse-travel: -100%;
+  /* RTL: lit side anchored right, burn front left → right. */
+  --fuse-anchor: right;
+  --fuse-front-from: 0%;
+  --fuse-front-to: 100%;
 }
 
-/* The recessed groove the thread burns through. */
+/* The recess the thread burns through — shading only, never a bar of its own. */
 .fuse-timer__track {
   position: absolute;
-  inset-inline: 0;
+  inset-inline: var(--fuse-inset);
   inset-block-start: 50%;
-  height: var(--fuse-thickness);
-  margin-block-start: calc(var(--fuse-thickness) / -2);
+  height: var(--fuse-track);
+  margin-block-start: calc(var(--fuse-track) / -2);
   border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--primary) 18%, var(--surface-2)),
-    color-mix(in srgb, var(--primary) 7%, var(--surface))
-  );
-  box-shadow:
-    0 1px 1px color-mix(in srgb, var(--text) 14%, transparent) inset,
-    0 -1px 0 color-mix(in srgb, var(--surface) 90%, #ffffff) inset,
-    0 1px 0 rgba(255, 255, 255, 0.35);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-2, #eef2f7));
+  box-shadow: inset 0 1px 1px color-mix(in srgb, var(--text, #14231b) 20%, transparent);
 }
 
 /* The luminous thread that is consumed as the time runs out. */
 .fuse-timer__line {
   position: absolute;
-  inset-inline: 0;
+  inset-inline: var(--fuse-inset);
   inset-block-start: 50%;
   height: var(--fuse-thickness);
   margin-block-start: calc(var(--fuse-thickness) / -2);
   border-radius: 999px;
   background: linear-gradient(180deg, var(--fuse-light) 0%, var(--fuse-main) 58%, var(--fuse-deep) 100%);
   box-shadow:
-    0 0 5px color-mix(in srgb, var(--primary) 48%, transparent),
-    0 1px 0 rgba(255, 255, 255, 0.34) inset;
+    0 1px 0 rgba(255, 255, 255, 0.34) inset,
+    0 0 6px color-mix(in srgb, var(--primary) 50%, transparent);
+  transform-origin: var(--fuse-anchor) center;
   transform: scaleX(1);
-  transform-origin: var(--fuse-origin);
   will-change: transform;
 }
 
-/* The carrier of the ember: a full-width rail moved along the track. */
+/* The rail that carries the ember from one end to the other. */
 .fuse-timer__run {
   position: absolute;
   inset-block: 0;
-  inset-inline: 0;
-  transform: translateX(0);
+  inset-inline: var(--fuse-inset);
+  transform: translateX(var(--fuse-front-from));
   will-change: transform;
 }
 
 .fuse-timer__ember {
   position: absolute;
   inset-block-start: 50%;
-  inset-inline-start: 0;
+  left: 0;
   width: var(--fuse-ember);
   height: var(--fuse-ember);
   margin-block-start: calc(var(--fuse-ember) / -2);
-  margin-inline-start: calc(var(--fuse-ember) / -2);
+  margin-left: calc(var(--fuse-ember) / -2);
   border-radius: 50%;
   background: radial-gradient(
     circle at 50% 38%,
@@ -107,6 +116,9 @@
     0 0 4px color-mix(in srgb, var(--fuse-main) 82%, transparent),
     0 0 9px color-mix(in srgb, var(--fuse-main) 42%, transparent),
     0 1px 0 rgba(255, 255, 255, 0.55) inset;
+  /* The fuse burns at the exact pace of the shared 3-second deadline: nothing
+     pauses it, on hover or on focus. */
+  animation: fuse-timer-glow 1.1s ease-in-out infinite alternate;
 }
 
 /* Started by the component once it has read the shared deadline. */
@@ -118,19 +130,21 @@
   animation: fuse-timer-travel var(--fuse-ms, 3000ms) linear var(--fuse-offset, 0ms) forwards;
 }
 
-.fuse-timer.is-running .fuse-timer__ember {
-  animation: fuse-timer-glow 1.1s ease-in-out infinite alternate;
-}
-
 @keyframes fuse-timer-burn {
+  from {
+    transform: scaleX(1);
+  }
   to {
     transform: scaleX(0);
   }
 }
 
 @keyframes fuse-timer-travel {
+  from {
+    transform: translateX(var(--fuse-front-from));
+  }
   to {
-    transform: translateX(var(--fuse-travel));
+    transform: translateX(var(--fuse-front-to));
   }
 }
 
@@ -145,12 +159,12 @@
 
 /* ------------------------------------------------------------- variants -- */
 
-/* Inside the large success card: a slightly taller line, full card width. */
+/* Inside the large success card: a slightly taller thread, full card width. */
 .fuse-timer--popup {
-  --fuse-height: 10px;
+  --fuse-height: 11px;
   --fuse-thickness: 3.5px;
   --fuse-ember: 7px;
-  margin: 16px 3px 0;
+  margin-block-start: 16px;
 }
 
 /*
@@ -167,7 +181,7 @@
     box-shadow: none;
   }
 
-  .fuse-timer.is-running .fuse-timer__ember {
+  .fuse-timer__ember {
     animation: none;
   }
 }
