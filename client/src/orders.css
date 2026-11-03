@@ -328,9 +328,9 @@
 
 /*
  * The action cell keeps one fixed, centred column now that the row itself opens
- * the order: every row carries the same compact square button, so a status
- * change, the saving spinner or a locked order can never resize the column or
- * push the neighbouring cells.
+ * the order: every row carries the same compact circle, so a status change,
+ * the saving spinner or a locked order can never resize the column or push
+ * the neighbouring cells.
  */
 .orow-actions {
   display: grid;
@@ -343,45 +343,42 @@
 /* ---------------------------------------------------------- status dropdown */
 
 /*
- * The ONE size of the status control, per breakpoint: a compact square on
+ * The ONE size of the status control, per breakpoint: a compact circle on
  * desktop that steps down a little on a tablet and on a phone. Everything that
  * has to agree with it — the button, the Actions grid cell, the chevron — reads
- * these three values, so the plate can never be one size in the table and
+ * these two values, so the circle can never be one size in the table and
  * another in a phone card, and nothing is ever measured by hand.
  */
 :root {
-  --ost-size: 36px;
-  --ost-icon: 15px;
-  --ost-radius: 10px;
+  --ost-size: 34px;
+  --ost-icon: 14px;
 }
 
 @media (max-width: 1023px) {
   :root {
-    --ost-size: 34px;
-    --ost-icon: 14px;
-    --ost-radius: 9.5px;
+    --ost-size: 32px;
+    --ost-icon: 13px;
   }
 }
 
 @media (max-width: 767px) {
   :root {
-    --ost-size: 32px;
-    --ost-icon: 13px;
-    --ost-radius: 9px;
+    --ost-size: 30px;
+    --ost-icon: 12px;
   }
 }
 
 .ostatus { display: inline-flex; vertical-align: middle; }
 
 /*
- * One compact square status button — the size comes from `--ost-size` in every
- * row, every language and every breakpoint, and it is icon-only so no
- * translation can stretch it. The plate is a small raised glass tile built from
- * THREE tones of the ONE active theme accent: the light tone along the upper
- * edge, the accent itself through the middle, and a deeper shade at the bottom,
- * under a lit top hairline, a contact edge and one soft cast shadow. Nothing
- * here is a fixed brand colour, so switching the business theme recolours the
- * whole control in the same frame.
+ * One compact CIRCULAR status button — the size comes from `--ost-size` in
+ * every row, every language and every breakpoint, and it is icon-only so no
+ * translation can stretch it. The disc is a small polished-glass jewel built
+ * from THREE tones of the ONE active theme accent: the light tone along the
+ * upper curve, the accent itself through the middle, and a deeper shade at the
+ * bottom, under a domed highlight, a beveled rim, a lit top hairline and one
+ * soft floating shadow. Nothing here is a fixed brand colour, so switching the
+ * business theme recolours the whole control in the same frame.
  *
  * The order's own status is named by the `StatusBadge` beside it; the control
  * itself stays the theme colour like every other action in the app. A locked
@@ -389,39 +386,72 @@
  * an unavailable action never looks available.
  */
 .ostatus .ostatus__btn {
-  --ost-a: var(--accent-one-hi);
-  --ost-b: var(--accent-one);
-  --ost-hover: var(--accent-one-lo);
+  --ost-light: var(--accent-one-hi);
+  --ost-main: var(--accent-one);
+  --ost-deep: var(--accent-one-lo);
   position: relative;
   width: var(--ost-size);
   height: var(--ost-size);
   min-width: var(--ost-size);
+  max-width: var(--ost-size);
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  flex: none;
   padding: 0;
   display: inline-grid;
   place-items: center;
-  border-radius: var(--ost-radius);
-  border: 1px solid color-mix(in srgb, var(--ost-b) 58%, #ffffff);
+  /* A TRUE circle at every breakpoint: no radius token, nothing to override. */
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--ost-light) 74%, #ffffff);
+  background-color: var(--ost-main);
   background-image: linear-gradient(
-    180deg,
-    var(--ost-a) 0%,
-    var(--ost-b) 54%,
-    color-mix(in srgb, var(--ost-b) 86%, var(--ost-hover)) 100%
+    168deg,
+    var(--ost-light) 0%,
+    var(--ost-main) 46%,
+    var(--ost-deep) 100%
   );
   color: #ffffff;
   cursor: pointer;
   white-space: nowrap;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -1px 2px rgba(8, 16, 34, 0.2),
-    0 1.5px 0 color-mix(in srgb, var(--ost-hover) 72%, #0b1020),
-    0 5px 10px -5px color-mix(in srgb, var(--ost-b) 68%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -2px 3px color-mix(in srgb, var(--ost-deep) 74%, #050b18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 1px 1.5px rgba(9, 15, 30, 0.18),
+    0 4px 8px -4px color-mix(in srgb, var(--ost-deep) 74%, transparent);
   transition:
-    background-image 0.2s ease, box-shadow 0.2s ease,
-    transform 0.18s ease, border-color 0.2s ease;
+    box-shadow 0.2s ease,
+    transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1),
+    border-color 0.2s ease;
 }
 
-/* The accessible touch target: the visible plate stays compact, but the hit
-   area is never smaller than 44×44 — an invisible square centred on the button,
+/* The domed glass surface: a bright reflection along the upper curve and a
+   soft inner light at the bottom, clipped by the circle. Its own layer lets
+   the hover brighten the reflection without repainting the gradient. */
+.ostatus .ostatus__btn::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      64% 54% at 32% 13%,
+      rgba(255, 255, 255, 0.7) 0%,
+      rgba(255, 255, 255, 0.24) 38%,
+      rgba(255, 255, 255, 0) 66%
+    ),
+    radial-gradient(
+      120% 82% at 50% 118%,
+      rgba(255, 255, 255, 0.26) 0%,
+      rgba(255, 255, 255, 0) 52%
+    );
+  opacity: 0.9;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+/* The accessible touch target: the visible circle stays compact, but the hit
+   area is never smaller than 44×44 — an invisible disc centred on the button,
    inside the row's own cell, so a thumb still lands comfortably. */
 .ostatus .ostatus__btn::after {
   content: '';
@@ -431,66 +461,87 @@
   width: max(100%, 44px);
   height: max(100%, 44px);
   transform: translate(-50%, -50%);
-  border-radius: var(--ost-radius);
+  border-radius: 50%;
 }
 
 .ostatus .ostatus__btn:hover:not(:disabled) {
-  background-image: linear-gradient(180deg, color-mix(in srgb, var(--ost-b) 70%, #ffffff), var(--ost-hover));
-  border-color: color-mix(in srgb, var(--ost-hover) 66%, #ffffff);
-  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--ost-light) 86%, #ffffff);
+  transform: translateY(-1.5px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.44),
-    inset 0 -1px 2px rgba(8, 16, 34, 0.24),
-    0 2px 0 color-mix(in srgb, var(--ost-hover) 78%, #0b1020),
-    0 9px 16px -7px color-mix(in srgb, var(--ost-hover) 74%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    inset 0 -2px 3px color-mix(in srgb, var(--ost-deep) 74%, #050b18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
+    0 2px 2px rgba(9, 15, 30, 0.16),
+    0 9px 15px -6px color-mix(in srgb, var(--ost-deep) 82%, transparent);
 }
+/* The upper reflection brightens as the plate lifts. */
+.ostatus .ostatus__btn:hover:not(:disabled)::before { opacity: 1; }
 .ostatus .ostatus__btn:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ost-b) 62%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ost-main) 62%, transparent);
   outline-offset: 2px;
 }
+/* Pressed glass: the depth changes, the circle itself never moves or resizes. */
 .ostatus .ostatus__btn:active:not(:disabled) {
-  transform: translateY(0);
+  transform: none;
+  border-color: color-mix(in srgb, var(--ost-deep) 62%, #ffffff);
   background-image: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ost-b) 88%, var(--ost-hover)),
-    var(--ost-hover)
+    168deg,
+    color-mix(in srgb, var(--ost-main) 84%, var(--ost-deep)) 0%,
+    var(--ost-deep) 100%
   );
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
-    inset 0 2px 5px rgba(8, 16, 34, 0.34),
-    0 1px 0 color-mix(in srgb, var(--ost-hover) 66%, #0b1020);
+    inset 0 3px 6px color-mix(in srgb, var(--ost-deep) 70%, #050b18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 1px 2px -1px rgba(9, 15, 30, 0.16);
 }
+.ostatus .ostatus__btn:active:not(:disabled)::before { opacity: 0.55; }
 .ostatus .ostatus__btn:disabled { cursor: not-allowed; }
 /* A button that is only saving keeps its status colour; the spinner says why
    it cannot be pressed again. */
 .ostatus .ostatus__btn:disabled:not(.is-locked) {
-  background-image: linear-gradient(180deg, var(--ost-a), var(--ost-b));
+  background-image: linear-gradient(
+    168deg,
+    var(--ost-light) 0%,
+    var(--ost-main) 46%,
+    var(--ost-deep) 100%
+  );
   color: #ffffff;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 6px 12px -6px color-mix(in srgb, var(--ost-b) 70%, transparent);
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    inset 0 -2px 3px color-mix(in srgb, var(--ost-deep) 74%, #050b18),
+    0 1px 1.5px rgba(9, 15, 30, 0.16),
+    0 4px 8px -4px color-mix(in srgb, var(--ost-deep) 70%, transparent);
 }
-/* Locked order: same box, unmistakably unavailable, still in its status hue. */
+/* Locked order: the same circle, unmistakably unavailable and colourless. */
 .ostatus .ostatus__btn.is-locked {
+  background-color: var(--surface-2);
   background-image: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ost-b) 12%, var(--surface-2)),
-    color-mix(in srgb, var(--ost-b) 20%, var(--surface-2))
+    168deg,
+    color-mix(in srgb, var(--ost-main) 10%, var(--surface)) 0%,
+    color-mix(in srgb, var(--ost-main) 20%, var(--surface-2)) 100%
   );
-  border-color: color-mix(in srgb, var(--ost-b) 24%, var(--border));
-  color: color-mix(in srgb, var(--ost-b) 40%, var(--muted));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-color: color-mix(in srgb, var(--ost-main) 22%, var(--border));
+  color: color-mix(in srgb, var(--ost-main) 42%, var(--muted));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 2px rgba(9, 15, 30, 0.08),
+    0 1px 1px rgba(9, 15, 30, 0.06);
 }
+.ostatus .ostatus__btn.is-locked::before { opacity: 0.5; }
 /* The glyph is sized by the same token as the plate, so the chevron stays
    centred and keeps its stroke weight at every breakpoint. */
 .ostatus__icon {
+  position: relative;
+  z-index: 1;
   color: currentColor;
   display: block;
   width: var(--ost-icon);
   height: var(--ost-icon);
   flex: none;
+  stroke-width: 2.1;
 }
-.ostatus__caret { transition: transform 0.18s ease; }
+.ostatus__caret { transition: transform 0.2s cubic-bezier(0.2, 0.7, 0.3, 1); }
 .ostatus__caret.is-open { transform: rotate(180deg); }
 .ostatus__spinner {
   width: calc(var(--ost-icon) - 1px);
