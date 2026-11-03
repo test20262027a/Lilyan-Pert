@@ -653,21 +653,147 @@ a { color: var(--primary); }
   border-color: color-mix(in srgb, var(--primary) 28%, transparent);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
-/* The rail's concave shoulders never apply here: the row keeps its own rounded
-   shape. Its `::before` becomes the thin accent bar instead of a corner cut. */
-.sidebar:not(.is-collapsed) .nav-children .nav-link.is-active::before {
-  content: '';
-  position: absolute;
-  inset-block: 9px;
-  inset-inline: 10px auto;
-  inline-size: 2px;
-  block-size: auto;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--primary) 62%, #ffffff);
+/*
+ * ---------------------------------------------------------------------------
+ * Premium rail accents: the boundary divider and the active light strip.
+ *
+ * Both are painted exclusively from three tones mixed out of the live
+ * `--primary` (`--nav-accent-light`, `--nav-accent`, `--nav-accent-deep`), so a
+ * theme switch repaints them in the same frame as the rest of the rail and no
+ * previous-theme colour can flash.
+ * ---------------------------------------------------------------------------
+ */
+.sidebar {
+  --nav-accent-light: color-mix(in srgb, var(--primary) 46%, #ffffff);
+  --nav-accent: var(--primary);
+  --nav-accent-deep: color-mix(in srgb, var(--primary) 62%, var(--navy));
+}
+
+/*
+ * The boundary between the three direct destinations and the management
+ * sections. A single 1px line: a lit gradient fading into the rail at both
+ * ends, a hairline highlight along its top edge, a soft shadow underneath and
+ * a small polished diamond at its centre — centred at 88% of the rail's inner
+ * width, with breathing room above and below.
+ */
+.nav-divider {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  inline-size: 88%;
+  block-size: 8px;
+  margin: 10px auto 9px;
   pointer-events: none;
 }
-.sidebar:not(.is-collapsed) .nav-children .nav-link.is-active::after {
-  content: none;
+.nav-divider::before {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 50%;
+  block-size: 1px;
+  translate: 0 -50%;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in srgb, var(--nav-accent) 30%, transparent) 16%,
+    var(--nav-accent-light) 50%,
+    color-mix(in srgb, var(--nav-accent) 30%, transparent) 84%,
+    transparent 100%
+  );
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, #ffffff 12%, transparent),
+    0 1px 2px rgba(3, 8, 14, 0.6),
+    0 0 6px color-mix(in srgb, var(--nav-accent) 40%, transparent);
+}
+.nav-divider__gem {
+  position: relative;
+  inline-size: 7px;
+  block-size: 7px;
+  rotate: 45deg;
+  border-radius: 1.5px;
+  background: linear-gradient(
+    135deg,
+    var(--nav-accent-light) 0%,
+    var(--nav-accent) 52%,
+    var(--nav-accent-deep) 100%
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 34%, transparent),
+    0 1px 2px rgba(3, 8, 14, 0.55),
+    0 0 7px color-mix(in srgb, var(--nav-accent) 55%, transparent);
+}
+
+/*
+ * The illuminated light strip that marks the selected row: 3px wide, 58% of
+ * the row, rounded ends, three-tone gradient with a hairline ring, outer glow
+ * and a soft drop shadow. It sits at the logical start of the title — just past
+ * the row's icon, inside the existing gap — so it touches neither the icon nor
+ * the label, and mirrors by itself between RTL and LTR.
+ */
+.sidebar .nav-link.is-active::before {
+  content: '';
+  position: absolute;
+  /* Offsets are measured from the row's padding box: the strip is centred in
+     the 10px gap between an 18px icon and the label, with its 1px ring and
+     glow still clear of both. */
+  inset-block: 21%;
+  inset-inline-start: 21px;
+  inline-size: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    var(--nav-accent-light) 0%,
+    var(--nav-accent) 52%,
+    var(--nav-accent-deep) 100%
+  );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 30%, transparent),
+    0 0 7px color-mix(in srgb, var(--nav-accent) 62%, transparent),
+    1px 1px 2px rgba(3, 8, 14, 0.5);
+  animation: nav-accent-in 0.22s ease both;
+  pointer-events: none;
+}
+/* Selecting a row fades the strip in; hovering only brightens its glow. */
+@keyframes nav-accent-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.sidebar .nav-link.is-active:hover::before,
+.sidebar .nav-link.is-active:focus-visible::before {
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 42%, transparent),
+    0 0 10px color-mix(in srgb, var(--nav-accent) 82%, transparent),
+    1px 1px 2px rgba(3, 8, 14, 0.5);
+}
+/* A closed group that holds the current page shows the same strip on its
+   header, so the parent stays identifiable while its submenu is collapsed. */
+.sidebar .nav-group.is-current:not(.is-open)::before {
+  content: '';
+  position: absolute;
+  inset-block: 24%;
+  inset-inline-start: 21px;
+  inline-size: 2.5px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to bottom,
+    var(--nav-accent-light) 0%,
+    var(--nav-accent) 55%,
+    var(--nav-accent-deep) 100%
+  );
+  box-shadow: 0 0 6px color-mix(in srgb, var(--nav-accent) 45%, transparent);
+  animation: nav-accent-in 0.22s ease both;
+  pointer-events: none;
+}
+/* Submenu rows: the same strip, two steps quieter and aligned to the title. */
+.sidebar:not(.is-collapsed) .nav-children .nav-link.is-active::before {
+  inset-block: 26%;
+  inset-inline-start: 19px;
+  inline-size: 2.5px;
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--nav-accent) 26%, transparent),
+    0 0 6px color-mix(in srgb, var(--nav-accent) 50%, transparent),
+    1px 1px 2px rgba(3, 8, 14, 0.45);
 }
 /* Hovering an active submenu row only warms the tint — nothing moves or grows. */
 .sidebar .nav-children .nav-link.is-active:hover,
@@ -1838,6 +1964,19 @@ table.data tr:hover td { background: var(--surface-2); }
   /* The icon rail has no outer edge to bend into: the active tile keeps a
      compact rounded square and drops the shoulders, but keeps the lit ring and
      accent halo so the selection still reads as a raised plate. */
+  /* No label to sit beside on the icon rail, so the text-adjacent strip is
+     retired and the active tile's own lit ring carries the selection. */
+  .sidebar.is-collapsed .nav-link.is-active::before,
+  .sidebar.is-collapsed .nav-group.is-current:not(.is-open)::before {
+    content: none;
+  }
+  /* The divider stays inside the narrow rail, with a smaller centre gem. */
+  .sidebar.is-collapsed .nav-divider {
+    inline-size: 44px;
+    margin-block: 9px 8px;
+  }
+  .sidebar.is-collapsed .nav-divider__gem { inline-size: 5px; block-size: 5px; }
+
   .sidebar.is-collapsed .nav-link.is-active {
     border-radius: 13px;
     padding-inline: 0;
@@ -1904,6 +2043,24 @@ table.data tr:hover td { background: var(--surface-2); }
     background: color-mix(in srgb, var(--primary) 18%, var(--navy-2));
     border-color: color-mix(in srgb, var(--primary) 34%, transparent);
     color: #ffffff;
+    position: relative;
+  }
+  /* The collapsed rail's submenu flyout carries the same small light strip. */
+  .nav-flyout__link.is-active::before {
+    content: '';
+    position: absolute;
+    inset-block: 26%;
+    inset-inline-start: 19px;
+    inline-size: 2.5px;
+    border-radius: 999px;
+    background: linear-gradient(
+      to bottom,
+      var(--nav-accent-light) 0%,
+      var(--nav-accent) 52%,
+      var(--nav-accent-deep) 100%
+    );
+    box-shadow: 0 0 6px color-mix(in srgb, var(--nav-accent) 50%, transparent);
+    pointer-events: none;
   }
 }
 
@@ -1917,7 +2074,9 @@ table.data tr:hover td { background: var(--surface-2); }
   .nav-collapse,
   .nav-collapse__chev,
   .nav-children,
-  .nav-flyout {
+  .nav-flyout,
+  .sidebar .nav-link.is-active::before,
+  .sidebar .nav-group.is-current:not(.is-open)::before {
     transition: none !important;
     animation: none !important;
   }

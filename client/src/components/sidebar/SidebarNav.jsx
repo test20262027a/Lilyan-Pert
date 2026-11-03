@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { Fragment, useCallback, useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
@@ -64,59 +64,74 @@ export default function SidebarNav({
   }, [collapsed, closeFlyout]);
   useEffect(() => closeFlyout(), [currentKey, closeFlyout]);
 
-  return items
-    .filter((item) => canSee(item, roles))
-    .map((item) => {
-      // The customer menu is a public page of this business — opened in its own
-      // tab from a browser. Inside the installed app a new tab would leave the
-      // standalone window and show a browser address bar, so there it opens in
-      // the app itself (the customer panel carries a Back to Admin control).
-      if (item.preview) {
-        return (
-          <a
-            key={item.key}
-            className="nav-link"
-            href={previewHref || '#'}
-            target={isStandalone() ? undefined : '_blank'}
-            rel="noreferrer"
-            data-tip={collapsed ? t(item.key) : undefined}
-            data-tip-side="inline-end"
-            onClick={(e) => {
-              if (!previewHref) e.preventDefault();
-              navigate(e);
-            }}
-          >
-            <Icon name={item.icon} size={18} />
-            <span className="nav-link__label">{t(item.key)}</span>
-          </a>
-        );
-      }
+  const visible = items.filter((item) => canSee(item, roles));
+  // The rail's three direct destinations (dashboard, orders, customer menu) sit
+  // above the management block, which begins with the first expandable section.
+  // That boundary is where the divider is drawn — derived from the tree itself,
+  // so it follows every role/permission filter without hardcoding an index.
+  const sectionsStart = visible.findIndex((item) => item.children);
 
-      if (!item.children) {
-        return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.exact}
-            className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
-            data-tip={collapsed ? t(item.key) : undefined}
-            data-tip-side="inline-end"
-            onClick={navigate}
-          >
-            <Icon name={item.icon} size={18} />
-            <span className="nav-link__label">{t(item.key)}</span>
-          </NavLink>
-        );
-      }
-
-      const children = item.children.filter((child) => canSee(child, roles));
-      const isOpen = !collapsed && expandedGroup === item.key;
-      const isFlyout = collapsed && flyout === item.key;
-      const isCurrent = children.some((child) => child.key === currentKey);
-      const panelId = `nav-panel-${item.key}`;
-
+  return visible.map((item, index) => {
+    // The customer menu is a public page of this business — opened in its own
+    // tab from a browser. Inside the installed app a new tab would leave the
+    // standalone window and show a browser address bar, so there it opens in
+    // the app itself (the customer panel carries a Back to Admin control).
+    if (item.preview) {
       return (
-        <div key={item.key} className="nav-item nav-item--group">
+        <a
+          key={item.key}
+          className="nav-link"
+          href={previewHref || '#'}
+          target={isStandalone() ? undefined : '_blank'}
+          rel="noreferrer"
+          data-tip={collapsed ? t(item.key) : undefined}
+          data-tip-side="inline-end"
+          onClick={(e) => {
+            if (!previewHref) e.preventDefault();
+            navigate(e);
+          }}
+        >
+          <Icon name={item.icon} size={18} />
+          <span className="nav-link__label">{t(item.key)}</span>
+        </a>
+      );
+    }
+
+    if (!item.children) {
+      return (
+        <NavLink
+          key={item.to}
+          to={item.to}
+          end={item.exact}
+          className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
+          data-tip={collapsed ? t(item.key) : undefined}
+          data-tip-side="inline-end"
+          onClick={navigate}
+        >
+          <Icon name={item.icon} size={18} />
+          <span className="nav-link__label">{t(item.key)}</span>
+        </NavLink>
+      );
+    }
+
+    const children = item.children.filter((child) => canSee(child, roles));
+    const isOpen = !collapsed && expandedGroup === item.key;
+    const isFlyout = collapsed && flyout === item.key;
+    const isCurrent = children.some((child) => child.key === currentKey);
+    const panelId = `nav-panel-${item.key}`;
+    // The first expandable section closes the three primary destinations
+    // above it: a 1px raised, glowing rule (with a small centre diamond)
+    // marks the boundary without adding a section heading.
+    const startsSections = index === sectionsStart && index > 0;
+
+    return (
+      <Fragment key={item.key}>
+        {startsSections ? (
+          <span className="nav-divider" role="separator" aria-hidden="true">
+            <span className="nav-divider__gem" />
+          </span>
+        ) : null}
+        <div className="nav-item nav-item--group">
           <button
             type="button"
             className={`nav-link nav-group ${isOpen ? 'is-open' : ''} ${isCurrent ? 'is-current' : ''} ${
@@ -175,7 +190,8 @@ export default function SidebarNav({
               ))}
             </div>
           ) : null}
-        </div>
+          </div>
+        </Fragment>
       );
     });
 }
