@@ -1,0 +1,349 @@
+/*
+ * The customer menu's basket pill.
+ *
+ * One control in three layers: the pill itself, the two-state cart glyph and
+ * the count badge. All of it is theme-derived — the filled state is the active
+ * `--primary` at a soft tint, its border and glow are the same colour, and the
+ * empty state is the neutral glass the header already used. Nothing here is
+ * pinned to left/right, so the button mirrors with `dir` alone.
+ *
+ * The whole file replaces the former `.cui-nav__cart` rules that lived in
+ * customer.css, so there is a single source of truth for this control.
+ */
+
+.cui-nav__cart {
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  color: var(--text);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+  box-shadow:
+    var(--cui-shadow-1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  transition:
+    transform 240ms cubic-bezier(0.22, 0.8, 0.28, 1),
+    background 240ms ease,
+    border-color 240ms ease,
+    box-shadow 240ms ease,
+    color 240ms ease;
+}
+
+/* The gloss: a restrained sheen over the upper half, revealed once filled. */
+.cui-nav__cart::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 1px 1px auto;
+  block-size: 46%;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 255, 255, 0));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 240ms ease;
+}
+
+.cui-nav__cart:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
+}
+
+.cui-nav__cartlabel { display: none; white-space: nowrap; }
+
+/* --------------------------------------------------------- filled state -- */
+
+.cui-nav__cart.is-filled {
+  color: color-mix(in srgb, var(--primary) 68%, var(--text));
+  border-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 64%),
+    color-mix(in srgb, var(--primary) 11%, var(--surface));
+  box-shadow:
+    0 9px 18px -10px color-mix(in srgb, var(--primary) 72%, transparent),
+    0 2px 4px rgba(16, 34, 25, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.78),
+    inset 0 -1px 0 color-mix(in srgb, var(--primary) 20%, transparent);
+}
+
+.cui-nav__cart.is-filled::after { opacity: 1; }
+
+@media (hover: hover) {
+  .cui-nav__cart:hover {
+    transform: translateY(-1.5px);
+    box-shadow:
+      var(--cui-shadow-2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.72);
+  }
+  .cui-nav__cart.is-filled:hover {
+    border-color: color-mix(in srgb, var(--primary) 44%, transparent);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0) 64%),
+      color-mix(in srgb, var(--primary) 16%, var(--surface));
+    box-shadow:
+      0 14px 24px -12px color-mix(in srgb, var(--primary) 82%, transparent),
+      0 3px 6px rgba(16, 34, 25, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.84),
+      inset 0 -1px 0 color-mix(in srgb, var(--primary) 26%, transparent);
+  }
+  .cui-nav__cart.is-filled:hover::after { opacity: 1; }
+}
+
+/* Pressed: the pill sinks into its own highlight, layout untouched. */
+.cui-nav__cart:active {
+  transform: translateY(0.5px) scale(0.985);
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+
+.cui-nav__cart:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 70%, #ffffff);
+  outline-offset: 3px;
+}
+
+/* ---------------------------------------------------------------- glyph -- */
+
+.cui-nav__cartglyph {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+  color: inherit;
+}
+
+.cui-nav__cartglyph .cg-frame {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 240ms ease;
+}
+
+.cui-nav__cartglyph .cg-basket {
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+  transition: fill 240ms ease, stroke 240ms ease;
+}
+
+.cui-nav__cartglyph.is-filled .cg-basket {
+  fill: color-mix(in srgb, var(--primary) 30%, transparent);
+  stroke: color-mix(in srgb, var(--primary) 80%, var(--text));
+}
+
+.cui-nav__cartglyph .cg-good {
+  opacity: 0;
+  transform: translateY(-2px) scale(0.72);
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity 200ms ease,
+    transform 260ms cubic-bezier(0.22, 0.8, 0.28, 1);
+}
+
+.cui-nav__cartglyph.is-filled .cg-good {
+  opacity: 1;
+  transform: none;
+}
+
+.cui-nav__cartglyph .cg-good rect {
+  fill: color-mix(in srgb, var(--primary) 88%, var(--text));
+}
+
+.cui-nav__cartglyph .cg-good .cg-good--alt {
+  fill: color-mix(in srgb, var(--primary) 54%, var(--text));
+  transition-delay: 45ms;
+}
+
+.cui-nav__cartglyph .cg-drop {
+  fill: color-mix(in srgb, var(--primary) 82%, var(--text));
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: cui-cart-drop 300ms cubic-bezier(0.3, 0.9, 0.35, 1) both;
+}
+
+@keyframes cui-cart-drop {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px) scale(0.72);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(4.6px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(6.4px) scale(0.92);
+  }
+}
+
+/* ---------------------------------------------------------------- count -- */
+
+.cui-nav__count {
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding-inline: 0;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  color: var(--primary-ink);
+  background: var(--primary);
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  font-variant-numeric: tabular-nums;
+  animation: cui-cart-count-pop 260ms cubic-bezier(0.22, 0.8, 0.28, 1);
+}
+
+/* `99+` needs width; a one- or two-digit count stays a perfect circle. */
+.cui-nav__count.is-wide { padding-inline: 6px; }
+
+@keyframes cui-cart-count-pop {
+  0% { transform: scale(0.86); }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* --- hero state: floating over the photograph --------------------------- */
+
+.cui-nav--hero .cui-nav__cart {
+  color: #fff;
+  background: rgba(16, 25, 21, 0.5);
+  border-color: rgba(255, 255, 255, 0.26);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+.cui-nav--hero .cui-nav__cart.is-filled {
+  color: #fff;
+  border-color: color-mix(in srgb, var(--primary) 54%, rgba(255, 255, 255, 0.32));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0) 62%),
+    color-mix(in srgb, var(--primary) 46%, rgba(16, 25, 21, 0.62));
+  box-shadow:
+    0 12px 24px -12px color-mix(in srgb, var(--primary) 78%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.cui-nav--hero .cui-nav__cart:hover { background: rgba(16, 25, 21, 0.66); }
+
+.cui-nav--hero .cui-nav__cart.is-filled:hover {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0) 62%),
+    color-mix(in srgb, var(--primary) 54%, rgba(16, 25, 21, 0.66));
+}
+
+.cui-nav--hero .cui-nav__cartglyph.is-filled .cg-basket {
+  /* A recessed interior, so the white products inside it read clearly. */
+  fill: rgba(16, 25, 21, 0.48);
+  stroke: #fff;
+}
+
+.cui-nav--hero .cui-nav__cartglyph .cg-good rect,
+.cui-nav--hero .cui-nav__cartglyph .cg-good .cg-good--alt,
+.cui-nav--hero .cui-nav__cartglyph .cg-drop {
+  fill: #fff;
+}
+
+.cui-nav--hero .cui-nav__count {
+  color: var(--cui-hero-ink);
+  background: #fff;
+}
+
+/* --- scrolled state: the compact floating bar --------------------------- */
+
+.cui-stickybar .cui-nav__cart {
+  height: 38px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  border-color: color-mix(in srgb, var(--border) 78%, transparent);
+}
+
+.cui-stickybar .cui-nav__cart.is-filled {
+  color: color-mix(in srgb, var(--primary) 68%, var(--text));
+  border-color: color-mix(in srgb, var(--primary) 32%, transparent);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0) 64%),
+    color-mix(in srgb, var(--primary) 12%, var(--surface));
+}
+
+.cui-stickybar .cui-nav__count {
+  color: var(--primary-ink);
+  background: var(--primary);
+}
+
+/* The variant rules above are more specific than the base hover/press states,
+   so each variant restates them rather than letting them fall through. */
+@media (hover: hover) {
+  .cui-nav--hero .cui-nav__cart:hover {
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+  .cui-nav--hero .cui-nav__cart.is-filled:hover {
+    box-shadow:
+      0 18px 28px -12px color-mix(in srgb, var(--primary) 88%, transparent),
+      inset 0 1px 0 rgba(255, 255, 255, 0.36),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.22);
+  }
+  .cui-stickybar .cui-nav__cart:hover {
+    border-color: color-mix(in srgb, var(--primary) 34%, transparent);
+    box-shadow: var(--cui-shadow-2), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  }
+}
+
+.cui-nav--hero .cui-nav__cart:active,
+.cui-stickybar .cui-nav__cart:active {
+  box-shadow:
+    inset 0 2px 5px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* ---------------------------------------------------------- responsive --- */
+
+@media (min-width: 560px) { .cui-nav__cartlabel { display: inline; } }
+
+@media (max-width: 559px) {
+  .cui-nav__cart { gap: 7px; padding-inline: 10px; }
+  .cui-nav__cartglyph { width: 19px; height: 19px; }
+}
+
+@media (max-width: 360px) {
+  .cui-nav__cart { gap: 6px; padding-inline: 8px; }
+}
+
+/* ------------------------------------------------------------- reduced --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .cui-nav__cart,
+  .cui-nav__cart::after,
+  .cui-nav__cartglyph .cg-frame,
+  .cui-nav__cartglyph .cg-basket,
+  .cui-nav__cartglyph .cg-good,
+  .cui-nav__cartglyph .cg-drop,
+  .cui-nav__count {
+    transition: none !important;
+    animation: none !important;
+  }
+  .cui-nav__cart:hover,
+  .cui-nav__cart:active {
+    transform: none;
+  }
+}

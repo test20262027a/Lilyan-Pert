@@ -151,32 +151,9 @@
 .cui-nav__lang .hdr-lang__label { font-size: 12.5px; }
 .cui-nav__lang .hdr-lang__caret { color: currentColor; opacity: 0.7; }
 
-.cui-nav__cart {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding-inline: 15px;
-  border-radius: 999px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 750;
-  transition: transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
-}
-.cui-nav__cart:active { transform: scale(0.97); }
-.cui-nav__cartlabel { display: none; white-space: nowrap; }
-.cui-nav__count {
-  min-width: 20px;
-  height: 20px;
-  padding-inline: 6px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  font-size: 11px;
-  font-weight: 850;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
-}
+/* The basket control itself — pill, cart glyph and count — is styled in
+   components/customer/customerCartButton.css, so its layout, theme tint and
+   animations have one source of truth. */
 
 /* --- hero state: floating over the photograph --------------------------- */
 
@@ -199,19 +176,7 @@
   box-shadow: 0 8px 20px rgba(6, 14, 12, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .cui-nav--hero .cui-nav__lang .hdr-lang__btn:hover { background: var(--surface); }
-.cui-nav--hero .cui-nav__cart {
-  color: #fff;
-  background: rgba(16, 25, 21, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  backdrop-filter: blur(10px) saturate(140%);
-  -webkit-backdrop-filter: blur(10px) saturate(140%);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-}
-.cui-nav--hero .cui-nav__cart:hover { background: rgba(16, 25, 21, 0.66); transform: translateY(-1px); }
-.cui-nav--hero .cui-nav__count {
-  color: var(--cui-hero-ink);
-  background: #fff;
-}
+/* (the hero basket is styled with the rest of the cart in customerCartButton.css) */
 
 /* --- scrolled state: the compact floating bar --------------------------- */
 
@@ -263,24 +228,7 @@
   min-inline-size: 38px;
   border-radius: 12px;
 }
-.cui-stickybar .cui-nav__cart {
-  height: 38px;
-  color: var(--text);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  border: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
-  box-shadow: var(--cui-shadow-1), inset 0 1px 0 rgba(255, 255, 255, 0.55);
-}
-.cui-stickybar .cui-nav__cart:hover {
-  transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary) 34%, transparent);
-  box-shadow: var(--cui-shadow-2);
-}
-.cui-stickybar .cui-nav__count {
-  color: var(--primary-ink);
-  background: var(--primary);
-}
-
-@media (min-width: 560px) { .cui-nav__cartlabel { display: inline; } }
+/* (the compact bar's basket is styled with the rest of the cart too) */
 
 /* --------------------------------------------------------------- hero ---- */
 

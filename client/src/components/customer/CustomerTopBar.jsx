@@ -2,6 +2,7 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import LanguageSelect from '../header/LanguageSelect';
 import AdminReturnButton from './AdminReturnButton';
+import CustomerCartButton from './CustomerCartButton';
 // The one language dropdown of the app, so the public menu's control looks and
 // behaves exactly like the admin panel's.
 import '../header/header.css';
@@ -43,18 +44,13 @@ export default function CustomerTopBar({
   return (
     <div className={`cui-nav cui-nav--${variant}`}>
       {cartEnabled ? (
-        <button
-          type="button"
-          className="cui-nav__cart"
+        <CustomerCartButton
+          count={cartCount}
+          label={t('customer_menu_cart')}
           onClick={onCart}
           disabled={cartDisabled}
-          aria-label={t('customer_menu_cart')}
-          title={t('customer_menu_cart')}
-        >
-          <Icon name="cart" size={18} />
-          <span className="cui-nav__cartlabel">{t('customer_menu_cart')}</span>
-          {cartCount > 0 ? <span className="cui-nav__count">{cartCount}</span> : null}
-        </button>
+          dir={dir}
+        />
       ) : (
         <span />
       )}
