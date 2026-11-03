@@ -626,11 +626,16 @@ a { color: var(--primary); }
     0 18px 30px -20px color-mix(in srgb, var(--primary) 100%, transparent),
     0 2px 7px -4px rgba(0, 0, 0, 0.55);
 }
-/* The selected icon stays fully sharp: a theme glow behind it, never a blur. */
-.sidebar .nav-link.is-active .icon {
-  color: #ffffff;
-  filter: drop-shadow(0 0 7px color-mix(in srgb, var(--nav-accent) 80%, transparent))
-    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
+/*
+ * A selected icon keeps its OWN semantic colour, intensified rather than turned
+ * white, with a glow in that same colour. The light strip beside it keeps the
+ * global theme — two separate colour systems, as intended.
+ */
+.sidebar .nav-link.is-active > .nav-link__icon > .icon {
+  color: color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 58%, #ffffff);
+  filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 26%, transparent))
+    drop-shadow(0 0 7px color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 78%, transparent))
+    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.5));
 }
 /*
  * A submenu row that is the current page.
@@ -761,6 +766,8 @@ a { color: var(--primary); }
  */
 .sidebar .nav-link__icon {
   position: relative;
+  /* Its own stacking context: the strip and halo can never paint over the glyph. */
+  isolation: isolate;
   flex: none;
   display: grid;
   place-items: center;
@@ -771,11 +778,21 @@ a { color: var(--primary); }
   overflow: visible;
 }
 .sidebar .nav-link__icon--child { inline-size: 16px; block-size: 16px; }
+/*
+ * Every row carries its own semantic tone in `--nav-icon` (see navConfig), so
+ * the glyph keeps that colour with a soft top light and a directional shadow
+ * for depth — and always paints above the strip.
+ */
 .sidebar .nav-link__icon > .icon {
   position: relative;
   z-index: 3;
+  color: var(--nav-icon, currentColor);
+  filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 16%, transparent))
+    drop-shadow(0 1px 1.5px rgba(3, 8, 14, 0.55));
   transition: color 0.2s ease, filter 0.2s ease;
 }
+/* Flyout rows (collapsed rail) carry the same per-item tones. */
+.sidebar .nav-flyout__link .icon { color: var(--nav-icon, currentColor); }
 /* Ambient halo behind the selected icon. */
 .sidebar .nav-link__icon::after {
   content: '';
@@ -785,24 +802,26 @@ a { color: var(--primary); }
   border-radius: 50%;
   background: radial-gradient(
     closest-side,
-    color-mix(in srgb, var(--nav-accent) 62%, transparent),
+    color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 62%, transparent),
     transparent 78%
   );
   opacity: 0;
   transition: opacity 0.2s ease;
   pointer-events: none;
 }
-/* The 3D light strip: 4px wide, 26px tall, rounded ends, beveled edges. */
+/* The 3D light strip: 3px wide, 24px tall, rounded ends, beveled edges. */
 .sidebar .nav-link__icon::before {
   content: '';
   position: absolute;
   z-index: 2;
   inset-block-start: 50%;
-  inset-inline-start: 50%;
-  margin-inline-start: -2px;
+  /* Mounted on the wrapper's logical outer edge, inside the row's own start
+     padding: 3px of light beside the glyph, with a clear gap to its strokes.
+     Mirrors automatically between RTL and LTR. */
+  inset-inline-start: -6px;
   translate: 0 -50%;
-  inline-size: 4px;
-  block-size: 26px;
+  inline-size: 3px;
+  block-size: 24px;
   border-radius: 999px;
   /* Light → main → deep, all mixed out of the live theme; the lit end is
      pushed toward white so the strip still reads on the copper active plate. */
@@ -842,21 +861,32 @@ a { color: var(--primary); }
     0 0 13px color-mix(in srgb, var(--nav-accent) 88%, transparent),
     1px 1px 3px rgba(3, 8, 14, 0.55);
 }
-/* Hovering any row lifts its icon a touch — no other row reacts. */
-.sidebar .nav-link:hover .nav-link__icon > .icon { filter: brightness(1.18); }
-.sidebar .nav-link.is-active:hover .nav-link__icon > .icon,
-.sidebar .nav-link.is-active:focus-visible .nav-link__icon > .icon {
-  filter: brightness(1.1)
-    drop-shadow(0 0 7px color-mix(in srgb, var(--nav-accent) 85%, transparent))
-    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
+/*
+ * Hover lifts only the row under the pointer — its own icon brightens and gains
+ * a little elevation; no sibling ever reacts, because the selector is scoped to
+ * that one row's own icon slot.
+ */
+.sidebar .nav-link:hover > .nav-link__icon > .icon,
+.sidebar .nav-link:focus-visible > .nav-link__icon > .icon {
+  color: color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 84%, #ffffff);
+  filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 24%, transparent))
+    drop-shadow(0 2px 3px rgba(3, 8, 14, 0.55))
+    drop-shadow(0 0 5px color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 55%, transparent));
+}
+/* The selected row brightens further, still in its own colour. */
+.sidebar .nav-link.is-active:hover > .nav-link__icon > .icon,
+.sidebar .nav-link.is-active:focus-visible > .nav-link__icon > .icon {
+  color: color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 42%, #ffffff);
+  filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 30%, transparent))
+    drop-shadow(0 0 9px color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 85%, transparent))
+    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.5));
 }
 /* A group that holds the current page: the same strip, quieter, so exactly one
    destination in the tree carries the strongest mark. */
 .sidebar .nav-group.is-current .nav-link__icon::before {
-  opacity: 0.55;
-  inline-size: 3px;
-  margin-inline-start: -1.5px;
-  block-size: 20px;
+  opacity: 0.5;
+  inset-inline-start: -5px;
+  block-size: 18px;
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--nav-accent) 24%, transparent),
     0 0 6px color-mix(in srgb, var(--nav-accent) 48%, transparent);
@@ -864,9 +894,8 @@ a { color: var(--primary); }
 .sidebar .nav-group.is-current .nav-link__icon::after { opacity: 0.24; }
 /* Submenu rows: the same system, one step smaller behind the 16px mark. */
 .sidebar .nav-children .nav-link.is-active .nav-link__icon::before {
-  inline-size: 3.5px;
-  margin-inline-start: -1.75px;
-  block-size: 22px;
+  inset-inline-start: -5px;
+  block-size: 18px;
 }
 /* Hovering an active submenu row only warms the tint — nothing moves or grows. */
 .sidebar .nav-children .nav-link.is-active:hover,
@@ -884,8 +913,10 @@ a { color: var(--primary); }
   text-shadow: none;
 }
 .sidebar .nav-children .nav-link.is-active .icon {
-  color: color-mix(in srgb, #ffffff 90%, var(--primary));
-  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--nav-accent) 70%, transparent));
+  color: color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 60%, #ffffff);
+  filter: drop-shadow(0 -1px 0 color-mix(in srgb, #ffffff 24%, transparent))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--nav-icon, var(--nav-accent)) 72%, transparent))
+    drop-shadow(0 1px 2px rgba(3, 8, 14, 0.45));
 }
 .nav-children .nav-link.is-active .nav-child-icon { opacity: 1; }
 
@@ -1925,7 +1956,7 @@ table.data tr:hover td { background: var(--surface-2); }
   background: currentColor; opacity: 0.5;
 }
 /* A submenu entry that carries its own small outlined mark instead of the dot. */
-.nav-children .nav-child-icon { flex: none; opacity: 0.6; }
+.nav-children .nav-child-icon { flex: none; opacity: 0.82; }
 /* A destructive destination (sample-data reset) is marked, never hidden. */
 .nav-children .nav-danger,
 .nav-flyout .nav-danger {

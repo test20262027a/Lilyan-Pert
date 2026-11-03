@@ -13,40 +13,43 @@
  * boundary: the destination route and the API enforce the same rule on their own.
  */
 export const NAV = [
-  { to: '/', icon: 'dashboard', key: 'nav_dashboard', exact: true, perm: 'dashboard.view' },
-  { to: '/orders', icon: 'cart', key: 'nav_orders', perm: 'orders.view' },
+  { to: '/', icon: 'dashboard', key: 'nav_dashboard', exact: true, perm: 'dashboard.view', tone: '#38DBE8' },
+  { to: '/orders', icon: 'cart', key: 'nav_orders', perm: 'orders.view', tone: '#5B9DFF' },
   // The customer menu is a public page of this business, opened in a new tab.
-  { icon: 'store', key: 'nav_view_menu', preview: true },
+  { icon: 'store', key: 'nav_view_menu', preview: true, tone: '#41DD9B' },
   {
     key: 'nav_group_menu',
     icon: 'utensils',
+    tone: '#A78BFA',
     children: [
-      { to: '/menu', icon: 'utensils', key: 'nav_menu', perm: 'menu.products.view' },
-      { to: '/tables', icon: 'grid', key: 'nav_tables', perm: 'tables.view' },
-      { to: '/discounts', icon: 'tag', key: 'nav_discounts', min: 'manager', perm: 'promotions.view' },
-      { to: '/advertisements', icon: 'megaphone', key: 'nav_ads', min: 'manager', perm: 'ads.view' },
-      { to: '/reviews', icon: 'star', key: 'nav_reviews', perm: 'reviews.view' },
+      { to: '/menu', icon: 'utensils', key: 'nav_menu', perm: 'menu.products.view', tone: '#FF8A73' },
+      { to: '/tables', icon: 'grid', key: 'nav_tables', perm: 'tables.view', tone: '#7D8CF7' },
+      { to: '/discounts', icon: 'tag', key: 'nav_discounts', min: 'manager', perm: 'promotions.view', tone: '#F472B6' },
+      { to: '/advertisements', icon: 'megaphone', key: 'nav_ads', min: 'manager', perm: 'ads.view', tone: '#F5A94B' },
+      { to: '/reviews', icon: 'star', key: 'nav_reviews', perm: 'reviews.view', tone: '#F2D06B' },
     ],
   },
   {
     key: 'nav_group_reports',
     icon: 'chart',
+    tone: '#34D6C4',
     children: [
-      { to: '/statistics', icon: 'chartBars', key: 'nav_statistics', perm: 'statistics.view' },
-      { to: '/activity', icon: 'history', key: 'nav_activity', min: 'manager', perm: 'activity.view' },
+      { to: '/statistics', icon: 'chartBars', key: 'nav_statistics', perm: 'statistics.view', tone: '#57C7F2' },
+      { to: '/activity', icon: 'history', key: 'nav_activity', min: 'manager', perm: 'activity.view', tone: '#9EE36F' },
     ],
   },
   {
     key: 'nav_group_business',
     icon: 'building',
+    tone: '#C084FC',
     children: [
       /* Menu Settings has no sidebar entry of its own: it is the "menu" tab of
          this Business Settings workspace (and /menu-settings still opens it). */
-      { to: '/settings', icon: 'settings', key: 'nav_settings', perm: 'settings.view' },
-      { to: '/text-editor', icon: 'type', key: 'nav_text_editor', min: 'manager', perm: 'text_editor.view' },
-      { to: '/users', icon: 'users', key: 'nav_users', min: 'manager', perm: 'users.view' },
-      { to: '/backups', icon: 'database', key: 'nav_backups', min: 'owner', perm: 'backup.full' },
-      { to: '/reset-sample', icon: 'trash', key: 'nav_reset_sample', min: 'owner', danger: true, perm: 'reset_sample.full' },
+      { to: '/settings', icon: 'settings', key: 'nav_settings', perm: 'settings.view', tone: '#8FB6E0' },
+      { to: '/text-editor', icon: 'type', key: 'nav_text_editor', min: 'manager', perm: 'text_editor.view', tone: '#F0A97A' },
+      { to: '/users', icon: 'users', key: 'nav_users', min: 'manager', perm: 'users.view', tone: '#7DD3FC' },
+      { to: '/backups', icon: 'database', key: 'nav_backups', min: 'owner', perm: 'backup.full', tone: '#9AA7C7' },
+      { to: '/reset-sample', icon: 'trash', key: 'nav_reset_sample', min: 'owner', danger: true, perm: 'reset_sample.full', tone: '#F27B7B' },
     ],
   },
 ];

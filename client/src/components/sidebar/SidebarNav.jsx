@@ -84,6 +84,7 @@ export default function SidebarNav({
           href={previewHref || '#'}
           target={isStandalone() ? undefined : '_blank'}
           rel="noreferrer"
+          style={{ '--nav-icon': item.tone }}
           data-tip={collapsed ? t(item.key) : undefined}
           data-tip-side="inline-end"
           onClick={(e) => {
@@ -106,6 +107,7 @@ export default function SidebarNav({
           to={item.to}
           end={item.exact}
           className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
+          style={{ '--nav-icon': item.tone }}
           data-tip={collapsed ? t(item.key) : undefined}
           data-tip-side="inline-end"
           onClick={navigate}
@@ -143,6 +145,7 @@ export default function SidebarNav({
             }`}
             aria-expanded={collapsed ? isFlyout : isOpen}
             aria-controls={isOpen || isFlyout ? panelId : undefined}
+            style={{ '--nav-icon': item.tone }}
             data-tip={collapsed && !isFlyout ? t(item.key) : undefined}
             data-tip-side="inline-end"
             onClick={() => {
@@ -167,6 +170,7 @@ export default function SidebarNav({
                   key={child.to}
                   to={child.to}
                   className={({ isActive }) => `nav-link ${isActive ? 'is-active' : ''}`}
+                  style={{ '--nav-icon': child.tone }}
                   onClick={navigate}
                 >
                   {/* Submenu rows carry their own small outlined mark. */}
@@ -189,6 +193,7 @@ export default function SidebarNav({
                   key={child.to}
                   to={child.to}
                   className={({ isActive }) => `nav-flyout__link ${isActive ? 'is-active' : ''}`}
+                  style={{ '--nav-icon': child.tone }}
                   onClick={navigate}
                 >
                   <Icon name={child.icon} size={16} />
