@@ -3,6 +3,7 @@ import { useAuth } from './context/AuthContext';
 import { EmptyState } from './components/ui';
 import { useI18n } from './i18n';
 import Layout from './components/Layout';
+import PageBoundary from './components/PageBoundary';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
@@ -64,11 +65,14 @@ export default function App() {
       {/* Public customer menu — deliberately outside the authenticated shell.
           `/menu/<slug>` is the address to share; `/m/<slug>` is the same page and
           stays the alias already-printed QR codes and old links carry. */}
-      <Route path="/m/:key" element={<CustomerMenu />} />
-      <Route path="/menu/:key" element={<CustomerMenu />} />
+      {/* Each public screen carries the same page-level boundary as the admin
+          shell, so a failure inside the menu can never take the whole document
+          down to a blank page that only a reload recovers from. */}
+      <Route path="/m/:key" element={<PageBoundary><CustomerMenu /></PageBoundary>} />
+      <Route path="/menu/:key" element={<PageBoundary><CustomerMenu /></PageBoundary>} />
       {/* The short table QR address: the token resolves the business, then the
           menu opens with that table already identified. */}
-      <Route path="/t/:token" element={<TableMenu />} />
+      <Route path="/t/:token" element={<PageBoundary><TableMenu /></PageBoundary>} />
       <Route
         element={
           <RequireAuth>

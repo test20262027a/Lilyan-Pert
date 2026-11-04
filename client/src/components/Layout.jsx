@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
+import PageBoundary from './PageBoundary';
 import { BusinessProvider, useBusiness } from '../context/BusinessContext';
 import GlobalBrandedLoader from './brand/GlobalBrandedLoader';
 import useDocumentMetadata from '../hooks/useDocumentMetadata';
@@ -16,6 +17,7 @@ import { syncBrandIcons } from '../brandIcons';
 function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { business, error, reload } = useBusiness();
+  const { pathname } = useLocation();
 
   // The tab shows this section and this business, in this language.
   useDocumentMetadata(business);
@@ -64,7 +66,12 @@ function Shell() {
         <AppHeader sidebarOpen={menuOpen} onOpenSidebar={() => setMenuOpen((v) => !v)} />
 
         <main className="page">
-          <Outlet />
+          {/* A page that fails to render keeps its failure to itself: the rail,
+              the header, the session and the current theme stay mounted, and
+              moving to another section clears the message. */}
+          <PageBoundary resetKey={pathname}>
+            <Outlet />
+          </PageBoundary>
         </main>
 
         {/* One control for every admin screen. */}

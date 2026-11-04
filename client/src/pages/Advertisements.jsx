@@ -60,8 +60,13 @@ export default function Advertisements() {
   const [confirm, setConfirm] = useState(null);
   const [formError, setFormError] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  /*
+   * `quiet` is the refresh that follows a save or a delete: the screen already
+   * holds the right list and only has to catch up, so it is never swapped for a
+   * loader — scroll position, the open filter and the selection stay put.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
     try {
       const [list, catalog, cats] = await Promise.all([
         get('/manage/ads'),
@@ -73,9 +78,10 @@ export default function Advertisements() {
       setCategories(cats.categories || []);
       setFailed(false);
     } catch {
-      setFailed(true);
+      // A failed background refresh keeps the list that already answered.
+      if (!quiet) setFailed(true);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -112,7 +118,7 @@ export default function Advertisements() {
       if (id) await put(`/manage/ads/${id}`, payload);
       else await post('/manage/ads', payload);
       setModal(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch (err) {
       // The dialog stays open with the entered values and an accurate message.
@@ -128,7 +134,7 @@ export default function Advertisements() {
     try {
       await del(`/manage/ads/${ad.id}`);
       setConfirm(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch {
       toast.error(t('error_generic'));
@@ -162,7 +168,7 @@ export default function Advertisements() {
       ) : failed ? (
         <Alert kind="error">
           {t('state_error')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load}>
+          <button type="button" className="btn btn--sm" onClick={() => load()}>
             {t('action_retry')}
           </button>
         </Alert>

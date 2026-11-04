@@ -45,8 +45,14 @@ export default function Discounts() {
   const [confirm, setConfirm] = useState(null);
   const [formError, setFormError] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  /*
+   * `quiet` is the refresh that follows a save or a delete: the list on screen
+   * is already correct and only has to catch up, so the page is never swapped
+   * for a loader — scroll position, the open filter and everything else the
+   * administrator is looking at stay exactly where they were.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
     try {
       const [list, catalog, cats] = await Promise.all([
         get('/manage/promotions'),
@@ -58,9 +64,10 @@ export default function Discounts() {
       setCategories(cats.categories || []);
       setFailed(false);
     } catch {
-      setFailed(true);
+      // A failed background refresh keeps the list that already answered.
+      if (!quiet) setFailed(true);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -114,7 +121,7 @@ export default function Discounts() {
       if (id) await put(`/manage/promotions/${id}`, payload);
       else await post('/manage/promotions', payload);
       setModal(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch (err) {
       setFormError(err?.code || 'ERROR');
@@ -129,7 +136,7 @@ export default function Discounts() {
     try {
       await del(`/manage/promotions/${promotion.id}`);
       setConfirm(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch {
       toast.error(t('error_generic'));
@@ -163,7 +170,7 @@ export default function Discounts() {
       ) : failed ? (
         <Alert kind="error">
           {t('state_error')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load}>
+          <button type="button" className="btn btn--sm" onClick={() => load()}>
             {t('action_retry')}
           </button>
         </Alert>

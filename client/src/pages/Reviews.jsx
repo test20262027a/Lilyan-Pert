@@ -49,8 +49,13 @@ export default function Reviews() {
   const [busy, setBusy] = useState(false);
   const [confirm, setConfirm] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  /*
+   * `quiet` is the refresh after moderating or deleting: the page is not
+   * replaced by a loader, so the reader keeps their scroll position and the
+   * list they were reading instead of being thrown back to the top.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
     try {
       const res = await get(`/manage/reviews?limit=${PAGE_SIZE}&offset=0`);
       setReviews(res.reviews || []);
@@ -58,9 +63,10 @@ export default function Reviews() {
       setTotal(Number(res.total) || 0);
       setFailed(false);
     } catch {
-      setFailed(true);
+      // A failed background refresh keeps the reviews that already answered.
+      if (!quiet) setFailed(true);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -86,7 +92,7 @@ export default function Reviews() {
     setBusy(true);
     try {
       await patch(`/manage/reviews/${id}`, { status: next });
-      await load();
+      await load({ quiet: true });
     } catch {
       toast.error(t('error_generic'));
     } finally {
@@ -100,7 +106,7 @@ export default function Reviews() {
     try {
       await del(`/manage/reviews/${confirm.id}`);
       setConfirm(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('review_deleted'));
     } catch {
       toast.error(t('error_generic'));
@@ -149,7 +155,7 @@ export default function Reviews() {
       ) : failed ? (
         <Alert kind="error">
           {t('review_load_error')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load}>
+          <button type="button" className="btn btn--sm" onClick={() => load()}>
             {t('action_retry')}
           </button>
         </Alert>

@@ -1060,6 +1060,8 @@ export default {
   admin_order_menu_title: 'قائمة الطلب',
 
   error_generic: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
+  page_error_title: 'تعذّر عرض هذا القسم',
+  page_error_hint: 'بقية الأقسام ما زالت تعمل. أعد المحاولة أو افتح قسمًا آخر.',
   error_network: 'لا يمكن الوصول إلى الخادم',
   error_forbidden: 'ليس لديك صلاحية لهذا الإجراء',
   error_auth_required: 'يرجى تسجيل الدخول مرة أخرى',

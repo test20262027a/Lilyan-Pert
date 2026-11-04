@@ -83,10 +83,18 @@ export default function Users() {
   const canEdit = can('users.edit');
   const canDelete = can('users.delete');
 
-  const load = useCallback(async () => {
+  /*
+   * `quiet` is the refresh after a member is saved, disabled or removed: the
+   * list is already correct and only has to catch up, so it is never swapped
+   * for a loader — the search field, the filters and the scroll position the
+   * administrator is working in all stay exactly where they are.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
     const id = ++requestId.current;
-    setLoading(true);
-    setLoadError(null);
+    if (!quiet) {
+      setLoading(true);
+      setLoadError(null);
+    }
     try {
       const params = new URLSearchParams();
       if (query.trim()) params.set('q', query.trim());
@@ -101,9 +109,10 @@ export default function Users() {
       // overwrite a newer one).
       if (id === requestId.current) setData({ ...EMPTY, ...res });
     } catch (err) {
-      if (id === requestId.current) setLoadError(err);
+      // A failed background refresh keeps the list that already answered.
+      if (id === requestId.current && !quiet) setLoadError(err);
     } finally {
-      if (id === requestId.current) setLoading(false);
+      if (id === requestId.current && !quiet) setLoading(false);
     }
   }, [query, role, status]);
 
@@ -148,7 +157,7 @@ export default function Users() {
         await post('/manage/users', values);
       }
       setModal(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('user_saved'));
     } catch (err) {
       toast.error(failMessage(err));
@@ -169,7 +178,7 @@ export default function Users() {
         });
       }
       setConfirm(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch (err) {
       toast.error(failMessage(err));
@@ -184,7 +193,7 @@ export default function Users() {
       await patch(`/manage/users/${member.membership_id}`, {
         status: member.status === 'active' ? 'disabled' : 'active',
       });
-      await load();
+      await load({ quiet: true });
     } catch (err) {
       toast.error(failMessage(err));
     } finally {
@@ -305,7 +314,7 @@ export default function Users() {
       {loadError ? (
         <Alert kind="error">
           {t(LOAD_ERROR_KEYS[loadError.code] || 'user_load_failed')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load} disabled={loading}>
+          <button type="button" className="btn btn--sm" onClick={() => load()} disabled={loading}>
             {t('action_retry')}
           </button>
         </Alert>
@@ -426,7 +435,7 @@ export default function Users() {
           onClose={() => setCreatorOpen(false)}
           onSaved={async () => {
             toast.success(t('user_creator_password_set'));
-            await load();
+            await load({ quiet: true });
           }}
         />
       ) : null}

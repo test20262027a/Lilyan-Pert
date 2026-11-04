@@ -48,16 +48,22 @@ export default function Tables() {
   const [deleteError, setDeleteError] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  /*
+   * `quiet` is the refresh after a table is saved or removed: the list is
+   * already correct and only has to catch up, so it is never swapped for a
+   * loader and the reader keeps their place on the page.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
     try {
       const res = await get('/manage/tables');
       setTables(res.tables || []);
       setError(null);
     } catch (err) {
-      setError(err?.code || 'ERROR');
+      // A failed background refresh keeps the tables that already answered.
+      if (!quiet) setError(err?.code || 'ERROR');
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -100,7 +106,7 @@ export default function Tables() {
       if (id) await put(`/manage/tables/${id}`, values);
       else await post('/manage/tables', values);
       setModal(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch (err) {
       setFormError(err?.code || 'ERROR');
@@ -115,7 +121,7 @@ export default function Tables() {
     try {
       await del(`/manage/tables/${table.id}`);
       setConfirm(null);
-      await load();
+      await load({ quiet: true });
       toast.success(t('state_saved'));
     } catch (err) {
       setDeleteError(err?.code || 'ERROR');
@@ -151,7 +157,7 @@ export default function Tables() {
       ) : error ? (
         <Alert kind="error">
           {t('state_error')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load}>
+          <button type="button" className="btn btn--sm" onClick={() => load()}>
             {t('action_retry')}
           </button>
         </Alert>

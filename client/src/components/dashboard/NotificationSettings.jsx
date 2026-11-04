@@ -218,11 +218,15 @@ export default function NotificationSettings({
             <div className="notif-note__main">
               <p className="notif-note__title">{notice.title}</p>
               <p className="notif-note__body">{notice.body}</p>
-              {notice.action ? (
+              {/* Only in a browser tab: there a second tab is a real, separate
+                  document. Inside the installed app the same address would
+                  reload the app in place — the one thing this control must
+                  never do — so it is not offered there at all. */}
+              {notice.action && !isStandalone() ? (
                 <a
                   className="btn btn--sm btn--primary notif-note__action"
                   href={appHref()}
-                  target={isStandalone() ? undefined : '_blank'}
+                  target="_blank"
                   rel="noopener noreferrer"
                 >
                   <Icon name="link" size={14} />

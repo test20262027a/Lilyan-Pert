@@ -1061,6 +1061,8 @@ export default {
   admin_order_menu_title: 'منوی سفارش',
 
   error_generic: 'خطایی رخ داد. لطفاً دوباره تلاش کنید.',
+  page_error_title: 'این بخش نمایش داده نشد',
+  page_error_hint: 'بخش‌های دیگر همچنان کار می‌کنند. دوباره تلاش کنید یا بخش دیگری را باز کنید.',
   error_network: 'اتصال به سرور ممکن نیست',
   error_forbidden: 'شما مجوز این عملیات را ندارید',
   error_auth_required: 'لطفاً دوباره وارد شوید',

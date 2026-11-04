@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { canSee } from '../nav/navConfig';
@@ -32,6 +32,7 @@ export default function SidebarNav({
   onNavigate,
 }) {
   const { t } = useI18n();
+  const push = useNavigate();
   const [flyout, setFlyout] = useState(null);
 
   const closeFlyout = useCallback(() => setFlyout(null), []);
@@ -88,8 +89,21 @@ export default function SidebarNav({
           data-tip={collapsed ? t(item.key) : undefined}
           data-tip-side="inline-end"
           onClick={(e) => {
-            if (!previewHref) e.preventDefault();
             navigate(e);
+            if (!previewHref) {
+              e.preventDefault();
+              return;
+            }
+            /* Inside the installed app a new tab would leave the standalone
+               window, so the customer menu opens as a route of this very
+               application: same document, same session, and "Back to Admin"
+               comes straight back without anything being reloaded. An ordinary
+               browser tab still opens the menu on its own, so the panel that is
+               already open keeps its state. */
+            if (isStandalone()) {
+              e.preventDefault();
+              push(previewHref);
+            }
           }}
         >
           <span className="nav-link__icon">

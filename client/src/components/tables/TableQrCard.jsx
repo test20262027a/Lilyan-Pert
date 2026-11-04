@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import QRCode from 'qrcode';
 import Icon from '../Icon';
 import QrCode from '../QrCode';
@@ -29,6 +30,7 @@ import { fmtDigits } from '../../format';
 export default function TableQrCard({ table, menuUrl, businessSlug, canManage, onEdit, onDelete }) {
   const { t, locale } = useI18n();
   const toast = useToast();
+  const push = useNavigate();
   const [downloading, setDownloading] = useState(false);
 
   const seats = Number(table.seats);
@@ -128,6 +130,15 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
         target={isStandalone() ? undefined : '_blank'}
         rel="noreferrer"
         title={t('table_open_menu')}
+        onClick={(event) => {
+          /* Installed app: the table's menu is a route of this same document,
+             so it opens in place and the panel behind it keeps its state.
+             An ordinary browser tab still opens it on its own. */
+          if (!isStandalone() || !menuUrl) return;
+          event.preventDefault();
+          const target = new URL(menuUrl, window.location.origin);
+          push(`${target.pathname}${target.search}`);
+        }}
       >
         <QrCode value={menuUrl} size={165} label={`${label} — ${t('table_qr')}`} />
       </a>

@@ -13,6 +13,16 @@ export function AuthProvider({ children }) {
     businessId: null,
   });
 
+  /*
+   * Only the server's own verdict ends a session.
+   *
+   * `401`/`403` mean the cookie is gone or the account lost access — that is a
+   * real sign-out. Anything else (a dropped connection, the API restarting, a
+   * 5xx, a proxy hiccup) is ordinary background failure: the session is still
+   * valid, so it is kept exactly as it is. Treating those as a sign-out is what
+   * made the panel suddenly land on the login screen and come back, which reads
+   * as a full page refresh and loses every unsaved field with it.
+   */
   const refresh = useCallback(async () => {
     try {
       const data = await get('/auth/me');
@@ -24,7 +34,13 @@ export function AuthProvider({ children }) {
         businessId: data.active_business_id,
       });
       return data;
-    } catch {
+    } catch (err) {
+      const signedOut = err?.status === 401 || err?.status === 403;
+      if (!signedOut) {
+        // Nothing to clear: keep the session and whatever the page is showing.
+        setState((current) => ({ ...current, loading: false }));
+        return null;
+      }
       setBusinessId(null);
       setState({ loading: false, user: null, memberships: [], businessId: null });
       return null;

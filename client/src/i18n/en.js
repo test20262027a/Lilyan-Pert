@@ -1063,6 +1063,8 @@ export default {
   admin_order_menu_title: 'Ordering Menu',
 
   error_generic: 'Something went wrong. Please try again.',
+  page_error_title: 'This section could not be shown',
+  page_error_hint: 'The rest of the panel is still working. Try again, or open another section.',
   error_network: 'Cannot reach the server',
   error_forbidden: 'You do not have permission for this action',
   error_auth_required: 'Please sign in again',

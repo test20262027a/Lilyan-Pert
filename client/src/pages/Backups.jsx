@@ -53,17 +53,25 @@ export default function Backups() {
   const [result, setResult] = useState(null);
   const [uploadError, setUploadError] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setFailed(false);
+  /*
+   * `quiet` is the refresh after a backup is created, uploaded, restored or
+   * removed: the archive list is already correct and only has to catch up, so
+   * the page is never swapped for a loader and the chosen sections stay ticked.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) {
+      setLoading(true);
+      setFailed(false);
+    }
     try {
       const [reg, list] = await Promise.all([get('/backups/modules'), get('/backups')]);
       setRegistry(reg);
       setBackups(list.backups || []);
     } catch {
-      setFailed(true);
+      // A failed background refresh keeps the archive list that already answered.
+      if (!quiet) setFailed(true);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -86,7 +94,7 @@ export default function Backups() {
       await post('/backups', body);
       toast.success(t('backup_created'));
       if (body.mode === 'custom') setSelected([]);
-      await load();
+      await load({ quiet: true });
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -132,7 +140,7 @@ export default function Backups() {
       const data = await post('/backups/upload', { file: parsed, name: file.name });
       if (data?.checksum_verified === false) setUploadError(t('backup_integrity_unverified'));
       toast.success(t('backup_uploaded_ok'));
-      await load();
+      await load({ quiet: true });
     } catch (err) {
       setUploadError(errorText(err));
       toast.error(errorText(err));
@@ -152,7 +160,7 @@ export default function Backups() {
       setResult(data);
       setRestoreTarget(null);
       toast.success(t('backup_restored'));
-      await load();
+      await load({ quiet: true });
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -167,7 +175,7 @@ export default function Backups() {
       await del(`/backups/${removeTarget.id}`);
       setRemoveTarget(null);
       toast.success(t('backup_deleted'));
-      await load();
+      await load({ quiet: true });
     } catch (err) {
       toast.error(errorText(err));
     } finally {
@@ -201,7 +209,7 @@ export default function Backups() {
       {failed ? (
         <Alert kind="error">
           {t('error_generic')}{' '}
-          <button type="button" className="btn btn--sm" onClick={load}>
+          <button type="button" className="btn btn--sm" onClick={() => load()}>
             {t('action_retry')}
           </button>
         </Alert>
