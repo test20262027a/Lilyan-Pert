@@ -8,6 +8,7 @@ import CategoryDrawer from '../components/menu/CategoryDrawer';
 import CategorySummary from '../components/menu/CategorySummary';
 import Icon from '../components/Icon';
 import ProductCard from '../components/menu/ProductCard';
+import SortableProductGrid from '../components/menu/SortableProductGrid';
 import CategoryFormModal from '../components/menu/CategoryFormModal';
 import ProductFormModal from '../components/menu/ProductFormModal';
 import CategoryDeleteDetails from '../components/menu/CategoryDeleteDetails';
@@ -65,6 +66,8 @@ export default function MenuManagement() {
   const [confirmError, setConfirmError] = useState(null);
   const [error, setError] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Display Order mode: products become draggable inside the selected category.
+  const [reorderMode, setReorderMode] = useState(false);
   // Measured height of the shared sticky header: the desktop rail and the
   // narrow-screen chip strip hang from it instead of a hardcoded offset.
   const [stickyTop, setStickyTop] = useState(0);
@@ -250,6 +253,44 @@ export default function MenuManagement() {
   };
 
   /*
+   * Display order, saved immediately: the new sequence is shown at once and
+   * rolled back to the last saved one if the server refuses it, so a failed
+   * save is never mistaken for a saved order.
+   */
+  const reorderCategories = async (ids) => {
+    const previous = categories;
+    const byId = new Map(previous.map((c) => [c.id, c]));
+    const next = ids.map((id) => byId.get(id)).filter(Boolean);
+    if (next.length !== previous.length) return;
+    setCategories(next);
+    try {
+      await put('/catalog/categories/reorder', { ids });
+    } catch {
+      setCategories(previous);
+      toast.error(t('error_generic'));
+    }
+  };
+
+  const reorderProducts = async (ids) => {
+    if (!selectedId) return;
+    const previous = products;
+    const byId = new Map(previous.map((p) => [p.id, p]));
+    const ordered = ids.map((id) => byId.get(id)).filter(Boolean);
+    if (ordered.length !== ids.length) return;
+    // Re-seat the category's products in the slots they already occupy, so a
+    // reorder never disturbs any other category's list.
+    const queue = ordered.slice();
+    const inScope = new Set(ids);
+    setProducts(previous.map((p) => (inScope.has(p.id) ? queue.shift() : p)));
+    try {
+      await put('/catalog/products/reorder', { category_id: selectedId, ids });
+    } catch {
+      setProducts(previous);
+      toast.error(t('error_generic'));
+    }
+  };
+
+  /*
    * A category delete always opens the shared confirmation dialog — a category
    * holding products is no longer refused, it is explained. The dialog shows the
    * record's own glyph and accent, and asks the server what the cascade would
@@ -300,6 +341,35 @@ export default function MenuManagement() {
 
   const selectedName = selectedCategory ? localized(selectedCategory, 'name', locale) : '';
 
+  // Product cards are identical in both presentations; only the sortable grid
+  // adds the grip and the move actions around them.
+  const cardFor = (p) => {
+    const categoryLabel = results
+      ? localized(p, 'category_name', locale) || t('menu_uncategorized')
+      : localized(selectedCategory, 'name', locale);
+    return {
+      currency,
+      canManage: isManager,
+      categoryName: categoryLabel,
+      onEdit: () => {
+        setFormError(null);
+        setProductModal({ mode: 'edit', id: p.id, values: { ...p } });
+      },
+      onDelete: () =>
+        setConfirm({
+          kind: 'product',
+          id: p.id,
+          name: localized(p, 'name', locale),
+          image: p.image_url || null,
+          categoryName: categoryLabel,
+        }),
+    };
+  };
+
+  // Dragging is available only on the real category list, never on a search
+  // result set — its order would silently drop every category it omits.
+  const sortableProducts = isManager && reorderMode && !results && listProducts.length > 1;
+
   // One selection, three presentations: the drawer hands the selection back and
   // dismisses itself so the products are immediately in view.
   const pickFromDrawer = (id) => {
@@ -313,6 +383,11 @@ export default function MenuManagement() {
       stats={categoryStats}
       selectedId={selectedId}
       canManage={isManager}
+      // Reordering always covers the complete, unfiltered list: a search result
+      // set is only part of the categories, so dragging waits until it clears.
+      reorderable={isManager && !results}
+      reorderBlocked={isManager && Boolean(results)}
+      onReorder={isManager ? reorderCategories : undefined}
       onEdit={(c) => {
         setFormError(null);
         setCategoryModal({ mode: 'edit', id: c.id, values: { ...c } });
@@ -394,41 +469,41 @@ export default function MenuManagement() {
             />
           ) : null}
 
+          {/* Display order — level 2: the sequence of products inside this category. */}
+          {isManager && !results && listProducts.length > 1 ? (
+            <div className={`mreorder ${reorderMode ? 'is-on' : ''}`.trim()}>
+              <button
+                type="button"
+                className="mreorder__toggle"
+                aria-pressed={reorderMode}
+                onClick={() => setReorderMode((on) => !on)}
+              >
+                <span className="mreorder__glyph">
+                  <Icon name="gripVertical" size={16} />
+                </span>
+                <span className="mreorder__label">{t('menu_display_order')}</span>
+              </button>
+              {reorderMode ? (
+                <span className="mreorder__hint">{t('menu_reorder_hint')}</span>
+              ) : null}
+            </div>
+          ) : null}
+
           {listProducts.length === 0 ? (
             <EmptyState
               icon={results ? 'search' : 'coffee'}
               title={results ? t('menu_no_search_results') : t('menu_no_products')}
             />
+          ) : sortableProducts ? (
+            <SortableProductGrid
+              products={listProducts}
+              onReorder={reorderProducts}
+              renderCard={cardFor}
+            />
           ) : (
             <div className="mgrid">
               {listProducts.map((p) => (
-                <ProductCard
-                  key={p.id}
-                  product={p}
-                  currency={currency}
-                  canManage={isManager}
-                  categoryName={
-                    results
-                      ? localized(p, 'category_name', locale) || t('menu_uncategorized')
-                      : localized(selectedCategory, 'name', locale)
-                  }
-                  onEdit={() => {
-                    setFormError(null);
-                    setProductModal({ mode: 'edit', id: p.id, values: { ...p } });
-                  }}
-                  onDelete={() =>
-                    setConfirm({
-                      kind: 'product',
-                      id: p.id,
-                      name: localized(p, 'name', locale),
-                      image: p.image_url || null,
-                      categoryName:
-                        results
-                          ? localized(p, 'category_name', locale) || t('menu_uncategorized')
-                          : localized(selectedCategory, 'name', locale),
-                    })
-                  }
-                />
+                <ProductCard key={p.id} product={p} {...cardFor(p)} />
               ))}
             </div>
           )}

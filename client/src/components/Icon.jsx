@@ -28,6 +28,9 @@ const BASE_PATHS = {
   close: <><path d="M18 6 6 18M6 6l12 12" /></>,
   check: <><path d="m20 6-11 11L4 12" /></>,
   chevronDown: <path d="m6 9 6 6 6-6" />,
+  chevronUp: <path d="m18 15-6-6-6 6" />,
+  /* The reorder grip: two columns of three dots, the universal drag mark. */
+  gripVertical: <><path d="M9 5h.01M9 12h.01M9 19h.01M15 5h.01M15 12h.01M15 19h.01" strokeWidth="2.6" strokeLinecap="round" /></>,
   chevronRight: <path d="m9 6 6 6-6 6" />,
   chevronLeft: <path d="m15 6-6 6 6 6" />,
   arrowLeft: <><path d="M19 12H5" /><path d="m12 19-7-7 7-7" /></>,

@@ -400,6 +400,107 @@
   text-overflow: ellipsis;
 }
 .mrow.is-selected .mrow__name { color: var(--mp-green-ink); font-weight: 750; }
+
+/* ------------------------------------------------- inactive category ----- */
+
+/*
+ * A disabled category keeps every control at full contrast — only its surface,
+ * its glyph and its name step back, so the row reads as "not shown to guests"
+ * without ever looking broken or unclickable.
+ */
+.mrow.is-inactive {
+  background: color-mix(in srgb, var(--surface-2) 78%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-line) 74%, transparent);
+  box-shadow: 0 1px 1px rgba(24, 46, 30, 0.02);
+}
+.mrow.is-inactive:hover { background: var(--surface-2); }
+.mrow.is-inactive .mcat {
+  filter: grayscale(0.85) saturate(0.45);
+  opacity: 0.82;
+  box-shadow: none;
+}
+.mrow.is-inactive .mrow__name { color: var(--mp-muted); font-weight: 600; }
+/* Selected *and* inactive: still clearly the selection, still visibly muted. */
+.mrow.is-inactive.is-selected {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mp-green) 9%, var(--surface-2)),
+    color-mix(in srgb, var(--mp-green) 4%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--mp-green) 44%, transparent);
+  box-shadow: 0 6px 14px -12px color-mix(in srgb, var(--mp-green) 70%, transparent);
+}
+.mrow.is-inactive.is-selected .mrow__name { color: var(--theme-primary-strong); font-weight: 750; }
+/* The small, localized "inactive" mark — a quiet dot, not a second label. */
+.mrow__status {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  margin-inline-start: auto;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--mp-muted) 65%, transparent);
+}
+
+/* --------------------------------------------------- category ordering --- */
+
+.mrow__handle {
+  flex: none;
+  width: 24px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--mp-muted);
+  cursor: grab;
+  /* Only the grip swallows the gesture; the list keeps scrolling normally. */
+  touch-action: none;
+  transition: color 0.16s ease, background 0.16s ease;
+}
+.mrow__handle:hover {
+  color: var(--theme-primary-strong);
+  background: var(--theme-primary-tint-hover);
+}
+.mrow__handle:active { cursor: grabbing; }
+.mrow.is-dragging { opacity: 0.4; }
+.mrow.is-drop-target {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--theme-primary) 55%, transparent);
+}
+.mrow--ghost {
+  gap: 9px;
+  padding: 7px 9px;
+  background: var(--surface);
+  cursor: grabbing;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 1px color-mix(in srgb, var(--theme-primary) 38%, transparent),
+    0 20px 34px -20px rgba(24, 46, 30, 0.6);
+}
+.mrow--ghost .mrow__handle { color: var(--theme-primary-strong); }
+
+/* The alternate reorder actions: touch and small screens only. */
+.mrow__move { display: none; flex-direction: column; gap: 2px; }
+@media (pointer: coarse) {
+  .mrow__move { display: inline-flex; }
+}
+.mrow__btn--move {
+  width: 26px;
+  height: 21px;
+  border-radius: 7px;
+  background: var(--surface);
+}
+
+/* The hint shown while a search result set blocks dragging. */
+.mreorder-hint {
+  margin: 0;
+  padding-inline: 2px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--mp-muted);
+}
+
 .mrow__actions { flex: none; display: flex; align-items: center; gap: 4px; }
 .mrow__btn {
   width: 30px;
@@ -651,6 +752,192 @@
 }
 .mcard__btn:disabled { opacity: 0.5; cursor: not-allowed; box-shadow: none; }
 
+/* ------------------------------------------------ inactive product card -- */
+
+/*
+ * An effectively inactive product (its own flag off, or its category's) keeps
+ * its structure and its contrast: only the photograph loses its colour and the
+ * card surface desaturates. The name, the price, the status pill and both action
+ * buttons keep full colour and full pointer behaviour.
+ */
+.mcard--muted {
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-line) 85%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mp-line) 92%, transparent),
+    0 10px 20px -22px rgba(24, 46, 30, 0.35);
+}
+.mcard--muted:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mp-line) 88%, transparent),
+    0 16px 26px -22px rgba(24, 46, 30, 0.4);
+}
+.mcard--muted .mcard__img { filter: grayscale(100%) contrast(0.95); }
+.mcard--muted .mcard__placeholder { color: color-mix(in srgb, var(--muted) 80%, var(--surface)); }
+.mcard--muted .mcard__panel {
+  background: linear-gradient(145deg, rgba(246, 246, 244, 0.88), rgba(237, 239, 237, 0.86));
+  -webkit-backdrop-filter: blur(12px) saturate(0.5);
+  backdrop-filter: blur(12px) saturate(0.5);
+  box-shadow:
+    0 -6px 16px rgba(0, 0, 0, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+.mcard--muted .mcard__name { color: #414841; }
+.mcard--muted .mcard__amount {
+  color: color-mix(in srgb, var(--theme-primary-strong) 76%, #5a605c);
+}
+
+/* --------------------------------------------------- product ordering --- */
+
+.msort { display: flex; min-width: 0; }
+.msort > .mcard { flex: 1 1 auto; }
+.msort.is-dragging { opacity: 0.4; }
+.msort.is-dragging .mcard { box-shadow: none; }
+.mcard.is-drop-target {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 0 2px color-mix(in srgb, var(--theme-primary) 58%, transparent),
+    0 18px 30px -26px rgba(24, 46, 30, 0.5);
+}
+
+/* The grip: a small glass chip on the photograph, the only drag activator. */
+.mcard__handle {
+  position: absolute;
+  inset-block-start: 9px;
+  inset-inline-end: 9px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--theme-primary-strong);
+  cursor: grab;
+  touch-action: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 6px 14px -10px rgba(24, 46, 30, 0.85);
+  transition: background 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+}
+.mcard__handle:hover {
+  background: #fff;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 10px 18px -12px rgba(24, 46, 30, 0.8);
+}
+.mcard__handle:active { cursor: grabbing; }
+
+/* Touch-sized move actions, shown where a drag handle is hardest to hit. */
+.mcard__move {
+  position: absolute;
+  inset-block-start: 9px;
+  inset-inline-start: 9px;
+  display: none;
+  gap: 4px;
+}
+@media (pointer: coarse) {
+  .mcard__move { display: inline-flex; }
+}
+.mcard__move-btn {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--theme-primary-strong);
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 6px 14px -10px rgba(24, 46, 30, 0.85);
+}
+.mcard__move-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* The lifted card under the pointer. */
+.mcard--ghost {
+  width: 210px;
+  border-radius: 18px;
+  cursor: grabbing;
+  transform: rotate(-1.2deg);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--theme-primary) 40%, transparent),
+    0 30px 48px -26px rgba(24, 46, 30, 0.62);
+}
+.mcard--ghost .mcard__media { aspect-ratio: 16 / 10; }
+.mcard__ghost-name {
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--mp-ink);
+  background: var(--surface);
+}
+
+/* The Display Order control above the product grid. */
+.mreorder {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 9px;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--mp-line) 92%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
+}
+.mreorder.is-on {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--theme-primary) 32%, var(--mp-line));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-primary) 7%, var(--surface)),
+    color-mix(in srgb, var(--theme-primary) 3%, var(--surface))
+  );
+}
+.mreorder__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 5px;
+  padding-inline: 9px 11px;
+  border-radius: 11px;
+  border: 1px solid var(--mp-line);
+  background: var(--surface);
+  color: var(--mp-ink);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 5px 12px -10px rgba(24, 46, 30, 0.8);
+  transition: border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
+}
+.mreorder__toggle:hover { transform: translateY(-1px); }
+.mreorder.is-on .mreorder__toggle {
+  border-color: color-mix(in srgb, var(--theme-primary) 46%, var(--mp-line));
+  color: var(--theme-primary-strong);
+}
+.mreorder__glyph {
+  width: 24px;
+  height: 24px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  color: var(--theme-primary-strong);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-primary) 12%, var(--surface)),
+    color-mix(in srgb, var(--theme-primary) 22%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 26%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+.mreorder__hint { font-size: 11.5px; line-height: 1.4; color: var(--mp-muted); }
+
 /* ------------------------------------------------------ theme & motion */
 
 [data-theme='dark'] .mtoolbar {
@@ -672,7 +959,18 @@
     0 0 0 1px var(--mp-line),
     0 20px 34px -28px rgba(0, 0, 0, 0.9);
 }
-[data-theme='dark'] .mcstat__icon { background: rgba(255, 255, 255, 0.08); }
+/* The icon tile keeps belonging to its card in dark mode too. */
+[data-theme='dark'] .mcstat__icon {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--mcstat-ink) 24%, var(--surface)),
+    color-mix(in srgb, var(--mcstat-ink) 38%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--mcstat-ink) 42%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 3px 8px -5px color-mix(in srgb, var(--mcstat-ink) 75%, transparent);
+}
 [data-theme='dark'] .mrow.is-selected {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.06),
@@ -682,7 +980,9 @@
 @media (prefers-reduced-motion: reduce) {
   .mcard,
   .mcard__btn,
+  .mcard__handle,
   .mbtn,
+  .mreorder__toggle,
   .mrow { transition: none; }
   .mcard:hover { transform: none; }
   .mcard__btn--edit:hover:not(:disabled),

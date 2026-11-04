@@ -17,6 +17,13 @@ import { fmtMoneyParts } from '../../format';
  * is active, available and its category is active too. An inactive parent
  * category never rewrites the product's own stored flag — it is only reflected
  * in the badge and label here.
+ *
+ * `muted` gives that effective inactivity its own visual language: a grayscale
+ * photograph and a desaturated card, while the name, the price, the status pill
+ * and both action buttons keep full contrast and stay clickable.
+ *
+ * `dragHandle` (reorder mode only) turns the small grip into the drag activator;
+ * `onMoveUp` / `onMoveDown` are the touch-friendly alternative to dragging.
  */
 function productState(product) {
   if (!product.active) return 'inactive';
@@ -32,14 +39,34 @@ const STATE_LABEL = {
   hidden: 'menu_stats_hidden',
 };
 
-export default function ProductCard({ product, categoryName, currency, canManage, onEdit, onDelete }) {
+export default function ProductCard({
+  product,
+  categoryName,
+  currency,
+  canManage,
+  onEdit,
+  onDelete,
+  dragHandle = null,
+  onMoveUp = null,
+  onMoveDown = null,
+  dropTarget = false,
+}) {
   const { t, locale } = useI18n();
   const name = localized(product, 'name', locale);
   const state = productState(product);
+  const muted = !product.active || product.category_active === false;
   const { number, symbol } = fmtMoneyParts(product.price, currency, locale);
 
+  const cardClass = [
+    'mcard',
+    muted ? 'mcard--muted' : '',
+    dropTarget ? 'is-drop-target' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <article className="mcard">
+    <article className={cardClass}>
       <div className="mcard__media">
         {product.image_url ? (
           <img className="mcard__img" src={product.image_url} alt="" loading="lazy" decoding="async" />
@@ -48,6 +75,45 @@ export default function ProductCard({ product, categoryName, currency, canManage
             <Icon name="image" size={34} />
           </span>
         )}
+
+        {dragHandle ? (
+          <button
+            type="button"
+            className="mcard__handle"
+            ref={dragHandle.ref}
+            aria-label={t('menu_reorder_handle')}
+            title={t('menu_reorder_handle')}
+            {...dragHandle.attributes}
+            {...dragHandle.listeners}
+          >
+            <Icon name="gripVertical" size={16} />
+          </button>
+        ) : null}
+
+        {onMoveUp || onMoveDown ? (
+          <span className="mcard__move">
+            <button
+              type="button"
+              className="mcard__move-btn"
+              onClick={onMoveUp || undefined}
+              disabled={!onMoveUp}
+              aria-label={t('menu_reorder_move_up')}
+              title={t('menu_reorder_move_up')}
+            >
+              <Icon name="chevronUp" size={15} />
+            </button>
+            <button
+              type="button"
+              className="mcard__move-btn"
+              onClick={onMoveDown || undefined}
+              disabled={!onMoveDown}
+              aria-label={t('menu_reorder_move_down')}
+              title={t('menu_reorder_move_down')}
+            >
+              <Icon name="chevronDown" size={15} />
+            </button>
+          </span>
+        ) : null}
 
         <div className="mcard__panel">
           <div className="mcard__name" title={name}>

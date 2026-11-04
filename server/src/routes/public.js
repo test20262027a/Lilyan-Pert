@@ -308,7 +308,7 @@ router.get(
       q(
         `SELECT id, icon, icon_color, sort_order, name_ku, name_fa, name_ar, name_en
            FROM categories WHERE business_id = $1 AND active = true
-          ORDER BY sort_order, created_at`,
+          ORDER BY sort_order, created_at, id`,
         [business.id],
       ),
       q(
@@ -317,7 +317,7 @@ router.get(
                 p.description_ku, p.description_fa, p.description_ar, p.description_en, p.sort_order
            FROM products p JOIN categories c ON c.id = p.category_id
           WHERE p.business_id = $1 AND p.active = true AND p.available = true AND c.active = true
-          ORDER BY p.sort_order, p.created_at`,
+          ORDER BY p.sort_order, p.created_at, p.id`,
         [business.id],
       ),
       q(
@@ -444,7 +444,7 @@ router.get(
            FROM products p JOIN categories c ON c.id = p.category_id
           WHERE p.business_id = $1 AND p.featured = true
             AND p.active = true AND p.available = true AND c.active = true
-          ORDER BY p.sort_order, p.created_at
+          ORDER BY p.sort_order, p.created_at, p.id
           LIMIT 12`,
         [business.id],
       );

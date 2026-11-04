@@ -18,9 +18,9 @@ import { catalogErrorText } from './errorText';
  * already falls back language by language.
  *
  * The stored flags stay independent of each other: `active` (public visibility,
- * also governed by the category) is never edited by this form, `available` says
- * whether the product can be ordered right now, and `featured` only marks it as
- * a special/featured item.
+ * also governed by the category), `available` (orderable right now) and
+ * `featured` (a special/featured item). Editing one never touches the others,
+ * so switching a product off never changes what its category is doing.
  */
 
 /*
@@ -200,10 +200,10 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
         tags: parseTags(values.tags),
         available: values.available,
         featured: values.featured,
-        // Not a field of this form: a new product is active, an existing one
-        // keeps the state its own rules gave it.
         active: values.active,
-        sort_order: Number(modal.values.sort_order) || 0,
+        // A new product is appended to the end of its category by the server;
+        // an existing one keeps the position the display-order manager gave it.
+        ...(isCreate ? {} : { sort_order: Number(modal.values.sort_order) || 0 }),
       },
       modal.id,
     );
@@ -380,6 +380,14 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
       </section>
 
       <div className="mform__toggles">
+        <span className="mform__toggle">
+          <Switch
+            checked={values.active}
+            onChange={(v) => set('active', v)}
+            ariaLabel={t('label_active')}
+          />
+          <span className="mform__toggle-label">{t('label_active')}</span>
+        </span>
         <span className="mform__toggle">
           <Switch
             checked={values.available}

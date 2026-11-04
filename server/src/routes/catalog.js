@@ -108,6 +108,61 @@ router.post(
   }),
 );
 
+/*
+ * Reordering one whole list. The interface always sends the complete sequence
+ * it is showing, so the server can prove the request covers exactly the records
+ * this business owns inside the scope — a stale or foreign id is refused
+ * instead of silently dropping whatever the client did not know about.
+ */
+function reorderIds(body) {
+  const ids = Array.isArray(body?.ids) ? body.ids : null;
+  if (!ids || !ids.length || ids.some((id) => !isUuid(id))) throw bad('REORDER_INVALID');
+  if (new Set(ids).size !== ids.length) throw bad('REORDER_INVALID');
+  return ids;
+}
+
+/**
+ * Writes 0…n-1 in the given order. Callers lock the rows and pass the business
+ * scope (plus any narrower scope) as the remaining bind values.
+ */
+async function writeOrder(client, table, ids, where, params) {
+  await client.query(
+    `UPDATE ${table} AS t
+        SET sort_order = v.ord - 1, updated_at = now()
+       FROM (SELECT unnest($1::uuid[]) AS id,
+                    generate_subscripts($1::uuid[], 1) AS ord) AS v
+      WHERE t.id = v.id AND ${where}`,
+    [ids, ...params],
+  );
+}
+
+/**
+ * Category display order (level 1 of two independent levels). Only the
+ * category sequence changes: product order, statuses and memberships are
+ * never touched here.
+ */
+router.put(
+  '/categories/reorder',
+  withBusiness('manager'),
+  perm('menu.categories.edit'),
+  ah(async (req, res) => {
+    const ids = reorderIds(req.body);
+    await tx(async (client) => {
+      const { rows } = await client.query(
+        'SELECT id FROM categories WHERE business_id = $1 FOR UPDATE',
+        [req.businessId],
+      );
+      const stored = new Set(rows.map((row) => row.id));
+      // A partial list would corrupt the positions of every category it omits.
+      if (stored.size !== ids.length || ids.some((id) => !stored.has(id))) {
+        throw conflict('REORDER_SCOPE_MISMATCH');
+      }
+      await writeOrder(client, 'categories', ids, 't.business_id = $2', [req.businessId]);
+    });
+    res.json({ ok: true });
+  }),
+);
+
 router.put(
   '/categories/:id',
   withBusiness('manager'),
@@ -283,7 +338,7 @@ router.get(
          FROM products p
          LEFT JOIN categories c ON c.id = p.category_id
         WHERE ${where}
-        ORDER BY p.sort_order, p.created_at`,
+        ORDER BY p.sort_order, p.created_at, p.id`,
       params,
     );
     res.json({ products: rows });
@@ -308,7 +363,12 @@ router.post(
                              active, available, featured, sort_order, calories, prep_minutes, tags,
                              name_ku, name_fa, name_ar, name_en,
                              description_ku, description_fa, description_ar, description_en)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+               -- No explicit position: a new product joins the end of its category.
+               COALESCE($12, (SELECT COALESCE(max(p2.sort_order), -1) + 1
+                                FROM products p2
+                               WHERE p2.business_id = $1 AND p2.category_id = $2)),
+               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23)
        RETURNING *`,
       [
         req.businessId,
@@ -325,7 +385,7 @@ router.post(
         b.active === undefined ? true : Boolean(b.active),
         b.available === undefined ? true : Boolean(b.available),
         b.featured === undefined ? false : Boolean(b.featured),
-        num(b.sort_order, 0),
+        b.sort_order === undefined || b.sort_order === null ? null : num(b.sort_order, 0),
         optInt(b.calories, 'INVALID_CALORIES'),
         optInt(b.prep_minutes, 'INVALID_PREP_TIME'),
         tagList(b.tags),
@@ -340,6 +400,41 @@ router.post(
       ],
     );
     res.status(201).json({ product: rows[0] });
+  }),
+);
+
+/**
+ * Product display order (level 2), scoped to one category of this business.
+ * The sequence sent must cover exactly that category's products, so a product
+ * of another category or business can never be pulled into it.
+ */
+router.put(
+  '/products/reorder',
+  withBusiness('manager'),
+  perm('menu.products.edit'),
+  ah(async (req, res) => {
+    const categoryId = req.body?.category_id;
+    if (!isUuid(categoryId)) throw bad('CATEGORY_REQUIRED');
+    const ids = reorderIds(req.body);
+    await loadCategory(req.businessId, categoryId);
+    await tx(async (client) => {
+      const { rows } = await client.query(
+        'SELECT id FROM products WHERE business_id = $1 AND category_id = $2 FOR UPDATE',
+        [req.businessId, categoryId],
+      );
+      const stored = new Set(rows.map((row) => row.id));
+      if (stored.size !== ids.length || ids.some((id) => !stored.has(id))) {
+        throw conflict('REORDER_SCOPE_MISMATCH');
+      }
+      await writeOrder(
+        client,
+        'products',
+        ids,
+        't.business_id = $2 AND t.category_id = $3',
+        [req.businessId, categoryId],
+      );
+    });
+    res.json({ ok: true });
   }),
 );
 
