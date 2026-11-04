@@ -585,7 +585,8 @@
   }
   .mpill__top { gap: 4px; }
   .mpill__num { font-size: 12.5px; }
-  .mpill__icon { width: 12px; height: 12px; }
+  .mpill .stat-ico { width: 18px; height: 18px; border-radius: 7px; }
+  .mpill .stat-ico svg { width: 11px; height: 11px; }
 }
 
 .mgrid { display: grid; gap: 20px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -801,41 +802,69 @@
     0 18px 30px -26px rgba(24, 46, 30, 0.5);
 }
 
-/* The grip: a small glass chip on the photograph, the only drag activator. */
+/*
+ * The grip: a small raised glass tile on the photograph's upper logical-start
+ * corner (physical left in LTR, right in RTL), the only drag activator.
+ */
 .mcard__handle {
   position: absolute;
   inset-block-start: 9px;
-  inset-inline-end: 9px;
-  width: 30px;
-  height: 30px;
+  inset-inline-start: 9px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.86);
+  border-radius: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.96),
+    color-mix(in srgb, var(--theme-primary) 9%, rgba(255, 255, 255, 0.84))
+  );
   color: var(--theme-primary-strong);
   cursor: grab;
   touch-action: none;
+  -webkit-backdrop-filter: blur(9px) saturate(1.25);
+  backdrop-filter: blur(9px) saturate(1.25);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 6px 14px -10px rgba(24, 46, 30, 0.85);
-  transition: background 0.16s ease, transform 0.16s ease, box-shadow 0.16s ease;
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 color-mix(in srgb, var(--theme-primary) 14%, transparent),
+    0 1px 2px rgba(24, 46, 30, 0.16),
+    0 8px 16px -10px rgba(24, 46, 30, 0.85);
+  transition: background 0.16s ease, color 0.16s ease, border-color 0.16s ease,
+    transform 0.12s ease, box-shadow 0.16s ease;
 }
 .mcard__handle:hover {
-  background: #fff;
+  background: linear-gradient(
+    180deg,
+    #fff,
+    color-mix(in srgb, var(--theme-primary) 20%, #fff)
+  );
+  border-color: color-mix(in srgb, var(--theme-primary) 34%, rgba(255, 255, 255, 0.7));
   transform: translateY(-1px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.95),
-    0 10px 18px -12px rgba(24, 46, 30, 0.8);
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 -1px 0 color-mix(in srgb, var(--theme-primary) 20%, transparent),
+    0 2px 4px rgba(24, 46, 30, 0.14),
+    0 12px 20px -12px rgba(24, 46, 30, 0.8);
 }
-.mcard__handle:active { cursor: grabbing; }
+.mcard__handle:active {
+  cursor: grabbing;
+  transform: translateY(0) scale(0.94);
+}
+.mcard__handle:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-primary) 62%, transparent);
+  outline-offset: 2px;
+}
 
-/* Touch-sized move actions, shown where a drag handle is hardest to hit. */
+/* Touch-sized move actions, at the opposite corner from the grip. */
 .mcard__move {
   position: absolute;
   inset-block-start: 9px;
-  inset-inline-start: 9px;
+  inset-inline-end: 9px;
+  z-index: 2;
   display: none;
   gap: 4px;
 }
@@ -876,68 +905,6 @@
   background: var(--surface);
 }
 
-/* The Display Order control above the product grid. */
-.mreorder {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-  padding: 6px 9px;
-  border-radius: 14px;
-  border: 1px dashed color-mix(in srgb, var(--mp-line) 92%, transparent);
-  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
-}
-.mreorder.is-on {
-  border-style: solid;
-  border-color: color-mix(in srgb, var(--theme-primary) 32%, var(--mp-line));
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--theme-primary) 7%, var(--surface)),
-    color-mix(in srgb, var(--theme-primary) 3%, var(--surface))
-  );
-}
-.mreorder__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding-block: 5px;
-  padding-inline: 9px 11px;
-  border-radius: 11px;
-  border: 1px solid var(--mp-line);
-  background: var(--surface);
-  color: var(--mp-ink);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 750;
-  cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    0 5px 12px -10px rgba(24, 46, 30, 0.8);
-  transition: border-color 0.16s ease, color 0.16s ease, transform 0.12s ease;
-}
-.mreorder__toggle:hover { transform: translateY(-1px); }
-.mreorder.is-on .mreorder__toggle {
-  border-color: color-mix(in srgb, var(--theme-primary) 46%, var(--mp-line));
-  color: var(--theme-primary-strong);
-}
-.mreorder__glyph {
-  width: 24px;
-  height: 24px;
-  flex: none;
-  display: grid;
-  place-items: center;
-  border-radius: 8px;
-  color: var(--theme-primary-strong);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--theme-primary) 12%, var(--surface)),
-    color-mix(in srgb, var(--theme-primary) 22%, var(--surface))
-  );
-  border: 1px solid color-mix(in srgb, var(--theme-primary) 26%, transparent);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
-}
-.mreorder__hint { font-size: 11.5px; line-height: 1.4; color: var(--mp-muted); }
-
 /* ------------------------------------------------------ theme & motion */
 
 [data-theme='dark'] .mtoolbar {
@@ -960,16 +927,25 @@
     0 20px 34px -28px rgba(0, 0, 0, 0.9);
 }
 /* The icon tile keeps belonging to its card in dark mode too. */
-[data-theme='dark'] .mcstat__icon {
+[data-theme='dark'] .stat-ico {
   background: linear-gradient(
     180deg,
-    color-mix(in srgb, var(--mcstat-ink) 24%, var(--surface)),
-    color-mix(in srgb, var(--mcstat-ink) 38%, var(--surface))
+    color-mix(in srgb, var(--stat-ink) 24%, var(--surface)),
+    color-mix(in srgb, var(--stat-ink) 38%, var(--surface))
   );
-  border-color: color-mix(in srgb, var(--mcstat-ink) 42%, transparent);
+  border-color: color-mix(in srgb, var(--stat-ink) 42%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
-    0 3px 8px -5px color-mix(in srgb, var(--mcstat-ink) 75%, transparent);
+    0 3px 8px -5px color-mix(in srgb, var(--stat-ink) 75%, transparent);
+}
+[data-theme='dark'] .mcard__handle {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.16),
+    color-mix(in srgb, var(--theme-primary) 16%, rgba(255, 255, 255, 0.06))
+  );
+  border-color: rgba(255, 255, 255, 0.22);
+  color: color-mix(in srgb, var(--theme-primary) 62%, #ffffff);
 }
 [data-theme='dark'] .mrow.is-selected {
   box-shadow:
@@ -982,7 +958,6 @@
   .mcard__btn,
   .mcard__handle,
   .mbtn,
-  .mreorder__toggle,
   .mrow { transition: none; }
   .mcard:hover { transform: none; }
   .mcard__btn--edit:hover:not(:disabled),
@@ -994,6 +969,8 @@
 
 @media (max-width: 1180px) {
   .mgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Tablet and phone grips: the same tile, one step smaller. */
+  .mcard__handle { width: 30px; height: 30px; border-radius: 10px; }
 }
 
 @media (max-width: 1000px) {

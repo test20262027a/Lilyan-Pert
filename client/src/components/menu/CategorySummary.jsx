@@ -60,7 +60,9 @@ export default function CategorySummary({ icon, color, title, subtitle, stats })
         {counters.map(({ kind, glyph, value, fullKey, compactKey, shortKey }) => (
           <span key={kind} className={`mpill mpill--${kind}`}>
             <span className="mpill__top">
-              <Icon name={glyph} size={13} className="mpill__icon" />
+              <span className="stat-ico">
+                <Icon name={glyph} size={13} />
+              </span>
               <span className="mpill__num">{fmtNumber(value, locale)}</span>
             </span>
             <StatLabel fullKey={fullKey} compactKey={compactKey} shortKey={shortKey} />

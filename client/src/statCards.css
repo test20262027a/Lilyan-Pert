@@ -22,13 +22,52 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
+/*
+ * The icon tile: one shared surface for both statistic families (category cards
+ * and product pills). It is mixed from the card's own ink, so the glyph sitting
+ * in a card always belongs to that card's colour family — a light tinted tile,
+ * never a detached white chip — with the same raised, glossy treatment in both
+ * light and dark mode.
+ */
+.mcstat,
+.mpill {
+  --stat-ink: var(--mp-green);
+  --stat-ink-strong: var(--mp-green-ink);
+}
+.mcstat--inactive,
+.mpill--inactive {
+  --stat-ink: var(--mp-red);
+  --stat-ink-strong: color-mix(in srgb, var(--mp-red) 78%, var(--mp-ink));
+}
+.stat-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--stat-ink) 15%, var(--surface)),
+    color-mix(in srgb, var(--stat-ink) 27%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--stat-ink) 32%, transparent);
+  color: var(--stat-ink-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 color-mix(in srgb, var(--stat-ink) 10%, transparent),
+    0 3px 8px -5px color-mix(in srgb, var(--stat-ink) 65%, transparent);
+}
+.mcstat .stat-ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+}
+.mpill .stat-ico {
+  width: 21px;
+  height: 21px;
+  border-radius: 8px;
+}
+
 .mcstat {
   min-width: 0;
-  /* The card's own colour family. Its icon tile is mixed from these, so the
-     glyph container always belongs to the card it sits in — never a detached
-     white chip — and follows the same family in dark mode. */
-  --mcstat-ink: var(--mp-green);
-  --mcstat-ink-strong: var(--mp-green-ink);
   /* Measured by the card itself — never by the viewport. */
   container-type: inline-size;
   container-name: statcard;
@@ -53,8 +92,6 @@
   border-color: color-mix(in srgb, var(--mp-green) 28%, transparent);
 }
 .mcstat--inactive {
-  --mcstat-ink: var(--mp-red);
-  --mcstat-ink-strong: color-mix(in srgb, var(--mp-red) 78%, var(--mp-ink));
   background: var(--mp-red-soft);
   border-color: color-mix(in srgb, var(--mp-red) 22%, transparent);
 }
@@ -64,25 +101,6 @@
   justify-content: center;
   gap: 6px;
   min-width: 0;
-}
-.mcstat__icon {
-  width: 26px;
-  height: 26px;
-  flex: none;
-  border-radius: 9px;
-  display: grid;
-  place-items: center;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--mcstat-ink) 15%, var(--surface)),
-    color-mix(in srgb, var(--mcstat-ink) 27%, var(--surface))
-  );
-  border: 1px solid color-mix(in srgb, var(--mcstat-ink) 32%, transparent);
-  color: var(--mcstat-ink-strong);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.85),
-    inset 0 -1px 0 color-mix(in srgb, var(--mcstat-ink) 10%, transparent),
-    0 3px 8px -5px color-mix(in srgb, var(--mcstat-ink) 65%, transparent);
 }
 .mcstat__value { font-size: 17px; font-weight: 800; color: var(--mp-ink); line-height: 1.15; }
 .mcstat--inactive .mcstat__value { color: color-mix(in srgb, var(--mp-red) 82%, var(--mp-ink)); }
@@ -129,7 +147,6 @@
   min-width: 0;
 }
 .mpill__num { font-size: 13px; font-weight: 800; flex: none; }
-.mpill__icon { flex: none; }
 .mpill--total {
   background: var(--mp-mint);
   border-color: color-mix(in srgb, var(--mp-green) 22%, transparent);

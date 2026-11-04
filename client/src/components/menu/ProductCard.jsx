@@ -22,7 +22,9 @@ import { fmtMoneyParts } from '../../format';
  * photograph and a desaturated card, while the name, the price, the status pill
  * and both action buttons keep full contrast and stay clickable.
  *
- * `dragHandle` (reorder mode only) turns the small grip into the drag activator;
+ * The grip on the upper logical-start corner of the photograph is the card's
+ * reorder control: `dragHandle` turns it into the dnd-kit activator, so admin
+ * product ordering lives on every card instead of a control above the grid.
  * `onMoveUp` / `onMoveDown` are the touch-friendly alternative to dragging.
  */
 function productState(product) {

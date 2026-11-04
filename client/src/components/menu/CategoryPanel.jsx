@@ -155,7 +155,7 @@ export default function CategoryPanel({
         {COUNTERS.map(({ kind, glyph, value, fullKey, compactKey, shortKey }) => (
           <div key={kind} className={`mcstat mcstat--${kind}`}>
             <span className="mcstat__top">
-              <span className="mcstat__icon">
+              <span className="stat-ico">
                 <Icon name={glyph} size={14} />
               </span>
               <span className="mcstat__value">{fmtNumber(stats[value], locale)}</span>

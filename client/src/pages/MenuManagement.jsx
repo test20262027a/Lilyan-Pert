@@ -66,8 +66,6 @@ export default function MenuManagement() {
   const [confirmError, setConfirmError] = useState(null);
   const [error, setError] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
-  // Display Order mode: products become draggable inside the selected category.
-  const [reorderMode, setReorderMode] = useState(false);
   // Measured height of the shared sticky header: the desktop rail and the
   // narrow-screen chip strip hang from it instead of a hardcoded offset.
   const [stickyTop, setStickyTop] = useState(0);
@@ -165,8 +163,18 @@ export default function MenuManagement() {
 
   const listCategories = results ? results.categories : categories;
   const listProducts = results ? results.products : selectedProducts;
+  /*
+   * Product counters read *effective* availability: a product is only available
+   * to customers when its own flag AND its category's flag are on. The server
+   * sends each product's parent state as `category_active`, so an inactive
+   * category counts every one of its products as inactive without ever
+   * rewriting the product's own stored flag. Each product is counted once
+   * because the total is simply the list length.
+   */
   const productStats = useMemo(() => {
-    const active = listProducts.filter((p) => p.active).length;
+    const active = listProducts.filter(
+      (p) => p.active === true && p.category_active !== false,
+    ).length;
     return { total: listProducts.length, active, inactive: listProducts.length - active };
   }, [listProducts]);
 
@@ -368,7 +376,9 @@ export default function MenuManagement() {
 
   // Dragging is available only on the real category list, never on a search
   // result set — its order would silently drop every category it omits.
-  const sortableProducts = isManager && reorderMode && !results && listProducts.length > 1;
+  // Every card carries its own grip, so the grid is always sortable for a
+  // manager — except over a search result set, whose order would be partial.
+  const sortableProducts = isManager && !results && listProducts.length > 1;
 
   // One selection, three presentations: the drawer hands the selection back and
   // dismisses itself so the products are immediately in view.
@@ -467,26 +477,6 @@ export default function MenuManagement() {
               subtitle={summary.subtitle}
               stats={productStats}
             />
-          ) : null}
-
-          {/* Display order — level 2: the sequence of products inside this category. */}
-          {isManager && !results && listProducts.length > 1 ? (
-            <div className={`mreorder ${reorderMode ? 'is-on' : ''}`.trim()}>
-              <button
-                type="button"
-                className="mreorder__toggle"
-                aria-pressed={reorderMode}
-                onClick={() => setReorderMode((on) => !on)}
-              >
-                <span className="mreorder__glyph">
-                  <Icon name="gripVertical" size={16} />
-                </span>
-                <span className="mreorder__label">{t('menu_display_order')}</span>
-              </button>
-              {reorderMode ? (
-                <span className="mreorder__hint">{t('menu_reorder_hint')}</span>
-              ) : null}
-            </div>
           ) : null}
 
           {listProducts.length === 0 ? (
