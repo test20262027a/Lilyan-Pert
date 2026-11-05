@@ -1,5 +1,6 @@
 import Icon from '../Icon';
 import ProductTitle from '../ProductTitle';
+import ProductMedia from '../product/ProductMedia';
 import { Money } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { productPrice } from '../../languages';
@@ -26,7 +27,9 @@ import '../../customerProduct.css';
  */
 export default function CustomerProductCard({
   product,
+  category,
   categoryName,
+  variant = 'customer-card',
   locale,
   currency,
   showPrices = true,
@@ -78,13 +81,12 @@ export default function CustomerProductCard({
       aria-disabled={disabled || undefined}
     >
       <div className="cui-prod__media">
-        {product.image_url ? (
-          <img src={product.image_url} alt="" loading="lazy" />
-        ) : (
-          <span className="cui-prod__ph">
-            <Icon name="coffee" size={30} />
-          </span>
-        )}
+        <ProductMedia
+          product={product}
+          category={category}
+          variant={variant}
+          muted={!available}
+        />
         {badge || onSale || !priced ? (
           <div className="cui-prod__badges">
             {badge ? (

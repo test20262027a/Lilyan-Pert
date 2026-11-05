@@ -242,6 +242,10 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
   const opening = useOpeningStatus(data?.business?.working_hours, data?.business?.timezone);
 
   const categories = data?.categories || [];
+  /* The card's no-photo fallback draws the product's own category glyph, and
+     the QR menu simply scales it a touch smaller than the in-store panel. */
+  const categoryOf = (p) => categories.find((c) => c.id === p.category_id);
+  const mediaVariant = data?.menu?.context === 'main' ? 'customer-card' : 'qr-card';
   /* Every category that still has a product, independent of the current
      selection — the rail, drawer and chips always list them all, so a guest can
      switch between categories (or back to "all") from any state. */
@@ -641,7 +645,9 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
                 <CustomerProductCard
                   key={p.id}
                   product={p}
-                  categoryName={localized(categories.find((c) => c.id === p.category_id), 'name', locale)}
+                  category={categoryOf(p)}
+                  variant={mediaVariant}
+                  categoryName={localized(categoryOf(p), 'name', locale)}
                   locale={locale}
                   currency={currency}
                   showPrices={showFeature('prices')}
@@ -676,7 +682,9 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
                 <CustomerProductCard
                   key={p.id}
                   product={p}
-                  categoryName={localized(categories.find((c) => c.id === p.category_id), 'name', locale)}
+                  category={categoryOf(p)}
+                  variant={mediaVariant}
+                  categoryName={localized(categoryOf(p), 'name', locale)}
                   locale={locale}
                   currency={currency}
                   showPrices={showFeature('prices')}
@@ -717,7 +725,9 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
                   <CustomerProductCard
                     key={p.id}
                     product={p}
-                    categoryName={localized(categories.find((c) => c.id === p.category_id), 'name', locale)}
+                    category={categoryOf(p)}
+                    variant={mediaVariant}
+                    categoryName={localized(categoryOf(p), 'name', locale)}
                     locale={locale}
                     currency={currency}
                     showPrices={showFeature('prices')}

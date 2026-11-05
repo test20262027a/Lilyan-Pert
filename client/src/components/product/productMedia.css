@@ -1,0 +1,256 @@
+/* ==========================================================================
+   Product media — one stage for a photograph, its loading state and the
+   category-glyph illustration that stands in when there is no photograph.
+
+   The component only ever fills the media frame its page already owns, so a
+   card keeps exactly the same dimensions whether it shows a photo, a skeleton
+   or the 3D icon. Nothing here changes layout, only what is painted inside.
+   ========================================================================== */
+
+.pmedia {
+  /* The category's own identity colour; a neutral slate stands in for the
+     generic package icon only. */
+  --pmedia-ink: #7f8a9a;
+  --pmedia-glyph-size: 34%;
+
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  align-self: stretch;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------ photograph -- */
+
+.pmedia__img {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+/* A failed address keeps its slot but never paints the browser's broken mark. */
+.pmedia.is-error .pmedia__img,
+.pmedia.is-error .pmedia__bg { display: none; }
+
+/* --------------------------------------------------------------- loading -- */
+
+.pmedia__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--surface) 82%, transparent),
+    color-mix(in srgb, var(--surface-2) 86%, transparent)
+  );
+  overflow: hidden;
+}
+
+.pmedia__skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 22%,
+    color-mix(in srgb, var(--surface) 62%, transparent) 48%,
+    transparent 74%
+  );
+  transform: translateX(-120%);
+  animation: pmedia-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes pmedia-shimmer {
+  to { transform: translateX(120%); }
+}
+
+/* --------------------------------------------- category-glyph fallback --- */
+
+/*
+ * A soft, category-tinted plate: a quiet light gradient, one delicate radial
+ * glow behind the mark, and the icon on a raised bevelled base with a glossy
+ * top edge. Everything is flat CSS — no canvas, no filters to animate.
+ */
+.pmedia__fallback {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background:
+    radial-gradient(
+      92% 82% at 78% 4%,
+      color-mix(in srgb, var(--pmedia-ink) 20%, transparent) 0%,
+      transparent 64%
+    ),
+    radial-gradient(
+      88% 78% at 12% 100%,
+      color-mix(in srgb, var(--pmedia-ink) 16%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      158deg,
+      color-mix(in srgb, var(--surface) 90%, var(--pmedia-ink)) 0%,
+      color-mix(in srgb, var(--surface-2) 88%, var(--pmedia-ink)) 100%
+    );
+}
+
+/* The soft floating highlight the icon sits on. */
+.pmedia__glow {
+  position: absolute;
+  width: 62%;
+  height: 46%;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--pmedia-ink) 34%, transparent) 0%,
+    transparent 100%
+  );
+  filter: blur(1px);
+  transform: translateY(28%);
+}
+
+.pmedia__glyph {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  height: var(--pmedia-glyph-size);
+  aspect-ratio: 1;
+  border-radius: 32%;
+  color: var(--pmedia-ink);
+  background:
+    radial-gradient(
+      118% 118% at 30% 10%,
+      rgba(255, 255, 255, 0.96) 0%,
+      rgba(255, 255, 255, 0) 58%
+    ),
+    linear-gradient(
+      162deg,
+      color-mix(in srgb, #ffffff 84%, var(--pmedia-ink)) 0%,
+      color-mix(in srgb, #ffffff 44%, var(--pmedia-ink)) 58%,
+      color-mix(in srgb, var(--pmedia-ink) 58%, #ffffff) 100%
+    );
+  box-shadow:
+    inset 0 2px 2px rgba(255, 255, 255, 0.92),
+    inset 0 -7px 12px color-mix(in srgb, var(--pmedia-ink) 34%, transparent),
+    0 16px 26px -16px color-mix(in srgb, var(--pmedia-ink) 82%, transparent),
+    0 3px 4px rgba(20, 32, 26, 0.14);
+}
+
+/* The tiny specular sweep that reads as a glossy, bevelled surface. */
+.pmedia__gloss {
+  position: absolute;
+  inset-block-start: 8%;
+  inset-inline-start: 14%;
+  width: 58%;
+  height: 26%;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.pmedia__glyph .icon {
+  width: 58%;
+  height: 58%;
+  filter: drop-shadow(0 2px 1px color-mix(in srgb, var(--pmedia-ink) 40%, transparent));
+}
+
+/* ------------------------------------------------------- dark appearance -- */
+
+[data-theme='dark'] .pmedia__fallback {
+  background:
+    radial-gradient(
+      92% 82% at 78% 4%,
+      color-mix(in srgb, var(--pmedia-ink) 26%, transparent) 0%,
+      transparent 64%
+    ),
+    radial-gradient(
+      88% 78% at 12% 100%,
+      color-mix(in srgb, var(--pmedia-ink) 20%, transparent) 0%,
+      transparent 62%
+    ),
+    linear-gradient(
+      158deg,
+      color-mix(in srgb, var(--pmedia-ink) 14%, var(--surface)) 0%,
+      color-mix(in srgb, var(--pmedia-ink) 8%, var(--surface-2)) 100%
+    );
+}
+
+[data-theme='dark'] .pmedia__glyph {
+  color: color-mix(in srgb, var(--pmedia-ink) 68%, #ffffff);
+  background:
+    radial-gradient(
+      118% 118% at 30% 10%,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0) 58%
+    ),
+    linear-gradient(
+      162deg,
+      color-mix(in srgb, var(--pmedia-ink) 34%, var(--surface)) 0%,
+      color-mix(in srgb, var(--pmedia-ink) 22%, var(--surface)) 58%,
+      color-mix(in srgb, var(--pmedia-ink) 42%, var(--surface)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    inset 0 -8px 14px color-mix(in srgb, #000000 34%, transparent),
+    0 16px 26px -16px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .pmedia__gloss {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0));
+}
+
+/* An effectively inactive product keeps its recognisable mark, dulled. */
+.pmedia.is-muted .pmedia__fallback {
+  filter: grayscale(0.55) saturate(0.6);
+  opacity: 0.92;
+}
+
+/* ------------------------------------------------------------- variants --- */
+
+.pmedia--qr-card { --pmedia-glyph-size: 32%; }
+
+.pmedia--product-modal {
+  border-radius: 18px;
+}
+
+.pmedia--product-modal .pmedia__img {
+  border-radius: 18px;
+}
+
+.pmedia--product-modal .pmedia__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: blur(26px) saturate(1.18);
+  opacity: 0.5;
+  transform: scale(1.18);
+  pointer-events: none;
+}
+
+.pmedia--product-modal.pmedia {
+  --pmedia-glyph-size: 38%;
+}
+
+@media (max-width: 640px) {
+  .pmedia { --pmedia-glyph-size: 32%; }
+  .pmedia--product-modal.pmedia { --pmedia-glyph-size: 34%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pmedia__skeleton::after { animation: none; }
+}

@@ -787,7 +787,8 @@
     0 0 0 1px color-mix(in srgb, var(--mp-line) 88%, transparent),
     0 16px 26px -22px rgba(24, 46, 30, 0.4);
 }
-.mcard--muted .mcard__img { filter: grayscale(100%) contrast(0.95); }
+.mcard--muted .mcard__img,
+.mcard--muted .pmedia__img { filter: grayscale(100%) contrast(0.95); }
 .mcard--muted .mcard__placeholder { color: color-mix(in srgb, var(--muted) 80%, var(--surface)); }
 .mcard--muted .mcard__panel {
   background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));

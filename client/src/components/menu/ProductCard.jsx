@@ -1,5 +1,6 @@
 import Icon from '../Icon';
 import ProductTitle from '../ProductTitle';
+import ProductMedia from '../product/ProductMedia';
 import { useI18n, localized } from '../../i18n';
 import { fmtMoneyParts } from '../../format';
 
@@ -45,6 +46,7 @@ const STATE_LABEL = {
 
 export default function ProductCard({
   product,
+  category,
   categoryName,
   currency,
   canManage,
@@ -72,13 +74,7 @@ export default function ProductCard({
   return (
     <article className={cardClass}>
       <div className="mcard__media">
-        {product.image_url ? (
-          <img className="mcard__img" src={product.image_url} alt="" loading="lazy" decoding="async" />
-        ) : (
-          <span className="mcard__placeholder">
-            <Icon name="image" size={34} />
-          </span>
-        )}
+        <ProductMedia product={product} category={category} variant="admin-card" muted={muted} />
 
         {dragHandle ? (
           <button

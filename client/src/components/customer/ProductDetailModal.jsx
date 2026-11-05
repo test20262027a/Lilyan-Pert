@@ -6,6 +6,7 @@ import { localized, useI18n } from '../../i18n';
 import { productPrice } from '../../languages';
 import { fmtMoneyParts } from '../../format';
 import { appearanceOf } from '../menu/categoryIcons';
+import ProductMedia from '../product/ProductMedia';
 import ProductQuantityControl from './ProductQuantityControl';
 import ProductImageViewer from './ProductImageViewer';
 
@@ -42,6 +43,9 @@ export default function ProductDetailModal({
   const closeRef = useRef(null);
   const restoreRef = useRef(null);
   const [zoomed, setZoomed] = useState(false);
+  /* Magnification follows the real photograph only: an icon-only product has
+     nothing to zoom, so its placeholder simply stays a placeholder. */
+  const [photoReady, setPhotoReady] = useState(false);
 
   const name = localized(product, 'name', locale) || t('customer_menu_name_unavailable');
   const description = localized(product, 'description', locale);
@@ -193,35 +197,43 @@ export default function ProductDetailModal({
         </div>
 
         <div className="cui-pd__media">
-          {product.image_url ? (
-            <button
-              type="button"
-              className="cui-pd__shot"
-              onClick={() => setZoomed(true)}
-              aria-label={t('customer_menu_zoom_open')}
-              title={t('customer_menu_zoom_open')}
-            >
-              {/* The whole photograph stays visible on top of a softened copy of
-                  itself, so a picture whose shape differs from this frame never
-                  leaves empty strips — and the sharp foreground is never cut. */}
-              <img
-                className="cui-pd__shotbg"
-                src={product.image_url}
-                alt=""
-                aria-hidden="true"
-                draggable="false"
-              />
-              <img className="cui-pd__shotimg" src={product.image_url} alt={name} draggable="false" />
+          {/* One fixed stage holds whatever the product really has: the
+              photograph (which can be magnified), the category illustration
+              when there is none, or a quiet skeleton while it loads. The stage
+              never resizes between those states. */}
+          <div
+            className={`cui-pd__shot ${photoReady ? 'is-zoomable' : 'is-static'}`}
+            role={photoReady ? 'button' : undefined}
+            tabIndex={photoReady ? 0 : undefined}
+            aria-label={photoReady ? t('customer_menu_zoom_open') : undefined}
+            title={photoReady ? t('customer_menu_zoom_open') : undefined}
+            onClick={photoReady ? () => setZoomed(true) : undefined}
+            onKeyDown={
+              photoReady
+                ? (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setZoomed(true);
+                    }
+                  }
+                : undefined
+            }
+          >
+            <ProductMedia
+              product={product}
+              category={category}
+              variant="product-modal"
+              alt={name}
+              muted={!available}
+              onStateChange={setPhotoReady}
+            />
+            {photoReady ? (
               <span className="cui-pd__zoomhint" aria-hidden="true">
                 <Icon name="search" size={15} />
                 <span>{t('customer_menu_zoom_open')}</span>
               </span>
-            </button>
-          ) : (
-            <span className="cui-pd__ph">
-              <Icon name="coffee" size={40} />
-            </span>
-          )}
+            ) : null}
+          </div>
         </div>
 
         <button
@@ -238,7 +250,7 @@ export default function ProductDetailModal({
         </button>
       </div>
 
-      {zoomed && product.image_url ? (
+      {zoomed && photoReady ? (
         <ProductImageViewer
           src={product.image_url}
           alt={name}

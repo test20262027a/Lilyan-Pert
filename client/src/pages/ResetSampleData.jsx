@@ -88,10 +88,10 @@ const MODULE_LABELS = {
 
 /** The page's sections. A module not listed here falls into the last one. */
 const GROUPS = [
-  { key: 'operations', icon: 'receipt', modules: ['orders', 'visits', 'tables'] },
-  { key: 'menu', icon: 'utensils', modules: ['products', 'categories', 'promotions', 'advertisements', 'suggestions'] },
-  { key: 'customers', icon: 'message', modules: ['reviews', 'notifications'] },
-  { key: 'system', icon: 'settings', modules: ['staff', 'activity', 'media', 'settings', 'branding', 'texts'] },
+  { key: 'operations', icon: 'receipt', tone: 'sky', modules: ['orders', 'visits', 'tables'] },
+  { key: 'menu', icon: 'utensils', tone: 'mint', modules: ['products', 'categories', 'promotions', 'advertisements', 'suggestions'] },
+  { key: 'customers', icon: 'message', tone: 'violet', modules: ['reviews', 'notifications'] },
+  { key: 'system', icon: 'settings', tone: 'indigo', modules: ['staff', 'activity', 'media', 'settings', 'branding', 'texts'] },
 ];
 
 /** Modules whose deletion needs a dependency warning before it runs. */
@@ -388,26 +388,30 @@ export default function ResetSampleData() {
       {!loading && cards.length ? (
         <div className="rs-sections">
           {groups.map((group) => (
-            <section key={group.key} className="rs-group">
+            <section key={group.key} className={`rs-group rs-group--${group.tone}`}>
+              {/* The group's own header is the first band of the same container
+                  that holds its module cards — one cohesive section. */}
               <header className="rs-group__head">
                 <span className="rs-group__icon" aria-hidden="true">
-                  <Icon name={group.icon} size={15} />
+                  <Icon name={group.icon} size={19} />
                 </span>
                 <h2 className="rs-group__title">{t(`reset_group_${group.key}`)}</h2>
                 <span className="rs-group__count">{group.items.length}</span>
               </header>
-              <div className="rs-grid">
-                {group.items.map((card) => (
-                  <ResetModuleCard
-                    key={card.key}
-                    card={card}
-                    mode={mode}
-                    selected={selected.includes(card.key)}
-                    busy={busy}
-                    onToggle={() => toggle(card.key)}
-                    onDelete={() => openSingle(card.key)}
-                  />
-                ))}
+              <div className="rs-group__body">
+                <div className="rs-grid">
+                  {group.items.map((card) => (
+                    <ResetModuleCard
+                      key={card.key}
+                      card={card}
+                      mode={mode}
+                      selected={selected.includes(card.key)}
+                      busy={busy}
+                      onToggle={() => toggle(card.key)}
+                      onDelete={() => openSingle(card.key)}
+                    />
+                  ))}
+                </div>
               </div>
             </section>
           ))}

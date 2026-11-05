@@ -3,6 +3,7 @@ import { DndContext, DragOverlay, closestCenter } from '@dnd-kit/core';
 import { SortableContext, rectSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import ProductCard from './ProductCard';
+import ProductMedia from '../product/ProductMedia';
 import { localized, useI18n } from '../../i18n';
 import { moveId, useReorderSensors } from './reorder';
 
@@ -101,7 +102,13 @@ export default function SortableProductGrid({ products, onReorder, renderCard })
         {active ? (
           <div className={`mcard mcard--ghost ${!active.active || active.category_active === false ? 'mcard--muted' : ''}`.trim()}>
             <div className="mcard__media">
-              {active.image_url ? <img className="mcard__img" src={active.image_url} alt="" /> : null}
+              {/* The lifted card shows exactly what the resting card shows. */}
+              <ProductMedia
+                product={active}
+                category={renderCard(active).category}
+                variant="admin-card"
+                muted={!active.active || active.category_active === false}
+              />
             </div>
             <div className="mcard__ghost-name">{localized(active, 'name', locale) || t('label_translation_missing')}</div>
           </div>

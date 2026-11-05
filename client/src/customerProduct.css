@@ -480,6 +480,12 @@
   outline: none;
   box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--primary) 42%, transparent);
 }
+/* Without a real photograph there is nothing to magnify: the stage keeps its
+   size and shape, it simply is not a zoom control. */
+.cui-pd__shot.is-static { cursor: default; }
+.cui-pd__shot.is-static:hover {
+  border-color: color-mix(in srgb, var(--primary) 15%, rgba(255, 255, 255, 0.5));
+}
 .cui-pd__zoomhint {
   position: absolute;
   z-index: 3;

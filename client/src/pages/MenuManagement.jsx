@@ -362,6 +362,11 @@ export default function MenuManagement() {
     return {
       currency,
       canManage: isManager,
+      // The card's no-photo fallback uses this category's own configured glyph.
+      category:
+        categories.find((c) => c.id === p.category_id) ||
+        (results ? results.categories.find((c) => c.id === p.category_id) : selectedCategory) ||
+        null,
       categoryName: categoryLabel,
       onEdit: () => {
         setFormError(null);
