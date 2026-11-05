@@ -604,6 +604,86 @@
   color: var(--rs-muted);
 }
 
+/* ---------------------------------------------------------------- modes */
+
+/*
+ * The two operations of this page. They sit at the top as a pair of surfaces so
+ * the administrator always knows which one is armed; the dangerous one keeps a
+ * red accent even when it is not selected.
+ */
+.rs-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.rs-mode {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 13px;
+  text-align: start;
+  border: 1px solid var(--rs-line);
+  border-radius: 14px;
+  background: var(--rs-card);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(25, 55, 35, 0.03);
+  transition:
+    background-color 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease,
+    transform 160ms ease;
+}
+
+.rs-mode:hover { transform: translateY(-1px); }
+
+.rs-mode.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 55%, #ffffff);
+  background: color-mix(in srgb, var(--theme-primary) 10%, #ffffff);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--theme-primary) 14%, transparent),
+    0 8px 18px rgba(25, 55, 35, 0.06);
+}
+
+.rs-mode--danger.is-on {
+  border-color: var(--rs-red);
+  background: var(--rs-red-soft);
+  box-shadow:
+    0 0 0 3px rgba(233, 71, 71, 0.14),
+    0 8px 18px rgba(233, 71, 71, 0.14);
+}
+
+.rs-mode__ico {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 22%, #e6eae4);
+  background: var(--theme-primary-soft);
+  color: var(--theme-primary-strong);
+}
+
+.rs-mode--danger .rs-mode__ico {
+  border-color: #f7c4c4;
+  background: #ffeaea;
+  color: #d64545;
+}
+
+.rs-mode__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rs-mode__text strong { font-size: 12.5px; font-weight: 700; color: var(--rs-ink); }
+.rs-mode--danger .rs-mode__text strong { color: #d64545; }
+.rs-mode__text em {
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--rs-muted);
+}
+
 /* ------------------------------------------------------------- responsive */
 
 @media (max-width: 900px) {
@@ -615,6 +695,7 @@
   .rs-page .mhero { flex-wrap: wrap; }
   .rs-page .mhero__art { order: 3; flex-basis: 100%; }
   .rs-page .mart { max-height: 70px; }
+  .rs-modes { grid-template-columns: minmax(0, 1fr); }
   .rs-card__badge { display: none; }
   /* Phone widths can't hold three labelled buttons side by side, so the row
      stays end-aligned and the last action takes a full-width row of its own. */

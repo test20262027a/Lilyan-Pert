@@ -10,6 +10,8 @@ import {
   SCHEMA_VERSION,
   archiveChecksum,
   categoryByKey,
+  countModule,
+  countOf,
   moduleByKey,
   modulesForCategories,
   modulesForSections,
@@ -19,7 +21,13 @@ import {
   withRequiredModules,
 } from '../lib/backup-modules.js';
 import { recordActivity } from '../lib/activity.js';
-import { EXECUTION_ORDER, PROTECTED, moduleByKey as resetModule, resetStats } from '../lib/reset-modules.js';
+import {
+  DATA_EXECUTION_ORDER,
+  PROTECTED,
+  SAMPLE_EXECUTION_ORDER,
+  moduleByKey as resetModule,
+  resetStats,
+} from '../lib/reset-modules.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -32,13 +40,13 @@ router.use(perm('backup.full'));
 const EXCLUDED_NOTE =
   'Passwords, sessions, authentication tokens, private keys, database credentials, caches and device push-subscription secrets are never included.';
 
-/** Images are referenced by their public URL; their binary bytes are not copied. */
-const IMAGE_POLICY = 'urls';
+/** Images are stored as their public URL and, for this business, as real bytes. */
+const IMAGE_POLICY = 'embedded';
 
 /** Protected by every restore, whatever the archive contains. */
 const PROTECTED_DATA = ['owner_account', 'team_memberships', 'activity_log', 'credentials'];
 
-const MAX_UPLOAD_BYTES = 11 * 1024 * 1024; // express.json() allows 12mb
+const MAX_UPLOAD_BYTES = 96 * 1024 * 1024;
 
 /* ------------------------------------------------------------- export helpers */
 
@@ -59,20 +67,8 @@ async function exportModule(businessId, mod) {
 }
 
 async function recordCount(businessId, mod) {
-  if (mod.countQuery) {
-    const { rows } = await q(mod.countQuery, [businessId]);
-    return rows[0].c;
-  }
-  if (mod.exportMode === 'rows') {
-    const { rows } = await q(`SELECT count(*)::int AS c FROM ${mod.table} WHERE business_id = $1`, [
-      businessId,
-    ]);
-    return rows[0].c;
-  }
-  return 1;
+  return countModule(pool, businessId, mod);
 }
-
-const countOf = (data) => (Array.isArray(data) ? data.length : data ? 1 : 0);
 
 /** The manifest sections of an archive, with real record counts. */
 function buildSections(modules, payload) {
@@ -85,6 +81,7 @@ function buildSections(modules, payload) {
       restorable: !restorable,
       implied_by: section.impliedBy || null,
       record_count: countOf(payload[primary]),
+      files: section.modules.some((key) => moduleByKey(key)?.files),
     };
   });
 }
@@ -140,9 +137,10 @@ async function createBackup({ businessId, user, mode, categoryKeys, sectionKeys 
     record_counts: Object.fromEntries(moduleManifest.map((m) => [m.key, m.record_count])),
     totals: { records, bytes: 0 },
     media: {
-      included: false,
+      included: Boolean(payload.uploaded_files),
       policy: IMAGE_POLICY,
-      note: 'Pictures are referenced by their permanent public URLs; their binary bytes are not copied into the archive.',
+      files: Array.isArray(payload.uploaded_files) ? payload.uploaded_files.length : 0,
+      note: 'Uploaded pictures of this business are embedded in the archive as base64 bytes, so a restore rebuilds every file its records point at.',
     },
     excludes: EXCLUDED_NOTE,
   };
@@ -234,18 +232,28 @@ async function imageReport(payload, businessId) {
     })
     .filter(Boolean);
 
-  let missingLocal = [];
-  if (localIds.length) {
-    const { rows } = await q(
-      'SELECT id FROM media WHERE business_id = $1 AND id = ANY($2::uuid[])',
-      [businessId, localIds],
-    );
-    const alive = new Set(rows.map((r) => r.id));
-    missingLocal = localIds.filter((id) => !alive.has(id));
+  // Files the archive itself carries; a legacy archive without them falls back
+  // to asking the database which references are still alive here.
+  const embedded = Array.isArray(payload?.uploaded_files) ? payload.uploaded_files : null;
+  let alive;
+  if (embedded) {
+    alive = new Set(embedded.map((row) => row?.id).filter(Boolean));
+  } else {
+    alive = new Set();
+    if (localIds.length) {
+      const { rows } = await q(
+        'SELECT id FROM media WHERE business_id = $1 AND id = ANY($2::uuid[])',
+        [businessId, localIds],
+      );
+      rows.forEach((r) => alive.add(r.id));
+    }
   }
+  const missingLocal = localIds.filter((id) => !alive.has(id));
 
   return {
     policy: IMAGE_POLICY,
+    included: Boolean(embedded),
+    files: embedded ? embedded.length : 0,
     references: refs.size,
     stored_locally: localIds.length,
     missing_local: missingLocal.length,
@@ -270,6 +278,7 @@ router.get(
         category: section.category,
         modules: section.modules,
         record_count: counts[section.modules[0]] ?? 0,
+        files: section.modules.some((key) => moduleByKey(key)?.files),
         restorable:
           section.restorable === false
             ? false
@@ -282,6 +291,7 @@ router.get(
         group: mod.category,
         dependencies: mod.dependsOn || [],
         restorable: mod.restorable !== false,
+        files: Boolean(mod.files),
         record_count: counts[mod.key] ?? 0,
       })),
       format_version: FORMAT_VERSION,
@@ -529,6 +539,28 @@ router.get(
       replaces.push({ key: mod.key, section: mod.section, existing: await recordCount(req.businessId, mod) });
     }
 
+    // Records the archive would collide with by id: a merge strategy keeps the
+    // live row, a replace strategy overwrites it — the dialog says which.
+    const conflicts = [];
+    let conflictTotal = 0;
+    for (const key of known) {
+      const mod = moduleByKey(key);
+      if (!mod || mod.exportMode !== 'rows' || mod.restorable === false) continue;
+      const ids = (Array.isArray(payload[key]) ? payload[key] : [])
+        .map((row) => row?.id)
+        .filter((id) => typeof id === 'string' && isUuid(id));
+      if (!ids.length) continue;
+      const { rows } = await q(
+        `SELECT count(*)::int AS c FROM ${mod.table} WHERE business_id = $1 AND id = ANY($2::uuid[])`,
+        [req.businessId, ids],
+      );
+      const existing = rows[0]?.c || 0;
+      if (existing) {
+        conflicts.push({ key, section: mod.section, existing });
+        conflictTotal += existing;
+      }
+    }
+
     const warnings = [];
     if (!checks.format_ok) warnings.push('format');
     if (!checks.business_match) warnings.push('business');
@@ -549,6 +581,8 @@ router.get(
       valid,
       sections,
       replaces,
+      conflicts,
+      conflict_total: conflictTotal,
       protected_data: PROTECTED_DATA,
       warnings,
       media: await imageReport(payload, req.businessId),
@@ -567,6 +601,7 @@ const FK_FIELDS = {
   promotions: { product_id: 'products', category_id: 'categories' },
   advertisements: { product_id: 'products', category_id: 'categories' },
   reviews: { order_id: 'orders' },
+  notifications: { order_id: 'orders' },
 };
 
 async function fkExists(client, table, id) {
@@ -602,6 +637,11 @@ router.post(
     const availableKeys = Object.keys(payload).filter((key) => moduleByKey(key));
     if (!availableKeys.length) throw bad('NO_KNOWN_MODULES');
 
+    // `merge` inserts only the records this business does not have yet (same id);
+    // `replace` is the explicit, fully destructive strategy that clears the
+    // module's current rows first. Nothing else ever overwrites silently.
+    const strategy = req.body?.strategy === 'merge' ? 'merge' : 'replace';
+
     // A verified safety copy of the current data, created before anything changes.
     let preRestoreBackupId = null;
     if (req.body?.pre_restore_backup !== false) {
@@ -626,11 +666,14 @@ router.post(
         if (data === null || data === undefined) continue;
 
         if (mod.exportMode === 'rows') {
-          await c.query(`DELETE FROM ${mod.table} WHERE business_id = $1`, [req.businessId]);
+          if (strategy === 'replace') {
+            await c.query(`DELETE FROM ${mod.table} WHERE business_id = $1`, [req.businessId]);
+          }
           const list = Array.isArray(data) ? data : [data];
           const fks = FK_FIELDS[mod.key] || {};
           let restored = 0;
           let skippedRows = 0;
+          let keptRows = 0;
           for (const raw of list) {
             const record = { ...raw };
             for (const [field, table] of Object.entries(fks)) {
@@ -642,18 +685,30 @@ router.post(
             }
             const cols = mod.columns.filter((col) => col in record || col === 'id');
             const values = cols.map((col) => record[col] ?? null);
-            const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+            // Tenant isolation: the row always belongs to the restoring business,
+            // whatever the file claims (child tables require it, too).
+            const insertCols = mod.tenantScoped ? ['business_id', ...cols] : cols;
+            const insertValues = mod.tenantScoped ? [req.businessId, ...values] : values;
+            const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
+            const conflict = strategy === 'merge' ? ' ON CONFLICT (id) DO NOTHING' : '';
             try {
-              await c.query(
-                `INSERT INTO ${mod.table} (${cols.join(', ')}) VALUES (${placeholders})`,
-                values,
+              const inserted = await c.query(
+                `INSERT INTO ${mod.table} (${insertCols.join(', ')}) VALUES (${placeholders})${conflict}`,
+                insertValues,
               );
-              restored += 1;
+              if (inserted.rowCount) restored += 1;
+              else keptRows += 1;
             } catch {
               skippedRows += 1;
             }
           }
-          summary.push({ key: mod.key, section: mod.section, restored, skipped: skippedRows });
+          summary.push({
+            key: mod.key,
+            section: mod.section,
+            restored,
+            skipped: skippedRows,
+            kept: keptRows,
+          });
         } else {
           // Business columns: only the columns this module owns are written back.
           const record = Array.isArray(data) ? data[0] : data;
@@ -692,6 +747,7 @@ router.post(
 
     res.json({
       ok: true,
+      strategy,
       summary,
       warnings: [...new Set(warnings)],
       skipped_sections: skipped,
@@ -702,13 +758,20 @@ router.post(
   }),
 );
 
-/* ------------------------------------------------- reset sample data */
+/* ------------------------------------------------------------ data reset */
 
 /*
  * What may be removed lives in lib/reset-modules.js — one entry per card of the
- * Reset Sample Data page, every one of them scoped to `is_sample = true`. This
- * route only validates the request, re-counts inside the transaction, runs the
- * selected modules and reports exactly what happened.
+ * Reset Data page, keyed to the same modules the backup manifest counts. Two
+ * operations, never mixed:
+ *
+ *   POST /reset-sample  removes only rows the demo seed flagged `is_sample`.
+ *   POST /reset-data    removes every record of the selected modules for this
+ *                       business, after a typed confirmation of its name.
+ *
+ * Both re-count inside the transaction, run in dependency-safe order and report
+ * exactly what happened; both return the fresh counts so the page updates
+ * without a reload.
  */
 
 // A prepared reset is submitted with a request id. A double click or a network
@@ -723,7 +786,30 @@ const rememberRun = (key, result) => {
   recentRuns.set(key, { at: now, result });
 };
 
-/** Modules of one business with their live eligible / blocked / total counts. */
+const runKeyFor = (req, scope) => {
+  const id = typeof req.body?.request_id === 'string' ? req.body.request_id.slice(0, 80) : '';
+  return id ? `${scope}:${req.businessId}:${id}` : null;
+};
+
+const selectedKeys = (req) => {
+  const requested = Array.isArray(req.body?.modules) ? req.body.modules : [];
+  return [...new Set(requested.filter((k) => typeof k === 'string' && resetModule(k)))];
+};
+
+/** Proof, read back from the database, that the protected core survived. */
+const aliveCore = async (businessId) =>
+  (
+    await q(
+      `SELECT
+         (SELECT count(*)::int FROM businesses WHERE id = $1) AS business,
+         (SELECT count(*)::int FROM memberships WHERE business_id = $1 AND role = 'owner') AS owners,
+         (SELECT count(*)::int FROM users WHERE id IN (SELECT user_id FROM memberships WHERE business_id = $1)) AS members,
+         (SELECT count(*)::int FROM activity_log WHERE business_id = $1) AS audit`,
+      [businessId],
+    )
+  ).rows[0];
+
+/** Modules of one business with their live counts for both operations. */
 router.get(
   '/reset-sample',
   perm('reset_sample.full'),
@@ -731,6 +817,7 @@ router.get(
     res.json({
       modules: await resetStats(pool, req.businessId),
       protected: PROTECTED,
+      counted_at: new Date().toISOString(),
     });
   }),
 );
@@ -739,12 +826,10 @@ router.post(
   '/reset-sample',
   perm('reset_sample.full'),
   ah(async (req, res) => {
-    const requested = Array.isArray(req.body?.modules) ? req.body.modules : [];
-    const keys = [...new Set(requested.filter((k) => typeof k === 'string' && resetModule(k)))];
+    const keys = selectedKeys(req);
     if (!keys.length) throw bad('NO_MODULES_SELECTED');
 
-    const requestId = typeof req.body?.request_id === 'string' ? req.body.request_id.slice(0, 80) : '';
-    const runKey = requestId ? `${req.businessId}:${requestId}` : null;
+    const runKey = runKeyFor(req, 'sample');
     if (runKey && recentRuns.has(runKey)) {
       const hit = recentRuns.get(runKey);
       if (Date.now() - hit.at <= RUN_TTL_MS) return res.json({ ...hit.result, duplicate: true });
@@ -754,36 +839,90 @@ router.post(
     // removed and the client is told which modules were affected by the failure.
     const results = [];
     await tx(async (c) => {
-      for (const key of EXECUTION_ORDER) {
+      for (const key of SAMPLE_EXECUTION_ORDER) {
         if (!keys.includes(key)) continue;
         const mod = resetModule(key);
-        const { eligible = 0, blocked = 0 } = await mod.stats(c, req.businessId);
+        const stats = await mod.stats(c, req.businessId);
+        const eligible = stats.sample?.eligible ?? 0;
+        const blocked = stats.sample?.blocked ?? 0;
         if (!eligible) {
           results.push({ key, status: blocked ? 'blocked' : 'empty', removed: 0, blocked });
           continue;
         }
-        results.push({ key, status: 'done', removed: await mod.remove(c, req.businessId), blocked });
+        const removed = await mod.removeSample(c, req.businessId);
+        results.push({ key, status: removed ? 'done' : 'empty', removed, blocked });
       }
     });
 
-    // Proof the protected core survived, read back from the database.
-    const alive = await q(
-      `SELECT
-         (SELECT count(*)::int FROM businesses WHERE id = $1) AS business,
-         (SELECT count(*)::int FROM memberships WHERE business_id = $1 AND role = 'owner') AS owners,
-         (SELECT count(*)::int FROM users WHERE id IN (SELECT user_id FROM memberships WHERE business_id = $1)) AS members,
-         (SELECT count(*)::int FROM activity_log WHERE business_id = $1) AS audit`,
-      [req.businessId],
-    );
-
     const payload = {
       ok: true,
+      mode: 'sample',
       results,
       removed: results.reduce((sum, r) => sum + r.removed, 0),
       blocked: results.filter((r) => r.status === 'blocked').map((r) => r.key),
       protected: PROTECTED,
-      still_present: alive.rows[0],
+      still_present: await aliveCore(req.businessId),
       modules: await resetStats(pool, req.businessId),
+      counted_at: new Date().toISOString(),
+    };
+    if (runKey) rememberRun(runKey, payload);
+    res.json(payload);
+  }),
+);
+
+router.post(
+  '/reset-data',
+  perm('reset_sample.full'),
+  ah(async (req, res) => {
+    if (req.body?.confirm !== true) throw bad('CONFIRMATION_REQUIRED');
+    const keys = selectedKeys(req);
+    if (!keys.length) throw bad('NO_MODULES_SELECTED');
+
+    // Typed confirmation of the business name: real records are never removed
+    // on a single click, and the name is compared on the server.
+    const business = (await q('SELECT name FROM businesses WHERE id = $1', [req.businessId])).rows[0];
+    const typed = String(req.body?.confirm_name || '').trim().toLowerCase();
+    const expected = String(business?.name || '').trim().toLowerCase();
+    if (!typed || typed !== expected) throw bad('CONFIRMATION_REQUIRED');
+
+    const runKey = runKeyFor(req, 'data');
+    if (runKey && recentRuns.has(runKey)) {
+      const hit = recentRuns.get(runKey);
+      if (Date.now() - hit.at <= RUN_TTL_MS) return res.json({ ...hit.result, duplicate: true });
+    }
+
+    const results = [];
+    await tx(async (c) => {
+      for (const key of DATA_EXECUTION_ORDER) {
+        if (!keys.includes(key)) continue;
+        const mod = resetModule(key);
+        const stats = await mod.stats(c, req.businessId);
+        const removable = stats.removable ?? 0;
+        if (!removable) {
+          results.push({ key, status: 'empty', removed: 0 });
+          continue;
+        }
+        results.push({ key, status: 'done', removed: await mod.removeAll(c, req.businessId) });
+      }
+      // The order counter always stays ahead of whatever orders remain.
+      await c.query(
+        `UPDATE businesses
+            SET order_seq = GREATEST(order_seq, coalesce((SELECT max(order_number) FROM orders WHERE business_id = $1), 0) + 1)
+          WHERE id = $1`,
+        [req.businessId],
+      );
+    });
+
+    const payload = {
+      ok: true,
+      mode: 'data',
+      results,
+      removed: results.reduce((sum, r) => sum + r.removed, 0),
+      blocked: [],
+      protected: PROTECTED,
+      still_present: await aliveCore(req.businessId),
+      modules: await resetStats(pool, req.businessId),
+      counted_at: new Date().toISOString(),
     };
     if (runKey) rememberRun(runKey, payload);
     res.json(payload);

@@ -1,15 +1,20 @@
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
+import { fmtNumber } from '../../format';
 import { categoryDesc, categoryLabel, categoryVisual } from './backupMeta';
 
 /*
  * Full Backup panel: the mint header with the real create action, the coverage
- * notice, the twelve descriptive category cards and the image-storage warning.
+ * notice, the thirteen descriptive category cards and the live record total.
  * The cards describe what a full archive contains — they are not selectable,
  * because a full backup always covers every section.
  */
-export default function FullBackupPanel({ categories = [], busy, onCreate }) {
-  const { t } = useI18n();
+export default function FullBackupPanel({ categories = [], sections = [], busy, onCreate }) {
+  const { t, locale } = useI18n();
+
+  // The live total of the modules a full archive would carry, from the server.
+  const records = sections.reduce((sum, section) => sum + (section.record_count || 0), 0);
+  const includesFiles = sections.some((section) => section.files);
 
   return (
     <section className="bk-panel">
@@ -18,7 +23,10 @@ export default function FullBackupPanel({ categories = [], busy, onCreate }) {
           <Icon name="database" size={21} />
         </span>
         <div className="bk-panel__titles">
-          <h2 className="bk-panel__title">{t('backup_full')}</h2>
+          <h2 className="bk-panel__title">
+            {t('backup_full')}
+            <span className="bk-badge">{fmtNumber(records, locale)}</span>
+          </h2>
           <p className="bk-panel__sub">{t('backup_full_subtitle')}</p>
         </div>
         <button type="button" className="bk-btn bk-btn--green" onClick={onCreate} disabled={busy}>
@@ -51,8 +59,8 @@ export default function FullBackupPanel({ categories = [], busy, onCreate }) {
         </div>
 
         <div className="bk-warn" role="note">
-          <Icon name="image" size={15} />
-          <span>{t('backup_image_note')}</span>
+          <Icon name={includesFiles ? 'image' : 'info'} size={15} />
+          <span>{t(includesFiles ? 'backup_files_note' : 'backup_image_note')}</span>
         </div>
       </div>
     </section>

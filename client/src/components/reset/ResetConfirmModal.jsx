@@ -5,23 +5,26 @@ import { ConfirmSurface } from '../confirm/DeleteConfirmationDialog';
 import { useI18n } from '../../i18n';
 
 /*
- * Confirmation for the Reset Sample Data module — a bulk destructive action, so
- * it shares the delete dialog's surface and red action while keeping its own
- * guarded workflow.
+ * Confirmation for a reset — a bulk destructive action, so it shares the delete
+ * dialog's surface and red action while keeping its own guarded workflow.
  *
  * Nothing here deletes anything: the modal only gathers the deliberate
- * acknowledgement the server requires. A reset that includes at least one
- * high-risk module (products, categories, staff members, suggestions) cannot be
- * confirmed until the business name is typed, and the optional backup is a real
- * full backup created before the reset — if it fails, the reset does not run.
+ * acknowledgement the server requires.
+ *
+ *   sample  only high-risk modules need the typed business name; an optional
+ *           backup is a real full backup created before the reset.
+ *   data    real records are deleted, so the business name is ALWAYS required —
+ *           the server compares it again before touching a single row — and the
+ *           safety backup is offered checked by default.
  */
-export default function ResetConfirmModal({ modules, businessName, busy, onCancel, onConfirm }) {
+export default function ResetConfirmModal({ mode = 'sample', modules, businessName, busy, onCancel, onConfirm }) {
   const { t } = useI18n();
-  const [backup, setBackup] = useState(false);
+  const isData = mode === 'data';
+  const [backup, setBackup] = useState(isData);
   const [typed, setTyped] = useState('');
   const cancelRef = useRef(null);
 
-  const needsAck = modules.some((m) => m.risk);
+  const needsAck = isData || modules.some((m) => m.risk);
   const expected = (businessName || '').trim();
   const ackOk = !needsAck || (expected && typed.trim().toLowerCase() === expected.toLowerCase());
   const warnings = [...new Set(modules.map((m) => m.warning).filter(Boolean))];
@@ -29,9 +32,9 @@ export default function ResetConfirmModal({ modules, businessName, busy, onCance
   return (
     <ConfirmSurface
       tone="amber"
-      icon="database"
-      title={t('reset_confirm_title')}
-      description={t('reset_confirm_lead')}
+      icon={isData ? 'alert' : 'database'}
+      title={t(isData ? 'reset_data_confirm_title' : 'reset_confirm_title')}
+      description={t(isData ? 'reset_data_confirm_lead' : 'reset_confirm_lead', { name: expected })}
       onCancel={onCancel}
       busy={busy}
       initialFocusRef={cancelRef}
@@ -52,9 +55,13 @@ export default function ResetConfirmModal({ modules, businessName, busy, onCance
             className="dcd__btn dcd__btn--danger"
             disabled={busy || !ackOk}
             aria-busy={busy || undefined}
-            onClick={() => onConfirm({ backup })}
+            onClick={() => onConfirm({ backup, typed: typed.trim() })}
           >
-            <span>{busy ? t('state_saving') : t('reset_confirm_go')}</span>
+            <span>
+              {busy
+                ? t('state_saving')
+                : t(isData ? 'reset_data_confirm_go' : 'reset_confirm_go')}
+            </span>
             {busy ? <span className="spinner" /> : <Icon name="trash" size={15} />}
           </button>
         </>
@@ -70,7 +77,7 @@ export default function ResetConfirmModal({ modules, businessName, busy, onCance
             {m.blocked > 0 ? (
               <span className="dcd__module-blocked">{t('reset_blocked_note', { count: m.blocked })}</span>
             ) : null}
-            <span className="dcd__module-count">{t('reset_count', { count: m.eligible })}</span>
+            <span className="dcd__module-count">{t('reset_count', { count: m.count })}</span>
           </li>
         ))}
       </ul>
@@ -88,7 +95,7 @@ export default function ResetConfirmModal({ modules, businessName, busy, onCance
 
       <p className="dcd__warn">
         <Icon name="alert" size={14} />
-        <span>{t('reset_confirm_irreversible')}</span>
+        <span>{t(isData ? 'reset_data_irreversible' : 'reset_confirm_irreversible')}</span>
       </p>
 
       <label className="dcd__ack">
@@ -101,7 +108,10 @@ export default function ResetConfirmModal({ modules, businessName, busy, onCance
 
       {needsAck ? (
         <div className="dcd__ack-field">
-          <Field label={t('reset_confirm_type_label', { name: expected })} hint={t('reset_confirm_type_hint')}>
+          <Field
+            label={t('reset_confirm_type_label', { name: expected })}
+            hint={t(isData ? 'reset_data_confirm_type_hint' : 'reset_confirm_type_hint')}
+          >
             <input
               className="input"
               value={typed}

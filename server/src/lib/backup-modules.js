@@ -98,11 +98,17 @@ const MODULE_DEFS = {
     exportMode: 'rows',
     table: 'orders',
     columns: [
-      'id', 'table_id', 'table_name', 'order_number', 'status', 'channel', 'customer_name',
-      'customer_phone', 'notes', 'subtotal', 'discount', 'tax', 'service_charge',
-      'total', 'language', 'currency', 'created_at', 'completed_at',
+      'id', 'table_id', 'table_name', 'table_source', 'order_number', 'status', 'channel',
+      'customer_name', 'customer_phone', 'notes', 'subtotal', 'discount', 'tax', 'service_charge',
+      'total', 'language', 'currency', 'promotion_id', 'promotion_code',
+      'manual_discount_type', 'manual_discount_value', 'manual_discount_amount',
+      'manual_discount_currency', 'manual_discount_at',
+      'created_at', 'completed_at',
     ],
     orderBy: 'created_at',
+    // An order keeps the table it was placed at; that table has to exist before
+    // the order row is written back.
+    dependsOn: ['tables'],
   },
   order_items: {
     exportMode: 'rows',
@@ -143,6 +149,7 @@ const MODULE_DEFS = {
     exportMode: 'rows',
     table: 'reviews',
     columns: ['id', 'order_id', 'customer_name', 'rating', 'comment', 'status', 'created_at'],
+    dependsOn: ['orders'],
   },
   advertisements: {
     exportMode: 'rows',
@@ -185,9 +192,33 @@ const MODULE_DEFS = {
     countQuery: `SELECT count(*)::int AS c FROM activity_log WHERE business_id = $1`,
     restorable: false,
   },
+  activity_hidden: {
+    exportMode: 'rows',
+    table: 'activity_hidden',
+    columns: ['id', 'kind', 'entry_id', 'hidden_by_name', 'hidden_at'],
+    orderBy: 'hidden_at',
+  },
+  notifications: {
+    exportMode: 'rows',
+    table: 'notifications',
+    columns: ['id', 'type', 'title', 'body', 'order_id', 'actor_name', 'read_at', 'created_at'],
+    orderBy: 'created_at',
+    dependsOn: ['orders'],
+  },
+  uploaded_files: {
+    exportMode: 'rows',
+    table: 'media',
+    // The bytes are carried in the archive (`data` is base64), so a restore puts
+    // every uploaded picture back and the URLs stored on products, banners,
+    // logos and backgrounds keep resolving. Only this business's own files are
+    // exported — `media.business_id` is always scoped by the query.
+    columns: ['id', 'mime', 'byte_size', 'data', 'created_at'],
+    orderBy: 'created_at',
+    files: true,
+  },
 };
 
-/** The eighteen manifest sections, in page order, grouped by the twelve cards. */
+/** The manifest sections, in page order, grouped by the thirteen cards. */
 export const BACKUP_SECTIONS = [
   { key: 'business_profile', category: 'profile', modules: ['business_profile'] },
   { key: 'business_settings', category: 'settings', modules: ['business_settings'] },
@@ -220,10 +251,14 @@ export const BACKUP_SECTIONS = [
   { key: 'receipt_settings', category: 'printing', modules: ['receipt_settings'] },
 
   { key: 'business_views', category: 'reports', modules: ['business_views'] },
+  { key: 'notifications', category: 'reports', modules: ['notifications'] },
   { key: 'activity_reports', category: 'reports', modules: ['activity_reports'] },
+  { key: 'activity_hidden', category: 'reports', modules: ['activity_hidden'] },
+
+  { key: 'uploaded_files', category: 'files', modules: ['uploaded_files'] },
 ];
 
-/** The twelve cards of both backup panels, in reading order (right to left). */
+/** The thirteen cards of both backup panels, in reading order (right to left). */
 export const BACKUP_CATEGORIES = [
   { key: 'profile', sections: ['business_profile'] },
   { key: 'settings', sections: ['business_settings', 'working_hours'] },
@@ -236,7 +271,8 @@ export const BACKUP_CATEGORIES = [
   { key: 'team', sections: ['team_members'] },
   { key: 'appearance', sections: ['editable_text', 'menu_settings'] },
   { key: 'printing', sections: ['receipt_settings'] },
-  { key: 'reports', sections: ['business_views', 'activity_reports'] },
+  { key: 'reports', sections: ['business_views', 'notifications', 'activity_reports', 'activity_hidden'] },
+  { key: 'files', sections: ['uploaded_files'] },
 ];
 
 export const BACKUP_MODULES = BACKUP_SECTIONS.flatMap((section) =>
@@ -245,13 +281,16 @@ export const BACKUP_MODULES = BACKUP_SECTIONS.flatMap((section) =>
     ...MODULE_DEFS[key],
     section: section.key,
     category: section.category,
+    // Every row module lives in a table carrying `business_id` (NOT NULL on the
+    // child tables too), so a restore always writes the target tenant back in.
+    tenantScoped: MODULE_DEFS[key].exportMode === 'rows',
     restorable:
       MODULE_DEFS[key].restorable === undefined ? !(section.restorable === false) : MODULE_DEFS[key].restorable,
   })),
 );
 
-export const FORMAT_VERSION = '1.1';
-export const SCHEMA_VERSION = '2026.10';
+export const FORMAT_VERSION = '1.2';
+export const SCHEMA_VERSION = '2026.11';
 
 export const moduleByKey = (key) => BACKUP_MODULES.find((m) => m.key === key);
 export const sectionByKey = (key) => BACKUP_SECTIONS.find((s) => s.key === key);
@@ -330,6 +369,32 @@ export function stableStringify(value) {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
   const keys = Object.keys(value).sort();
   return `{${keys.map((k) => `${JSON.stringify(k)}:${stableStringify(value[k])}`).join(',')}}`;
+}
+
+/** The manifest sections of an archive, with real record counts. */
+export const countOf = (data) => (Array.isArray(data) ? data.length : data ? 1 : 0);
+
+/**
+ * The ONE record count of a module for a business.
+ *
+ * Backup and Reset both call this, so the number a module shows in the backup
+ * manifest is by construction the same number the reset page shows for the
+ * same business scope — counted by the database, never by a client page.
+ */
+export async function countModule(db, businessId, mod) {
+  if (!mod) return 0;
+  if (mod.countQuery) {
+    const { rows } = await db.query(mod.countQuery, [businessId]);
+    return rows[0]?.c ?? 0;
+  }
+  if (mod.exportMode === 'rows') {
+    const { rows } = await db.query(
+      `SELECT count(*)::int AS c FROM ${mod.table} WHERE business_id = $1`,
+      [businessId],
+    );
+    return rows[0]?.c ?? 0;
+  }
+  return 1;
 }
 
 /**

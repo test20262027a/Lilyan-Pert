@@ -6,17 +6,22 @@ import ResetArtwork from '../components/reset/ResetArtwork';
 import ResetConfirmModal from '../components/reset/ResetConfirmModal';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
+import { useLiveRefresh } from '../hooks/useLiveRefresh';
 import { get, post } from '../api';
 import '../reset.css';
 
 /*
- * Reset Sample Data.
+ * Data Reset.
  *
- * The page shows exactly what the server counts as removable sample data — one
- * card per module of lib/reset-modules.js — and never decides on its own what
- * may be deleted. Selecting cards only builds a request; every removal happens
- * behind a confirmation, inside one server transaction, scoped to this business
- * and to `is_sample = true`.
+ * Two operations that never mix, one card per real data module of
+ * lib/reset-modules.js:
+ *
+ *   Sample data    removes only records the demo seed flagged `is_sample`.
+ *   Business data  deletes this business's real records, after typing its name.
+ *
+ * Every number on this page comes from the server's authoritative count — the
+ * same count query the backup manifest uses — and is refreshed in place after
+ * any change, without reloading the application.
  */
 
 /** Icon and pastel tone per module. The order below is the reference screen's. */
@@ -31,9 +36,15 @@ const MODULE_VISUALS = {
   categories: { icon: 'grid', tone: 'red' },
   staff: { icon: 'users', tone: 'red' },
   suggestions: { icon: 'trendUp', tone: 'red' },
+  notifications: { icon: 'bell', tone: 'blue' },
+  activity: { icon: 'history', tone: 'purple' },
+  media: { icon: 'image', tone: 'teal' },
+  settings: { icon: 'settings', tone: 'neutral' },
+  branding: { icon: 'palette', tone: 'amber' },
+  texts: { icon: 'type', tone: 'pink' },
 };
 
-/** Modules whose reset needs a dependency warning before it runs. */
+/** Modules whose deletion needs a dependency warning before it runs. */
 const WARNINGS = {
   tables: 'reset_dep_tables',
   promotions: 'reset_dep_promotions',
@@ -41,6 +52,10 @@ const WARNINGS = {
   categories: 'reset_dep_categories',
   staff: 'reset_dep_staff',
   suggestions: 'reset_dep_suggestions',
+  orders: 'reset_dep_orders_real',
+  media: 'reset_dep_media',
+  activity: 'reset_dep_activity',
+  settings: 'reset_dep_settings',
 };
 
 const newRequestId = () =>
@@ -60,21 +75,27 @@ export default function ResetSampleData() {
   const [modules, setModules] = useState(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+  const [mode, setMode] = useState('sample');
   const [selected, setSelected] = useState([]);
   const [confirm, setConfirm] = useState(null);
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setFailed(false);
+  /*
+   * `quiet` is the live refresh: counts are replaced in place, so the loader
+   * never appears and a ticked module, an open dialog or the scroll position is
+   * never thrown away.
+   */
+  const load = useCallback(async ({ quiet = false } = {}) => {
+    if (!quiet) setLoading(true);
     try {
       const data = await get('/backups/reset-sample');
       setModules(data.modules || []);
+      setFailed(false);
     } catch {
-      setFailed(true);
+      if (!quiet) setFailed(true);
     } finally {
-      setLoading(false);
+      if (!quiet) setLoading(false);
     }
   }, []);
 
@@ -82,19 +103,40 @@ export default function ResetSampleData() {
     load();
   }, [load]);
 
+  // Real-time counters: every successful write, other tabs, focus and a slow poll.
+  useLiveRefresh(load);
+
   const cards = useMemo(
     () =>
-      (modules || []).map((m) => ({
-        ...m,
-        ...(MODULE_VISUALS[m.key] || { icon: 'database', tone: 'neutral' }),
-        label: t(`reset_mod_${m.key}`),
-        warning: WARNINGS[m.key] ? WARNINGS[m.key] : null,
-        kept: Math.max(0, (m.total || 0) - (m.eligible || 0) - (m.blocked || 0)),
-      })),
-    [modules, t],
+      (modules || []).map((m) => {
+        const sampleEligible = m.sample_counts?.eligible || 0;
+        const sampleBlocked = m.sample_counts?.blocked || 0;
+        const removable = m.removable || 0;
+        const count = mode === 'sample' ? sampleEligible : removable;
+        return {
+          key: m.key,
+          risk: m.risk,
+          total: m.total || 0,
+          count,
+          blocked: mode === 'sample' ? sampleBlocked : 0,
+          kept: Math.max(0, (m.total || 0) - count - (mode === 'sample' ? sampleBlocked : 0)),
+          dependents: m.dependents || [],
+          ...(MODULE_VISUALS[m.key] || { icon: 'database', tone: 'neutral' }),
+          label: t(`reset_mod_${m.key}`),
+          warning: WARNINGS[m.key] || null,
+        };
+      }),
+    [modules, mode, t],
   );
 
-  const selectable = cards.filter((c) => c.eligible > 0);
+  const selectable = cards.filter((c) => c.count > 0);
+
+  const switchMode = (next) => {
+    if (next === mode) return;
+    setMode(next);
+    setSelected([]);
+    setResult(null);
+  };
 
   const toggle = (key) =>
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -102,7 +144,7 @@ export default function ResetSampleData() {
   const openBulk = () => setConfirm({ keys: selected, requestId: newRequestId() });
   const openSingle = (key) => setConfirm({ keys: [key], requestId: newRequestId() });
 
-  const runReset = async ({ backup }) => {
+  const runReset = async ({ backup, typed }) => {
     if (!confirm) return;
     setBusy(true);
     try {
@@ -116,16 +158,22 @@ export default function ResetSampleData() {
           return;
         }
       }
-      const data = await post('/backups/reset-sample', {
+      const data = await post(mode === 'data' ? '/backups/reset-data' : '/backups/reset-sample', {
         modules: confirm.keys,
         request_id: confirm.requestId,
+        ...(mode === 'data' ? { confirm: true, confirm_name: typed } : {}),
       });
       setResult(data);
       setModules(data.modules || []);
       setSelected((prev) => prev.filter((k) => !confirm.keys.includes(k)));
       setConfirm(null);
-      if (data.removed > 0) toast.success(t('reset_done', { count: data.removed }));
-      else toast.error(t('reset_nothing'));
+      if (data.removed > 0) {
+        toast.success(
+          t(mode === 'data' ? 'reset_data_done' : 'reset_done', { count: data.removed }),
+        );
+      } else {
+        toast.error(t(mode === 'data' ? 'reset_data_nothing' : 'reset_nothing'));
+      }
     } catch {
       toast.error(t('error_generic'));
     } finally {
@@ -134,18 +182,53 @@ export default function ResetSampleData() {
   };
 
   const resultRows = (result?.results || []).filter((r) => r.status !== 'empty');
-  const resultLabels = useMemo(
-    () => Object.fromEntries(cards.map((c) => [c.key, c.label])),
-    [cards],
-  );
+  const resultLabels = useMemo(() => Object.fromEntries(cards.map((c) => [c.key, c.label])), [cards]);
 
   return (
     <div className="rs-page">
-      <PageHeroBanner icon="trash" title={t('reset_title')} subtitle={t('reset_subtitle')} art={<ResetArtwork />} />
+      <PageHeroBanner
+        icon="trash"
+        title={t('reset_title')}
+        subtitle={t('reset_subtitle')}
+        art={<ResetArtwork />}
+      />
+
+      <div className="rs-modes" role="tablist" aria-label={t('reset_title')}>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'sample'}
+          className={`rs-mode ${mode === 'sample' ? 'is-on' : ''}`}
+          onClick={() => switchMode('sample')}
+        >
+          <span className="rs-mode__ico" aria-hidden="true">
+            <Icon name="database" size={15} />
+          </span>
+          <span className="rs-mode__text">
+            <strong>{t('reset_mode_sample')}</strong>
+            <em>{t('reset_mode_sample_hint')}</em>
+          </span>
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'data'}
+          className={`rs-mode rs-mode--danger ${mode === 'data' ? 'is-on' : ''}`}
+          onClick={() => switchMode('data')}
+        >
+          <span className="rs-mode__ico" aria-hidden="true">
+            <Icon name="alert" size={15} />
+          </span>
+          <span className="rs-mode__text">
+            <strong>{t('reset_mode_data')}</strong>
+            <em>{t('reset_mode_data_hint')}</em>
+          </span>
+        </button>
+      </div>
 
       <div className="rs-notice" role="note">
-        <Icon name="shield" size={16} />
-        <span>{t('reset_protected_notice')}</span>
+        <Icon name={mode === 'data' ? 'alert' : 'shield'} size={16} />
+        <span>{mode === 'data' ? t('reset_protected_notice_data') : t('reset_protected_notice')}</span>
       </div>
 
       <div className="rs-toolbar">
@@ -175,7 +258,7 @@ export default function ResetSampleData() {
             disabled={!selected.length || busy}
           >
             <Icon name="trash" size={14} />
-            {t('reset_selected')}
+            {mode === 'data' ? t('reset_delete_selected') : t('reset_selected')}
             {selected.length ? ` (${selected.length})` : ''}
           </button>
         </div>
@@ -196,8 +279,8 @@ export default function ResetSampleData() {
             <Icon name={result.removed > 0 ? 'checkCircle' : 'info'} size={17} />
             <strong>
               {result.removed > 0
-                ? t('reset_done', { count: result.removed })
-                : t('reset_nothing')}
+                ? t(result.mode === 'data' ? 'reset_data_done' : 'reset_done', { count: result.removed })
+                : t(result.mode === 'data' ? 'reset_data_nothing' : 'reset_nothing')}
             </strong>
             <button
               type="button"
@@ -232,7 +315,10 @@ export default function ResetSampleData() {
         <div className="rs-grid">
           {cards.map((card) => {
             const on = selected.includes(card.key);
-            const disabled = card.eligible === 0;
+            const disabled = card.count === 0;
+            const depList = card.dependents
+              .map((d) => `${t(`reset_mod_${d.key}`)} (${d.count})`)
+              .join(' · ');
             return (
               <article
                 key={card.key}
@@ -242,6 +328,10 @@ export default function ResetSampleData() {
                 <div className="rs-card__top">
                   <span className={`rs-card__icon rs-tone--${card.tone}`} aria-hidden="true">
                     <Icon name={card.icon} size={18} />
+                  </span>
+                  <span className="rs-card__total" title={t('reset_total')}>
+                    <Icon name="database" size={10} />
+                    {card.total}
                   </span>
                   <button
                     type="button"
@@ -270,26 +360,32 @@ export default function ResetSampleData() {
 
                 <p className="rs-card__desc">{t(`reset_mod_${card.key}_desc`)}</p>
 
-                {card.risk ? <p className="rs-card__warn">{t('reset_risk_warning')}</p> : null}
+                {card.risk && mode === 'data' ? <p className="rs-card__warn">{t('reset_risk_warning_data')}</p> : null}
+                {card.warning && (card.count > 0 || card.blocked > 0) ? (
+                  <p className="rs-card__warn">{t(card.warning)}</p>
+                ) : null}
+                {depList ? <p className="rs-card__dep">{t('reset_impact', { list: depList })}</p> : null}
                 {card.blocked > 0 ? (
                   <p className="rs-card__warn">{t('reset_blocked_note', { count: card.blocked })}</p>
                 ) : null}
 
                 <div className="rs-card__foot">
                   <span className={`rs-count ${card.risk ? 'rs-count--risk' : ''}`}>
-                    {t('reset_count', { count: card.eligible })}
+                    {mode === 'sample'
+                      ? t('reset_sample_count', { count: card.count })
+                      : t('reset_data_count', { count: card.count })}
                   </span>
                   {card.kept > 0 ? <span className="rs-kept">{t('reset_kept', { count: card.kept })}</span> : null}
                   <button
                     type="button"
-                    className={`rs-reset ${card.risk ? 'rs-reset--risk' : ''}`}
+                    className={`rs-reset ${card.risk || mode === 'data' ? 'rs-reset--risk' : ''}`}
                     disabled={disabled || busy}
                     onClick={(e) => {
                       e.stopPropagation();
                       openSingle(card.key);
                     }}
                   >
-                    {t('reset_action')}
+                    {mode === 'data' ? t('reset_action_delete') : t('reset_action')}
                   </button>
                 </div>
               </article>
@@ -300,6 +396,7 @@ export default function ResetSampleData() {
 
       {confirm ? (
         <ResetConfirmModal
+          mode={mode}
           modules={cards.filter((c) => confirm.keys.includes(c.key))}
           businessName={business?.name}
           busy={busy}

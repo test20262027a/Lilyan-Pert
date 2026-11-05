@@ -170,6 +170,10 @@ export default function SelectiveBackupPanel({
                         {on ? <Icon name="check" size={9} /> : <Icon name={sectionStyle.icon} size={10} />}
                       </span>
                       <span className="bk-chip__label">{sectionLabel(t, section.key)}</span>
+                      {section.files ? <Icon name="image" size={10} /> : null}
+                      <span className="bk-chip__count" aria-label={t('reset_total')}>
+                        {fmtNumber(section.record_count || 0, locale)}
+                      </span>
                     </button>
                   );
                 })}

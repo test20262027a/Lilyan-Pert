@@ -22,6 +22,7 @@ export const CATEGORY_VISUALS = {
   appearance: { icon: 'palette', tone: 'purple' },
   printing: { icon: 'print', tone: 'pink' },
   reports: { icon: 'chart', tone: 'cyan' },
+  files: { icon: 'image', tone: 'teal' },
 };
 
 /** Icon + tone of the eighteen manifest sections (the chips). */
@@ -43,7 +44,10 @@ export const SECTION_VISUALS = {
   menu_settings: { icon: 'sliders', tone: 'purple' },
   receipt_settings: { icon: 'print', tone: 'pink' },
   business_views: { icon: 'eye', tone: 'cyan' },
+  notifications: { icon: 'bell', tone: 'blue' },
   activity_reports: { icon: 'chart', tone: 'cyan' },
+  activity_hidden: { icon: 'eyeOff', tone: 'slate' },
+  uploaded_files: { icon: 'image', tone: 'teal' },
 };
 
 /** Visual for a module key of an older archive, mapped onto its section. */

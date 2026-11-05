@@ -1,3 +1,5 @@
+import { broadcastDataChange } from './dataChange';
+
 const BASE = '/api';
 
 let businessId = null;
@@ -54,6 +56,8 @@ export async function api(path, { method = 'GET', body } = {}) {
    */
   if (method !== 'GET') {
     window.dispatchEvent(new CustomEvent('lilyan:admin-change'));
+    // Other tabs holding the Backup or Reset panel hear about it too.
+    broadcastDataChange();
   }
   return data;
 }

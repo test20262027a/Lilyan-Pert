@@ -11,6 +11,7 @@ import RestoreDialog from '../components/backups/RestoreDialog';
 import { archiveSize, sectionLabel } from '../components/backups/backupMeta';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
+import { useLiveRefresh } from '../hooks/useLiveRefresh';
 import { del, get, getBusinessId, post } from '../api';
 import { fmtDateTime, fmtNumber, zoneFor } from '../format';
 import '../backups.css';
@@ -78,6 +79,13 @@ export default function Backups() {
   useEffect(() => {
     load();
   }, [load]);
+
+  /*
+   * The counts beside each module are live: they refetch quietly after any
+   * write, when another tab changes data, and on focus — so this panel and the
+   * Reset panel always show the same number for the same module.
+   */
+  useLiveRefresh(load);
 
   const categories = registry?.categories || [];
   const sections = registry?.sections || [];
@@ -149,13 +157,14 @@ export default function Backups() {
     }
   };
 
-  const restore = async ({ pre_restore_backup }) => {
+  const restore = async ({ pre_restore_backup, strategy }) => {
     if (!restoreTarget) return;
     setBusy(true);
     try {
       const data = await post(`/backups/${restoreTarget.id}/restore`, {
         confirm: true,
         pre_restore_backup,
+        strategy,
       });
       setResult(data);
       setRestoreTarget(null);

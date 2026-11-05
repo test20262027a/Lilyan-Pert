@@ -37,6 +37,9 @@ export default function RestoreDialog({ backup, business, busy, onCancel, onConf
   const [failed, setFailed] = useState(false);
   const [ack, setAck] = useState(false);
   const [safety, setSafety] = useState(true);
+  // Merge is the safe default: a record this business already has keeps its
+  // live version. Replace is the explicit full overwrite.
+  const [strategy, setStrategy] = useState('merge');
 
   useEffect(() => {
     let live = true;
@@ -66,7 +69,7 @@ export default function RestoreDialog({ backup, business, busy, onCancel, onConf
           primaryLabel={t('backup_restore_start')}
           primaryVariant="danger"
           primaryIcon="refresh"
-          onPrimary={() => onConfirm({ pre_restore_backup: safety })}
+          onPrimary={() => onConfirm({ pre_restore_backup: safety, strategy })}
           loading={busy}
           primaryDisabled={!valid || !ack}
           secondaryLabel={t('action_cancel')}
@@ -175,7 +178,16 @@ export default function RestoreDialog({ backup, business, busy, onCancel, onConf
             </div>
           ) : null}
 
-          {media && media.references > 0 ? (
+          {media && media.included ? (
+            <div className="bk-dialog__warnings bk-dialog__warnings--ok">
+              <p>
+                <Icon name="image" size={13} />
+                {t('backup_media_included', { count: fmtNumber(media.files || 0, locale) })}
+              </p>
+            </div>
+          ) : null}
+
+          {media && media.references > 0 && !media.included ? (
             <div className="bk-dialog__warnings bk-dialog__warnings--soft">
               <p>
                 <Icon name="image" size={13} />
@@ -193,6 +205,42 @@ export default function RestoreDialog({ backup, business, busy, onCancel, onConf
               ) : null}
             </div>
           ) : null}
+
+          <div className="bk-dialog__block">
+            <div className="bk-dialog__blockhead">
+              <Icon name="layers" size={14} />
+              {t('backup_restore_strategy')}
+            </div>
+            <div className="bk-strategy" role="radiogroup" aria-label={t('backup_restore_strategy')}>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={strategy === 'merge'}
+                className={`bk-strategy__opt ${strategy === 'merge' ? 'is-on' : ''}`}
+                onClick={() => setStrategy('merge')}
+                disabled={busy}
+              >
+                <strong>{t('backup_restore_merge')}</strong>
+                <span>{t('backup_restore_merge_hint')}</span>
+              </button>
+              <button
+                type="button"
+                role="radio"
+                aria-checked={strategy === 'replace'}
+                className={`bk-strategy__opt bk-strategy__opt--danger ${strategy === 'replace' ? 'is-on' : ''}`}
+                onClick={() => setStrategy('replace')}
+                disabled={busy}
+              >
+                <strong>{t('backup_restore_replace')}</strong>
+                <span>{t('backup_restore_replace_hint')}</span>
+              </button>
+            </div>
+            {preview.conflict_total > 0 ? (
+              <div className="bk-dialog__hint">
+                {t('backup_conflicts', { count: fmtNumber(preview.conflict_total, locale) })}
+              </div>
+            ) : null}
+          </div>
 
           <div className="bk-dialog__options">
             <Switch

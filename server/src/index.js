@@ -18,6 +18,10 @@ import translateRoutes from './routes/translate.js';
 const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
+// An archive carries the business's own pictures as base64, so a restore file
+// can be far larger than an ordinary JSON body. Only that one route accepts the
+// bigger payload; everything else keeps the 12mb ceiling.
+app.use('/api/backups/upload', express.json({ limit: '96mb' }));
 app.use(express.json({ limit: '12mb' }));
 app.use(attachSession);
 // Records authorized changes for the Activity Reports page — see lib/activity.js.
