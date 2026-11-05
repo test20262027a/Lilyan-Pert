@@ -1,3 +1,4 @@
+import Icon from '../Icon';
 import UserAvatar from '../UserAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { useI18n } from '../../i18n';
@@ -46,7 +47,10 @@ export default function SidebarProfile() {
         </span>
         <span className="sprofile__text">
           <span className="sprofile__name" title={displayName}>{displayName}</span>
-          <span className="sprofile__role">{roleLabel}</span>
+          <span className="sprofile__role">
+            <Icon name="shield" size={10} />
+            {roleLabel}
+          </span>
         </span>
       </div>
     </div>

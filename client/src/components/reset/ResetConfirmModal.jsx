@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import Icon from '../Icon';
 import { Field } from '../ui';
+import ConfirmCheckbox from '../confirm/ConfirmCheckbox';
 import { ConfirmSurface } from '../confirm/DeleteConfirmationDialog';
 import { useI18n } from '../../i18n';
 
@@ -98,13 +99,10 @@ export default function ResetConfirmModal({ mode = 'sample', modules, businessNa
         <span>{t(isData ? 'reset_data_irreversible' : 'reset_confirm_irreversible')}</span>
       </p>
 
-      <label className="dcd__ack">
-        <input type="checkbox" checked={backup} onChange={(e) => setBackup(e.target.checked)} disabled={busy} />
-        <span>
-          <strong>{t('reset_confirm_backup')}</strong>
-          <em>{t('reset_confirm_backup_hint')}</em>
-        </span>
-      </label>
+      <ConfirmCheckbox checked={backup} onChange={setBackup} disabled={busy}>
+        <strong>{t('reset_confirm_backup')}</strong>
+        <em>{t('reset_confirm_backup_hint')}</em>
+      </ConfirmCheckbox>
 
       {needsAck ? (
         <div className="dcd__ack-field">

@@ -388,24 +388,23 @@
   align-items: stretch;
 }
 
+/*
+ * Header / body / footer, edge to edge. The card itself keeps the frame and the
+ * rounded corners; the coloured header is the card's own first band, so it
+ * inherits the top corners instead of floating above the frame.
+ */
 .rs-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 0;
   min-width: 0;
   height: 100%;
-  min-height: 232px;
-  padding: 18px;
+  padding: 0;
+  overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 20%, #eef0ea);
   border-radius: 22px;
-  /* Every module carries its own semantic tint — never one red page. */
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 9%, #ffffff),
-      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 3%, #ffffff)
-    );
+  background: #ffffff;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
     inset 0 -1px 0 color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 12%, transparent),
@@ -440,12 +439,6 @@
 /* Selected: the module keeps its own tint, raised by the active theme colour. */
 .rs-card.is-on {
   border-color: color-mix(in srgb, var(--theme-primary) 52%, #ffffff);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--theme-primary) 12%, #ffffff),
-      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 6%, #ffffff)
-    );
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--theme-primary) 13%, transparent),
     inset 0 1px 0 rgba(255, 255, 255, 0.95),
@@ -454,11 +447,43 @@
 
 /* --------------------------------------------------------------- card head */
 
-.rs-card__top {
+/*
+ * The integrated module header: a low-opacity gradient of the module's own
+ * colour (light → main), a glossy top highlight, a soft inner shadow on its
+ * lower edge, and one hairline separator — no detached plate, no second frame.
+ */
+.rs-card__head {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
+  gap: 12px;
+  min-height: 96px;
+  padding: 16px 18px 15px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 22%, transparent);
+  background:
+    radial-gradient(
+      120% 150% at 12% 0%,
+      color-mix(in srgb, #ffffff 70%, transparent) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 20%, #ffffff) 0%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 11%, #ffffff) 62%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 7%, #ffffff) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 6px 12px -12px color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 75%, transparent);
+}
+
+.rs-card__heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: start;
 }
 
 /* -------------------------------------------------- unique 3D module icons */
@@ -470,6 +495,8 @@
 .rs-tone--mint { --rs-tone: #34d399; --rs-tone-ink: #0f766e; }
 .rs-tone--amber { --rs-tone: #eab308; --rs-tone-ink: #a16207; }
 .rs-tone--teal { --rs-tone: #2dd4bf; --rs-tone-ink: #0f766e; }
+.rs-tone--emerald { --rs-tone: #10b981; --rs-tone-ink: #047857; }
+.rs-tone--pink { --rs-tone: #ec4899; --rs-tone-ink: #be185d; }
 .rs-tone--cyan { --rs-tone: #22d3ee; --rs-tone-ink: #0e7490; }
 .rs-tone--indigo { --rs-tone: #6366f1; --rs-tone-ink: #4338ca; }
 .rs-tone--lime { --rs-tone: #84cc16; --rs-tone-ink: #4d7c0f; }
@@ -483,15 +510,16 @@
 .rs-card__icon {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   flex: none;
-  border-radius: 14px;
+  border-radius: 13px;
   border: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 30%, #ffffff);
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 22%, #ffffff),
-    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 46%, #ffffff)
+    #ffffff 0%,
+    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 18%, #ffffff) 58%,
+    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 34%, #ffffff) 100%
   );
   color: var(--rs-tone-ink, var(--theme-primary-strong));
   box-shadow:
@@ -538,21 +566,48 @@
   transform: scale(1);
 }
 
+/* On the tinted header the badge keeps a thin light rim, so it reads as a
+   raised control rather than a flat dot on the module's colour. */
+.rs-card__head .rs-card__badge.is-on {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.16),
+    0 7px 14px -7px color-mix(in srgb, var(--theme-primary) 85%, transparent);
+}
+
 /* ------------------------------------------------------------- card text */
 
 .rs-card__name {
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 16.5px;
+  font-weight: 750;
   line-height: 1.5;
   color: var(--rs-ink);
+  overflow-wrap: anywhere;
 }
 
 .rs-card__desc {
   margin: 0;
+  padding-bottom: 1px;
   font-size: 12.5px;
-  line-height: 1.6;
-  color: #7d847d;
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--rs-tone-ink, var(--theme-primary-strong)) 42%, #6b736c);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- card body */
+
+/* Everything the header does not carry: the live count, the safety notes and
+   the dependency expansion. It takes the leftover height, so the Delete action
+   always sits on the card's bottom edge whatever the module's text length. */
+.rs-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 13px 18px 12px;
 }
 
 /* ------------------------------------------------------------------- count */
@@ -699,7 +754,7 @@
 
 .rs-card__foot {
   margin-top: auto;
-  padding-top: 10px;
+  padding: 0 18px 16px;
 }
 
 .rs-del {
@@ -825,7 +880,11 @@
   .rs-mode__ico { width: 40px; height: 40px; border-radius: 12px; }
   .rs-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   /* A phone shows one card per row, so the card may size to its own content. */
-  .rs-card { min-height: 0; padding: 16px; border-radius: 20px; }
+  .rs-card { border-radius: 20px; }
+  .rs-card__head { min-height: 0; padding: 14px 15px 13px; gap: 11px; }
+  .rs-card__icon { width: 40px; height: 40px; border-radius: 12px; }
+  .rs-card__body { padding: 12px 15px 10px; }
+  .rs-card__foot { padding: 0 15px 14px; }
   .rs-card__name { font-size: 16px; }
   .rs-card__count strong { font-size: 20px; }
   .rs-del { height: 40px; font-size: 13.5px; }
@@ -950,12 +1009,7 @@
 
 [data-theme='dark'] .rs-card {
   border-color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 26%, var(--line));
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 13%, var(--surface)),
-      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 7%, var(--surface))
-    );
+  background: var(--surface);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
     inset 0 -1px 0 rgba(0, 0, 0, 0.25),
@@ -965,15 +1019,26 @@
 
 [data-theme='dark'] .rs-card.is-on {
   border-color: color-mix(in srgb, var(--theme-primary) 55%, transparent);
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--theme-primary) 20%, var(--surface)),
-      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 12%, var(--surface))
-    );
   box-shadow:
     0 0 0 3px color-mix(in srgb, var(--theme-primary) 16%, transparent),
     0 16px 28px -18px rgba(0, 0, 0, 0.85);
+}
+
+/* The module header keeps its own semantic colour in the dark theme too — just
+   deeper, so the white icon tile and the title stay legible. */
+[data-theme='dark'] .rs-card__head {
+  border-bottom-color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 30%, transparent);
+  background:
+    radial-gradient(120% 150% at 12% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 58%),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 26%, var(--surface)) 0%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 16%, var(--surface)) 62%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 11%, var(--surface)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 12px -12px rgba(0, 0, 0, 0.85);
 }
 
 [data-theme='dark'] .rs-card__icon {
@@ -990,8 +1055,8 @@
     0 9px 16px -9px rgba(0, 0, 0, 0.9);
 }
 
-[data-theme='dark'] .rs-card__name { color: #eee9dd; }
-[data-theme='dark'] .rs-card__desc { color: #9aa3a2; }
+[data-theme='dark'] .rs-card__name { color: #f2ede1; }
+[data-theme='dark'] .rs-card__desc { color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 32%, #b4bcb5); }
 
 [data-theme='dark'] .rs-card__count {
   border-color: rgba(255, 255, 255, 0.12);

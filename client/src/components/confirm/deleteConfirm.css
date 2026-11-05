@@ -440,32 +440,153 @@
 .dcd__notes li { display: flex; gap: 6px; align-items: flex-start; }
 .dcd__notes .icon { flex: none; margin-top: 2px; }
 
-.dcd__ack {
+/* ---------------------------------------- destructive acknowledgement ----- */
+
+/*
+ * The acknowledgement control of every destructive dialog (see
+ * ConfirmCheckbox.jsx). Unchecked it is an elegant neutral glass square;
+ * checked it becomes a glossy raised plate in the ACTIVE theme colour with a
+ * centred white check. The native input sits transparently on top of the drawn
+ * box, so the whole label, the pointer and the keyboard toggle the same state.
+ */
+.dcd-ack {
   display: flex;
   align-items: flex-start;
-  gap: 9px;
+  gap: 10px;
   margin-top: 12px;
-  padding: 9px 11px;
-  border-radius: 11px;
+  padding: 10px 12px;
+  border-radius: 12px;
   text-align: start;
   background: var(--surface);
   border: 1px solid var(--border-strong);
   cursor: pointer;
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
 }
-.dcd__ack input { margin-top: 2px; flex: none; accent-color: var(--primary); }
-.dcd__ack > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.dcd__ack strong { font-size: 12.5px; color: var(--text); }
-.dcd__ack em { font-size: 11px; font-style: normal; color: var(--text-soft); line-height: 1.5; }
+
+.dcd-ack:hover { border-color: color-mix(in srgb, var(--primary) 30%, var(--border-strong)); }
+
+.dcd-ack.is-checked {
+  border-color: color-mix(in srgb, var(--primary) 34%, var(--border-strong));
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+}
+
+.dcd-ack.is-disabled { cursor: not-allowed; }
+
+.dcd-ack__control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  margin-top: 1px;
+}
+
+.dcd-ack__input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.dcd-ack__input:disabled { cursor: not-allowed; }
+
+.dcd-ack__box {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--text) 15%, var(--border-strong));
+  background: linear-gradient(180deg, #ffffff, color-mix(in srgb, var(--surface-2) 72%, #ffffff));
+  color: #ffffff;
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 2px color-mix(in srgb, var(--text) 8%, transparent),
+    0 1px 2px color-mix(in srgb, var(--text) 9%, transparent);
+  transition:
+    background 200ms ease,
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.dcd-ack__box .icon {
+  opacity: 0;
+  transform: scale(0.62);
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.22));
+  transition:
+    opacity 170ms ease,
+    transform 190ms cubic-bezier(0.22, 0.9, 0.3, 1);
+}
+
+.dcd-ack__input:focus-visible + .dcd-ack__box {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Checked: three tones of the active theme colour (light → main → deep). */
+.dcd-ack.is-checked .dcd-ack__box {
+  border-color: color-mix(in srgb, var(--primary) 60%, #000000);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 66%, #ffffff) 0%,
+    var(--primary) 56%,
+    color-mix(in srgb, var(--primary) 76%, #000000) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.18),
+    0 5px 11px -5px color-mix(in srgb, var(--primary) 85%, transparent);
+}
+
+.dcd-ack.is-checked .dcd-ack__box .icon {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.dcd-ack__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.65;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.dcd-ack__text strong { font-size: 12.5px; font-weight: 700; color: var(--text); }
+.dcd-ack__text em { font-size: 11px; font-style: normal; color: var(--text-soft); line-height: 1.5; }
+
+[data-theme='dark'] .dcd-ack__box {
+  border-color: color-mix(in srgb, #ffffff 15%, var(--border-strong));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.03));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4),
+    0 1px 2px rgba(0, 0, 0, 0.45);
+}
+[data-theme='dark'] .dcd-ack.is-checked .dcd-ack__box {
+  border-color: color-mix(in srgb, var(--primary) 55%, #000000);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 78%, #ffffff) 0%,
+    var(--primary) 55%,
+    color-mix(in srgb, var(--primary) 68%, #000000) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 6px 12px -6px color-mix(in srgb, var(--primary) 70%, transparent);
+}
 
 .dcd__ack-field { margin-top: 12px; text-align: start; }
-
-/* A plain acknowledgements sentence (no title/subtitle stack). */
-.dcd__ack-label {
-  font-size: 12.5px;
-  line-height: 1.65;
-  font-weight: 600;
-  color: var(--text);
-}
 
 /* Amber consequence warning — deliberately independent of the entity colour,
    so "this also deletes records" never looks like ordinary context. */
@@ -538,7 +659,11 @@
     animation-iteration-count: 1;
   }
   .dcd__btn,
-  .dcd__close { transition: none; }
+  .dcd__close,
+  .dcd-ack,
+  .dcd-ack__box,
+  .dcd-ack__box .icon { transition: none; }
+  .dcd-ack__box .icon { transform: none; }
 }
 
 /* ----------------------------------------------------------- responsive --- */

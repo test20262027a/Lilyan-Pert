@@ -535,7 +535,7 @@ export default function UserFormModal({
             ) : null}
 
             <div className="um-fields um-fields--2">
-              <label className="um-field">
+              <label className="um-field um-field--full">
                 <span className="um-field__label">{t('user_assigned_business')}</span>
                 <input className="um-input" value={business?.name || ''} readOnly disabled />
               </label>

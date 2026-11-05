@@ -1606,8 +1606,8 @@ export default {
   reset_mod_promotions_desc: 'کۆدەکانی پرۆمۆشن، داشکاندن و کاتەکانیان.',
   reset_mod_products: 'بەرهەمەکان',
   reset_mod_products_desc: 'بەرهەمەکان، نرخەکانیان بە هەموو زمانەکان و وێنەکانیان.',
-  reset_mod_categories: 'پۆلێنەکان',
-  reset_mod_categories_desc: 'پۆلێنەکانی مێنیو؛ بەرهەمەکان بەبێ پۆلێن دەمێننەوە.',
+  reset_mod_categories: 'پۆلەکان',
+  reset_mod_categories_desc: 'پۆلەکانی مێنیو؛ بەرهەمەکان بەبێ پۆل دەمێننەوە.',
   reset_mod_staff: 'بەکارهێنەرانی کارمەند',
   reset_mod_staff_desc: 'ئەندامێتی تیم جگە لە خاوەن.',
   reset_mod_suggestions: 'زۆرترین فرۆش / پێشنیارەکان',
@@ -1627,7 +1627,7 @@ export default {
   reset_dep_tables: 'سڕینەوەی مێز هەموو کۆدەکانی QR کە چاپکراون لەکار دەخات.',
   reset_dep_promotions: 'داواکارییە تەواوبووەکان بڕ و کۆدی داشکاندنی خۆیان دەپارێزن.',
   reset_dep_products: 'مێژووی داواکاری هێڵە سەڵمێنراوەکانی دەپارێزێت؛ پرۆمۆشنەکانی بەرهەم لەگەڵ بەرهەم دەسڕدرێنەوە.',
-  reset_dep_categories: 'بەرهەم، بانەر و پرۆمۆشنەکان دەمێننەوە و تەنها پۆلێنەکەیان لەدەست دەدەن.',
+  reset_dep_categories: 'بەرهەم، بانەر و پرۆمۆشنەکان دەمێننەوە و تەنها پۆلەکەیان لەدەست دەدەن.',
   reset_dep_staff: 'خاوەن و هەموو هەژمارەکانی چوونەژوورەوە دەستکاری ناکرێن.',
   reset_dep_suggestions: 'زۆرترین فرۆش لە داواکارییەکانەوە هەژمار دەکرێت؛ تەنها نیشانەی پێشنیاری تایبەت پاک دەکرێتەوە.',
   reset_dep_orders_real: 'بەندەکانی داواکاری، مێژووی دۆخ، پسووڵە چاپکراوەکان و ئاگادارکردنەوەکانی داواکاری لەگەڵیدا دەسڕدرێنەوە.',
@@ -1662,7 +1662,7 @@ export default {
   user_temp_password_copy: 'کۆپیکردنی وشەی نهێنی',
   user_temp_password_copied: 'کۆپی کرا',
   user_must_change_password: 'ئەم هەژمارە دەبێت لە چوونەژوورەوەی داهاتوودا وشەی نهێنی نوێ هەڵبژێرێت.',
-  user_role_manager_hint: 'بەڕێوەبردنی تەواو،',
+  user_role_manager_hint: 'بەڕێوەبردنی تەواو.',
   user_role_staff_hint: 'تەنها ئەو بەشانەی کە لە خوارەوە دەیانبەخشی.',
 
   /* Header notification feed */

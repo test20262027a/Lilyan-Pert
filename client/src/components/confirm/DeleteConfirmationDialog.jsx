@@ -4,6 +4,7 @@ import Icon from '../Icon';
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { Alert } from '../ui';
 import { useI18n } from '../../i18n';
+import ConfirmCheckbox from './ConfirmCheckbox';
 import { entityVisual } from './entityVisuals';
 import './deleteConfirm.css';
 
@@ -288,16 +289,13 @@ export default function DeleteConfirmationDialog({
       {/* Reaching beyond the selected record is acknowledged explicitly before
           the destructive button becomes available. */}
       {needsAck ? (
-        <label className="dcd__ack">
-          <input
-            type="checkbox"
-            className="dcd__ack-input"
-            checked={acknowledged}
-            disabled={busy}
-            onChange={(event) => setAcknowledged(event.target.checked)}
-          />
-          <span className="dcd__ack-label">{acknowledgeLabel}</span>
-        </label>
+        <ConfirmCheckbox
+          checked={acknowledged}
+          disabled={busy}
+          onChange={setAcknowledged}
+        >
+          {acknowledgeLabel}
+        </ConfirmCheckbox>
       ) : null}
     </ConfirmSurface>
   );

@@ -119,16 +119,41 @@
   overflow-wrap: anywhere;
 }
 
-/* Secondary text: the same role wording, quieter so the name leads. */
+/* The role as an intrinsic-width glass pill: it always shows its whole label
+   (never an ellipsis, never a clipped glyph) because the pill measures its own
+   content instead of a fixed width, and it hugs the logical start of the card
+   so it never runs under the avatar or the name in either direction. */
 .sprofile__role {
-  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  align-self: flex-start;
+  width: max-content;
+  max-width: 100%;
+  min-height: 24px;
+  margin-top: 3px;
+  padding-inline: 9px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 40%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 34%, transparent),
+    color-mix(in srgb, var(--primary) 18%, transparent)
+  );
+  color: color-mix(in srgb, var(--primary) 26%, #ffffff);
   font-size: 11px;
-  font-weight: 600;
-  line-height: 1.5;
+  font-weight: 700;
+  line-height: 1.55;
   letter-spacing: 0.02em;
-  color: color-mix(in srgb, var(--primary) 34%, #ffffff);
-  overflow-wrap: anywhere;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.22),
+    0 4px 9px -6px rgba(2, 7, 12, 0.85);
 }
+.sprofile__role .icon { flex: none; opacity: 0.92; }
 
 /* ----------------------------------------------------- collapsed icon rail */
 
