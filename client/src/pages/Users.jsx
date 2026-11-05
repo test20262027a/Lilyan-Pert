@@ -52,6 +52,8 @@ const ERROR_KEYS = {
   SUFFIX_LOCKED: 'user_suffix_locked_error',
   EMAIL_TAKEN: 'user_email_taken',
   NAME_REQUIRED: 'user_name_required',
+  // Refused by the server for the platform's system owner, whatever this page sends.
+  PROTECTED_OWNER: 'user_protected_owner_hint',
 };
 
 export default function Users() {

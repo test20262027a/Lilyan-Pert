@@ -4,6 +4,7 @@ import { Alert, Loading, useToast } from '../components/ui';
 import PageHeroBanner from '../components/menu/PageHeroBanner';
 import ResetArtwork from '../components/reset/ResetArtwork';
 import ResetConfirmModal from '../components/reset/ResetConfirmModal';
+import ResetModuleCard from '../components/reset/ResetModuleCard';
 import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useLiveRefresh } from '../hooks/useLiveRefresh';
@@ -24,25 +25,74 @@ import '../reset.css';
  * any change, without reloading the application.
  */
 
-/** Icon and pastel tone per module. The order below is the reference screen's. */
+/** Icon and tone per module. Each module owns a colour of its own. */
 const MODULE_VISUALS = {
-  orders: { icon: 'receipt', tone: 'orange' },
-  visits: { icon: 'eye', tone: 'blue' },
-  reviews: { icon: 'star', tone: 'purple' },
+  orders: { icon: 'cart', tone: 'orange' },
+  visits: { icon: 'chartBars', tone: 'sky' },
+  reviews: { icon: 'message', tone: 'violet' },
   advertisements: { icon: 'megaphone', tone: 'amber' },
   tables: { icon: 'qr', tone: 'teal' },
   promotions: { icon: 'percent', tone: 'pink' },
-  products: { icon: 'package', tone: 'red' },
-  categories: { icon: 'grid', tone: 'red' },
-  staff: { icon: 'users', tone: 'red' },
-  suggestions: { icon: 'trendUp', tone: 'red' },
+  products: { icon: 'package', tone: 'indigo' },
+  categories: { icon: 'layers', tone: 'grape' },
+  staff: { icon: 'users', tone: 'rose' },
+  suggestions: { icon: 'trendUp', tone: 'lime' },
   notifications: { icon: 'bell', tone: 'blue' },
-  activity: { icon: 'history', tone: 'purple' },
-  media: { icon: 'image', tone: 'teal' },
-  settings: { icon: 'settings', tone: 'neutral' },
-  branding: { icon: 'palette', tone: 'amber' },
-  texts: { icon: 'type', tone: 'pink' },
+  activity: { icon: 'history', tone: 'slate' },
+  media: { icon: 'image', tone: 'cyan' },
+  settings: { icon: 'settings', tone: 'graphite' },
+  branding: { icon: 'store', tone: 'sand' },
+  texts: { icon: 'type', tone: 'plum' },
 };
+
+/**
+ * Localized name for a module — and for every module a card can list as a
+ * dependency. Both vocabularies resolve here, so the page can never print an
+ * internal identifier such as `order_items` as if it were a label.
+ */
+const MODULE_LABELS = {
+  /* reset modules */
+  orders: 'reset_mod_orders',
+  visits: 'reset_mod_visits',
+  reviews: 'reset_mod_reviews',
+  advertisements: 'reset_mod_advertisements',
+  tables: 'reset_mod_tables',
+  promotions: 'reset_mod_promotions',
+  products: 'reset_mod_products',
+  categories: 'reset_mod_categories',
+  staff: 'reset_mod_staff',
+  suggestions: 'reset_mod_suggestions',
+  notifications: 'reset_mod_notifications',
+  activity: 'reset_mod_activity',
+  media: 'reset_mod_media',
+  settings: 'reset_mod_settings',
+  branding: 'reset_mod_branding',
+  texts: 'reset_mod_texts',
+  /* dependency module identifiers returned by the server */
+  order_items: 'reset_mod_order_items',
+  order_audit: 'reset_mod_order_audit',
+  receipt_prints: 'reset_mod_receipt_prints',
+  order_discounts: 'reset_mod_order_discounts',
+  menu_products: 'reset_mod_menu_products',
+  menu_categories: 'reset_mod_categories',
+  team_members: 'reset_mod_staff',
+  featured_products: 'reset_mod_suggestions',
+  business_views: 'reset_mod_visits',
+  activity_reports: 'reset_mod_activity',
+  activity_hidden: 'reset_mod_activity_hidden',
+  uploaded_files: 'reset_mod_uploaded_files',
+  business_settings: 'reset_mod_settings',
+  business_profile: 'reset_mod_branding',
+  editable_text: 'reset_mod_texts',
+};
+
+/** The page's sections. A module not listed here falls into the last one. */
+const GROUPS = [
+  { key: 'operations', icon: 'receipt', modules: ['orders', 'visits', 'tables'] },
+  { key: 'menu', icon: 'utensils', modules: ['products', 'categories', 'promotions', 'advertisements', 'suggestions'] },
+  { key: 'customers', icon: 'message', modules: ['reviews', 'notifications'] },
+  { key: 'system', icon: 'settings', modules: ['staff', 'activity', 'media', 'settings', 'branding', 'texts'] },
+];
 
 /** Modules whose deletion needs a dependency warning before it runs. */
 const WARNINGS = {
@@ -113,16 +163,22 @@ export default function ResetSampleData() {
         const sampleBlocked = m.sample_counts?.blocked || 0;
         const removable = m.removable || 0;
         const count = mode === 'sample' ? sampleEligible : removable;
+        const total = m.total || 0;
+        const blocked = mode === 'sample' ? sampleBlocked : 0;
+        const labelKey = MODULE_LABELS[m.key] || null;
         return {
           key: m.key,
           risk: m.risk,
-          total: m.total || 0,
+          total,
           count,
-          blocked: mode === 'sample' ? sampleBlocked : 0,
-          kept: Math.max(0, (m.total || 0) - count - (mode === 'sample' ? sampleBlocked : 0)),
-          dependents: m.dependents || [],
-          ...(MODULE_VISUALS[m.key] || { icon: 'database', tone: 'neutral' }),
-          label: t(`reset_mod_${m.key}`),
+          blocked,
+          kept: Math.max(0, total - count - blocked),
+          dependents: (m.dependents || [])
+            .filter((d) => MODULE_LABELS[d.key] && d.count > 0)
+            .map((d) => ({ key: d.key, labelKey: MODULE_LABELS[d.key], count: d.count })),
+          ...(MODULE_VISUALS[m.key] || { icon: 'database', tone: 'graphite' }),
+          label: labelKey ? t(labelKey) : m.key,
+          desc: t(`reset_mod_${m.key}_desc`),
           warning: WARNINGS[m.key] || null,
         };
       }),
@@ -130,6 +186,21 @@ export default function ResetSampleData() {
   );
 
   const selectable = cards.filter((c) => c.count > 0);
+
+  const groups = useMemo(() => {
+    const placed = new Set();
+    const out = GROUPS.map((group) => {
+      const items = group.modules
+        .map((key) => cards.find((card) => card.key === key))
+        .filter(Boolean);
+      items.forEach((card) => placed.add(card.key));
+      return { ...group, items };
+    });
+    // Anything the server knows but this page does not group still stays reachable.
+    const rest = cards.filter((card) => !placed.has(card.key));
+    if (rest.length) out[out.length - 1].items.push(...rest);
+    return out.filter((group) => group.items.length);
+  }, [cards]);
 
   const switchMode = (next) => {
     if (next === mode) return;
@@ -312,85 +383,31 @@ export default function ResetSampleData() {
       {loading ? <Loading /> : null}
 
       {!loading && cards.length ? (
-        <div className="rs-grid">
-          {cards.map((card) => {
-            const on = selected.includes(card.key);
-            const disabled = card.count === 0;
-            const depList = card.dependents
-              .map((d) => `${t(`reset_mod_${d.key}`)} (${d.count})`)
-              .join(' · ');
-            return (
-              <article
-                key={card.key}
-                className={`rs-card ${card.risk ? 'rs-card--risk' : ''} ${on ? 'is-on' : ''} ${disabled ? 'is-empty' : ''}`}
-                onClick={() => !disabled && toggle(card.key)}
-              >
-                <div className="rs-card__top">
-                  <span className={`rs-card__icon rs-tone--${card.tone}`} aria-hidden="true">
-                    <Icon name={card.icon} size={18} />
-                  </span>
-                  <span className="rs-card__total" title={t('reset_total')}>
-                    <Icon name="database" size={10} />
-                    {card.total}
-                  </span>
-                  <button
-                    type="button"
-                    className="rs-tick"
-                    aria-pressed={on}
-                    aria-label={card.label}
-                    disabled={disabled}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggle(card.key);
-                    }}
-                  >
-                    {on ? <Icon name="check" size={13} /> : null}
-                  </button>
-                </div>
-
-                <div className="rs-card__title">
-                  <span className="rs-card__name">{card.label}</span>
-                  {card.risk ? (
-                    <span className="rs-card__badge">
-                      <Icon name="alert" size={11} />
-                      {t('reset_risk_badge')}
-                    </span>
-                  ) : null}
-                </div>
-
-                <p className="rs-card__desc">{t(`reset_mod_${card.key}_desc`)}</p>
-
-                {card.risk && mode === 'data' ? <p className="rs-card__warn">{t('reset_risk_warning_data')}</p> : null}
-                {card.warning && (card.count > 0 || card.blocked > 0) ? (
-                  <p className="rs-card__warn">{t(card.warning)}</p>
-                ) : null}
-                {depList ? <p className="rs-card__dep">{t('reset_impact', { list: depList })}</p> : null}
-                {card.blocked > 0 ? (
-                  <p className="rs-card__warn">{t('reset_blocked_note', { count: card.blocked })}</p>
-                ) : null}
-
-                <div className="rs-card__foot">
-                  <span className={`rs-count ${card.risk ? 'rs-count--risk' : ''}`}>
-                    {mode === 'sample'
-                      ? t('reset_sample_count', { count: card.count })
-                      : t('reset_data_count', { count: card.count })}
-                  </span>
-                  {card.kept > 0 ? <span className="rs-kept">{t('reset_kept', { count: card.kept })}</span> : null}
-                  <button
-                    type="button"
-                    className={`rs-reset ${card.risk || mode === 'data' ? 'rs-reset--risk' : ''}`}
-                    disabled={disabled || busy}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openSingle(card.key);
-                    }}
-                  >
-                    {mode === 'data' ? t('reset_action_delete') : t('reset_action')}
-                  </button>
-                </div>
-              </article>
-            );
-          })}
+        <div className="rs-sections">
+          {groups.map((group) => (
+            <section key={group.key} className="rs-group">
+              <header className="rs-group__head">
+                <span className="rs-group__icon" aria-hidden="true">
+                  <Icon name={group.icon} size={15} />
+                </span>
+                <h2 className="rs-group__title">{t(`reset_group_${group.key}`)}</h2>
+                <span className="rs-group__count">{group.items.length}</span>
+              </header>
+              <div className="rs-grid">
+                {group.items.map((card) => (
+                  <ResetModuleCard
+                    key={card.key}
+                    card={card}
+                    mode={mode}
+                    selected={selected.includes(card.key)}
+                    busy={busy}
+                    onToggle={() => toggle(card.key)}
+                    onDelete={() => openSingle(card.key)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       ) : null}
 

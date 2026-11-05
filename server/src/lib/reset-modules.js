@@ -317,15 +317,23 @@ export const RESET_MODULES = [
     sample: true,
     async stats(db, businessId) {
       const total = await totalOf(db, businessId, 'team_members');
-      const protect = `EXISTS (SELECT 1 FROM memberships o
-                                 WHERE o.business_id = $1 AND o.role = 'owner' AND o.user_id = t.user_id)`;
+      // Two identities survive every reset: the business owner and the system
+      // owner (`users.is_super_admin`, the stable record behind the platform's
+      // creator account). Their memberships are neither counted as removable nor
+      // ever reachable by a delete below.
+      const protect = `(EXISTS (SELECT 1 FROM memberships o
+                                  WHERE o.business_id = $1 AND o.role = 'owner' AND o.user_id = t.user_id)
+                        OR EXISTS (SELECT 1 FROM users u
+                                    WHERE u.id = t.user_id AND u.is_super_admin))`;
       return {
         total,
         sample: await sampleRows(db, businessId, 'memberships', protect),
         removable: await scalar(
           db,
           businessId,
-          "SELECT count(*)::int c FROM memberships WHERE business_id = $1 AND role <> 'owner'",
+          `SELECT count(*)::int c
+             FROM memberships m JOIN users u ON u.id = m.user_id
+            WHERE m.business_id = $1 AND m.role <> 'owner' AND NOT u.is_super_admin`,
         ),
         dependents: [],
       };
@@ -334,6 +342,7 @@ export const RESET_MODULES = [
       const { rowCount } = await db.query(
         `DELETE FROM memberships m
           WHERE m.business_id = $1 AND m.is_sample AND m.role <> 'owner'
+            AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = m.user_id AND u.is_super_admin)
             AND NOT EXISTS (SELECT 1 FROM memberships o
                              WHERE o.business_id = $1 AND o.role = 'owner' AND o.user_id = m.user_id)`,
         [businessId],
@@ -341,9 +350,11 @@ export const RESET_MODULES = [
       return rowCount;
     },
     async removeAll(db, businessId) {
-      // The owner membership and every sign-in account stay, always.
+      // The owner membership, the system owner and every sign-in account stay.
       const { rowCount } = await db.query(
-        "DELETE FROM memberships WHERE business_id = $1 AND role <> 'owner'",
+        `DELETE FROM memberships m
+          WHERE m.business_id = $1 AND m.role <> 'owner'
+            AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = m.user_id AND u.is_super_admin)`,
         [businessId],
       );
       return rowCount;

@@ -1055,7 +1055,7 @@ router.get(
 
     const { rows } = await q(
       `SELECT m.id AS membership_id, m.role, m.status, m.permissions, m.created_at,
-              u.id, u.email, u.full_name, u.phone, u.locale,
+              u.id, u.email, u.full_name, u.phone, u.locale, u.is_super_admin,
               u.profile_image_url, u.avatar_type, u.recovery_email
          FROM memberships m JOIN users u ON u.id = m.user_id
         WHERE ${where.join(' AND ')}
@@ -1087,6 +1087,9 @@ router.get(
         created_at: r.created_at,
         permissions,
         full_access: isFullAccess(r.role, permissions),
+        // The system owner is reported so the list can hide its Delete action;
+        // the refusal itself lives in the DELETE handler below.
+        protected: Boolean(r.is_super_admin),
       };
     });
 
@@ -1364,12 +1367,21 @@ router.delete(
   ah(async (req, res) => {
     if (!isUuid(req.params.membershipId)) throw notFound('MEMBERSHIP_NOT_FOUND');
     const { rows } = await q(
-      'SELECT * FROM memberships WHERE id = $1 AND business_id = $2',
+      `SELECT m.*, u.is_super_admin
+         FROM memberships m JOIN users u ON u.id = m.user_id
+        WHERE m.id = $1 AND m.business_id = $2`,
       [req.params.membershipId, req.businessId],
     );
     const membership = rows[0];
     if (!membership) throw notFound('MEMBERSHIP_NOT_FOUND');
     if (!canActOnRole(req, membership.role)) throw bad('ROLE_NOT_ASSIGNABLE');
+    /*
+     * The system owner's identity is never removable — not by another
+     * administrator, not through a bulk request, not by a stale page. The flag
+     * on the verified identity record is the authority; a UI that hides the
+     * button is only a convenience on top of this refusal.
+     */
+    if (membership.is_super_admin) throw conflict('PROTECTED_OWNER');
     if (membership.user_id === req.user.id) throw conflict('CANNOT_MODIFY_SELF');
     if (membership.role === 'owner' && (await countOwners(req.businessId)) <= 1) {
       throw conflict('LAST_OWNER');

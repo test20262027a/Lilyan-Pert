@@ -59,6 +59,9 @@ export default function UserListRow({
 
   const displayName = member.full_name || member.email;
   const activeMember = member.status === 'active';
+  /* The system owner is reported by the server: its Delete action is removed
+     here, while the backend refuses the request regardless of what this page does. */
+  const protectedMember = Boolean(member.protected);
   const permsLabel = t('user_permissions_label');
   const permsSummary = t(permissionSummaryKey(member));
 
@@ -93,6 +96,12 @@ export default function UserListRow({
           <span className="um-badge__dot" aria-hidden="true" />
           {t(activeMember ? 'user_active' : 'user_disabled')}
         </span>
+        {protectedMember ? (
+          <span className="um-badge um-badge--protected">
+            <Icon name="shield" size={11} />
+            {t('user_protected_owner')}
+          </span>
+        ) : null}
       </div>
 
       <span
@@ -133,9 +142,15 @@ export default function UserListRow({
           <button
             type="button"
             className="um-iconbtn um-iconbtn--danger"
-            disabled={self || busy}
+            disabled={self || busy || protectedMember}
             onClick={onDelete}
-            title={self ? t('user_cannot_modify_self') : t('action_delete')}
+            title={
+              protectedMember
+                ? t('user_protected_owner_hint')
+                : self
+                  ? t('user_cannot_modify_self')
+                  : t('action_delete')
+            }
             aria-label={t('action_delete')}
           >
             <Icon name="trash" size={15} />
