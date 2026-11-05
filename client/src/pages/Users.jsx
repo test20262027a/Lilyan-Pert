@@ -260,19 +260,37 @@ export default function Users() {
         ) : null}
       </PageHeroBanner>
 
+      {/* Three live counters over the same records the list below shows: total
+          (blue), active (green) and inactive (red). Each keeps its own semantic
+          colour and 3D icon whatever the business theme is. */}
       {data.counts ? (
         <div className="um-stats">
-          <div className="um-stat">
-            <span className="um-stat__value">{fmtNumber(data.counts.total, locale)}</span>
-            <span className="um-stat__label">{t('user_count_total')}</span>
+          <div className="um-stat um-stat--total">
+            <span className="um-stat__icon" aria-hidden="true">
+              <Icon name="users" size={22} />
+            </span>
+            <span className="um-stat__text">
+              <span className="um-stat__value">{fmtNumber(data.counts.total, locale)}</span>
+              <span className="um-stat__label">{t('user_count_total')}</span>
+            </span>
           </div>
           <div className="um-stat um-stat--active">
-            <span className="um-stat__value">{fmtNumber(data.counts.active, locale)}</span>
-            <span className="um-stat__label">{t('user_active')}</span>
+            <span className="um-stat__icon" aria-hidden="true">
+              <Icon name="userCheck" size={22} />
+            </span>
+            <span className="um-stat__text">
+              <span className="um-stat__value">{fmtNumber(data.counts.active, locale)}</span>
+              <span className="um-stat__label">{t('user_active')}</span>
+            </span>
           </div>
           <div className="um-stat um-stat--off">
-            <span className="um-stat__value">{fmtNumber(data.counts.disabled, locale)}</span>
-            <span className="um-stat__label">{t('user_inactive')}</span>
+            <span className="um-stat__icon" aria-hidden="true">
+              <Icon name="userX" size={22} />
+            </span>
+            <span className="um-stat__text">
+              <span className="um-stat__value">{fmtNumber(data.counts.disabled, locale)}</span>
+              <span className="um-stat__label">{t('user_inactive')}</span>
+            </span>
           </div>
         </div>
       ) : null}

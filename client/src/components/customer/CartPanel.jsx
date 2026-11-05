@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
+import ProductTitle from '../ProductTitle';
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import { Money, useToast } from '../ui';
 import { localized, useI18n } from '../../i18n';
@@ -291,7 +292,11 @@ export default function CartPanel({
                     </span>
 
                     <span className="cui-line__text">
-                      <strong>{localized(line.product, 'name', locale) || t('customer_menu_name_unavailable')}</strong>
+                      <ProductTitle
+                        as="strong"
+                        className="cui-line__name"
+                        name={localized(line.product, 'name', locale) || t('customer_menu_name_unavailable')}
+                      />
                       {line.valid === false ? (
                         <small className="cui-line__off">{t('customer_menu_price_unavailable')}</small>
                       ) : (

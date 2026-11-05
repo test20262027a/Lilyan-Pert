@@ -249,6 +249,31 @@ export function NotificationsProvider({ children }) {
     };
   }, [load]);
 
+  /*
+   * An administrative save has just succeeded somewhere in the app, so its
+   * activity notification already exists on the server. Reading the feed again
+   * now keeps the bell badge and the Activity tab count in step with the change
+   * — no page refresh, no artificial counter. Bursts (a bulk save) coalesce
+   * into one read.
+   */
+  useEffect(() => {
+    let timer = null;
+    const onChange = () => {
+      if (!enabledRef.current) return;
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        // Not silent: an order that arrived in the same moment still rings.
+        // Activity rows themselves never raise the order celebration.
+        if (!document.hidden) load();
+      }, 400);
+    };
+    window.addEventListener('lilyan:admin-change', onChange);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('lilyan:admin-change', onChange);
+    };
+  }, [load]);
+
   /* The first gesture unlocks Web Audio, so the ringtone for an order that
      arrives later can start on its own. */
   useEffect(() => {

@@ -55,11 +55,26 @@ function labelFrom(body) {
 /**
  * Which recorded changes also raise a notification in the header feed.
  *
- * Only changes an owner must not miss — access, business configuration,
- * backups and sample-data resets — are delivered. Routine catalogue edits stay
- * in the activity report alone, so the unread badge keeps meaning something.
+ * Every successful administrative change is announced: catalogue edits
+ * (categories, products), tables, advertisements, promotions, review
+ * moderation, staff and permissions, business/menu settings, backups and
+ * sample-data resets. Each request produces exactly one row — a bulk reorder is
+ * a single request, so it raises a single "products updated" event rather than
+ * one per moved row — and the activity logger only records responses that
+ * actually succeeded.
  */
-const NOTIFY_ENTITIES = new Set(['user', 'settings', 'backup', 'reset']);
+const NOTIFY_ENTITIES = new Set([
+  'category',
+  'product',
+  'table',
+  'ad',
+  'promotion',
+  'review',
+  'user',
+  'settings',
+  'backup',
+  'reset',
+]);
 
 /** Writes one row. Best-effort: an audit failure never breaks the request. */
 export async function recordActivity({
@@ -131,7 +146,9 @@ export function activityLogger(req, res, next) {
       entity: route.entity,
       action: route.action || ACTIONS[req.method],
       entityId: req.params?.id || null,
-      entityLabel: route.label ? route.label(req.body) : route.entity === 'settings' ? labelFrom(req.body) : null,
+      // The record's own name, so the notification says which product, category
+      // or table changed instead of a bare "updated".
+      entityLabel: route.label ? route.label(req.body) : labelFrom(req.body),
       path: req.path,
     });
   });

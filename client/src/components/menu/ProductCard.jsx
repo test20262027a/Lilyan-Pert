@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import ProductTitle from '../ProductTitle';
 import { useI18n, localized } from '../../i18n';
 import { fmtMoneyParts } from '../../format';
 
@@ -120,9 +121,7 @@ export default function ProductCard({
       </div>
 
       <div className="mcard__panel">
-        <div className="mcard__name" title={name}>
-          {name}
-        </div>
+        <ProductTitle className="mcard__name" name={name} />
         <div className="mcard__meta">
           {categoryName ? <span className="mcard__cat">{categoryName}</span> : null}
           <span className="mcard__price">

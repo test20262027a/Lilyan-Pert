@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { Alert, Select, Switch } from '../ui';
 import { LOCALES, localized, useI18n } from '../../i18n';
@@ -129,6 +129,9 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
   const [localError, setLocalError] = useState(null);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // The price inputs, so a rejected amount is brought into view and focused
+  // instead of only being reported in the banner.
+  const priceRefs = useRef({});
 
   // Editing a field also clears the validation message it caused.
   const set = (key, value) => {
@@ -152,15 +155,24 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
       return;
     }
 
+    /*
+     * Price is required. An empty field, text the browser could not read as a
+     * number, a negative amount and a whitespace-only value are all rejected
+     * here and again by the API; an explicit 0 stays valid, so a genuinely free
+     * product can still be saved.
+     */
     const price = amountOrNull(values.price);
     if (price === null || Number.isNaN(price)) {
       setLocalError('INVALID_PRICE');
+      priceRefs.current.price?.focus();
       return;
     }
     const altPrices = { price_fa: amountOrNull(values.price_fa), price_en: amountOrNull(values.price_en) };
     const visibleAltKeys = priceFields.filter((field) => field.key !== 'price').map((field) => field.key);
-    if (visibleAltKeys.some((key) => Number.isNaN(altPrices[key]))) {
+    const badAltKey = visibleAltKeys.find((key) => Number.isNaN(altPrices[key]));
+    if (badAltKey) {
       setLocalError('INVALID_PRICE');
+      priceRefs.current[badAltKey]?.focus();
       return;
     }
 
@@ -288,6 +300,7 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
         <div className="mcmodal__section-head">
           <span className="mcmodal__bar" aria-hidden="true" />
           <span className="mcmodal__label">{t('menu_price')}</span>
+          <span className="mcmodal__req" aria-hidden="true">*</span>
         </div>
 
         <div className="mform__prices">
@@ -297,12 +310,16 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
                 {localeFor(field.code).label} · {field.currency || currency}
               </span>
               <input
+                ref={(node) => {
+                  priceRefs.current[field.key] = node;
+                }}
                 className="mcmodal__input mform__num"
                 dir="ltr"
                 type="number"
                 min="0"
                 step="any"
                 inputMode="decimal"
+                aria-required={field.key === 'price'}
                 value={values[field.key]}
                 onChange={(e) => set(field.key, e.target.value)}
               />

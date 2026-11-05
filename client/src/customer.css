@@ -948,18 +948,12 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-/* One line, always: a long name is ellipsized (its full text stays in the
-   record and in the title attribute) instead of wrapping into a second line and
-   changing the card's height. */
+/* One line, always: the name is a ProductTitle, so the complete saved text is
+   kept on a single line and only the title itself scrolls horizontally when
+   the card is narrower than the name. Nothing is ever ellipsised. */
 .cui-prod__name {
   margin: 0;
-  display: block;
   width: 100%;
-  min-width: 0;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-size: clamp(13px, 0.45vw + 11px, 16px);
   font-weight: 800;
   line-height: 1.45;

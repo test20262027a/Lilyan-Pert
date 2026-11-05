@@ -44,6 +44,17 @@ export async function api(path, { method = 'GET', body } = {}) {
   if (!res.ok) {
     throw new ApiError(data?.error || 'REQUEST_FAILED', data?.message, res.status);
   }
+
+  /*
+   * One announcement per successful write, for the whole app: the notification
+   * listener reads the feed again straight away, so a saved product, category
+   * or setting raises its activity notification and the unread badge without
+   * waiting for the next poll or a page refresh. A failed request never
+   * announces anything (it threw above), and the listener coalesces bursts.
+   */
+  if (method !== 'GET') {
+    window.dispatchEvent(new CustomEvent('lilyan:admin-change'));
+  }
   return data;
 }
 

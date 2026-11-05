@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
+import ProductTitle from '../ProductTitle';
 import { localized, useI18n } from '../../i18n';
 import { productPrice } from '../../languages';
 import { fmtMoneyParts } from '../../format';
@@ -103,9 +104,7 @@ export default function ProductDetailModal({
               <Icon name={appearance.icon} size={22} />
             </span>
             <div className="cui-pd__heading">
-              <h2 className="cui-pd__name" id={titleId} title={name}>
-                {name}
-              </h2>
+              <ProductTitle as="h2" className="cui-pd__name" id={titleId} name={name} />
               {categoryName ? <span className="cui-pd__cat">{categoryName}</span> : null}
             </div>
           </header>

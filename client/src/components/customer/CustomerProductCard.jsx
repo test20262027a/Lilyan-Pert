@@ -1,4 +1,5 @@
 import Icon from '../Icon';
+import ProductTitle from '../ProductTitle';
 import { Money } from '../ui';
 import { localized, useI18n } from '../../i18n';
 import { productPrice } from '../../languages';
@@ -109,9 +110,7 @@ export default function CustomerProductCard({
       </div>
 
       <div className="cui-prod__glass">
-        <h3 className="cui-prod__name" title={name}>
-          {name}
-        </h3>
+        <ProductTitle as="h3" className="cui-prod__name" name={name} />
 
         {categoryName || !buyable ? (
           <div className="cui-prod__meta">

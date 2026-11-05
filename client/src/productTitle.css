@@ -1,0 +1,44 @@
+/* ==========================================================================
+   ProductTitle — one line, never truncated, always complete.
+
+   A product's saved name is never shortened, ellipsised or moved onto a second
+   line. The title is a single line that always renders its FULL text: when the
+   name is wider than the space the card/modal can give it, only this title
+   region scrolls horizontally (touch swipe, trackpad, arrow keys when it holds
+   focus). The scrollbar is hidden so nothing about the card's design changes.
+
+   The element is measured once per resize with a ResizeObserver only to decide
+   whether it is really overflowing: an overflowing title becomes keyboard
+   focusable, a title that fits stays out of the tab order.
+   ========================================================================== */
+
+.product-title {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: clip;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.product-title::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+/* A title that has more text than room gets a focus ring — the cue that it can
+   be read to the end — and its whole name in the native tooltip. */
+.product-title[data-overflow='true'] {
+  cursor: text;
+}
+.product-title[data-overflow='true']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 62%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

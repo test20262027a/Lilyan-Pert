@@ -657,13 +657,9 @@
 /* A product name is always ONE line: it never wraps, never grows the card and
    never pushes the price or the status pill down. The full name stays in the
    record and is reachable through the title attribute. */
+/* Admin product card title — the shared ProductTitle keeps the whole name on
+   one line and scrolls only itself when the card is too narrow for it. */
 .mcard__name {
-  display: block;
-  min-width: 0;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-size: clamp(14px, 0.5vw + 11px, 19px);
   font-weight: 800;
   color: #1f231f;

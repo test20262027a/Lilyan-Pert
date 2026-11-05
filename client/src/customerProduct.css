@@ -187,17 +187,11 @@
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .cui-pd__heading { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 4px; }
-/* The sheet's title is one line too: it is ellipsized inside the header so it
-   can never push the status, price or actions down, and `title` on the element
-   keeps the full saved name reachable. */
+/* The sheet's title is the shared ProductTitle: one line, the complete name,
+   never ellipsised. It takes the header's full width beside the category icon
+   and scrolls by itself only when the name is wider than the sheet. */
 .cui-pd__name {
   margin: 0;
-  display: block;
-  min-width: 0;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   font-size: clamp(20px, 2.1vw, 27px);
   font-weight: 850;
   line-height: 1.28;
