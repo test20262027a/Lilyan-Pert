@@ -1659,7 +1659,7 @@ export default {
   user_temp_password_copy: 'نسخ كلمة المرور',
   user_temp_password_copied: 'تم النسخ',
   user_must_change_password: 'يجب أن يختار الحساب كلمة مرور جديدة عند تسجيل الدخول التالي.',
-  user_role_manager_hint: 'إدارة كاملة، دون التحكم بمالك النظام.',
+  user_role_manager_hint: 'إدارة كاملة،',
   user_role_staff_hint: 'الوحدات التي تمنحها أدناه فقط.',
 
   /* Header notification feed */

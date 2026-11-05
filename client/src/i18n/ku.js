@@ -1662,7 +1662,7 @@ export default {
   user_temp_password_copy: 'کۆپیکردنی وشەی نهێنی',
   user_temp_password_copied: 'کۆپی کرا',
   user_must_change_password: 'ئەم هەژمارە دەبێت لە چوونەژوورەوەی داهاتوودا وشەی نهێنی نوێ هەڵبژێرێت.',
-  user_role_manager_hint: 'بەڕێوەبردنی تەواو، بەبێ کۆنترۆڵکردنی خاوەنی سیستەم.',
+  user_role_manager_hint: 'بەڕێوەبردنی تەواو،',
   user_role_staff_hint: 'تەنها ئەو بەشانەی کە لە خوارەوە دەیانبەخشی.',
 
   /* Header notification feed */

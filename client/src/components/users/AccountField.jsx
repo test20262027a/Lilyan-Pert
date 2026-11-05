@@ -21,10 +21,11 @@ export default function AccountField({
   autoComplete,
   name,
   placeholder,
+  full = false,
 }) {
   const locked = disabled || readOnly;
   return (
-    <label className={`am-field ${locked ? 'is-readonly' : ''}`.trim()}>
+    <label className={`am-field ${locked ? 'is-readonly' : ''} ${full ? 'am-field--full' : ''}`.trim()}>
       <span className="am-field__label">{label}</span>
       <span className="am-field__control">
         {icon ? <Icon name={icon} size={15} className="am-field__icon" /> : null}

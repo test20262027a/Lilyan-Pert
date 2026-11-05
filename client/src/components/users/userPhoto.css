@@ -323,12 +323,18 @@
     0 8px 16px -8px color-mix(in srgb, var(--theme-primary) 75%, transparent);
 }
 
+/* The label owns a line of its own under the portrait and is never clipped:
+   it wraps when the word is wider than the card, and the taller line box keeps
+   the Sorani (and Persian / Arabic) ascenders and descenders inside the tile,
+   clear of the portrait above and of the neighbouring card. */
 .uavatar-option__label {
   position: relative;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
+  padding-block: 1px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 /* Check badge pinned to the portrait, with a surface-coloured cut-out ring so

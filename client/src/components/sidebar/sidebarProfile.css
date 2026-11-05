@@ -105,17 +105,18 @@
   text-align: start;
 }
 
+/* The name and the role are never truncated: a long name or a long localized
+   role wraps onto a second line inside the card, and the taller line box keeps
+   the Kurdish / Persian / Arabic shaping fully visible. */
 .sprofile__name {
   min-width: 0;
   font-size: 13px;
   font-weight: 750;
-  line-height: 1.3;
+  line-height: 1.45;
   letter-spacing: 0.012em;
   color: #ffffff;
   text-shadow: 0 1px 2px rgba(3, 8, 14, 0.5);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 /* Secondary text: the same role wording, quieter so the name leads. */
@@ -123,12 +124,10 @@
   min-width: 0;
   font-size: 11px;
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1.5;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--primary) 34%, #ffffff);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 /* ----------------------------------------------------- collapsed icon rail */

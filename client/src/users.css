@@ -698,6 +698,23 @@
   gap: 10px;
 }
 .um-field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+
+/*
+ * A field that owns the whole form row. The person's name always runs from one
+ * inner edge of its section to the other — it never shares the row, whatever
+ * container it lands in (the stacked flex column or a two-column grid).
+ */
+.um-field--full {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.um-field--full .um-input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
 .um-field__label { font-size: 11.5px; font-weight: 650; color: #6d756b; }
 
 /* Required marker: the one red accent in the form, next to the label only. */

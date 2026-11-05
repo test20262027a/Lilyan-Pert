@@ -1665,7 +1665,7 @@ export default {
   user_temp_password_copy: 'Copy password',
   user_temp_password_copied: 'Copied',
   user_must_change_password: 'This account must choose a new password at its next sign-in.',
-  user_role_manager_hint: 'Full administration, without controlling the system owner.',
+  user_role_manager_hint: 'Full administration.',
   user_role_staff_hint: 'Only the modules you grant below.',
 
   /* Header notification feed */

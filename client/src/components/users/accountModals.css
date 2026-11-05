@@ -164,6 +164,16 @@
   gap: 6px;
   min-width: 0;
 }
+/* A field that owns the whole row of the account grid — the person's name
+   takes the full available width, from one inner edge of the section to the
+   other, on every screen. */
+.am-field--full {
+  grid-column: 1 / -1;
+  width: 100%;
+  min-width: 0;
+}
+.am-field--full .am-field__control { box-sizing: border-box; }
+
 .am-field__label {
   font-size: 12.5px;
   font-weight: 700;

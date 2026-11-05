@@ -1661,7 +1661,7 @@ export default {
   user_temp_password_copy: 'کپی رمز',
   user_temp_password_copied: 'کپی شد',
   user_must_change_password: 'این حساب باید در ورود بعدی رمز جدیدی انتخاب کند.',
-  user_role_manager_hint: 'مدیریت کامل، بدون کنترل مالک سیستم.',
+  user_role_manager_hint: 'مدیریت کامل،',
   user_role_staff_hint: 'فقط بخش‌هایی که در پایین اجازه می‌دهید.',
 
   /* Header notification feed */

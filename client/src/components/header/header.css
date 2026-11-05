@@ -223,13 +223,15 @@
 }
 /* The menu avatar is the same shared <UserAvatar>, at 50px. */
 .hdr-menu__who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+/* Neither line of the account card is truncated: a long name or address wraps
+   inside the menu, and the line boxes stay tall enough for Kurdish shaping. */
 .hdr-menu__name {
   font-size: 15px; font-weight: 800; color: var(--text);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  line-height: 1.45; overflow-wrap: anywhere;
 }
 .hdr-menu__mail {
   font-size: 12px; color: var(--muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  line-height: 1.5; overflow-wrap: anywhere;
 }
 .hdr-menu__role {
   align-self: flex-start; margin-top: 4px;

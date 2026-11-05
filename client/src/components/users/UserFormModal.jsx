@@ -383,7 +383,7 @@ export default function UserFormModal({
 
           <Section title={t('user_section_general')}>
             <div className="um-fields">
-              <label className="um-field">
+              <label className="um-field um-field--full">
                 <FieldLabel label={t('label_full_name')} required />
                 <input
                   className={`um-input ${errorFor('fullName') ? 'is-invalid' : ''}`}

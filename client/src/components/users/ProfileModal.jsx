@@ -103,6 +103,7 @@ export default function ProfileModal({ user, role, onClose, updateProfile, onSav
               autoComplete="name"
               value={values.full_name}
               onChange={(e) => setValues((v) => ({ ...v, full_name: e.target.value }))}
+              full
             />
             <AccountField
               icon="phone"
