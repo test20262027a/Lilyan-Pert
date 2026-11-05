@@ -95,33 +95,44 @@ export default function ProductDetailModal({
         aria-labelledby={titleId}
       >
         <div className="cui-pd__info" dir={dir}>
+          {/* One heading group: the reserved Close zone, then the icon + title
+              row, then the subtitle and availability badge on the same
+              alignment axis as the group itself. */}
           <header className="cui-pd__head" data-dir={dir}>
-            <span
-              className="cui-pd__caticon"
-              style={{ '--pd-ink': appearance.color }}
-              aria-hidden="true"
-            >
-              <Icon name={appearance.icon} size={22} />
-            </span>
             <div className="cui-pd__heading">
-              <ProductTitle as="h2" className="cui-pd__name" id={titleId} name={name} />
+              <div className="cui-pd__titlerow">
+                <span
+                  className="cui-pd__caticon"
+                  style={{ '--pd-ink': appearance.color }}
+                  aria-hidden="true"
+                >
+                  <Icon name={appearance.icon} size={22} />
+                </span>
+                <ProductTitle
+                  as="h2"
+                  className="cui-pd__name"
+                  id={titleId}
+                  name={name}
+                  minScale={0.5}
+                  minPx={14}
+                />
+              </div>
               {categoryName ? <span className="cui-pd__cat">{categoryName}</span> : null}
+              <div className="cui-pd__status">
+                {buyable ? (
+                  <span className="cui-pd__stock">
+                    <i aria-hidden="true" />
+                    {t('customer_menu_in_stock')}
+                  </span>
+                ) : (
+                  <span className="cui-pd__stock cui-pd__stock--out">
+                    <i aria-hidden="true" />
+                    {t('customer_menu_unavailable_item')}
+                  </span>
+                )}
+              </div>
             </div>
           </header>
-
-          <div className="cui-pd__status">
-            {buyable ? (
-              <span className="cui-pd__stock">
-                <i aria-hidden="true" />
-                {t('customer_menu_in_stock')}
-              </span>
-            ) : (
-              <span className="cui-pd__stock cui-pd__stock--out">
-                <i aria-hidden="true" />
-                {t('customer_menu_unavailable_item')}
-              </span>
-            )}
-          </div>
 
           {description ? <p className="cui-pd__desc">{description}</p> : null}
 

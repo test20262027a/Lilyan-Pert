@@ -31,6 +31,8 @@ export default function ProductTitle({
   name,
   className = '',
   title,
+  minScale = MIN_SCALE,
+  minPx = MIN_PX,
   ...rest
 }) {
   const ref = useRef(null);
@@ -50,7 +52,7 @@ export default function ProductTitle({
       el.style.fontSize = '';
       const base = parseFloat(getComputedStyle(el).fontSize);
       if (!base) return;
-      const min = Math.max(MIN_PX, base * MIN_SCALE);
+      const min = Math.max(minPx, base * minScale);
       let size = base;
       el.style.fontSize = `${size}px`;
       while (size > min && el.scrollWidth > el.clientWidth + 1) {
@@ -75,7 +77,7 @@ export default function ProductTitle({
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => observer.disconnect();
-  }, [text]);
+  }, [text, minScale, minPx]);
 
   return (
     <Tag

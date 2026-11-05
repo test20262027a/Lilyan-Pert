@@ -137,8 +137,11 @@
  */
 .cui-pd {
   --pd-close: 44px;
-  /* the empty header cell the floating Close button occupies */
-  --pd-close-slot: 58px;
+  /* the Close button's own width plus the safety gap it keeps from the heading */
+  --pd-close-gap: calc(var(--pd-close) + 20px);
+  /* the category glyph wrapper — fixed, square, never squeezed by a long name */
+  --pd-icon: 42px;
+  --pd-icon-gap: 12px;
   position: relative;
   direction: ltr;
   display: grid;
@@ -175,27 +178,47 @@
 }
 
 /*
- * Close button · category icon · heading are three separate regions of one grid
- * row, so the title can never run underneath the Close control — whatever the
- * language, the reading direction or the length of the name. `direction: ltr`
- * fixes the physical order of those regions; the heading itself carries the
- * guest's own direction.
+ * The heading is ONE group of three logical regions: the reserved Close-button
+ * zone, the icon + title row, and the subtitle / availability group under it.
+ * The Close control floats at the physical top-left of the sheet in every
+ * language, so its exclusive zone is applied to that same physical edge through
+ * a logical inset — inline-start for LTR, inline-end for RTL — and the heading
+ * itself always begins at the content's logical inline-start edge. Title,
+ * subtitle and badge therefore share one alignment axis that never moves when
+ * the name gets longer, and no region ever needs an absolute offset.
  */
 .cui-pd__head {
-  display: grid;
-  direction: ltr;
-  grid-template-columns: var(--pd-close-slot) auto minmax(0, 1fr);
-  grid-template-areas: 'slot icon title';
-  align-items: center;
-  column-gap: 12px;
   min-width: 0;
+  max-width: 100%;
 }
-.cui-pd__head[data-dir='rtl'] { grid-template-areas: 'slot title icon'; }
+.cui-pd__head[data-dir='ltr'] { padding-inline-start: var(--pd-close-gap); }
+.cui-pd__head[data-dir='rtl'] { padding-inline-end: var(--pd-close-gap); }
+
+.cui-pd__heading {
+  min-width: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  text-align: start;
+}
+/* The icon keeps its own fixed square slot at the logical start of the row and
+   the title takes exactly the width that is left, so a long name reduces its
+   own type instead of pushing the glyph out of the heading. */
+.cui-pd__titlerow {
+  display: flex;
+  align-items: center;
+  gap: var(--pd-icon-gap);
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
 .cui-pd__caticon {
-  grid-area: icon;
-  width: 46px;
-  height: 46px;
-  flex: none;
+  width: var(--pd-icon);
+  height: var(--pd-icon);
+  flex: 0 0 auto;
+  aspect-ratio: 1 / 1;
   display: grid;
   place-items: center;
   border-radius: 15px;
@@ -212,28 +235,30 @@
     inset 0 -1px 0 color-mix(in srgb, var(--pd-ink, var(--primary)) 18%, transparent),
     0 10px 20px -12px color-mix(in srgb, var(--pd-ink, var(--primary)) 55%, transparent);
 }
-.cui-pd__heading {
-  grid-area: title;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
 /* The sheet's title is the shared ProductTitle: one line, the complete name,
-   never ellipsised, sized to the real width it gets and never clipped. */
+   never ellipsised, sized to the real width it gets and never clipped. It only
+   ever owns the room the fixed icon leaves over. */
 .cui-pd__name {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
   margin: 0;
-  font-size: clamp(22px, 2.1vw, 30px);
+  font-size: clamp(24px, 2.1vw, 30px);
   font-weight: 850;
   color: var(--text);
 }
 .cui-pd__cat {
+  max-width: 100%;
   font-size: 12.5px;
   font-weight: 750;
   color: var(--muted);
 }
 
-.cui-pd__status { display: flex; }
+.cui-pd__status {
+  display: flex;
+  max-width: 100%;
+  margin-top: 5px;
+}
 .cui-pd__stock {
   display: inline-flex;
   align-items: center;
@@ -620,14 +645,16 @@
 @media (max-width: 1040px) {
   .cui-pd {
     --pd-close: 42px;
-    --pd-close-slot: 54px;
+    --pd-close-gap: calc(var(--pd-close) + 18px);
+    --pd-icon: 40px;
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   }
   .cui-pd__info { padding: 18px 20px 18px; gap: 12px; }
   .cui-pd__action { flex: 0 1 200px; }
   .cui-pd__media { padding: 14px; }
   .cui-pd__shot { min-height: clamp(230px, 34vh, 400px); }
-  .cui-pd__caticon { width: 42px; height: 42px; border-radius: 14px; }
+  .cui-pd__name { font-size: clamp(23px, 2.1vw, 27px); }
+  .cui-pd__caticon { border-radius: 14px; }
 }
 
 /* Stacked as soon as two columns would squeeze the title or the price. */
@@ -635,7 +662,10 @@
   .cui-pd-overlay { padding: 0; align-items: end; }
   .cui-pd {
     --pd-close: 40px;
-    --pd-close-slot: 0px;
+    /* the Close button floats over the photograph here, above the information
+       block, so the heading needs no reserved zone of its own */
+    --pd-close-gap: 0px;
+    --pd-icon: 40px;
     grid-template-columns: minmax(0, 1fr);
     width: 100%;
     max-width: 560px;
@@ -667,6 +697,7 @@
     padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px));
     gap: 11px;
   }
+  .cui-pd__name { font-size: clamp(19px, 3.4vw, 22px); }
   .cui-pd__foot {
     flex-wrap: wrap;
     gap: 10px;
@@ -680,9 +711,10 @@
 }
 
 @media (max-width: 420px) {
+  .cui-pd { --pd-icon: 34px; }
   .cui-pd__name { font-size: 21px; }
   .cui-pd__amount { font-size: 22px; }
-  .cui-pd__caticon { width: 38px; height: 38px; border-radius: 13px; }
+  .cui-pd__caticon { border-radius: 12px; }
   .cui-pd__info { padding-inline: 14px; }
 }
 
