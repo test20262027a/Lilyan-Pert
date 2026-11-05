@@ -1643,6 +1643,8 @@ export default {
   reset_records_label: 'records',
   reset_empty_card: 'No records yet',
   reset_select: 'Select for reset',
+  reset_impact_short: 'Related data ({count})',
+  reset_selected_count: '{count} selected',
   /* Dependency names. Every related-module chip resolves through this family,
      so no internal module identifier is ever printed as a label. */
   reset_mod_order_items: 'Order items',

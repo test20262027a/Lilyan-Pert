@@ -1642,6 +1642,8 @@ export default {
   reset_records_label: 'تۆمار',
   reset_empty_card: 'هیچ تۆمارێک نییە',
   reset_select: 'هەڵبژێرە بۆ سڕینەوە',
+  reset_impact_short: 'داتای پەیوەندیدار ({count})',
+  reset_selected_count: '{count} هەڵبژێردراو',
   reset_mod_order_items: 'بڕگەکانی داواکاری',
   reset_mod_order_audit: 'مێژووی دۆخی داواکاری',
   reset_mod_receipt_prints: 'وەسڵە چاپکراوەکان',

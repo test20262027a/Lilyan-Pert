@@ -1641,6 +1641,8 @@ export default {
   reset_records_label: 'رکورد',
   reset_empty_card: 'هنوز رکوردی وجود ندارد',
   reset_select: 'انتخاب برای بازنشانی',
+  reset_impact_short: 'داده‌های مرتبط ({count})',
+  reset_selected_count: '{count} انتخاب‌شده',
   reset_mod_order_items: 'اقلام سفارش',
   reset_mod_order_audit: 'تاریخچه وضعیت سفارش',
   reset_mod_receipt_prints: 'رسیدهای چاپ‌شده',

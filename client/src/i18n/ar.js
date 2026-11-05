@@ -1639,6 +1639,8 @@ export default {
   reset_records_label: 'سجل',
   reset_empty_card: 'لا توجد سجلات بعد',
   reset_select: 'تحديد لإعادة التعيين',
+  reset_impact_short: 'بيانات مرتبطة ({count})',
+  reset_selected_count: '{count} محدّد',
   reset_mod_order_items: 'عناصر الطلب',
   reset_mod_order_audit: 'سجل حالات الطلب',
   reset_mod_receipt_prints: 'الإيصالات المطبوعة',

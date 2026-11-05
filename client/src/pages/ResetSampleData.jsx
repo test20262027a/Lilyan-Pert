@@ -27,19 +27,19 @@ import '../reset.css';
 
 /** Icon and tone per module. Each module owns a colour of its own. */
 const MODULE_VISUALS = {
-  orders: { icon: 'cart', tone: 'orange' },
+  orders: { icon: 'cart', tone: 'red' },
   visits: { icon: 'chartBars', tone: 'sky' },
-  reviews: { icon: 'message', tone: 'violet' },
-  advertisements: { icon: 'megaphone', tone: 'amber' },
-  tables: { icon: 'qr', tone: 'teal' },
-  promotions: { icon: 'percent', tone: 'pink' },
-  products: { icon: 'package', tone: 'indigo' },
-  categories: { icon: 'layers', tone: 'grape' },
-  staff: { icon: 'users', tone: 'rose' },
+  reviews: { icon: 'star', tone: 'gold' },
+  advertisements: { icon: 'megaphone', tone: 'violet' },
+  tables: { icon: 'qr', tone: 'mint' },
+  promotions: { icon: 'percent', tone: 'amber' },
+  products: { icon: 'package', tone: 'teal' },
+  categories: { icon: 'layers', tone: 'cyan' },
+  staff: { icon: 'users', tone: 'indigo' },
   suggestions: { icon: 'trendUp', tone: 'lime' },
   notifications: { icon: 'bell', tone: 'blue' },
   activity: { icon: 'history', tone: 'slate' },
-  media: { icon: 'image', tone: 'cyan' },
+  media: { icon: 'image', tone: 'grape' },
   settings: { icon: 'settings', tone: 'graphite' },
   branding: { icon: 'store', tone: 'sand' },
   texts: { icon: 'type', tone: 'plum' },
@@ -269,7 +269,7 @@ export default function ResetSampleData() {
           type="button"
           role="tab"
           aria-selected={mode === 'sample'}
-          className={`rs-mode ${mode === 'sample' ? 'is-on' : ''}`}
+          className={`rs-mode rs-mode--sample ${mode === 'sample' ? 'is-on' : ''}`}
           onClick={() => switchMode('sample')}
         >
           <span className="rs-mode__ico" aria-hidden="true">
@@ -284,7 +284,7 @@ export default function ResetSampleData() {
           type="button"
           role="tab"
           aria-selected={mode === 'data'}
-          className={`rs-mode rs-mode--danger ${mode === 'data' ? 'is-on' : ''}`}
+          className={`rs-mode rs-mode--data ${mode === 'data' ? 'is-on' : ''}`}
           onClick={() => switchMode('data')}
         >
           <span className="rs-mode__ico" aria-hidden="true">
@@ -303,6 +303,10 @@ export default function ResetSampleData() {
       </div>
 
       <div className="rs-toolbar">
+        <span className={`rs-toolbar__count ${selected.length ? 'is-on' : ''}`}>
+          <Icon name={selected.length ? 'checkCircle' : 'layers'} size={14} />
+          {t('reset_selected_count', { count: selected.length })}
+        </span>
         <div className="rs-toolbar__actions">
           <button
             type="button"
@@ -330,7 +334,6 @@ export default function ResetSampleData() {
           >
             <Icon name="trash" size={14} />
             {mode === 'data' ? t('reset_delete_selected') : t('reset_selected')}
-            {selected.length ? ` (${selected.length})` : ''}
           </button>
         </div>
       </div>

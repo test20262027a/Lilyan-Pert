@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
@@ -5,55 +6,53 @@ import { fmtNumber } from '../../format';
 /*
  * One data module of the Reset Data page.
  *
- * Compact by construction: the icon, the localized name and the record count
- * share the first row, the description and the impact notes follow, and the
- * Delete action closes the card. Nothing has a fixed height, so a module with
- * one note is never stretched to the size of a module with four.
+ * One identical structure for every module: a raised 3D icon with the
+ * selection badge beside it, the localized name, the description, the live
+ * record count, the safety notes, an optional Details expansion for long
+ * dependency lists, and the Delete action pinned to the bottom edge.
  *
- * The whole card toggles selection (that is what the bulk toolbar acts on); the
- * Delete button in the footer opens the confirmation for this module alone.
+ * The whole card is the selection control (that is what the bulk toolbar acts
+ * on). Nothing is drawn while the module is unselected — the badge slot keeps
+ * its space, so turning selection on never moves the layout. The Delete button
+ * in the footer opens the confirmation for this module alone.
  */
 export default function ResetModuleCard({ card, mode, selected, busy, onToggle, onDelete }) {
   const { t, locale } = useI18n();
   const empty = card.count === 0;
   const disabled = empty || busy;
 
-  const depList = card.dependents
-    .map((d) => `${t(d.labelKey)} (${fmtNumber(d.count, locale)})`)
-    .join(' · ');
+  const toggle = () => {
+    if (!disabled) onToggle();
+  };
 
   return (
     <article
-      className={[
-        'rs-card',
-        card.risk ? 'rs-card--risk' : '',
-        selected ? 'is-on' : '',
-        empty ? 'is-empty' : '',
-      ].filter(Boolean).join(' ')}
-      onClick={() => !disabled && onToggle()}
+      className={['rs-card', `rs-tone--${card.tone}`, selected ? 'is-on' : '', empty ? 'is-empty' : '']
+        .filter(Boolean)
+        .join(' ')}
+      role="button"
+      tabIndex={disabled ? -1 : 0}
+      aria-pressed={selected}
+      aria-disabled={disabled || undefined}
+      onClick={toggle}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          toggle();
+        }
+      }}
     >
-      <div className="rs-card__head">
-        <span className={`rs-card__icon rs-tone--${card.tone}`} aria-hidden="true">
-          <Icon name={card.icon} size={20} />
+      <div className="rs-card__top">
+        <span className="rs-card__icon" aria-hidden="true">
+          <Icon name={card.icon} size={23} />
         </span>
-        <div className="rs-card__ident">
-          <h3 className="rs-card__name">{card.label}</h3>
-          <p className="rs-card__desc">{card.desc}</p>
-        </div>
-        <button
-          type="button"
-          className="rs-tick"
-          aria-pressed={selected}
-          aria-label={`${t('reset_select')} — ${card.label}`}
-          disabled={disabled}
-          onClick={(event) => {
-            event.stopPropagation();
-            onToggle();
-          }}
-        >
-          {selected ? <Icon name="check" size={13} /> : null}
-        </button>
+        <span className={`rs-card__badge ${selected ? 'is-on' : ''}`} aria-hidden="true">
+          <Icon name="check" size={16} />
+        </span>
       </div>
+
+      <h3 className="rs-card__name">{card.label}</h3>
+      <p className="rs-card__desc">{card.desc}</p>
 
       <div className="rs-card__meta">
         <span className={`rs-card__count ${card.risk ? 'is-risk' : ''}`}>
@@ -63,7 +62,7 @@ export default function ResetModuleCard({ card, mode, selected, busy, onToggle, 
         {card.kept > 0 ? (
           <span className="rs-card__kept">{t('reset_records_total', { count: fmtNumber(card.kept, locale) })}</span>
         ) : null}
-        {card.risk ? (
+        {card.risk && !empty ? (
           <span className="rs-card__risk">
             <Icon name="shield" size={11} />
             {t('reset_risk_badge')}
@@ -71,20 +70,43 @@ export default function ResetModuleCard({ card, mode, selected, busy, onToggle, 
         ) : null}
       </div>
 
-      {empty ? (
-        <p className="rs-card__empty">
-          <Icon name="checkCircle" size={13} />
-          {t('reset_empty_card')}
-        </p>
-      ) : (
-        <>
-          {card.warning ? <p className="rs-card__warn">{t(card.warning)}</p> : null}
-          {depList ? <p className="rs-card__dep">{t('reset_impact', { list: depList })}</p> : null}
-          {card.blocked > 0 ? (
-            <p className="rs-card__warn">{t('reset_blocked_note', { count: fmtNumber(card.blocked, locale) })}</p>
-          ) : null}
-        </>
-      )}
+      <div className="rs-card__notes">
+        {empty ? (
+          <p className="rs-card__empty">
+            <Icon name="checkCircle" size={13} />
+            {t('reset_empty_card')}
+          </p>
+        ) : (
+          <>
+            {card.warning ? <p className="rs-card__warn">{t(card.warning)}</p> : null}
+            {card.blocked > 0 ? (
+              <p className="rs-card__warn">
+                {t('reset_blocked_note', { count: fmtNumber(card.blocked, locale) })}
+              </p>
+            ) : null}
+            {card.dependents.length ? (
+              <details
+                className="rs-card__more"
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+              >
+                <summary>
+                  <span>{t('reset_impact_short', { count: card.dependents.length })}</span>
+                  <Icon name="chevronDown" size={13} />
+                </summary>
+                <ul>
+                  {card.dependents.map((dep) => (
+                    <li key={dep.key}>
+                      <span>{t(dep.labelKey)}</span>
+                      <strong>{fmtNumber(dep.count, locale)}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+          </>
+        )}
+      </div>
 
       <div className="rs-card__foot">
         <button
