@@ -14,7 +14,7 @@ import './accountModals.css';
  * with a leading icon, a clear label and a themed focus ring. The validation and
  * the endpoint call are unchanged — only the surface was redesigned.
  */
-export default function ChangePasswordModal({ onClose, onSaved }) {
+export default function ChangePasswordModal({ onClose, onSaved, required = false }) {
   const { t } = useI18n();
   const [values, setValues] = useState({
     current_password: '',
@@ -49,7 +49,9 @@ export default function ChangePasswordModal({ onClose, onSaved }) {
         new_password: values.new_password,
       });
       onSaved();
-      onClose();
+      /* A credential issued by an administrator has to be replaced before the
+         panel opens: the dialog stays until the session says it is done. */
+      if (!required) onClose();
     } catch (err) {
       if (err.code === 'CURRENT_PASSWORD_INCORRECT') setError(t('user_current_password_wrong'));
       else if (err.code === 'WEAK_PASSWORD') setError(t('auth_weak_password'));
@@ -66,15 +68,15 @@ export default function ChangePasswordModal({ onClose, onSaved }) {
       icon="key"
       section="users"
       className="modal--password"
-      onClose={onClose}
+      onClose={required ? undefined : onClose}
       footer={
         <ModalActions
           primaryLabel={t('action_save')}
           primaryIcon="check"
           onPrimary={submit}
           loading={busy}
-          secondaryLabel={t('action_cancel')}
-          onSecondary={onClose}
+          secondaryLabel={required ? undefined : t('action_cancel')}
+          onSecondary={required ? undefined : onClose}
           secondaryDisabled={busy}
         />
       }
@@ -86,7 +88,7 @@ export default function ChangePasswordModal({ onClose, onSaved }) {
           <span className="amodal__notice-icon" aria-hidden="true">
             <Icon name="shield" size={15} />
           </span>
-          <span>{t('user_password_tip')}</span>
+          <span>{required ? t('user_must_change_password') : t('user_password_tip')}</span>
         </div>
 
         <div className="amodal__stack">

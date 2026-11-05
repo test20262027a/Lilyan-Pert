@@ -15,6 +15,7 @@ export default {
   nav_customer_menu: 'مێنیۆی کڕیار',
   nav_promotions: 'پرۆمۆشنەکان',
 
+  action_done: 'تەواو',
   action_save: 'پاشەکەوتکردن',
   action_cancel: 'هەڵوەشاندنەوە',
   action_close: 'داخستن',
@@ -1649,7 +1650,18 @@ export default {
   reset_mod_activity_hidden: 'تۆمارە شاراوەکانی چالاکی',
   reset_mod_uploaded_files: 'وێنە بارکراوەکان',
   user_protected_owner: 'هەژماری پارێزراو',
-  user_protected_owner_hint: 'ئەم هەژماری خاوەنی سیستەم ناتوانرێت بسڕدرێتەوە.',
+  user_protected_owner_hint: 'ئەم هەژماری خاوەنی سیستەم ناتوانرێت بگۆڕدرێت، ناچالاک بکرێت یان بسڕدرێتەوە.',
+  user_system_owner: 'خاوەنی سیستەم',
+  user_reset_password: 'ڕێکخستنی وشەی نهێنی',
+  user_reset_password_hint: 'وشەیەکی نهێنی کاتی بۆ ئەم هەژمارە دروست دەکرێت. وشەی نهێنی ئێستای دەستبەجێ کار ناکات.',
+  user_temp_password_generate: 'دروستکردنی وشەی نهێنی کاتی',
+  user_temp_password_once: 'ئەم وشەی نهێنی تەنها جارێک پیشان دەدرێت. ئێستا کۆپی بکە و بیدە بە خاوەنی هەژمارەکە.',
+  user_temp_password_never_shown: 'هیچ وشەیەکی نهێنی بە شێوەی خوێندنەوە هەڵنەگیراوە یان پیشان نادرێت — هەژمارەکە تەنها هاشێکی پارێزراو هەڵدەگرێت.',
+  user_temp_password_copy: 'کۆپیکردنی وشەی نهێنی',
+  user_temp_password_copied: 'کۆپی کرا',
+  user_must_change_password: 'ئەم هەژمارە دەبێت لە چوونەژوورەوەی داهاتوودا وشەی نهێنی نوێ هەڵبژێرێت.',
+  user_role_manager_hint: 'بەڕێوەبردنی تەواو، بەبێ کۆنترۆڵکردنی خاوەنی سیستەم.',
+  user_role_staff_hint: 'تەنها ئەو بەشانەی کە لە خوارەوە دەیانبەخشی.',
 
   /* Header notification feed */
   dash_notifications: 'ئاگادارکردنەوەکان',

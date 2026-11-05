@@ -7,6 +7,8 @@ import useDocumentMetadata from '../hooks/useDocumentMetadata';
 import AppHeader from './header/AppHeader';
 import Sidebar from './sidebar/Sidebar';
 import AnimatedBackToTop from './backToTop/AnimatedBackToTop';
+import ChangePasswordModal from './users/ChangePasswordModal';
+import { useAuth } from '../context/AuthContext';
 import { syncBrandIcons } from '../brandIcons';
 
 /*
@@ -18,6 +20,7 @@ function Shell() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { business, error, reload } = useBusiness();
   const { pathname } = useLocation();
+  const { mustChangePassword, refresh } = useAuth();
 
   // The tab shows this section and this business, in this language.
   useDocumentMetadata(business);
@@ -77,6 +80,13 @@ function Shell() {
         {/* One control for every admin screen. */}
         <AnimatedBackToTop />
       </div>
+
+      {/* An account still holding an administrator-issued temporary password
+          may only replace it: the dialog has no Cancel and cannot be dismissed,
+          and it disappears as soon as the session says the password is its own. */}
+      {mustChangePassword ? (
+        <ChangePasswordModal required onSaved={() => refresh()} />
+      ) : null}
     </div>
   );
 }

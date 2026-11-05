@@ -92,7 +92,15 @@ export const ALL_PERMISSIONS = PERMISSION_CATALOG.map((p) => p.key);
 const ALL = new Set(ALL_PERMISSIONS);
 
 /** Elevated abilities only an owner may ever hold or grant. */
-const OWNER_ONLY = ['backup.full', 'users.view', 'users.create', 'users.edit', 'users.delete', 'reset_sample.full'];
+/*
+ * Nothing here is withheld from a Manager: a Manager holds the full normal
+ * administrative set — user management, backups, authorised data cleanup
+ * included. What a Manager may never do is reach the protected system owner,
+ * and that boundary is not a module permission: it is enforced per request in
+ * the API (see lib/owner.js and routes/manage.js), where every owner-identity
+ * operation is refused whatever permissions the caller holds.
+ */
+const OWNER_ONLY = [];
 
 /** What each role can ever hold — assignment is validated against this. */
 export const ROLE_TEMPLATE = {

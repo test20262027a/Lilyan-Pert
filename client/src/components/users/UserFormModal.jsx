@@ -1,7 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import Icon from '../Icon';
-import { Select } from '../ui';
 import { useI18n } from '../../i18n';
 import UsersArtwork from './UsersArtwork';
 import UserPhotoField from './UserPhotoField';
@@ -200,8 +199,13 @@ export default function UserFormModal({
   // double click on Cancel can never stack two dialogs.
   const [askDiscard, setAskDiscard] = useState(false);
 
+  /*
+   * Two roles, and only two: Manager and Employee. `owner` is the protected
+   * system identity's own role — it is never offered here, and the server
+   * refuses any request that tries to hand it out.
+   */
   const roleOptions = useMemo(
-    () => ['owner', 'manager', 'staff', 'customer'].filter((key) => (grantable[key] || []).length > 0),
+    () => ['manager', 'staff'].filter((key) => (grantable[key] || []).length > 0),
     [grantable],
   );
   const currentGrantable = grantable[role] || [];
@@ -231,9 +235,9 @@ export default function UserFormModal({
     else if (password && password.length < 8) found.password = t('auth_weak_password');
     if (confirmNeeded && !confirmPassword) found.confirm = t('user_confirm_required');
     else if (confirmNeeded && confirmPassword !== password) found.confirm = t('user_password_mismatch');
-    if (!role) found.role = t('user_required_field');
+    if (!role || !roleOptions.includes(role)) found.role = t('user_role_not_assignable');
     return found;
-  }, [fullName, cleanUsername, user?.username, password, confirmPassword, passwordNeeded, confirmNeeded, role, t]);
+  }, [fullName, cleanUsername, user?.username, password, confirmPassword, passwordNeeded, confirmNeeded, role, roleOptions, t]);
 
   const hasErrors = Object.keys(errors).length > 0;
   const touch = (field) => setTouched((current) => ({ ...current, [field]: true }));
@@ -500,16 +504,37 @@ export default function UserFormModal({
           </Section>
 
           <Section title={t('user_section_role')}>
+            {/* Both roles as their own beveled tile: the glyph, the name and a
+                one-line description of the access each one carries. Only one can
+                be chosen, and neither of them is the system owner. */}
+            <div className="um-roles" role="radiogroup" aria-label={t('user_role')}>
+              {roleOptions.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  role="radio"
+                  aria-checked={role === key}
+                  className={`um-role ${role === key ? 'is-on' : ''}`.trim()}
+                  onClick={() => changeRole(key)}
+                >
+                  <span className="um-role__icon" aria-hidden="true">
+                    <Icon name={key === 'manager' ? 'shieldCheck' : 'user'} size={20} />
+                  </span>
+                  <span className="um-role__text">
+                    <strong>{t(`role_${key}`)}</strong>
+                    <small>{t(`user_role_${key}_hint`)}</small>
+                  </span>
+                  <span className="um-role__check" aria-hidden="true">
+                    <Icon name="check" size={12} />
+                  </span>
+                </button>
+              ))}
+            </div>
+            {!roleOptions.includes(role) ? (
+              <p className="um-field__error" role="alert">{t('user_role_not_assignable')}</p>
+            ) : null}
+
             <div className="um-fields um-fields--2">
-              <label className="um-field">
-                <FieldLabel label={t('user_role')} required />
-                <Select
-                  value={role}
-                  onChange={changeRole}
-                  aria-label={t('user_role')}
-                  options={roleOptions.map((key) => ({ value: key, label: t(`role_${key}`) }))}
-                />
-              </label>
               <label className="um-field">
                 <span className="um-field__label">{t('user_assigned_business')}</span>
                 <input className="um-input" value={business?.name || ''} readOnly disabled />

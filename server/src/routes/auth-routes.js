@@ -112,7 +112,9 @@ router.post(
     loginFailures.delete(key);
     await q('UPDATE users SET last_login_at = now() WHERE id = $1', [user.id]);
     setSessionCookie(res, signToken({ uid: user.id }));
-    res.json({ ok: true });
+    // A credential an administrator issued must be replaced before the panel
+    // opens; the client shows only the password-change form until it is.
+    res.json({ ok: true, must_change_password: Boolean(user.must_change_password) });
   }),
 );
 
@@ -159,6 +161,7 @@ router.get(
         locale: req.user.locale,
         profile_image_url: req.user.profile_image_url || null,
         avatar_type: req.user.avatar_type || 'default',
+        must_change_password: Boolean(req.user.must_change_password),
       },
       memberships: req.memberships,
       active_business_id: active,
@@ -209,10 +212,12 @@ router.post(
     if (!verifyPassword(current, rows[0]?.password_hash)) {
       return res.status(400).json({ error: 'CURRENT_PASSWORD_INCORRECT' });
     }
-    await q('UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1', [
-      req.user.id,
-      hashPassword(next),
-    ]);
+    // Choosing a password of one's own ends the temporary-credential state.
+    await q(
+      `UPDATE users SET password_hash = $2, must_change_password = false, updated_at = now()
+        WHERE id = $1`,
+      [req.user.id, hashPassword(next)],
+    );
     res.json({ ok: true });
   }),
 );

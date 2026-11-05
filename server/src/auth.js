@@ -118,7 +118,7 @@ export async function attachSession(req, _res, next) {
     if (payload?.uid) {
       const { rows } = await q(
         `SELECT id, email, full_name, phone, is_super_admin, locale,
-                profile_image_url, avatar_type
+                profile_image_url, avatar_type, must_change_password
            FROM users WHERE id = $1`,
         [payload.uid],
       );

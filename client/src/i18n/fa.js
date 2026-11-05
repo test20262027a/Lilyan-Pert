@@ -15,6 +15,7 @@ export default {
   nav_customer_menu: 'منوی مشتری',
   nav_promotions: 'تخفیف‌ها و پروموشن‌ها',
 
+  action_done: 'انجام شد',
   action_save: 'ذخیره',
   action_cancel: 'انصراف',
   action_close: 'بستن',
@@ -1648,7 +1649,18 @@ export default {
   reset_mod_activity_hidden: 'موارد پنهان‌شده فعالیت',
   reset_mod_uploaded_files: 'تصاویر بارگذاری‌شده',
   user_protected_owner: 'حساب محافظت‌شده',
-  user_protected_owner_hint: 'این حساب مالک سیستم قابل حذف نیست.',
+  user_protected_owner_hint: 'این حساب مالک سیستم قابل تغییر، غیرفعال‌سازی یا حذف نیست.',
+  user_system_owner: 'مالک سیستم',
+  user_reset_password: 'بازنشانی رمز عبور',
+  user_reset_password_hint: 'یک رمز موقت برای این حساب ساخته می‌شود. رمز فعلی بی‌درنگ باطل می‌شود.',
+  user_temp_password_generate: 'ساخت رمز موقت',
+  user_temp_password_once: 'این رمز فقط یک بار نمایش داده می‌شود. همین حالا کپی کنید و به صاحب حساب بدهید.',
+  user_temp_password_never_shown: 'هیچ رمزی به شکل خوانا ذخیره یا نمایش داده نمی‌شود؛ حساب فقط یک هش امن نگه می‌دارد.',
+  user_temp_password_copy: 'کپی رمز',
+  user_temp_password_copied: 'کپی شد',
+  user_must_change_password: 'این حساب باید در ورود بعدی رمز جدیدی انتخاب کند.',
+  user_role_manager_hint: 'مدیریت کامل، بدون کنترل مالک سیستم.',
+  user_role_staff_hint: 'فقط بخش‌هایی که در پایین اجازه می‌دهید.',
 
   /* Header notification feed */
   dash_notifications: 'اعلان‌ها',

@@ -13,6 +13,7 @@ import UsersArtwork from '../components/users/UsersArtwork';
 import UserFormModal from '../components/users/UserFormModal';
 import ChangePasswordModal from '../components/users/ChangePasswordModal';
 import ProfileModal from '../components/users/ProfileModal';
+import ResetPasswordModal from '../components/users/ResetPasswordModal';
 import UserListRow from '../components/users/UserListRow';
 import '../users.css';
 
@@ -27,7 +28,14 @@ import '../users.css';
  * enforce role rank, module permissions and last-owner protection on their own.
  */
 
-const EMPTY = { users: [], grantable: {}, presets: {}, mandatory: {}, business: null };
+const EMPTY = {
+  users: [],
+  roles: ['manager', 'staff'],
+  grantable: {},
+  presets: {},
+  mandatory: {},
+  business: null,
+};
 
 /* Why a list request can fail, in the reader's language. */
 const LOAD_ERROR_KEYS = {
@@ -77,6 +85,7 @@ export default function Users() {
   const [modal, setModal] = useState(null);
   const [confirm, setConfirm] = useState(null);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [resetTarget, setResetTarget] = useState(null);
   const [profileOpen, setProfileOpen] = useState(false);
   const [creatorOpen, setCreatorOpen] = useState(false);
   const requestId = useRef(0);
@@ -210,9 +219,15 @@ export default function Users() {
     else toggleStatus(member);
   };
 
+  /*
+   * The role filter lists what this administrator may actually see: Manager and
+   * Employee for everyone, plus the protected Owner row for the owner's own
+   * view. The list comes from the server with the users, so an edited page
+   * cannot add a role the API would refuse.
+   */
   const roleOptions = [
     { value: 'all', label: t('user_filter_role_all') },
-    ...['owner', 'manager', 'staff', 'customer'].map((key) => ({
+    ...(data.roles || ['manager', 'staff']).map((key) => ({
       value: key,
       label: t(`role_${key}`),
     })),
@@ -389,6 +404,7 @@ export default function Users() {
               onEdit={() => setModal({ mode: 'edit', user: member })}
               onVisibility={() => changeVisibility(member)}
               onDelete={() => setConfirm({ kind: 'delete', user: member })}
+              onResetPassword={() => setResetTarget(member)}
             />
           ))
         )}
@@ -437,6 +453,12 @@ export default function Users() {
           onClose={() => setPasswordOpen(false)}
           onSaved={() => toast.success(t('user_password_changed'))}
         />
+      ) : null}
+
+      {/* A credential issued here is shown once and then gone: the account is
+          flagged to choose its own password at the next sign-in. */}
+      {resetTarget ? (
+        <ResetPasswordModal member={resetTarget} onClose={() => setResetTarget(null)} />
       ) : null}
 
       {profileOpen ? (

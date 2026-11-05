@@ -27,6 +27,20 @@ ALTER TABLE users ADD CONSTRAINT users_avatar_type_check
 -- identifier such as staff@lilyanpert.app is not a mailbox, so a recovery
 -- address has to be stored separately when the owner wants one.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS recovery_email text;
+
+-- A credential issued by an administrator (a temporary password) must be
+-- replaced by the account holder before the panel opens. The plaintext is never
+-- stored: only this flag remains after the one-time hand-over.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS must_change_password boolean NOT NULL DEFAULT false;
+
+-- Exactly one system owner, and only on the platform's own Creator address.
+-- The flag is the authority the API checks, so the database itself refuses a
+-- second owner row and refuses the flag on any other address.
+ALTER TABLE users DROP CONSTRAINT IF EXISTS users_super_admin_email_check;
+ALTER TABLE users ADD CONSTRAINT users_super_admin_email_check
+  CHECK (NOT is_super_admin OR lower(email) = 'superadmin@work.app');
+CREATE UNIQUE INDEX IF NOT EXISTS users_one_super_admin ON users (is_super_admin)
+  WHERE is_super_admin;
 -- Last successful sign-in, written by the login route only.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at timestamptz;
 

@@ -19,6 +19,12 @@ import {
   suffixLocked,
 } from '../lib/identity.js';
 import { recordActivity } from '../lib/activity.js';
+import {
+  PROTECTED_OWNER_EMAIL,
+  isProtectedActor,
+  protectedOwner,
+  temporaryPassword,
+} from '../lib/owner.js';
 import { getVapidKeys, pushTest } from '../lib/push.js';
 import { resolveLanguage } from '../lib/languages.js';
 
@@ -898,7 +904,14 @@ router.delete(
  * stays, so history keeps its attribution. Role rank is the outer boundary and
  * the stored module permission set is the finer one, both enforced here.
  */
-const ASSIGNABLE_ROLES = ['owner', 'manager', 'staff', 'customer'];
+/*
+ * The roles this page hands out: Manager and Employee (stored as `staff`).
+ *
+ * `owner` is deliberately absent. It is a system-reserved role carried only by
+ * the verified protected identity (`users.is_super_admin`, see lib/owner.js),
+ * so no create or edit request — however it is crafted — can hand it out.
+ */
+const ASSIGNABLE_ROLES = ['manager', 'staff'];
 const ROLE_RANK = { customer: 0, staff: 1, manager: 2, owner: 3 };
 
 /*
@@ -941,9 +954,16 @@ function foldSql(column) {
   return `translate(translate(lower(${column}), '${JOINER_CHARS}', ''), '${FOLD_FROM}', '${FOLD_TO}')`;
 }
 
+/**
+ * Active owners of this business. The protected system owner governs it by
+ * platform authority even without a membership row, so it always counts — a
+ * legacy owner-role membership is therefore never "the last owner".
+ */
 async function countOwners(businessId) {
   const { rows } = await q(
-    `SELECT count(*)::int AS c FROM memberships WHERE business_id = $1 AND role = 'owner' AND status = 'active'`,
+    `SELECT (SELECT count(*)::int FROM memberships
+              WHERE business_id = $1 AND role = 'owner' AND status = 'active')
+          + (SELECT count(*)::int FROM users WHERE is_super_admin = true) AS c`,
     [businessId],
   );
   return rows[0].c;
@@ -954,13 +974,25 @@ function actorRank(req) {
   return req.role === 'super_admin' ? 4 : ROLE_RANK[req.role] ?? -1;
 }
 
-/** True when the actor may hand out `role` / act on a membership of that role. */
+/**
+ * True when the actor may act on a membership that currently holds `role`.
+ * The owner role is never handed out here (see canAssignRole below); the
+ * protected owner — the only identity that may review a legacy owner-role row —
+ * is the sole exception.
+ */
 function canActOnRole(req, role) {
-  if (req.role === 'super_admin') return true;
+  if (role === 'owner') return isProtectedActor(req);
   const rank = ROLE_RANK[role] ?? -1;
-  // An owner may create or manage another owner; anyone else stays strictly below.
-  if (req.role === 'owner') return rank <= ROLE_RANK.owner;
+  if (req.role === 'super_admin') return true;
+  // A manager administers its own peers as well as employees — never the owner
+  // identity itself, which the branch above already refuses.
+  if (req.role === 'owner' || req.role === 'manager') return rank <= ROLE_RANK.manager;
   return rank < actorRank(req);
+}
+
+/** True when `role` may be given to a user through this endpoint. */
+function canAssignRole(req, role) {
+  return ASSIGNABLE_ROLES.includes(role) && canActOnRole(req, role);
 }
 
 /** The permissions object a save should store (NULL = follow the role template). */
@@ -1031,6 +1063,17 @@ router.get(
     const params = [req.businessId];
     const where = ['m.business_id = $1'];
 
+    /*
+     * Owner visibility. The protected system owner row is only ever part of this
+     * answer for the protected owner itself — the filter lives in SQL, so a
+     * Manager's search, role filter, counters and direct requests cannot reach
+     * it at all.
+     */
+    const seesOwner = isProtectedActor(req);
+    // No owner-role row is part of a Manager's world either: the owner role is
+    // the protected identity's, and a legacy row carrying it stays owner-only.
+    if (!seesOwner) where.push("u.is_super_admin = false AND m.role <> 'owner'");
+
     // Partial matching across the identity fields the administrator may read:
     // name, email and phone. `%` / `_` typed by the user stay literal.
     const term = foldTerm(String(req.query.q || '').slice(0, 80));
@@ -1044,9 +1087,15 @@ router.get(
           OR ${foldSql('u.phone')} LIKE ${at} ESCAPE '\\')`,
       );
     }
-    if (ASSIGNABLE_ROLES.includes(req.query.role)) {
-      params.push(req.query.role);
-      where.push(`m.role = $${params.length}`);
+    const roleFilter = String(req.query.role || '');
+    if ([...ASSIGNABLE_ROLES, 'owner'].includes(roleFilter)) {
+      if (roleFilter === 'owner' && !seesOwner) {
+        // Asking a Manager for the owner role answers with nothing at all.
+        where.push('1 = 0');
+      } else {
+        params.push(roleFilter);
+        where.push(`m.role = $${params.length}`);
+      }
     }
     if (['active', 'disabled'].includes(req.query.status)) {
       params.push(req.query.status);
@@ -1099,26 +1148,75 @@ router.get(
       ASSIGNABLE_ROLES.map((role) => [role, grantablePermissions(role, req.permissions)]),
     );
 
-    // Counts describe the whole membership list, never the filtered page: the
-    // three tiles must keep meaning "this business", whatever the admin types
-    // into the search box or picks in the filters.
+    /*
+     * The protected owner's own row. It has no business membership — the owner
+     * governs the business by platform authority — so it is read from the
+     * identity record and shown first, to that account only, marked as the
+     * system owner and never as a deletable member.
+     */
+    let ownerRow = null;
+    if (seesOwner) {
+      const owner = await protectedOwner();
+      if (owner) {
+        const term = foldTerm(String(req.query.q || '').slice(0, 80));
+        const matches = !term || [owner.full_name, owner.email]
+          .filter(Boolean)
+          .some((value) => foldTerm(value).includes(term));
+        const roleOk = !roleFilter || roleFilter === 'owner';
+        const statusOk = req.query.status !== 'disabled';
+        if (matches && roleOk && statusOk) {
+          ownerRow = {
+            membership_id: null,
+            id: owner.id,
+            email: owner.email,
+            ...splitIdentifier(owner.email),
+            recovery_email: null,
+            full_name: owner.full_name,
+            phone: owner.phone,
+            locale: owner.locale,
+            profile_image_url: owner.profile_image_url || null,
+            avatar_type: owner.avatar_type || 'default',
+            role: 'owner',
+            status: 'active',
+            created_at: owner.created_at,
+            permissions: effectivePermissions('owner', null),
+            full_access: true,
+            protected: true,
+            system_owner: true,
+          };
+        }
+      }
+    }
+
+    // Counts describe the whole visible membership list, never the filtered
+    // page: the three tiles must keep meaning "this business", whatever the
+    // admin types into the search box — and for a Manager the protected owner
+    // is not part of that list at all.
     const totals = await q(
       `SELECT count(*)::int AS total,
-              count(*) FILTER (WHERE status = 'active')::int AS active,
-              count(*) FILTER (WHERE status = 'disabled')::int AS disabled
-         FROM memberships WHERE business_id = $1`,
+              count(*) FILTER (WHERE m.status = 'active')::int AS active,
+              count(*) FILTER (WHERE m.status = 'disabled')::int AS disabled
+         FROM memberships m JOIN users u ON u.id = m.user_id
+        WHERE m.business_id = $1${seesOwner ? '' : " AND u.is_super_admin = false AND m.role <> 'owner'"}`,
       [req.businessId],
     );
+    if (ownerRow) {
+      totals.rows[0].total += 1;
+      totals.rows[0].active += 1;
+    }
 
     const creator = await creatorRecord();
     const businessRow = business.rows[0] || null;
     const suffix = brandSuffix(businessRow || {});
 
     res.json({
-      users,
+      users: ownerRow ? [ownerRow, ...users] : users,
       counts: totals.rows[0],
       can_manage: true,
       actor_role: req.role,
+      // Roles this page may show and hand out: Manager and Employee, plus the
+      // protected Owner row for the owner's own view.
+      roles: seesOwner ? ['owner', ...ASSIGNABLE_ROLES] : ASSIGNABLE_ROLES,
       grantable,
       presets: rolePresets(),
       mandatory: MANDATORY,
@@ -1150,7 +1248,10 @@ router.post(
     const fullName = String(req.body?.full_name || '').trim().slice(0, 120);
     const phone = String(req.body?.phone || '').trim().slice(0, 40) || null;
     const password = String(req.body?.password || '');
-    const role = ASSIGNABLE_ROLES.includes(req.body?.role) ? req.body.role : 'staff';
+    // Only Manager and Employee exist as createable roles; anything else — an
+    // `owner` from a crafted request included — is refused, never downgraded.
+    const role = req.body?.role === undefined ? 'staff' : String(req.body.role);
+    if (!ASSIGNABLE_ROLES.includes(role)) throw bad('ROLE_NOT_ASSIGNABLE');
     const status = req.body?.status === 'disabled' ? 'disabled' : 'active';
 
     // The login identifier is composed here, on the server: the username the
@@ -1165,9 +1266,10 @@ router.post(
     const recovery = recoveryEmail(req.body?.recovery_email);
 
     if (!fullName) throw bad('NAME_REQUIRED');
-    if (!canActOnRole(req, role) || (role === 'owner' && !['owner', 'super_admin'].includes(req.role))) {
-      throw bad('ROLE_NOT_ASSIGNABLE');
-    }
+    if (!canAssignRole(req, role)) throw bad('ROLE_NOT_ASSIGNABLE');
+    // The protected owner identity is never re-created, re-linked or given a
+    // second membership from here.
+    if (email.toLowerCase() === PROTECTED_OWNER_EMAIL) throw conflict('PROTECTED_OWNER');
     const permissions = permissionPayload(req, role, req.body?.permissions);
     // Appearance is optional: no photo, and the neutral avatar unless one is chosen.
     const profileImageUrl = normalizeProfileImageUrl(req.body?.profile_image_url) || null;
@@ -1220,12 +1322,18 @@ router.patch(
   ah(async (req, res) => {
     if (!isUuid(req.params.membershipId)) throw notFound('MEMBERSHIP_NOT_FOUND');
     const { rows } = await q(
-      `SELECT m.*, u.email FROM memberships m JOIN users u ON u.id = m.user_id
+      `SELECT m.*, u.email, u.is_super_admin FROM memberships m JOIN users u ON u.id = m.user_id
         WHERE m.id = $1 AND m.business_id = $2`,
       [req.params.membershipId, req.businessId],
     );
     const membership = rows[0];
     if (!membership) throw notFound('MEMBERSHIP_NOT_FOUND');
+    // The protected owner is invisible — and unaddressable — to every other
+    // administrator, whatever membership id a request happens to carry.
+    if (membership.is_super_admin) {
+      if (!isProtectedActor(req)) throw notFound('MEMBERSHIP_NOT_FOUND');
+      throw conflict('PROTECTED_OWNER');
+    }
     if (!canActOnRole(req, membership.role)) throw bad('ROLE_NOT_ASSIGNABLE');
 
     const self = membership.user_id === req.user.id;
@@ -1234,11 +1342,9 @@ router.patch(
     const nextStatus = b.status === undefined ? null : b.status;
 
     if (nextRole !== null) {
-      if (!ASSIGNABLE_ROLES.includes(nextRole)) throw bad('INVALID_ROLE');
-      if (!canActOnRole(req, nextRole)) throw bad('ROLE_NOT_ASSIGNABLE');
-      if (nextRole === 'owner' && !['owner', 'super_admin'].includes(req.role)) {
-        throw bad('ROLE_NOT_ASSIGNABLE');
-      }
+      // Promotion to `owner` does not exist: the role is system-reserved and is
+      // never handed out to a Manager or an Employee.
+      if (!canAssignRole(req, nextRole)) throw bad('ROLE_NOT_ASSIGNABLE');
       if (self && nextRole !== membership.role) throw conflict('CANNOT_MODIFY_SELF');
     }
     if (nextStatus !== null) {
@@ -1381,7 +1487,12 @@ router.delete(
      * on the verified identity record is the authority; a UI that hides the
      * button is only a convenience on top of this refusal.
      */
-    if (membership.is_super_admin) throw conflict('PROTECTED_OWNER');
+    if (membership.is_super_admin) {
+      // Invisible to every other administrator; explicitly refused to the owner
+      // itself, which may never delete its own protected account.
+      if (!isProtectedActor(req)) throw notFound('MEMBERSHIP_NOT_FOUND');
+      throw conflict('PROTECTED_OWNER');
+    }
     if (membership.user_id === req.user.id) throw conflict('CANNOT_MODIFY_SELF');
     if (membership.role === 'owner' && (await countOwners(req.businessId)) <= 1) {
       throw conflict('LAST_OWNER');
@@ -1409,25 +1520,40 @@ router.post(
   perm('users.edit'),
   ah(async (req, res) => {
     if (!isUuid(req.params.membershipId)) throw notFound('MEMBERSHIP_NOT_FOUND');
-    const password = String(req.body?.password || '');
-    if (password.length < 8) throw bad('WEAK_PASSWORD');
 
     const { rows } = await q(
-      'SELECT * FROM memberships WHERE id = $1 AND business_id = $2',
+      `SELECT m.*, u.is_super_admin
+         FROM memberships m JOIN users u ON u.id = m.user_id
+        WHERE m.id = $1 AND m.business_id = $2`,
       [req.params.membershipId, req.businessId],
     );
     const membership = rows[0];
     if (!membership) throw notFound('MEMBERSHIP_NOT_FOUND');
+    // The owner's own password is only ever changed by the owner, through the
+    // authenticated change-password route — never issued to an administrator.
+    if (membership.is_super_admin) {
+      if (!isProtectedActor(req)) throw notFound('MEMBERSHIP_NOT_FOUND');
+      throw conflict('PROTECTED_OWNER');
+    }
     if (!canActOnRole(req, membership.role)) throw bad('ROLE_NOT_ASSIGNABLE');
     // Your own password goes through /api/auth/change-password, which also
     // verifies the current one.
     if (membership.user_id === req.user.id) throw conflict('CANNOT_MODIFY_SELF');
 
-    await q('UPDATE users SET password_hash = $2, updated_at = now() WHERE id = $1', [
-      membership.user_id,
-      hashPassword(password),
-    ]);
-    res.json({ ok: true });
+    /*
+     * The new credential is GENERATED here — not chosen by the administrator and
+     * never read back from the store. Only its scrypt hash is written; the
+     * plaintext leaves this response once, for the administrator to hand over,
+     * and the account is flagged so a password of its own must be chosen before
+     * the panel opens.
+     */
+    const temporary = temporaryPassword();
+    await q(
+      `UPDATE users SET password_hash = $2, must_change_password = true, updated_at = now()
+        WHERE id = $1`,
+      [membership.user_id, hashPassword(temporary)],
+    );
+    res.json({ ok: true, temporary_password: temporary, must_change_password: true });
   }),
 );
 

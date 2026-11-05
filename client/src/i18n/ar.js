@@ -15,6 +15,7 @@ export default {
   nav_customer_menu: 'قائمة العميل',
   nav_promotions: 'العروض والخصومات',
 
+  action_done: 'تم',
   action_save: 'حفظ',
   action_cancel: 'إلغاء',
   action_close: 'إغلاق',
@@ -1646,7 +1647,18 @@ export default {
   reset_mod_activity_hidden: 'سجلات النشاط المخفية',
   reset_mod_uploaded_files: 'الصور المرفوعة',
   user_protected_owner: 'حساب محمي',
-  user_protected_owner_hint: 'لا يمكن حذف حساب مالك النظام هذا.',
+  user_protected_owner_hint: 'لا يمكن تغيير حساب مالك النظام هذا أو تعطيله أو حذفه.',
+  user_system_owner: 'مالك النظام',
+  user_reset_password: 'إعادة تعيين كلمة المرور',
+  user_reset_password_hint: 'سيتم إنشاء كلمة مرور مؤقتة لهذا الحساب. تتوقف كلمة المرور الحالية عن العمل فورًا.',
+  user_temp_password_generate: 'إنشاء كلمة مرور مؤقتة',
+  user_temp_password_once: 'تُعرض كلمة المرور هذه مرة واحدة فقط. انسخها الآن وسلّمها لصاحب الحساب.',
+  user_temp_password_never_shown: 'لا تُخزَّن كلمة المرور ولا تُعرض بصيغة مقروءة؛ يحتفظ الحساب بتجزئة آمنة فقط.',
+  user_temp_password_copy: 'نسخ كلمة المرور',
+  user_temp_password_copied: 'تم النسخ',
+  user_must_change_password: 'يجب أن يختار الحساب كلمة مرور جديدة عند تسجيل الدخول التالي.',
+  user_role_manager_hint: 'إدارة كاملة، دون التحكم بمالك النظام.',
+  user_role_staff_hint: 'الوحدات التي تمنحها أدناه فقط.',
 
   /* Header notification feed */
   dash_notifications: 'الإشعارات',

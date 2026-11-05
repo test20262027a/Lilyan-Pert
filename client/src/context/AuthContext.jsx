@@ -110,6 +110,9 @@ export function AuthProvider({ children }) {
       permissions,
       can: (key) => permissions.includes(key),
       isSuperAdmin: Boolean(state.user?.is_super_admin),
+      // A credential an administrator issued (see User Management → Reset
+      // password) has to be replaced before the panel is used.
+      mustChangePassword: Boolean(state.user?.must_change_password),
       isOwner: state.user?.is_super_admin
         || state.memberships.some((m) => m.business_id === state.businessId && m.role === 'owner'),
       isManager: state.user?.is_super_admin

@@ -15,6 +15,7 @@ export default {
   nav_customer_menu: 'Customer Menu',
   nav_promotions: 'Promotions & Discounts',
 
+  action_done: 'Done',
   action_save: 'Save',
   action_cancel: 'Cancel',
   action_close: 'Close',
@@ -99,7 +100,7 @@ export default {
 
   role_owner: 'Owner',
   role_manager: 'Manager',
-  role_staff: 'Staff',
+  role_staff: 'Employee',
   role_customer: 'Customer',
   role_super_admin: 'Super Admin',
 
@@ -1652,7 +1653,18 @@ export default {
   reset_mod_activity_hidden: 'Hidden activity entries',
   reset_mod_uploaded_files: 'Uploaded images',
   user_protected_owner: 'Protected account',
-  user_protected_owner_hint: 'This system owner account cannot be deleted.',
+  user_protected_owner_hint: 'This system owner account cannot be changed, disabled or deleted.',
+  user_system_owner: 'System Owner',
+  user_reset_password: 'Reset password',
+  user_reset_password_hint: 'A new temporary password will be generated for this account. Its current password stops working immediately.',
+  user_temp_password_generate: 'Generate temporary password',
+  user_temp_password_once: 'This password is shown only once. Copy it now and hand it to the account holder.',
+  user_temp_password_never_shown: 'No password is ever stored or displayed in readable form — the account only holds a secure hash.',
+  user_temp_password_copy: 'Copy password',
+  user_temp_password_copied: 'Copied',
+  user_must_change_password: 'This account must choose a new password at its next sign-in.',
+  user_role_manager_hint: 'Full administration, without controlling the system owner.',
+  user_role_staff_hint: 'Only the modules you grant below.',
 
   /* Header notification feed */
   dash_notifications: 'Notifications',

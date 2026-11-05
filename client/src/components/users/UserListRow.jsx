@@ -54,14 +54,17 @@ export default function UserListRow({
   onEdit,
   onVisibility,
   onDelete,
+  onResetPassword,
 }) {
   const { t } = useI18n();
 
   const displayName = member.full_name || member.email;
   const activeMember = member.status === 'active';
-  /* The system owner is reported by the server: its Delete action is removed
-     here, while the backend refuses the request regardless of what this page does. */
-  const protectedMember = Boolean(member.protected);
+  /* The system owner is reported by the server: nothing about its identity is
+     offered here — no edit, no access switch, no delete, no credential reset —
+     while the backend refuses each of those requests regardless of this page. */
+  const protectedMember = Boolean(member.protected || member.system_owner);
+  const canTouch = canEdit && !protectedMember && !self;
   const permsLabel = t('user_permissions_label');
   const permsSummary = t(permissionSummaryKey(member));
 
@@ -98,8 +101,8 @@ export default function UserListRow({
         </span>
         {protectedMember ? (
           <span className="um-badge um-badge--protected">
-            <Icon name="shield" size={11} />
-            {t('user_protected_owner')}
+            <Icon name="shieldCheck" size={11} />
+            {t('user_system_owner')}
           </span>
         ) : null}
       </div>
@@ -117,8 +120,15 @@ export default function UserListRow({
           <button
             type="button"
             className="um-iconbtn"
+            disabled={!canTouch || busy}
             onClick={onEdit}
-            title={t('user_edit_title')}
+            title={
+              protectedMember
+                ? t('user_protected_owner_hint')
+                : self
+                  ? t('user_cannot_modify_self')
+                  : t('user_edit_title')
+            }
             aria-label={t('user_edit_title')}
           >
             <Icon name="pencil" size={15} />
@@ -128,14 +138,28 @@ export default function UserListRow({
           <button
             type="button"
             className="um-iconbtn"
-            disabled={self || busy}
+            disabled={!canTouch || busy}
             onClick={onVisibility}
-            title={self
-              ? t('user_cannot_modify_self')
-              : t(activeMember ? 'user_deactivate' : 'user_activate')}
+            title={protectedMember
+              ? t('user_protected_owner_hint')
+              : self
+                ? t('user_cannot_modify_self')
+                : t(activeMember ? 'user_deactivate' : 'user_activate')}
             aria-label={t(activeMember ? 'user_deactivate' : 'user_activate')}
           >
             <Icon name={activeMember ? 'eyeOff' : 'eye'} size={15} />
+          </button>
+        ) : null}
+        {canEdit ? (
+          <button
+            type="button"
+            className="um-iconbtn"
+            disabled={!canTouch || busy}
+            onClick={onResetPassword}
+            title={protectedMember ? t('user_protected_owner_hint') : t('user_reset_password')}
+            aria-label={t('user_reset_password')}
+          >
+            <Icon name="key" size={15} />
           </button>
         ) : null}
         {canDelete ? (

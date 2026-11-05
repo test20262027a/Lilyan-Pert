@@ -296,7 +296,7 @@
   --um-avatar: 46px;
   --um-role-col: 108px;
   --um-status-col: 104px;
-  --um-actions-col: 110px;
+  --um-actions-col: 148px;
 
   display: grid;
   /* Every column is a fixed width, so a long name, email, role or permission
@@ -707,6 +707,158 @@
   font-weight: 800;
 }
 /* Beside its own field, never in a banner at the top of the form. */
+/* -------------------------------------------------------- role selector --- */
+
+/*
+ * The two roles an account can have, as beveled tiles. Each one carries its own
+ * glyph, its localized name and one line about the access it grants, so the
+ * choice is made on what the role means rather than on a name in a dropdown.
+ * The selected tile lifts on its own theme-tinted gradient; the unselected one
+ * stays flat and quiet. RTL and LTR both come from the flex row's own direction.
+ */
+.um-roles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.um-role {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--um-line);
+  background: linear-gradient(180deg, #ffffff, var(--um-body));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 4px 10px -8px rgba(16, 32, 24, 0.45);
+  color: var(--um-ink);
+  text-align: start;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease,
+    background 150ms ease;
+}
+.um-role:hover {
+  transform: translateY(-1px);
+  border-color: var(--theme-primary-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 18px -14px rgba(16, 32, 24, 0.6);
+}
+.um-role:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-primary) 55%, transparent);
+  outline-offset: 2px;
+}
+.um-role.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 45%, var(--um-line));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-primary-soft) 88%, #ffffff),
+    color-mix(in srgb, var(--theme-primary-soft) 62%, #ffffff)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 12px 22px -14px color-mix(in srgb, var(--theme-primary) 65%, transparent);
+}
+.um-role__icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--theme-primary-strong) 82%, #10231a);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-primary) 20%, #ffffff),
+    color-mix(in srgb, var(--theme-primary) 9%, #ffffff)
+  );
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 22%, transparent);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 6px 12px -10px rgba(16, 32, 24, 0.6);
+}
+.um-role__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.um-role__text strong { font-size: 13px; font-weight: 800; line-height: 1.35; }
+.um-role__text small {
+  font-size: 10.8px;
+  font-weight: 620;
+  line-height: 1.4;
+  color: var(--um-muted);
+}
+.um-role__check {
+  position: absolute;
+  inset-inline-end: 9px;
+  inset-block-start: 9px;
+  width: 16px;
+  height: 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--theme-primary-strong);
+  background: #ffffff;
+  border: 1px solid var(--theme-primary-line);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.um-role.is-on .um-role__check { opacity: 1; transform: none; }
+
+/* --------------------------------------------- one-time temporary password - */
+
+.temp-pass { display: flex; flex-direction: column; gap: 12px; }
+.temp-pass__lead { font-size: 12.5px; font-weight: 650; color: var(--um-muted); line-height: 1.6; }
+.temp-pass__value {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px dashed color-mix(in srgb, var(--theme-primary) 38%, var(--um-line));
+  background: color-mix(in srgb, var(--theme-primary-soft) 45%, #ffffff);
+}
+.temp-pass__value code {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--um-ink);
+  word-break: break-all;
+}
+.temp-pass__copy {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 40%, transparent);
+  background: linear-gradient(180deg, #ffffff, var(--theme-primary-soft));
+  color: var(--theme-primary-strong);
+  font-size: 11.5px;
+  font-weight: 780;
+  cursor: pointer;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.temp-pass__copy:hover { transform: translateY(-1px); }
+.temp-pass__note {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 11.5px;
+  font-weight: 650;
+  line-height: 1.6;
+  color: var(--um-muted);
+}
+.temp-pass__note svg { flex: none; margin-top: 2px; color: var(--theme-primary); }
+
+@media (max-width: 560px) {
+  .um-roles { grid-template-columns: minmax(0, 1fr); }
+}
+
 .um-field__error { font-size: 11px; font-weight: 650; line-height: 1.45; color: #b3262b; }
 .um-input.is-invalid { border-color: #e5a6a6; }
 .um-input.is-invalid:focus {
