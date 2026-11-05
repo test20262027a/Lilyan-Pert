@@ -6,6 +6,8 @@ import { createHash } from 'node:crypto';
  * Three levels, all read from this one file:
  *
  *   category  the twelve cards of the page (Business & Profile, Menu & Products…)
+ *             — uploaded files are not one of them: they travel inside the
+ *             groups that own them (see MEDIA_MODULE and media-owners.js)
  *   section   a row of the backup manifest — the labelled chip inside a card
  *   module    the actual query: one table, or one group of columns of `businesses`
  *
@@ -18,8 +20,9 @@ import { createHash } from 'node:crypto';
  *   - the audit trail: security records are not rewritten by a restore.
  *
  * Deliberately excluded: password hashes, sessions, authentication tokens,
- * VAPID private keys, push subscriptions (device secrets), caches and image
- * binaries. Pictures are stored as their public URLs, never as bytes.
+ * VAPID private keys, push subscriptions (device secrets) and caches.
+ * Uploaded pictures are carried as real bytes — see MEDIA_MODULE — and belong
+ * to the group whose records point at them.
  *
  * `businesses` modules only ever write the columns they own, and `id`/`slug`
  * are never restored, so one module can not rewrite the tenant's identity.
@@ -29,6 +32,8 @@ const MODULE_DEFS = {
   business_profile: {
     exportMode: 'single',
     table: 'businesses',
+    // This group's pictures (logo, cover, login backdrop) travel with it.
+    mediaOwner: 'business_profile',
     columns: [
       'id', 'slug', 'name', 'name_ku', 'name_fa', 'name_ar', 'name_en',
       'description', 'logo_url', 'cover_url', 'login_bg_url', 'phone', 'email', 'website',
@@ -76,6 +81,8 @@ const MODULE_DEFS = {
   menu_products: {
     exportMode: 'rows',
     table: 'products',
+    // Product pictures travel with the products that point at them.
+    mediaOwner: 'menu_products',
     columns: [
       'id', 'category_id', 'price', 'price_fa', 'price_en', 'price_ar', 'price_fa_unit', 'price_fa_review', 'image_url',
       'active', 'available', 'featured', 'sort_order', 'calories', 'prep_minutes', 'tags',
@@ -154,6 +161,7 @@ const MODULE_DEFS = {
   advertisements: {
     exportMode: 'rows',
     table: 'advertisements',
+    mediaOwner: 'advertisements',
     columns: [
       'id', 'image_url', 'link_url', 'category_id', 'product_id',
       'title_ku', 'title_fa', 'title_ar', 'title_en',
@@ -172,6 +180,8 @@ const MODULE_DEFS = {
   },
   team_members: {
     exportMode: 'derived',
+    // Member profile photos belong to this group, for the record only.
+    mediaOwner: 'team_members',
     // Names and roles for the record; never written back by a restore.
     query: `SELECT m.id, m.user_id, u.full_name, u.email, m.role, m.status, m.permissions, m.created_at
               FROM memberships m JOIN users u ON u.id = m.user_id
@@ -212,9 +222,14 @@ const MODULE_DEFS = {
     // every uploaded picture back and the URLs stored on products, banners,
     // logos and backgrounds keep resolving. Only this business's own files are
     // exported — `media.business_id` is always scoped by the query.
+    //
+    // There is no separate "files" card any more: see MEDIA_MODULE below. The
+    // files belong to the group that points at them, and this module is added
+    // automatically whenever such a group is in the archive.
     columns: ['id', 'mime', 'byte_size', 'data', 'created_at'],
     orderBy: 'created_at',
     files: true,
+    internal: true,
   },
 };
 
@@ -254,11 +269,9 @@ export const BACKUP_SECTIONS = [
   { key: 'notifications', category: 'reports', modules: ['notifications'] },
   { key: 'activity_reports', category: 'reports', modules: ['activity_reports'] },
   { key: 'activity_hidden', category: 'reports', modules: ['activity_hidden'] },
-
-  { key: 'uploaded_files', category: 'files', modules: ['uploaded_files'] },
 ];
 
-/** The thirteen cards of both backup panels, in reading order (right to left). */
+/** The twelve cards of both backup panels, in reading order (right to left). */
 export const BACKUP_CATEGORIES = [
   { key: 'profile', sections: ['business_profile'] },
   { key: 'settings', sections: ['business_settings', 'working_hours'] },
@@ -272,10 +285,30 @@ export const BACKUP_CATEGORIES = [
   { key: 'appearance', sections: ['editable_text', 'menu_settings'] },
   { key: 'printing', sections: ['receipt_settings'] },
   { key: 'reports', sections: ['business_views', 'notifications', 'activity_reports', 'activity_hidden'] },
-  { key: 'files', sections: ['uploaded_files'] },
 ];
 
-export const BACKUP_MODULES = BACKUP_SECTIONS.flatMap((section) =>
+/**
+ * Uploaded files are not a card of their own: they are an internal dependency
+ * of the groups that own pictures (a product picture travels with products, the
+ * logo with the business profile, a banner with advertisements, a member photo
+ * with the team). The module stays in the registry so its bytes are still
+ * exported and restored, but no page offers it as a separate selection.
+ *
+ * It is listed first so a restore writes the files before the records that
+ * point at them.
+ */
+export const MEDIA_MODULE = {
+  key: 'uploaded_files',
+  ...MODULE_DEFS.uploaded_files,
+  // Its own manifest label — a restore summary names the files it wrote — but
+  // it is listed under the menu card so live counts sit with their owner.
+  section: 'uploaded_files',
+  category: 'menu_products',
+  tenantScoped: true,
+  restorable: true,
+};
+
+const SECTION_MODULES = BACKUP_SECTIONS.flatMap((section) =>
   section.modules.map((key) => ({
     key,
     ...MODULE_DEFS[key],
@@ -289,7 +322,14 @@ export const BACKUP_MODULES = BACKUP_SECTIONS.flatMap((section) =>
   })),
 );
 
-export const FORMAT_VERSION = '1.2';
+export const BACKUP_MODULES = [MEDIA_MODULE, ...SECTION_MODULES];
+
+/** The sections that own uploaded pictures, in registry order. */
+export const MEDIA_OWNER_SECTIONS = [
+  ...new Set(BACKUP_MODULES.map((mod) => mod.mediaOwner).filter(Boolean)),
+];
+
+export const FORMAT_VERSION = '1.3';
 export const SCHEMA_VERSION = '2026.11';
 
 export const moduleByKey = (key) => BACKUP_MODULES.find((m) => m.key === key);
@@ -355,6 +395,22 @@ export function withRequiredModules(modules) {
   };
   for (const mod of [...modules]) visit(mod);
   return BACKUP_MODULES.filter((m) => wanted.has(m.key));
+}
+
+/**
+ * The uploaded-file module a selection needs, and the picture-owning groups it
+ * must carry.
+ *
+ * A card that owns pictures brings them along automatically — no separate
+ * images checkbox exists. A file nobody points at is still carried (it belongs
+ * to this business and would otherwise be lost) and is reported as unassigned
+ * in the manifest instead of being guessed into a group.
+ */
+export function withMediaModule(modules) {
+  const mediaOwners = [...new Set(modules.map((mod) => mod.mediaOwner).filter(Boolean))];
+  if (!mediaOwners.length) return { modules, mediaOwners: [] };
+  const hasMedia = modules.some((mod) => mod.files);
+  return { modules: hasMedia ? modules : [MEDIA_MODULE, ...modules], mediaOwners };
 }
 
 /** The sections a list of module keys really covers, in registry order. */

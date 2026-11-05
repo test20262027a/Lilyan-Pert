@@ -651,10 +651,8 @@ export default {
   backup_full_subtitle: 'پشتیبان‌گیری از تمام داده‌های کسب‌وکار در یک فایل.',
   backup_create_full: 'ایجاد پشتیبان کامل',
   backup_full_includes: 'پشتیبان کامل همیشه همه بخش‌های زیر را شامل می‌شود:',
-  backup_image_note:
-    'تصاویر بارگذاری‌شده به‌صورت فایل واقعی در پشتیبان کامل گنجانده می‌شوند؛ پشتیبان انتخابی بدون «فایل‌های بارگذاری‌شده» فقط ارجاع‌ها را نگه می‌دارد.',
   backup_files_note:
-    'تصاویر بارگذاری‌شده این کسب‌وکار به‌صورت فایل واقعی در آرشیو جاسازی می‌شوند تا بازیابی آن‌ها را بازسازی کند.',
+    'تصاویر بارگذاری‌شده همراه با گروهی که مالک آن‌هاست ذخیره می‌شوند — تصاویر محصول با محصولات، لوگو و کاور با پروفایل کسب‌وکار، بنرها با تبلیغات و عکس اعضا با کاربران.',
   backup_media_included: '{count} فایل بارگذاری‌شده در این آرشیو هست.',
   backup_restore_strategy: 'راهبرد بازیابی',
   backup_restore_merge: 'بازیابی رکوردهای جاافتاده',
@@ -726,7 +724,7 @@ export default {
   backup_cat_settings: 'تنظیمات کسب‌وکار',
   backup_cat_settings_desc: 'واحد پول، پلن، ظاهر، وضعیت و تنظیمات',
   backup_cat_menu_products: 'منو و محصولات',
-  backup_cat_menu_products_desc: 'دسته‌ها، محصولات و تنظیمات پرفروش‌ها',
+  backup_cat_menu_products_desc: 'دسته‌ها، محصولات، قیمت‌ها و تصاویر آن‌ها',
   backup_cat_orders: 'سفارش‌ها و رسیدها',
   backup_cat_orders_desc: 'همه سفارش‌ها همراه با اقلام، میز و مبالغ',
   backup_cat_order_history: 'تاریخچه سفارش و حسابرسی',
@@ -745,8 +743,6 @@ export default {
   backup_cat_printing_desc: 'عرض کاغذ و تنظیمات چاپ رسید',
   backup_cat_reports: 'گزارش‌ها و فعالیت',
   backup_cat_reports_desc: 'بازدیدها، اعلان‌ها و گزارش فعالیت',
-  backup_cat_files: 'فایل‌ها و تصاویر بارگذاری‌شده',
-  backup_cat_files_desc: 'تصاویر محصول، بنر، برند و ورود',
 
   backup_sec_business_profile: 'پروفایل کسب‌وکار',
   backup_sec_business_settings: 'تنظیمات کسب‌وکار',
@@ -769,6 +765,8 @@ export default {
   backup_sec_activity_reports: 'گزارش فعالیت',
   backup_sec_activity_hidden: 'فعالیت پنهان',
   backup_sec_uploaded_files: 'فایل‌ها و تصاویر بارگذاری‌شده',
+  backup_media_chip: 'تصاویر',
+  backup_media_auto: 'تصاویر بارگذاری‌شده این گروه به‌طور خودکار همراه آن ذخیره می‌شوند.',
 
   module_business_profile: 'پروفایل کسب‌وکار',
   module_business_settings: 'تنظیمات کسب‌وکار',

@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { Fragment, useMemo } from 'react';
 import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import { fmtNumber } from '../../format';
@@ -151,30 +151,45 @@ export default function SelectiveBackupPanel({
                   const on = selected.includes(section.key);
                   const reference = section.restorable === false;
                   return (
-                    <button
-                      type="button"
-                      key={section.key}
-                      role="checkbox"
-                      aria-checked={on}
-                      className={`bk-chip bk-chip--choice ${on ? 'is-on' : ''} ${
-                        reference ? 'bk-chip--ref' : ''
-                      }`}
-                      title={reference ? t('backup_ref_only') : sectionLabel(t, section.key)}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onToggleSection?.(section.key);
-                      }}
-                      disabled={busy}
-                    >
-                      <span className="bk-chip__box" aria-hidden="true">
-                        {on ? <Icon name="check" size={9} /> : <Icon name={sectionStyle.icon} size={10} />}
-                      </span>
-                      <span className="bk-chip__label">{sectionLabel(t, section.key)}</span>
-                      {section.files ? <Icon name="image" size={10} /> : null}
-                      <span className="bk-chip__count" aria-label={t('reset_total')}>
-                        {fmtNumber(section.record_count || 0, locale)}
-                      </span>
-                    </button>
+                    <Fragment key={section.key}>
+                      <button
+                        type="button"
+                        role="checkbox"
+                        aria-checked={on}
+                        className={`bk-chip bk-chip--choice ${on ? 'is-on' : ''} ${
+                          reference ? 'bk-chip--ref' : ''
+                        }`}
+                        title={reference ? t('backup_ref_only') : sectionLabel(t, section.key)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleSection?.(section.key);
+                        }}
+                        disabled={busy}
+                      >
+                        <span className="bk-chip__box" aria-hidden="true">
+                          {on ? <Icon name="check" size={9} /> : <Icon name={sectionStyle.icon} size={10} />}
+                        </span>
+                        <span className="bk-chip__label">{sectionLabel(t, section.key)}</span>
+                        <span className="bk-chip__count" aria-label={t('reset_total')}>
+                          {fmtNumber(section.record_count || 0, locale)}
+                        </span>
+                      </button>
+
+                      {/* Pictures belong to this group and are never a separate
+                          card or checkbox: the chip reports the group's own file
+                          count and travels automatically with it. */}
+                      {section.files ? (
+                        <span className="bk-chip bk-chip--auto" title={t('backup_media_auto')}>
+                          <span className="bk-chip__box" aria-hidden="true">
+                            <Icon name="image" size={10} />
+                          </span>
+                          <span className="bk-chip__label">{t('backup_media_chip')}</span>
+                          <span className="bk-chip__count" aria-label={t('reset_total')}>
+                            {fmtNumber(section.media_count || 0, locale)}
+                          </span>
+                        </span>
+                      ) : null}
+                    </Fragment>
                   );
                 })}
               </div>

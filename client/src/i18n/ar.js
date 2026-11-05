@@ -651,10 +651,8 @@ export default {
   backup_full_subtitle: 'نسخ احتياطي لكل بيانات العمل في ملف واحد.',
   backup_create_full: 'إنشاء نسخة كاملة',
   backup_full_includes: 'النسخة الكاملة تشمل دائماً كل الأقسام التالية:',
-  backup_image_note:
-    'تُضمَّن الصور المرفوعة كملفات حقيقية في النسخة الكاملة؛ النسخة الجزئية بدون «الملفات المرفوعة» تحتفظ بالمراجع فقط.',
   backup_files_note:
-    'تُضمَّن صور هذا النشاط المرفوعة كملفات حقيقية في الأرشيف ليعيد الاستعادة إنشاءها.',
+    'تنتقل الصور المرفوعة مع المجموعة التي تملكها — صور المنتجات مع المنتجات، والشعار والغلاف مع ملف النشاط، واللافتات مع الإعلانات، وصور الأعضاء مع المستخدمين.',
   backup_media_included: '{count} ملفاً مرفوعاً مضمن في هذا الأرشيف.',
   backup_restore_strategy: 'استراتيجية الاستعادة',
   backup_restore_merge: 'استعادة السجلات الناقصة',
@@ -725,7 +723,7 @@ export default {
   backup_cat_settings: 'إعدادات العمل',
   backup_cat_settings_desc: 'العملة والخطة والمظهر والحالة والتفضيلات',
   backup_cat_menu_products: 'القائمة والمنتجات',
-  backup_cat_menu_products_desc: 'الأقسام والمنتجات وإعدادات الأكثر مبيعاً',
+  backup_cat_menu_products_desc: 'الأقسام والمنتجات والأسعار وصورها',
   backup_cat_orders: 'الطلبات والفواتير',
   backup_cat_orders_desc: 'كل الطلبات مع عناصرها والطاولة والمبالغ',
   backup_cat_order_history: 'سجل الطلبات والتدقيق',
@@ -744,8 +742,6 @@ export default {
   backup_cat_printing_desc: 'عرض الورق وإعدادات طباعة الفاتورة',
   backup_cat_reports: 'التقارير والنشاط',
   backup_cat_reports_desc: 'زيارات القائمة والإشعارات وتقرير النشاط',
-  backup_cat_files: 'الملفات والصور المرفوعة',
-  backup_cat_files_desc: 'صور المنتجات واللافتات والهوية والدخول',
 
   backup_sec_business_profile: 'ملف العمل',
   backup_sec_business_settings: 'إعدادات العمل',
@@ -768,6 +764,8 @@ export default {
   backup_sec_activity_reports: 'تقارير النشاط',
   backup_sec_activity_hidden: 'نشاط مخفي',
   backup_sec_uploaded_files: 'الملفات والصور المرفوعة',
+  backup_media_chip: 'الصور',
+  backup_media_auto: 'تُضمَّن صور هذه المجموعة المرفوعة تلقائياً معها.',
 
   module_business_profile: 'ملف النشاط',
   module_business_settings: 'إعدادات النشاط',

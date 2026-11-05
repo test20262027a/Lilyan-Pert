@@ -651,10 +651,8 @@ export default {
   backup_full_subtitle: 'Back up every piece of business data in one file.',
   backup_create_full: 'Create Full Backup',
   backup_full_includes: 'A full backup always includes every section below:',
-  backup_image_note:
-    'Uploaded pictures are included as real files in a full backup; a selective backup without “Uploaded Files” keeps only their references.',
   backup_files_note:
-    'Uploaded pictures of this business are embedded in the archive as real files, so a restore rebuilds them.',
+    'Uploaded pictures travel with the group that owns them — product pictures with products, the logo and cover with the business profile, banners with advertisements, member photos with the team.',
   backup_media_included: '{count} uploaded files are included in this archive.',
   backup_restore_strategy: 'Restore strategy',
   backup_restore_merge: 'Restore missing records',
@@ -728,7 +726,7 @@ export default {
   backup_cat_settings: 'Business Settings',
   backup_cat_settings_desc: 'Currency, plan, theme, status and preferences',
   backup_cat_menu_products: 'Menu & Products',
-  backup_cat_menu_products_desc: 'Categories, products and best-seller settings',
+  backup_cat_menu_products_desc: 'Categories, products, prices and their pictures',
   backup_cat_orders: 'Orders & Receipts',
   backup_cat_orders_desc: 'Every order with its items, table and totals',
   backup_cat_order_history: 'Order History & Audit',
@@ -747,8 +745,6 @@ export default {
   backup_cat_printing_desc: 'Paper width and receipt printing settings',
   backup_cat_reports: 'Reports & Activity',
   backup_cat_reports_desc: 'Menu visits, notifications and the activity report',
-  backup_cat_files: 'Uploaded Files & Images',
-  backup_cat_files_desc: 'Product, banner, branding and login pictures',
 
   backup_sec_business_profile: 'Business Profile',
   backup_sec_business_settings: 'Business Settings',
@@ -771,6 +767,8 @@ export default {
   backup_sec_activity_reports: 'Activity Reports',
   backup_sec_activity_hidden: 'Hidden Activity',
   backup_sec_uploaded_files: 'Uploaded Files & Images',
+  backup_media_chip: 'Images',
+  backup_media_auto: 'This group’s uploaded pictures are included automatically.',
 
   module_business_profile: 'Business Profile',
   module_business_settings: 'Business Settings',

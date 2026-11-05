@@ -436,6 +436,32 @@
   color: #8f968f;
 }
 
+/* A group's own pictures ride along with it: the chip reports their real file
+   count and is a note, never a second checkbox. */
+.bk-chip--auto {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--theme-primary) 5%, #ffffff);
+  color: #5f6a63;
+  cursor: default;
+}
+.bk-chip--auto .bk-chip__box {
+  width: auto;
+  height: auto;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: color-mix(in srgb, var(--theme-primary) 62%, #8c948c);
+}
+.bk-sel-card.is-on .bk-chip--auto {
+  border-color: color-mix(in srgb, var(--theme-primary) 32%, #ffffff);
+  background: color-mix(in srgb, var(--theme-primary) 9%, #ffffff);
+  color: var(--theme-primary-strong);
+}
+[data-theme='dark'] .bk-chip--auto {
+  background: color-mix(in srgb, var(--theme-primary) 8%, #23261f);
+  color: #bcc5bd;
+}
+
 .bk-sel-card.is-on .bk-chip {
   border-color: color-mix(in srgb, var(--theme-primary) 44%, #ffffff);
   background: color-mix(in srgb, var(--theme-primary) 12%, #ffffff);

@@ -7,6 +7,7 @@ import {
   BACKUP_MODULES,
   BACKUP_SECTIONS,
   FORMAT_VERSION,
+  MEDIA_OWNER_SECTIONS,
   SCHEMA_VERSION,
   archiveChecksum,
   categoryByKey,
@@ -18,8 +19,10 @@ import {
   sectionByKey,
   sectionsCoveredBy,
   sortByDependencies,
+  withMediaModule,
   withRequiredModules,
 } from '../lib/backup-modules.js';
+import { mediaOwnership } from '../lib/media-owners.js';
 import { recordActivity } from '../lib/activity.js';
 import {
   DATA_EXECUTION_ORDER,
@@ -50,7 +53,20 @@ const MAX_UPLOAD_BYTES = 96 * 1024 * 1024;
 
 /* ------------------------------------------------------------- export helpers */
 
-async function exportModule(businessId, mod) {
+async function exportModule(businessId, mod, { mediaOwners } = {}) {
+  if (mod.files) {
+    // Uploaded pictures travel with the groups that own them. A file no record
+    // points at has no owner to ride with, so it goes with Menu & Products —
+    // the group that inherited the old separate file card — and is reported as
+    // unassigned in the manifest rather than being guessed into another group.
+    const { files } = await mediaOwnership(pool, businessId);
+    if (!mediaOwners) return files;
+    const orphanGroup = mediaOwners.includes('menu_products');
+    return files.filter(
+      (file) =>
+        file.owners.some((owner) => mediaOwners.includes(owner)) || (orphanGroup && !file.owners.length),
+    );
+  }
   if (mod.query) return (await q(mod.query, [businessId])).rows;
   if (mod.exportMode === 'rows') {
     const cols = mod.columns.join(', ');
@@ -72,6 +88,7 @@ async function recordCount(businessId, mod) {
 
 /** The manifest sections of an archive, with real record counts. */
 function buildSections(modules, payload) {
+  const media = Array.isArray(payload.uploaded_files) ? payload.uploaded_files : [];
   return sectionsCoveredBy(modules.map((m) => m.key)).map((section) => {
     const primary = section.modules[0];
     const restorable = section.restorable === false || section.modules.some((k) => !moduleByKey(k)?.restorable);
@@ -81,21 +98,44 @@ function buildSections(modules, payload) {
       restorable: !restorable,
       implied_by: section.impliedBy || null,
       record_count: countOf(payload[primary]),
-      files: section.modules.some((key) => moduleByKey(key)?.files),
+      // A group that owns pictures carries them inside this archive; the count
+      // is the number of its files, not the number of records pointing at them.
+      files: MEDIA_OWNER_SECTIONS.includes(section.key),
+      media_count: media.filter((file) => (file.owners || []).includes(section.key)).length,
     };
   });
+}
+
+/** The uploaded files of an archive, split by the group that owns them. */
+function mediaSummary(files) {
+  const byOwner = Object.fromEntries(MEDIA_OWNER_SECTIONS.map((key) => [key, 0]));
+  let unassigned = 0;
+  let bytes = 0;
+  for (const file of files) {
+    const owners = file?.owners || [];
+    if (owners.length) owners.forEach((key) => (byOwner[key] = (byOwner[key] || 0) + 1));
+    else unassigned += 1;
+    bytes += Number(file?.byte_size) || 0;
+  }
+  return { files: files.length, by_owner: byOwner, unassigned, bytes };
 }
 
 /** Creates and persists a real archive. Returns the stored row plus manifest. */
 async function createBackup({ businessId, user, mode, categoryKeys, sectionKeys }) {
   let modules = BACKUP_MODULES;
+  // `null` means every file: a full archive is never narrowed by ownership.
+  let mediaOwners = null;
   if (mode === 'custom') {
     // A section selection is exported exactly as chosen, plus only the modules
     // those sections genuinely depend on (never a whole extra section).
-    modules = sectionKeys?.length
+    const chosen = sectionKeys?.length
       ? withRequiredModules(modulesForSections(sectionKeys))
       : modulesForCategories(categoryKeys || []);
-    if (!modules.length) throw bad('NO_MODULES_SELECTED');
+    if (!chosen.length) throw bad('NO_MODULES_SELECTED');
+    // A card that owns pictures brings its uploaded files along automatically.
+    const withMedia = withMediaModule(chosen);
+    modules = withMedia.modules;
+    mediaOwners = withMedia.mediaOwners;
   }
   modules = sortByDependencies(modules);
 
@@ -107,7 +147,7 @@ async function createBackup({ businessId, user, mode, categoryKeys, sectionKeys 
   const moduleManifest = [];
   let records = 0;
   for (const mod of modules) {
-    const data = await exportModule(businessId, mod);
+    const data = await exportModule(businessId, mod, { mediaOwners });
     payload[mod.key] = data;
     const count = countOf(data);
     records += count;
@@ -139,8 +179,8 @@ async function createBackup({ businessId, user, mode, categoryKeys, sectionKeys 
     media: {
       included: Boolean(payload.uploaded_files),
       policy: IMAGE_POLICY,
-      files: Array.isArray(payload.uploaded_files) ? payload.uploaded_files.length : 0,
-      note: 'Uploaded pictures of this business are embedded in the archive as base64 bytes, so a restore rebuilds every file its records point at.',
+      ...mediaSummary(Array.isArray(payload.uploaded_files) ? payload.uploaded_files : []),
+      note: 'Uploaded pictures are embedded in the archive as base64 bytes and grouped with the records that own them: product pictures with products, the logo and cover with the business profile, banners with advertisements, member photos with the team. Files no record points at travel with Menu & Products and are listed as unassigned.',
     },
     excludes: EXCLUDED_NOTE,
   };
@@ -209,6 +249,7 @@ const IMAGE_FIELDS = {
   business_profile: ['logo_url', 'cover_url', 'login_bg_url'],
   menu_products: ['image_url'],
   advertisements: ['image_url'],
+  team_members: ['profile_image_url'],
 };
 
 /** Image references the archive carries, so a restore can report dead ones. */
@@ -270,6 +311,9 @@ router.get(
   ah(async (req, res) => {
     const counts = {};
     for (const mod of BACKUP_MODULES) counts[mod.key] = await recordCount(req.businessId, mod);
+    // One audit of the uploaded files, read from the records that point at
+    // them, so every card shows the picture count of its own group.
+    const media = await mediaOwnership(pool, req.businessId);
 
     res.json({
       categories: BACKUP_CATEGORIES,
@@ -278,13 +322,22 @@ router.get(
         category: section.category,
         modules: section.modules,
         record_count: counts[section.modules[0]] ?? 0,
-        files: section.modules.some((key) => moduleByKey(key)?.files),
+        // A group that owns pictures carries them automatically: no checkbox.
+        files: MEDIA_OWNER_SECTIONS.includes(section.key),
+        media_count: media.byOwner[section.key] ?? 0,
         restorable:
           section.restorable === false
             ? false
             : section.modules.every((key) => moduleByKey(key)?.restorable !== false),
         implied_by: section.impliedBy || null,
       })),
+      media: {
+        total: media.total,
+        unassigned: media.unassigned,
+        by_owner: media.byOwner,
+        bytes: media.bytes,
+        owners: MEDIA_OWNER_SECTIONS,
+      },
       modules: BACKUP_MODULES.map((mod) => ({
         key: mod.key,
         section: mod.section,
@@ -292,6 +345,9 @@ router.get(
         dependencies: mod.dependsOn || [],
         restorable: mod.restorable !== false,
         files: Boolean(mod.files),
+        // Internal modules belong to a card; they are never offered on their own.
+        internal: Boolean(mod.internal),
+        media_owner: mod.mediaOwner || null,
         record_count: counts[mod.key] ?? 0,
       })),
       format_version: FORMAT_VERSION,
@@ -433,6 +489,11 @@ router.post(
       if (actual !== manifest.checksum) throw bad('INTEGRITY_FAILED');
     }
 
+    // An older archive may still carry its files in their own
+    // "Uploaded Files & Images" section; the sections are rebuilt from the
+    // current registry here, so those files are counted with the group that
+    // owns them and the old standalone entry disappears from the archive.
+    const uploaded = Array.isArray(modules.uploaded_files) ? modules.uploaded_files : [];
     const sections = BACKUP_SECTIONS.filter((section) =>
       section.modules.some((key) => known.includes(key)),
     ).map((section) => {
@@ -443,6 +504,8 @@ router.post(
         restorable: section.restorable !== false,
         implied_by: section.impliedBy || null,
         record_count: countOf(modules[primary]),
+        files: MEDIA_OWNER_SECTIONS.includes(section.key),
+        media_count: uploaded.filter((file) => (file?.owners || []).includes(section.key)).length,
       };
     });
 
@@ -641,6 +704,10 @@ router.post(
     // `replace` is the explicit, fully destructive strategy that clears the
     // module's current rows first. Nothing else ever overwrites silently.
     const strategy = req.body?.strategy === 'merge' ? 'merge' : 'replace';
+    // Only a full archive may clear the uploaded-file table: a selective archive
+    // carries the pictures of its own groups, and wiping the rest would delete
+    // the logo, a banner or a member photo it never contained.
+    const fullArchive = manifest.backup_type === 'full';
 
     // A verified safety copy of the current data, created before anything changes.
     let preRestoreBackupId = null;
@@ -666,7 +733,8 @@ router.post(
         if (data === null || data === undefined) continue;
 
         if (mod.exportMode === 'rows') {
-          if (strategy === 'replace') {
+          const isFiles = Boolean(mod.files);
+          if (strategy === 'replace' && (!isFiles || fullArchive)) {
             await c.query(`DELETE FROM ${mod.table} WHERE business_id = $1`, [req.businessId]);
           }
           const list = Array.isArray(data) ? data : [data];
@@ -690,7 +758,15 @@ router.post(
             const insertCols = mod.tenantScoped ? ['business_id', ...cols] : cols;
             const insertValues = mod.tenantScoped ? [req.businessId, ...values] : values;
             const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
-            const conflict = strategy === 'merge' ? ' ON CONFLICT (id) DO NOTHING' : '';
+            // A file is restored by id: bytes come back without creating a second
+            // copy. Merge keeps the live file, replace rewrites its bytes.
+            const conflict = isFiles
+              ? strategy === 'replace'
+                ? ' ON CONFLICT (id) DO UPDATE SET mime = EXCLUDED.mime, byte_size = EXCLUDED.byte_size, data = EXCLUDED.data'
+                : ' ON CONFLICT (id) DO NOTHING'
+              : strategy === 'merge'
+                ? ' ON CONFLICT (id) DO NOTHING'
+                : '';
             try {
               const inserted = await c.query(
                 `INSERT INTO ${mod.table} (${insertCols.join(', ')}) VALUES (${placeholders})${conflict}`,

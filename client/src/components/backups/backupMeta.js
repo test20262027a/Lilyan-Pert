@@ -22,7 +22,6 @@ export const CATEGORY_VISUALS = {
   appearance: { icon: 'palette', tone: 'purple' },
   printing: { icon: 'print', tone: 'pink' },
   reports: { icon: 'chart', tone: 'cyan' },
-  files: { icon: 'image', tone: 'teal' },
 };
 
 /** Icon + tone of the eighteen manifest sections (the chips). */

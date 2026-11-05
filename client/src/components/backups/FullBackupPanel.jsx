@@ -14,7 +14,6 @@ export default function FullBackupPanel({ categories = [], sections = [], busy, 
 
   // The live total of the modules a full archive would carry, from the server.
   const records = sections.reduce((sum, section) => sum + (section.record_count || 0), 0);
-  const includesFiles = sections.some((section) => section.files);
 
   return (
     <section className="bk-panel">
@@ -59,8 +58,8 @@ export default function FullBackupPanel({ categories = [], sections = [], busy, 
         </div>
 
         <div className="bk-warn" role="note">
-          <Icon name={includesFiles ? 'image' : 'info'} size={15} />
-          <span>{t(includesFiles ? 'backup_files_note' : 'backup_image_note')}</span>
+          <Icon name="image" size={15} />
+          <span>{t('backup_files_note')}</span>
         </div>
       </div>
     </section>

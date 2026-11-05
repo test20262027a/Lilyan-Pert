@@ -651,10 +651,8 @@ export default {
   backup_full_subtitle: 'پاڵپشتیکردن لە هەموو داتای بازرگانی لە یەک فایلدا.',
   backup_create_full: 'دروستکردنی پاڵپشتی تەواو',
   backup_full_includes: 'پاڵپشتی تەواو هەمیشە هەموو بەشەکانی خوارەوە لەخۆدەگرێت:',
-  backup_image_note:
-    'وێنە بارکراوەکان وەک فایلی ڕاستەقینە لە پاڵپشتی تەواودا جێگیر دەکرێن؛ پاڵپشتی هەڵبژێردراو بەبێ «فایلە بارکراوەکان» تەنها بەستەرەکان دەپارێزێت.',
   backup_files_note:
-    'وێنە بارکراوەکانی ئەم کارە وەک فایلی ڕاستەقینە لە پاڵپشتەکەدا جێگیر دەکرێن، بۆیە گەڕاندنەوە دووبارە دروستیان دەکات.',
+    'وێنە بارکراوەکان لەگەڵ ئەو گرووپەدا دەڕۆن کە خاوەنیانە — وێنەی بەرهەم لەگەڵ بەرهەمەکان، لۆگۆ و بەرگی مێنیو لەگەڵ پرۆفایلی کار، بانەرەکان لەگەڵ ڕیکلامەکان و وێنەی ئەندامان لەگەڵ بەکارهێنەران.',
   backup_media_included: '{count} فایلی بارکراو لەم پاڵپشتەدا هەیە.',
   backup_restore_strategy: 'ستراتیژی گەڕاندنەوە',
   backup_restore_merge: 'گەڕاندنەوەی تۆمارە ونبووەکان',
@@ -727,7 +725,7 @@ export default {
   backup_cat_settings: 'ڕێکخستنەکانی بازرگانی',
   backup_cat_settings_desc: 'دراو، پلان، ڕووکار، دۆخ و ڕێکخستنەکان',
   backup_cat_menu_products: 'مینیو و بەرهەمەکان',
-  backup_cat_menu_products_desc: 'پۆلەکان، بەرهەمەکان و ڕێکخستنی پڕفرۆشەکان',
+  backup_cat_menu_products_desc: 'پۆلەکان، بەرهەمەکان، نرخەکان و وێنەکانیان',
   backup_cat_orders: 'داواکاری و وەسڵەکان',
   backup_cat_orders_desc: 'هەموو داواکارییەکان لەگەڵ بەندەکان، مێز و بڕەکان',
   backup_cat_order_history: 'مێژووی داواکاری و وردبینی',
@@ -746,8 +744,6 @@ export default {
   backup_cat_printing_desc: 'پانی کاغەز و ڕێکخستنی چاپی وەسڵ',
   backup_cat_reports: 'ڕاپۆرت و چالاکی',
   backup_cat_reports_desc: 'سەردان، ئاگادارکردنەوە و ڕاپۆرتی چالاکی',
-  backup_cat_files: 'فایل و وێنەی بارکراو',
-  backup_cat_files_desc: 'وێنەی بەرهەم، بانەر، براند و چوونەژوورەوە',
 
   backup_sec_business_profile: 'پرۆفایلی بازرگانی',
   backup_sec_business_settings: 'ڕێکخستنەکانی بازرگانی',
@@ -770,6 +766,8 @@ export default {
   backup_sec_activity_reports: 'ڕاپۆرتی چالاکی',
   backup_sec_activity_hidden: 'چالاکی شاراوە',
   backup_sec_uploaded_files: 'فایل و وێنەی بارکراو',
+  backup_media_chip: 'وێنەکان',
+  backup_media_auto: 'وێنە بارکراوەکانی ئەم گرووپە خۆکارانە لەگەڵیدا دەگرێتەوە.',
 
   module_business_profile: 'پرۆفایلی کار',
   module_business_settings: 'ڕێکخستنەکانی کار',
