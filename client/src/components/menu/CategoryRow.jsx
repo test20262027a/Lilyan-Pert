@@ -31,7 +31,7 @@ export default function CategoryRow({
   onMoveDown = null,
 }) {
   const { t, locale } = useI18n();
-  const name = localized(category, 'name', locale);
+  const name = localized(category, 'name', locale) || t('label_translation_missing');
   const appearance = appearanceOf(category);
   const inactive = category.active === false;
 

@@ -54,7 +54,7 @@ export default function ProductCard({
   dropTarget = false,
 }) {
   const { t, locale } = useI18n();
-  const name = localized(product, 'name', locale);
+  const name = localized(product, 'name', locale) || t('label_translation_missing');
   const state = productState(product);
   const muted = !product.active || product.category_active === false;
   const { number, symbol } = fmtMoneyParts(product.price, currency, locale);

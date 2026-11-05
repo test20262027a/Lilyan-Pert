@@ -208,7 +208,7 @@ export default function CategoryPanel({
                   color={activeAppearance.color}
                   size={34}
                 />
-                <span className="mrow__name">{localized(active, 'name', locale)}</span>
+                <span className="mrow__name">{localized(active, 'name', locale) || t('label_translation_missing')}</span>
               </div>
             ) : null}
           </DragOverlay>

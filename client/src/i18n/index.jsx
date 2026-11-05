@@ -144,13 +144,27 @@ export function useI18n() {
 }
 
 /**
- * Picks a localized field with a graceful fallback chain.
+ * One record's stored translation in the given language — and nothing else.
  *
- * The chain prefers the active language, then the languages the owner left
- * enabled, then the remaining ones — so a disabled language's old translation is
- * never shown in its place.
+ * Owner-managed content (product and category names, descriptions, promotion
+ * and advertisement copy) is never borrowed from another language: an empty
+ * translation in the selected language stays empty, even when a disabled or
+ * different language still holds text. Callers decide how to present a missing
+ * translation; this helper only reports it.
  */
 export function localized(row, field, locale) {
+  if (!row || !locale) return '';
+  const v = row[`${field}_${locale}`];
+  return v === null || v === undefined ? '' : String(v);
+}
+
+/**
+ * The interface's own graceful chain, for records that carry a single plain
+ * fallback column (a business or table name, which always has one). Only use it
+ * where such a neutral value genuinely exists — never to borrow a translation
+ * from another language.
+ */
+export function localizedFallback(row, field, locale) {
   if (!row) return '';
   const enabled = getEnabledLanguages();
   const order = [...new Set([locale, ...enabled.filter((code) => code !== locale), 'en', 'ku', 'fa', 'ar'])];

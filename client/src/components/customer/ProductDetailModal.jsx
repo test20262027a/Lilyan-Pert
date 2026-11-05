@@ -42,7 +42,7 @@ export default function ProductDetailModal({
   const restoreRef = useRef(null);
   const [zoomed, setZoomed] = useState(false);
 
-  const name = localized(product, 'name', locale);
+  const name = localized(product, 'name', locale) || t('customer_menu_name_unavailable');
   const description = localized(product, 'description', locale);
   const categoryName = localized(category, 'name', locale);
   const appearance = appearanceOf(category);
@@ -103,7 +103,7 @@ export default function ProductDetailModal({
               <Icon name={appearance.icon} size={22} />
             </span>
             <div className="cui-pd__heading">
-              <h2 className="cui-pd__name" id={titleId}>
+              <h2 className="cui-pd__name" id={titleId} title={name}>
                 {name}
               </h2>
               {categoryName ? <span className="cui-pd__cat">{categoryName}</span> : null}

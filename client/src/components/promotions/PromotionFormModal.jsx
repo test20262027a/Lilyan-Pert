@@ -251,7 +251,7 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
                   { value: '', label: '—' },
                   ...categories.map((category) => ({
                     value: category.id,
-                    label: localized(category, 'name', locale),
+                    label: localized(category, 'name', locale) || t('label_translation_missing'),
                   })),
                 ]}
               />
@@ -269,7 +269,7 @@ export default function PromotionFormModal({ modal, products, categories, busy, 
                   { value: '', label: '—' },
                   ...products.map((product) => ({
                     value: product.id,
-                    label: localized(product, 'name', locale),
+                    label: localized(product, 'name', locale) || t('label_translation_missing'),
                   })),
                 ]}
               />

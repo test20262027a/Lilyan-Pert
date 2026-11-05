@@ -291,7 +291,7 @@ export default function CartPanel({
                     </span>
 
                     <span className="cui-line__text">
-                      <strong>{localized(line.product, 'name', locale)}</strong>
+                      <strong>{localized(line.product, 'name', locale) || t('customer_menu_name_unavailable')}</strong>
                       {line.valid === false ? (
                         <small className="cui-line__off">{t('customer_menu_price_unavailable')}</small>
                       ) : (

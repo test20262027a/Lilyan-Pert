@@ -143,7 +143,7 @@ export default function OrderEditPanel({
                 placeholder={t('order_select_product')}
                 options={activeProducts.map((p) => ({
                   value: p.id,
-                  label: localized(p, 'name', locale),
+                  label: localized(p, 'name', locale) || t('label_translation_missing'),
                 }))}
               />
               <input

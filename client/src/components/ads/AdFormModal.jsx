@@ -232,7 +232,7 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
                     { value: '', label: t('ads_none') },
                     ...visibleProducts.map((product) => ({
                       value: product.id,
-                      label: localized(product, 'name', locale),
+                      label: localized(product, 'name', locale) || t('label_translation_missing'),
                     })),
                   ]}
                 />
@@ -259,7 +259,7 @@ export default function AdFormModal({ modal, products, categories, timeZone, bus
                     { value: '', label: t('ads_none') },
                     ...categories.map((category) => ({
                       value: category.id,
-                      label: localized(category, 'name', locale),
+                      label: localized(category, 'name', locale) || t('label_translation_missing'),
                     })),
                   ]}
                 />

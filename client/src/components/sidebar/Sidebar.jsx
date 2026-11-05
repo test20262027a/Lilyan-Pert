@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Icon from '../Icon';
-import { localized, useI18n } from '../../i18n';
+import { localizedFallback, useI18n } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
 import SidebarNav from './SidebarNav';
@@ -83,7 +83,7 @@ export default function Sidebar({ open = false, onNavigate }) {
 
   // Brand in the active language, with the same graceful fallback chain the
   // header uses, so both names of the shell always agree.
-  const brandName = localized(business, 'name', locale) || business?.name || t('app_name');
+  const brandName = localizedFallback(business, 'name', locale) || business?.name || t('app_name');
 
   return (
     <div className={`sidebar-shell ${open ? 'is-open' : ''} ${railCollapsed ? 'is-collapsed' : ''}`}>

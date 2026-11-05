@@ -218,8 +218,10 @@ router.put(
     try {
       ({ rows } = await q(
         `UPDATE tables SET name = COALESCE($3, name),
-                           name_ku = COALESCE($4, name_ku), name_fa = COALESCE($5, name_fa),
-                           name_ar = COALESCE($6, name_ar), name_en = COALESCE($7, name_en),
+                           name_ku = CASE WHEN $14 THEN $4 ELSE name_ku END,
+                           name_fa = CASE WHEN $14 THEN $5 ELSE name_fa END,
+                           name_ar = CASE WHEN $14 THEN $6 ELSE name_ar END,
+                           name_en = CASE WHEN $14 THEN $7 ELSE name_en END,
                            table_number = COALESCE($8, table_number),
                            seats = COALESCE($9, seats), display_order = COALESCE($10, display_order),
                            vip = COALESCE($11, vip), zone = COALESCE($12, zone),
@@ -236,6 +238,9 @@ router.put(
           b.vip === undefined ? null : Boolean(b.vip),
           b.zone === undefined ? null : String(b.zone).slice(0, 60),
           b.active === undefined ? null : Boolean(b.active),
+          // Names the request includes are written exactly as sent (an empty
+          // one clears that translation); omitted ones keep their stored value.
+          withNames,
         ],
       ));
     } catch (err) {
@@ -832,8 +837,10 @@ router.put(
           SET code = $3, product_id = $4, category_id = $5, target_type = $6,
               discount_type = $7, discount_value = $8, min_order = $9,
               starts_at = $10, ends_at = $11, active = $12, max_uses = $13,
-              title_ku = COALESCE($14, title_ku), title_fa = COALESCE($15, title_fa),
-              title_ar = COALESCE($16, title_ar), title_en = COALESCE($17, title_en),
+              title_ku = CASE WHEN $19 THEN $14 ELSE title_ku END,
+              title_fa = CASE WHEN $20 THEN $15 ELSE title_fa END,
+              title_ar = CASE WHEN $21 THEN $16 ELSE title_ar END,
+              title_en = CASE WHEN $22 THEN $17 ELSE title_en END,
               currency_amounts = $18
         WHERE id = $1 AND business_id = $2 RETURNING *`,
       [
@@ -855,6 +862,12 @@ router.put(
         b.title_ar || null,
         b.title_en || null,
         JSON.stringify(input.currencyAmounts || {}),
+        // A title the request includes is written exactly as sent — an empty
+        // string clears that translation; an omitted one is kept.
+        b.title_ku !== undefined,
+        b.title_fa !== undefined,
+        b.title_ar !== undefined,
+        b.title_en !== undefined,
       ],
     );
     if (!rows[0]) throw notFound('PROMOTION_NOT_FOUND');

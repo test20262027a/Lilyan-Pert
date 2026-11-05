@@ -6,6 +6,9 @@ import { ah, bad, conflict, isUuid, notFound, num } from '../lib/http.js';
 const router = express.Router();
 router.use(requireAuth);
 
+/** The four content languages, in the order the translated columns are stored. */
+const LANG_CODES = ['ku', 'fa', 'ar', 'en'];
+
 const catName = (n) => (n === null || n === undefined || n === '' ? null : String(n).slice(0, 300));
 
 /** A category's identity colour: only a plain #rrggbb value is ever stored. */
@@ -168,18 +171,30 @@ router.put(
   withBusiness('manager'),
   perm('menu.categories.edit'),
   ah(async (req, res) => {
-    await loadCategory(req.businessId, req.params.id);
+    const current = await loadCategory(req.businessId, req.params.id);
     const b = req.body || {};
+    /*
+     * A language field is written exactly as sent — including an empty string,
+     * which is a real "clear this translation" instruction. A language the
+     * request does not mention keeps its stored value, so a partial update can
+     * never wipe a translation it never saw.
+     */
+    const sent = LANG_CODES.map((code) => b[`name_${code}`] !== undefined);
+    // The record must still be identifiable in at least one language.
+    const nextNames = LANG_CODES.map((code, i) =>
+      sent[i] ? catName(b[`name_${code}`]) : current[`name_${code}`],
+    );
+    if (!nextNames.some(Boolean)) throw bad('NAME_REQUIRED');
     const { rows } = await q(
       `UPDATE categories
           SET icon = COALESCE($3, icon),
               icon_color = COALESCE($4, icon_color),
               sort_order = COALESCE($5, sort_order),
               active = COALESCE($6, active),
-              name_ku = COALESCE($7, name_ku),
-              name_fa = COALESCE($8, name_fa),
-              name_ar = COALESCE($9, name_ar),
-              name_en = COALESCE($10, name_en),
+              name_ku = CASE WHEN $11 THEN $7 ELSE name_ku END,
+              name_fa = CASE WHEN $12 THEN $8 ELSE name_fa END,
+              name_ar = CASE WHEN $13 THEN $9 ELSE name_ar END,
+              name_en = CASE WHEN $14 THEN $10 ELSE name_en END,
               updated_at = now()
         WHERE id = $1 AND business_id = $2
         RETURNING *`,
@@ -194,6 +209,10 @@ router.put(
         catName(b.name_fa),
         catName(b.name_ar),
         catName(b.name_en),
+        sent[0],
+        sent[1],
+        sent[2],
+        sent[3],
       ],
     );
     // Note: products keep their own stored active flag — nothing is cascaded here.
@@ -443,13 +462,26 @@ router.put(
   withBusiness('manager'),
   perm('menu.products.edit'),
   ah(async (req, res) => {
-    await loadProduct(req.businessId, req.params.id);
+    const current = await loadProduct(req.businessId, req.params.id);
     const b = req.body || {};
     if (b.category_id) await loadCategory(req.businessId, b.category_id);
     if (b.price !== undefined) {
       const price = num(b.price, NaN);
       if (!Number.isFinite(price) || price < 0) throw bad('INVALID_PRICE');
     }
+    /*
+     * Translation writes are presence-aware, never truthiness-aware: a field the
+     * request includes is stored exactly as sent — an empty string deliberately
+     * clears that language — while a field it omits keeps its stored value. A
+     * cleared name stays cleared instead of silently returning the old one.
+     */
+    const nameSent = LANG_CODES.map((code) => b[`name_${code}`] !== undefined);
+    const descSent = LANG_CODES.map((code) => b[`description_${code}`] !== undefined);
+    // A product must keep a name in at least one language.
+    const nextNames = LANG_CODES.map((code, i) =>
+      nameSent[i] ? catName(b[`name_${code}`]) : current[`name_${code}`],
+    );
+    if (!nextNames.some(Boolean)) throw bad('NAME_REQUIRED');
     const { rows } = await q(
       `UPDATE products
           SET category_id = COALESCE($3, category_id),
@@ -458,14 +490,14 @@ router.put(
               active = COALESCE($6, active),
               available = COALESCE($7, available),
               sort_order = COALESCE($8, sort_order),
-              name_ku = COALESCE($9, name_ku),
-              name_fa = COALESCE($10, name_fa),
-              name_ar = COALESCE($11, name_ar),
-              name_en = COALESCE($12, name_en),
-              description_ku = COALESCE($13, description_ku),
-              description_fa = COALESCE($14, description_fa),
-              description_ar = COALESCE($15, description_ar),
-              description_en = COALESCE($16, description_en),
+              name_ku = CASE WHEN $26 THEN $9 ELSE name_ku END,
+              name_fa = CASE WHEN $27 THEN $10 ELSE name_fa END,
+              name_ar = CASE WHEN $28 THEN $11 ELSE name_ar END,
+              name_en = CASE WHEN $29 THEN $12 ELSE name_en END,
+              description_ku = CASE WHEN $30 THEN $13 ELSE description_ku END,
+              description_fa = CASE WHEN $31 THEN $14 ELSE description_fa END,
+              description_ar = CASE WHEN $32 THEN $15 ELSE description_ar END,
+              description_en = CASE WHEN $33 THEN $16 ELSE description_en END,
               -- Detail fields are written exactly as sent (an empty value clears
               -- them), the same rule image_url already follows: the form always
               -- submits the product's complete payload.
@@ -514,6 +546,8 @@ router.put(
         optPrice(b.price_ar),
         b.price_fa_unit === 'toman' || b.price_fa_unit === 'rial' ? b.price_fa_unit : null,
         b.price_ar !== undefined,
+        ...nameSent,
+        ...descSent,
       ],
     );
     res.json({ product: rows[0] });

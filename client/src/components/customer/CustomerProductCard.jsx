@@ -42,7 +42,7 @@ export default function CustomerProductCard({
   onOpen,
 }) {
   const { t } = useI18n();
-  const name = localized(product, 'name', locale);
+  const name = localized(product, 'name', locale) || t('customer_menu_name_unavailable');
   const available = product.available !== false;
   /*
    * The card shows the active language's own saved price — never another

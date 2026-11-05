@@ -108,17 +108,16 @@ export function languagePrice(product, code, businessCurrency = 'IQD') {
   return { amount: valid ? amount : null, stored: Number.isFinite(amount) ? amount : null, currency, valid, review };
 }
 
-/** The product's name in the ordering language, with the existing fallback chain. */
+/**
+ * The product's name in the ordering language — and only that language.
+ *
+ * A missing translation is reported as an empty string, exactly as strict
+ * language isolation requires: another language's name is never substituted
+ * into an order, a receipt or a customer menu.
+ */
 export function localizedName(product, code) {
-  return (
-    product?.[`name_${code}`]
-    || product?.name_en
-    || product?.name_ku
-    || product?.name_fa
-    || product?.name_ar
-    || product?.name
-    || ''
-  );
+  const value = product?.[`name_${code}`];
+  return value === null || value === undefined ? '' : String(value);
 }
 
 /**

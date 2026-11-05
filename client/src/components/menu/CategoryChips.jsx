@@ -115,7 +115,7 @@ export default function CategoryChips({ categories, selectedId, onSelect }) {
               onClick={() => onSelect(c.id)}
             >
               <CategoryIdentityIcon icon={appearance.icon} color={appearance.color} size={26} />
-              <span className="mchip__label">{localized(c, 'name', locale)}</span>
+              <span className="mchip__label">{localized(c, 'name', locale) || t('label_translation_missing')}</span>
             </button>
           );
         })}

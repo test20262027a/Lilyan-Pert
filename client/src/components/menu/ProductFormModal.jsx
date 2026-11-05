@@ -14,8 +14,9 @@ import { catalogErrorText } from './errorText';
  *
  * One product, four languages: the name and description inputs of every card
  * are keyed by locale code here and mapped to the stored columns (name_ku …)
- * only when the payload is built — a missing translation is fine, `localized()`
- * already falls back language by language.
+ * only when the payload is built. Each field starts from its own stored
+ * translation and an empty field is submitted as an empty string, which the API
+ * stores as a real clear — never as "keep what was there".
  *
  * The stored flags stay independent of each other: `active` (public visibility,
  * also governed by the category), `available` (orderable right now) and
@@ -325,7 +326,7 @@ export default function ProductFormModal({ modal, categories, currency = 'IQD', 
           placeholder={t('menu_select_category')}
           options={categories.map((c) => ({
             value: c.id,
-            label: localized(c, 'name', locale) || c.name_en || c.name_ku || t('menu_uncategorized'),
+            label: localized(c, 'name', locale) || t('menu_uncategorized'),
           }))}
         />
       </section>

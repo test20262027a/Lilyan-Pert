@@ -9,7 +9,7 @@ import DiscardChangesDialog from '../../confirm/DiscardChangesDialog';
 import OrderEditPanel, { ORDER_EDIT_FORM_ID } from './OrderEditPanel';
 import OrderStatusControl from './OrderStatusControl';
 import OrderActivityTimeline from './OrderActivityTimeline';
-import { localized, useI18n } from '../../../i18n';
+import { localizedFallback, useI18n } from '../../../i18n';
 import { useAuth } from '../../../context/AuthContext';
 import { useBusiness } from '../../../context/BusinessContext';
 import { get, patch, post, put } from '../../../api';
@@ -279,7 +279,7 @@ export default function OrderDetailsModal({ orderId, onClose, onChanged }) {
   const tableName = useMemo(() => {
     const table = data?.table;
     if (!table) return '';
-    return localized(table, 'name', locale) || table.name || '';
+    return localizedFallback(table, 'name', locale) || table.name || '';
   }, [data, locale]);
 
   const tableSource =

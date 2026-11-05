@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
-import { localized, useI18n } from '../i18n';
+import { localizedFallback, useI18n } from '../i18n';
 import { get, post } from '../api';
 import { playSound, unlockAudio, DEFAULT_SOUND, DEFAULT_VOLUME } from '../sound';
 import { syncPushDevice } from '../push/pushClient';
@@ -110,7 +110,7 @@ export function NotificationsProvider({ children }) {
       }
     }
 
-    const businessName = localized(nameRef.current, 'name', localeRef.current) || nameRef.current?.name || '';
+    const businessName = localizedFallback(nameRef.current, 'name', localeRef.current) || nameRef.current?.name || '';
     const label = tRef.current('dash_new_orders');
     const title = row.title ? `${label} · ${row.title}` : label;
     // The stored body is the table name; the placeholder used when an order

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Icon from '../Icon';
 import { Spinner, useToast } from '../ui';
-import { localized, useI18n } from '../../i18n';
+import { localizedFallback, useI18n } from '../../i18n';
 import { useBusiness } from '../../context/BusinessContext';
 import { put } from '../../api';
 import { applyTheme } from '../../theme';
@@ -23,7 +23,7 @@ export default function AppHeader({ onOpenSidebar, sidebarOpen = false }) {
   const toast = useToast();
   const [busy, setBusy] = useState(false);
 
-  const businessName = localized(business, 'name', locale) || business?.name || t('app_name');
+  const businessName = localizedFallback(business, 'name', locale) || business?.name || t('app_name');
   const themeMode = business?.theme?.mode === 'dark' ? 'dark' : 'light';
   const soundEnabled = business?.notification_settings?.sound_enabled !== false;
 

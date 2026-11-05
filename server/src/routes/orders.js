@@ -632,7 +632,8 @@ router.put(
             order.id,
             req.businessId,
             product.id,
-            product.name_en || product.name_ku || product.name_fa || product.name_ar,
+            // The frozen line keeps the order's own language, never another one.
+            localizedName(product, order.language),
             unitPrice,
             quantity,
             lineTotal,

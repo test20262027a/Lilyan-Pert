@@ -1,6 +1,6 @@
 import HeaderBackdrop from '../../headers/HeaderBackdrop';
 import DashIcon from './DashIcon';
-import { localized, useI18n } from '../../i18n';
+import { localizedFallback, useI18n } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 
 /*
@@ -70,7 +70,7 @@ function CafeScene() {
 export default function WelcomeBanner({ business }) {
   const { t, locale } = useI18n();
   const { user } = useAuth();
-  const brand = localized(business, 'name', locale) || business?.name || t('app_name');
+  const brand = localizedFallback(business, 'name', locale) || business?.name || t('app_name');
   const savedName = String(user?.full_name || '').trim();
   // The email's local part is an account identifier, never the person's name.
   const loginId = String(user?.email || '').split('@')[0].trim().toLowerCase();

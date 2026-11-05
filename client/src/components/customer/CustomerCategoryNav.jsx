@@ -51,7 +51,7 @@ export default function CustomerCategoryNav({ categories, activeCat, onSelect, d
 
   const rows = [
     { id: null, label: t('customer_menu_all') },
-    ...categories.map((c) => ({ id: c.id, label: localized(c, 'name', locale), category: c })),
+    ...categories.map((c) => ({ id: c.id, label: localized(c, 'name', locale) || t('label_translation_missing'), category: c })),
   ];
 
   /* Measured from real element boxes, so "is there more that way?" is correct

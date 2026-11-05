@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
-import { localized, useI18n } from '../../i18n';
+import { localizedFallback, useI18n } from '../../i18n';
 import './tableField.css';
 
 /*
@@ -25,7 +25,7 @@ const PANEL_MAX = 300;
 
 export function tableLabel(row, locale) {
   if (!row) return '';
-  const name = localized(row, 'name', locale) || row.name || '';
+  const name = localizedFallback(row, 'name', locale) || row.name || '';
   const number = row.table_number ? `#${row.table_number}` : '';
   return number ? `${name} · ${number}` : name;
 }
@@ -186,7 +186,7 @@ export default function TableField({ mode = 'manual', table = null, tables = [],
                     <Icon name="table" size={15} />
                   </span>
                   <span className="tfield-opt__text">
-                    <strong>{localized(row, 'name', locale) || row.name}</strong>
+                    <strong>{localizedFallback(row, 'name', locale) || row.name}</strong>
                     {row.table_number ? <small>#{row.table_number}</small> : null}
                   </span>
                   <span className="tfield-opt__check" aria-hidden="true">
@@ -223,7 +223,7 @@ export default function TableField({ mode = 'manual', table = null, tables = [],
         <span className={`tfield__value ${selected ? '' : 'is-placeholder'}`}>
           {selected ? (
             <>
-              <strong>{localized(selected, 'name', locale) || selected.name}</strong>
+              <strong>{localizedFallback(selected, 'name', locale) || selected.name}</strong>
               {selected.table_number ? <small>#{selected.table_number}</small> : null}
             </>
           ) : (

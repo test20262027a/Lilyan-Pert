@@ -52,7 +52,7 @@ function SortableProductCard({ product, index, ids, onReorder, dropTarget, ...ca
 }
 
 export default function SortableProductGrid({ products, onReorder, renderCard }) {
-  const { locale } = useI18n();
+  const { t, locale } = useI18n();
   const sensors = useReorderSensors();
   const [activeId, setActiveId] = useState(null);
   const [overId, setOverId] = useState(null);
@@ -103,7 +103,7 @@ export default function SortableProductGrid({ products, onReorder, renderCard })
             <div className="mcard__media">
               {active.image_url ? <img className="mcard__img" src={active.image_url} alt="" /> : null}
             </div>
-            <div className="mcard__ghost-name">{localized(active, 'name', locale)}</div>
+            <div className="mcard__ghost-name">{localized(active, 'name', locale) || t('label_translation_missing')}</div>
           </div>
         ) : null}
       </DragOverlay>

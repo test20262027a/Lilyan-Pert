@@ -4,7 +4,7 @@ import QRCode from 'qrcode';
 import Icon from '../Icon';
 import QrCode from '../QrCode';
 import { useToast } from '../ui';
-import { localized, useI18n } from '../../i18n';
+import { localizedFallback, useI18n } from '../../i18n';
 import { copyText, qrFileName } from './menuUrl';
 import { isStandalone } from '../../pwa';
 import { fmtDigits } from '../../format';
@@ -36,7 +36,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
   const seats = Number(table.seats);
   // The table's own name in the language the owner is reading, falling back to
   // the stored display name of a table created before the four languages existed.
-  const label = localized(table, 'name', locale) || table.name || '';
+  const label = localizedFallback(table, 'name', locale) || table.name || '';
 
   // A large PNG (1024px, full quiet zone) so the printed code scans reliably.
   const download = async () => {

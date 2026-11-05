@@ -392,7 +392,7 @@ function CreateOrderModal({ products, tables, currency, onClose, onCreated }) {
               value={line.product_id}
               onChange={(v) => setLines((l) => l.map((x, i) => (i === idx ? { ...x, product_id: v } : x)))}
               placeholder={t('order_select_product')}
-              options={activeProducts.map((p) => ({ value: p.id, label: localized(p, 'name', locale) }))}
+              options={activeProducts.map((p) => ({ value: p.id, label: localized(p, 'name', locale) || t('label_translation_missing') }))}
             />
             <input
               className="input"

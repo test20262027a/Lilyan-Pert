@@ -184,9 +184,11 @@ export default function MenuManagement() {
     try {
       if (id) await put(`/catalog/categories/${id}`, values);
       else await post('/catalog/categories', values);
+      // The refreshed records must be in place before the form closes, so an
+      // immediate second edit opens from what the server really stored.
+      await load();
       toast.success(t('state_saved'));
       setCategoryModal(null);
-      await load();
     } catch (err) {
       setFormError(err.code);
     } finally {
@@ -200,9 +202,11 @@ export default function MenuManagement() {
     try {
       if (id) await put(`/catalog/products/${id}`, values);
       else await post('/catalog/products', values);
+      // Refresh first, close second: reopening the same product reads the
+      // record the server just stored, never the previous list snapshot.
+      await load();
       toast.success(t('state_saved'));
       setProductModal(null);
-      await load();
     } catch (err) {
       setFormError(err.code);
     } finally {
@@ -310,7 +314,7 @@ export default function MenuManagement() {
     setConfirm({
       kind: 'category',
       id: c.id,
-      name: localized(c, 'name', locale),
+      name: localized(c, 'name', locale) || t('label_translation_missing'),
       icon: appearance.icon,
       color: appearance.color,
       productCount: Number(c.product_count) || 0,
@@ -342,7 +346,7 @@ export default function MenuManagement() {
       ? {
           icon: selectedAppearance.icon,
           color: selectedAppearance.color,
-          title: localized(selectedCategory, 'name', locale),
+          title: localized(selectedCategory, 'name', locale) || t('label_translation_missing'),
           subtitle: t('menu_products_hint'),
         }
       : null;
@@ -354,7 +358,7 @@ export default function MenuManagement() {
   const cardFor = (p) => {
     const categoryLabel = results
       ? localized(p, 'category_name', locale) || t('menu_uncategorized')
-      : localized(selectedCategory, 'name', locale);
+      : localized(selectedCategory, 'name', locale) || t('label_translation_missing');
     return {
       currency,
       canManage: isManager,
@@ -367,7 +371,7 @@ export default function MenuManagement() {
         setConfirm({
           kind: 'product',
           id: p.id,
-          name: localized(p, 'name', locale),
+          name: localized(p, 'name', locale) || t('label_translation_missing'),
           image: p.image_url || null,
           categoryName: categoryLabel,
         }),
