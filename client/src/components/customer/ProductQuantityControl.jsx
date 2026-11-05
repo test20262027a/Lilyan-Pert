@@ -11,7 +11,7 @@ import { fmtNumber } from '../../format';
  * cart badge and the cart sheet can never disagree. Reaching zero is the cart's
  * decision (`onDecrease` removes the line), never a negative count here.
  *
- * The plus sits at the inline-start edge and the minus at the inline-end, so the
+ * The minus sits at the inline-start edge and the plus at the inline-end, so the
  * control mirrors with the text direction exactly like the rest of the menu.
  */
 export default function ProductQuantityControl({
@@ -34,24 +34,6 @@ export default function ProductQuantityControl({
     >
       <button
         type="button"
-        className="cui-qc__btn cui-qc__btn--plus"
-        onClick={(event) => {
-          event.stopPropagation();
-          if (!disabled) onIncrease?.();
-        }}
-        disabled={disabled}
-        aria-label={t('customer_menu_qty_increase')}
-        title={t('customer_menu_qty_increase')}
-      >
-        <Icon name="plus" size={size === 'lg' ? 19 : 17} />
-      </button>
-
-      <span className="cui-qc__value" aria-live="polite">
-        {count}
-      </span>
-
-      <button
-        type="button"
         className="cui-qc__btn cui-qc__btn--minus"
         onClick={(event) => {
           event.stopPropagation();
@@ -62,6 +44,24 @@ export default function ProductQuantityControl({
         title={t('customer_menu_qty_decrease')}
       >
         <Icon name="minus" size={size === 'lg' ? 19 : 17} />
+      </button>
+
+      <span className="cui-qc__value" aria-live="polite">
+        {count}
+      </span>
+
+      <button
+        type="button"
+        className="cui-qc__btn cui-qc__btn--plus"
+        onClick={(event) => {
+          event.stopPropagation();
+          if (!disabled) onIncrease?.();
+        }}
+        disabled={disabled}
+        aria-label={t('customer_menu_qty_increase')}
+        title={t('customer_menu_qty_increase')}
+      >
+        <Icon name="plus" size={size === 'lg' ? 19 : 17} />
       </button>
     </div>
   );

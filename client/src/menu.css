@@ -619,32 +619,40 @@
     0 6px 14px rgba(24, 46, 30, 0.06);
 }
 
+/*
+ * The photograph's own area: a fixed, softly tinted stage with rounded corners,
+ * inset in the card so the whole picture stays visible (`contain`) with a calm
+ * theme-tinted surround instead of an awkward crop.
+ */
 .mcard__media {
   position: relative;
   aspect-ratio: 4 / 3;
   display: flex;
-  background: linear-gradient(160deg, var(--surface-2), var(--surface-3));
+  margin: 8px 8px 0;
+  padding: 10px;
+  border-radius: 16px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 90% at 70% 8%, color-mix(in srgb, var(--theme-primary) 10%, transparent), transparent 62%),
+    linear-gradient(160deg, var(--surface-2), var(--surface-3));
 }
-.mcard__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mcard__img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 12px;
+}
 .mcard__placeholder { margin: auto; color: var(--muted); opacity: 0.75; }
 
-/* Frosted information panel over the lower edge of the photograph. */
+/* Information panel below the photograph: the name sits clearly apart from the
+   image edge, followed by the category, the price and the availability pill. */
 .mcard__panel {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  padding: 11px 13px 12px;
+  padding: 15px 14px 2px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border-radius: 18px 18px 0 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.7);
-  background: linear-gradient(145deg, rgba(255, 250, 241, 0.79), rgba(245, 247, 246, 0.76));
-  -webkit-backdrop-filter: blur(14px) saturate(1.1);
-  backdrop-filter: blur(14px) saturate(1.1);
-  box-shadow:
-    0 -8px 20px rgba(0, 0, 0, 0.035),
-    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  gap: 5px;
+  background: var(--surface);
 }
 /* A product name is always ONE line: it never wraps, never grows the card and
    never pushes the price or the status pill down. The full name stays in the
@@ -785,12 +793,7 @@
 .mcard--muted .mcard__img { filter: grayscale(100%) contrast(0.95); }
 .mcard--muted .mcard__placeholder { color: color-mix(in srgb, var(--muted) 80%, var(--surface)); }
 .mcard--muted .mcard__panel {
-  background: linear-gradient(145deg, rgba(246, 246, 244, 0.88), rgba(237, 239, 237, 0.86));
-  -webkit-backdrop-filter: blur(12px) saturate(0.5);
-  backdrop-filter: blur(12px) saturate(0.5);
-  box-shadow:
-    0 -6px 16px rgba(0, 0, 0, 0.02),
-    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  background: color-mix(in srgb, var(--surface-2) 55%, var(--surface));
 }
 .mcard--muted .mcard__name { color: #414841; }
 .mcard--muted .mcard__amount {
@@ -1011,6 +1014,10 @@
 
 @media (max-width: 560px) {
   .mgrid { grid-template-columns: minmax(0, 1fr); }
+  /* one card per row: a shallower stage keeps the whole picture visible
+     without eating most of the phone's screen */
+  .mcard__media { aspect-ratio: 16 / 10; }
+  .mcard__panel { padding: 13px 13px 2px; }
   .mhero__art { display: none; }
   .mcstat { padding: 7px 5px; }
 }

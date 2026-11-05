@@ -175,8 +175,8 @@ export default function CustomerProductCard({
                 }}
                 aria-label={`${addLabel || t('customer_menu_add_to_cart')} — ${name}`}
               >
-                <Icon name="cart" size={17} />
                 <span>{addLabel || t('customer_menu_add_to_cart')}</span>
+                <Icon name="cart" size={17} />
               </button>
             )}
           </div>

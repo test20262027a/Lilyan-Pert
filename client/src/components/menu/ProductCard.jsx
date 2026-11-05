@@ -5,9 +5,10 @@ import { fmtMoneyParts } from '../../format';
 /*
  * One image-first product card.
  *
- * The photograph fills the card; a frosted panel sits over its lower edge with
- * the product name, the category and the price, closed by the real availability
- * pill. The two equal action buttons follow underneath.
+ * The photograph owns its own rounded area at the top of the card and is shown
+ * whole (never cropped); below it a soft panel carries the product name, the
+ * category and the price, closed by the real availability pill. The two equal
+ * action buttons follow underneath.
  *
  * Both buttons follow the app-wide rule for labelled actions: label first, icon
  * last, so the pencil/trash sits at the logical end of the word — physical left
@@ -116,23 +117,23 @@ export default function ProductCard({
             </button>
           </span>
         ) : null}
+      </div>
 
-        <div className="mcard__panel">
-          <div className="mcard__name" title={name}>
-            {name}
-          </div>
-          <div className="mcard__meta">
-            {categoryName ? <span className="mcard__cat">{categoryName}</span> : null}
-            <span className="mcard__price">
-              <span className="mcard__amount">{number}</span>
-              <span className="mcard__currency">{symbol}</span>
-            </span>
-          </div>
-          <span className={`mcard__state mcard__state--${state}`}>
-            <i className="mcard__dot" />
-            {t(STATE_LABEL[state])}
+      <div className="mcard__panel">
+        <div className="mcard__name" title={name}>
+          {name}
+        </div>
+        <div className="mcard__meta">
+          {categoryName ? <span className="mcard__cat">{categoryName}</span> : null}
+          <span className="mcard__price">
+            <span className="mcard__amount">{number}</span>
+            <span className="mcard__currency">{symbol}</span>
           </span>
         </div>
+        <span className={`mcard__state mcard__state--${state}`}>
+          <i className="mcard__dot" />
+          {t(STATE_LABEL[state])}
+        </span>
       </div>
 
       <div className="mcard__actions">

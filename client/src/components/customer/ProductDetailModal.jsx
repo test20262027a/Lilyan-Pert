@@ -173,8 +173,8 @@ export default function ProductDetailModal({
                     onClick={() => onAdd?.(product)}
                     disabled={!buyable}
                   >
-                    <Icon name="plus" size={18} />
                     <span>{addLabel || t('customer_menu_add_to_cart')}</span>
+                    <Icon name="plus" size={18} />
                   </button>
                 )}
               </div>
