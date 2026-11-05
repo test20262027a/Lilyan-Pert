@@ -954,9 +954,8 @@
 .cui-prod__name {
   margin: 0;
   width: 100%;
-  font-size: clamp(13px, 0.45vw + 11px, 16px);
+  font-size: clamp(14px, 0.45vw + 11px, 17px);
   font-weight: 800;
-  line-height: 1.45;
   color: var(--text);
 }
 

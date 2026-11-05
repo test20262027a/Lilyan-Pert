@@ -95,7 +95,7 @@ export default function ProductDetailModal({
         aria-labelledby={titleId}
       >
         <div className="cui-pd__info" dir={dir}>
-          <header className="cui-pd__head">
+          <header className="cui-pd__head" data-dir={dir}>
             <span
               className="cui-pd__caticon"
               style={{ '--pd-ink': appearance.color }}
@@ -190,7 +190,17 @@ export default function ProductDetailModal({
               aria-label={t('customer_menu_zoom_open')}
               title={t('customer_menu_zoom_open')}
             >
-              <img src={product.image_url} alt={name} draggable="false" />
+              {/* The whole photograph stays visible on top of a softened copy of
+                  itself, so a picture whose shape differs from this frame never
+                  leaves empty strips — and the sharp foreground is never cut. */}
+              <img
+                className="cui-pd__shotbg"
+                src={product.image_url}
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
+              <img className="cui-pd__shotimg" src={product.image_url} alt={name} draggable="false" />
               <span className="cui-pd__zoomhint" aria-hidden="true">
                 <Icon name="search" size={15} />
                 <span>{t('customer_menu_zoom_open')}</span>
