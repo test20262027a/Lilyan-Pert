@@ -94,12 +94,14 @@
 
 /* --------------------------------------------------------------- sections */
 
+/* The card is only the frame: the semantic header band sits flush at its top
+   (it inherits these corners) and the body below carries the padding, so the
+   band is part of the card instead of a detached strip above it. */
 .amodal__section {
   display: flex;
   flex-direction: column;
-  gap: 13px;
   min-width: 0;
-  padding: 14px;
+  padding: 0;
   border-radius: 18px;
   border: 1px solid var(--border);
   background: linear-gradient(180deg, var(--surface) 0%, var(--surface-2) 100%);
@@ -109,39 +111,13 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-.amodal__head {
+.amodal__section-body {
   display: flex;
-  align-items: center;
-  gap: 9px;
+  flex-direction: column;
+  gap: 13px;
   min-width: 0;
+  padding: 14px;
 }
-.amodal__icon {
-  flex: none;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 10px;
-  color: var(--theme-primary-strong);
-  background: var(--theme-primary-soft);
-  border: 1px solid var(--theme-primary-line);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
-}
-.amodal__title {
-  flex: none;
-  font-size: 12.5px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  color: var(--text);
-}
-/* A hairline running to the far edge, so the group head reads as a quiet rule. */
-.amodal__rule {
-  flex: 1 1 auto;
-  height: 1px;
-  border-radius: 1px;
-  background: linear-gradient(to right, var(--border), transparent);
-}
-[dir='rtl'] .amodal__rule { background: linear-gradient(to left, var(--border), transparent); }
 
 /* The photo panel is already its own card; inside a section it flattens so the
    two never read as a card in a card. */
@@ -286,7 +262,6 @@
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.32);
 }
 [data-theme='dark'] .am-field__control:focus-within { background: var(--surface); }
-[data-theme='dark'] .amodal__icon,
 [data-theme='dark'] .amodal__notice-icon { box-shadow: none; }
 [data-theme='dark'] .modal.modal--account .modal__close,
 [data-theme='dark'] .modal.modal--password .modal__close {
@@ -303,7 +278,8 @@
 
 @media (max-width: 640px) {
   .amodal__grid { grid-template-columns: 1fr; }
-  .amodal__section { padding: 12px; border-radius: 16px; gap: 11px; }
+  .amodal__section { border-radius: 16px; }
+  .amodal__section-body { padding: 12px; gap: 11px; }
   /* Compact header: the picture still fills it, the title, icon and close
      control stay visible and the subtitle never grows into the illustration. */
   .modal.modal--account .sh-head,

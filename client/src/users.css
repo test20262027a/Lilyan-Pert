@@ -454,12 +454,41 @@
   color: var(--muted);
   border-color: var(--border);
 }
-/* The system owner: never deletable, so its row carries a protected marker. */
+/* Both owner pills measure their own label and are never squeezed. The
+   protected marker used to be auto-placed into the avatar's 46px column, where
+   `max-width: 100%` clipped the Kurdish label; it now owns a full line of the
+   row — directly beneath the avatar — so the whole localized label always fits
+   inside the card. */
+.um-badge--owner,
 .um-badge--protected {
-  gap: 4px;
-  background: color-mix(in srgb, #7c67e4 13%, var(--surface));
-  color: color-mix(in srgb, #7c67e4 78%, var(--text));
-  border-color: color-mix(in srgb, #7c67e4 30%, var(--surface));
+  min-width: max-content;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: clip;
+  flex-shrink: 0;
+}
+
+/* The system owner: never deletable, so its row carries a protected marker as a
+   compact lavender 3D pill with its shield glyph. */
+.um-badge--protected {
+  grid-column: 1 / -1;
+  justify-self: start;
+  gap: 5px;
+  width: max-content;
+  padding-inline: 10px;
+  border-radius: 999px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, #7c67e4 20%, var(--surface)) 0%,
+    color-mix(in srgb, #7c67e4 10%, var(--surface)) 100%
+  );
+  color: color-mix(in srgb, #7c67e4 80%, var(--text));
+  border-color: color-mix(in srgb, #7c67e4 34%, var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 color-mix(in srgb, #7c67e4 24%, transparent),
+    0 2px 6px -3px color-mix(in srgb, #7c67e4 55%, transparent);
 }
 .um-badge--protected .icon { flex: none; }
 .um-badge__dot {
@@ -672,22 +701,28 @@
   font-weight: 600;
 }
 
-.um-sec { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.um-sec__head { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.um-sec__bar {
-  flex: none;
-  width: 3px;
-  height: 15px;
-  border-radius: 2px;
-  background: var(--um-green);
+/* One section = one card. The semantic header band is drawn by the shared
+   SectionCardHeader, which inherits this card's own top corners; the body keeps
+   its padding and spacing here, so no field inside it moves. */
+.um-sec {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-radius: 18px;
+  border: 1px solid var(--um-line);
+  background: var(--um-card);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 2px rgba(23, 26, 43, 0.05),
+    0 12px 24px -20px rgba(23, 26, 43, 0.45);
 }
-.um-sec__title {
-  font-size: 13.5px;
-  font-weight: 750;
-  color: var(--um-ink);
-  margin: 0;
+.um-sec__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px 14px 15px;
 }
-.um-sec__aside { margin-inline-start: auto; }
 
 /* --------------------------------------------------------- form fields */
 
@@ -1254,8 +1289,8 @@
 [data-theme='dark'] .um-badge { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08); }
 [data-theme='dark'] .um-row__name,
 [data-theme='dark'] .um-modal__title,
-[data-theme='dark'] .um-sec__title,
 [data-theme='dark'] .um-permcard__title { color: var(--text); }
+[data-theme='dark'] .um-sec { background: var(--surface-2); border-color: var(--border); }
 [data-theme='dark'] .um-permcard { background: var(--surface-2); border-color: var(--border); }
 [data-theme='dark'] .um-input { background: var(--surface-2); color: var(--text); }
 [data-theme='dark'] .um-input--locked {
@@ -1353,8 +1388,6 @@
 @media (max-width: 560px) {
   .um-modal__head { min-height: var(--hd-modal-h-sm); padding-block: 12px; padding-inline-end: 52px; }
   .um-fields--2 { grid-template-columns: minmax(0, 1fr); }
-  .um-sec__head { flex-wrap: wrap; }
-  .um-sec__aside { margin-inline-start: 0; }
   .um-permgroup__checks { gap: 6px 10px; }
   .um-modal__foot { padding: 10px 14px; }
   .um-btn { flex: 1 1 0; }

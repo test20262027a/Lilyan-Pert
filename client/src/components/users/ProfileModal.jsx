@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import Icon from '../Icon';
 import { Alert, Modal } from '../ui';
 import ModalActions from '../ModalActions';
 import { useI18n } from '../../i18n';
 import AccountField from './AccountField';
 import UserPhotoField from './UserPhotoField';
+import SectionCardHeader from './SectionCardHeader';
 import './accountModals.css';
 
 /*
@@ -71,75 +71,63 @@ export default function ProfileModal({ user, role, onClose, updateProfile, onSav
         {error ? <Alert kind="error">{error}</Alert> : null}
 
         <section className="amodal__section">
-          <div className="amodal__head">
-            <span className="amodal__icon" aria-hidden="true">
-              <Icon name="camera" size={15} />
-            </span>
-            <span className="amodal__title">{t('user_section_profile')}</span>
-            <span className="amodal__rule" aria-hidden="true" />
-          </div>
-          <UserPhotoField
-            className="uphoto--account"
-            photo={values.profile_image_url}
-            avatarType={values.avatar_type}
-            name={values.full_name}
-            onPhotoChange={(url) => setValues((v) => ({ ...v, profile_image_url: url }))}
-            onAvatarChange={(kind) => setValues((v) => ({ ...v, avatar_type: kind }))}
-          />
-        </section>
-
-        <section className="amodal__section">
-          <div className="amodal__head">
-            <span className="amodal__icon" aria-hidden="true">
-              <Icon name="person" size={15} />
-            </span>
-            <span className="amodal__title">{t('user_section_general')}</span>
-            <span className="amodal__rule" aria-hidden="true" />
-          </div>
-          <div className="amodal__grid">
-            <AccountField
-              icon="person"
-              label={t('label_full_name')}
-              autoComplete="name"
-              value={values.full_name}
-              onChange={(e) => setValues((v) => ({ ...v, full_name: e.target.value }))}
-              full
-            />
-            <AccountField
-              icon="phone"
-              label={t('label_phone')}
-              dir="ltr"
-              autoComplete="tel"
-              value={values.phone}
-              onChange={(e) => setValues((v) => ({ ...v, phone: e.target.value }))}
+          <SectionCardHeader icon="camera" title={t('user_section_profile')} tone="success" />
+          <div className="amodal__section-body">
+            <UserPhotoField
+              className="uphoto--account"
+              photo={values.profile_image_url}
+              avatarType={values.avatar_type}
+              name={values.full_name}
+              onPhotoChange={(url) => setValues((v) => ({ ...v, profile_image_url: url }))}
+              onAvatarChange={(kind) => setValues((v) => ({ ...v, avatar_type: kind }))}
             />
           </div>
         </section>
 
         <section className="amodal__section">
-          <div className="amodal__head">
-            <span className="amodal__icon" aria-hidden="true">
-              <Icon name="shield" size={15} />
-            </span>
-            <span className="amodal__title">{t('user_section_account')}</span>
-            <span className="amodal__rule" aria-hidden="true" />
+          <SectionCardHeader icon="person" title={t('user_section_general')} tone="info" />
+          <div className="amodal__section-body">
+            <div className="amodal__grid">
+              <AccountField
+                icon="person"
+                label={t('label_full_name')}
+                autoComplete="name"
+                value={values.full_name}
+                onChange={(e) => setValues((v) => ({ ...v, full_name: e.target.value }))}
+                full
+              />
+              <AccountField
+                icon="phone"
+                label={t('label_phone')}
+                dir="ltr"
+                autoComplete="tel"
+                value={values.phone}
+                onChange={(e) => setValues((v) => ({ ...v, phone: e.target.value }))}
+              />
+            </div>
           </div>
-          <div className="amodal__grid">
-            <AccountField
-              icon="mail"
-              label={t('user_login_identifier')}
-              dir="ltr"
-              value={user?.email || ''}
-              readOnly
-              disabled
-            />
-            <AccountField
-              icon="shield"
-              label={t('user_role')}
-              value={role ? (role === 'super_admin' ? t('user_super_admin') : t(`role_${role}`)) : ''}
-              readOnly
-              disabled
-            />
+        </section>
+
+        <section className="amodal__section">
+          <SectionCardHeader icon="shield" title={t('user_section_account')} tone="amber" />
+          <div className="amodal__section-body">
+            <div className="amodal__grid">
+              <AccountField
+                icon="mail"
+                label={t('user_login_identifier')}
+                dir="ltr"
+                value={user?.email || ''}
+                readOnly
+                disabled
+              />
+              <AccountField
+                icon="shield"
+                label={t('user_role')}
+                value={role ? (role === 'super_admin' ? t('user_super_admin') : t(`role_${role}`)) : ''}
+                readOnly
+                disabled
+              />
+            </div>
           </div>
         </section>
       </div>

@@ -4,6 +4,7 @@ import Icon from '../Icon';
 import { useI18n } from '../../i18n';
 import UsersArtwork from './UsersArtwork';
 import UserPhotoField from './UserPhotoField';
+import SectionCardHeader from './SectionCardHeader';
 import ModalActions from '../ModalActions';
 import DiscardChangesDialog from '../confirm/DiscardChangesDialog';
 import {
@@ -35,15 +36,14 @@ import {
  */
 const USERNAME_RE = /^[a-z0-9]{1,63}$/;
 
-function Section({ title, children, aside }) {
+/* One section of the dialog is one card: the shared semantic header band on
+   top, the fields underneath. Only the frame around them is new — the fields,
+   their order and their behaviour are untouched. */
+function Section({ title, icon, tone, children, aside }) {
   return (
     <section className="um-sec">
-      <div className="um-sec__head">
-        <span className="um-sec__bar" aria-hidden="true" />
-        <h3 className="um-sec__title">{title}</h3>
-        {aside ? <div className="um-sec__aside">{aside}</div> : null}
-      </div>
-      {children}
+      <SectionCardHeader icon={icon} title={title} tone={tone} aside={aside} />
+      <div className="um-sec__body">{children}</div>
     </section>
   );
 }
@@ -381,7 +381,7 @@ export default function UserFormModal({
 
           <p className="um-note um-note--req">{t('user_required_note')}</p>
 
-          <Section title={t('user_section_general')}>
+          <Section title={t('user_section_general')} icon="user" tone="info">
             <div className="um-fields">
               <label className="um-field um-field--full">
                 <FieldLabel label={t('label_full_name')} required />
@@ -468,7 +468,7 @@ export default function UserFormModal({
             </div>
           </Section>
 
-          <Section title={t('user_section_password')}>
+          <Section title={t('user_section_password')} icon="key" tone="danger">
             <div className="um-fields um-fields--2">
               <PasswordField
                 label={t('label_password')}
@@ -492,7 +492,7 @@ export default function UserFormModal({
             <p className="um-note">{t('user_password_notice')}</p>
           </Section>
 
-          <Section title={t('user_section_profile')}>
+          <Section title={t('user_section_profile')} icon="camera" tone="success">
             <UserPhotoField
               photo={profileImage}
               avatarType={avatarType}
@@ -503,7 +503,7 @@ export default function UserFormModal({
             />
           </Section>
 
-          <Section title={t('user_section_role')}>
+          <Section title={t('user_section_role')} icon="shieldCheck" tone="amber">
             {/* Both roles as their own beveled tile: the glyph, the name and a
                 one-line description of the access each one carries. Only one can
                 be chosen, and neither of them is the system owner. */}
@@ -562,6 +562,8 @@ export default function UserFormModal({
 
           <Section
             title={t('user_section_permissions')}
+            icon="sliders"
+            tone="amber"
             aside={
               <div className="um-perm-actions">
                 <button type="button" className="um-mini" onClick={selectAll} disabled={!activeGrantableCount}>
