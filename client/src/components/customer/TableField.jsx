@@ -2,6 +2,7 @@ import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import Icon from '../Icon';
 import { localizedFallback, useI18n } from '../../i18n';
+import { isVipTable } from '../../tableNaming';
 import './tableField.css';
 
 /*
@@ -126,8 +127,8 @@ export default function TableField({ mode = 'manual', table = null, tables = [],
           {t('customer_table_your')}
         </span>
         <div className="tfield__auto" role="status">
-          <span className="tfield__autoicon" aria-hidden="true">
-            <Icon name="table" size={17} />
+          <span className={`tfield__autoicon ${isVipTable(table) ? 'is-vip' : ''}`} aria-hidden="true">
+            <Icon name={isVipTable(table) ? 'crown' : 'table'} size={17} />
           </span>
           <span className="tfield__autotext">
             <strong>{tableLabel(table, locale)}</strong>
@@ -179,11 +180,13 @@ export default function TableField({ mode = 'manual', table = null, tables = [],
                   key={row.id}
                   role="option"
                   aria-selected={row.id === value}
-                  className={`tfield-opt ${row.id === value ? 'is-selected' : ''}`}
+                  className={`tfield-opt ${row.id === value ? 'is-selected' : ''} ${
+                    isVipTable(row) ? 'is-vip' : ''
+                  }`}
                   onClick={() => choose(row)}
                 >
                   <span className="tfield-opt__lead" aria-hidden="true">
-                    <Icon name="table" size={15} />
+                    <Icon name={isVipTable(row) ? 'crown' : 'table'} size={15} />
                   </span>
                   <span className="tfield-opt__text">
                     <strong>{localizedFallback(row, 'name', locale) || row.name}</strong>
@@ -217,8 +220,8 @@ export default function TableField({ mode = 'manual', table = null, tables = [],
         aria-label={t('customer_table_select')}
         onClick={() => (open ? close() : setOpen(true))}
       >
-        <span className="tfield__icon" aria-hidden="true">
-          <Icon name="table" size={16} />
+        <span className={`tfield__icon ${isVipTable(selected) ? 'is-vip' : ''}`} aria-hidden="true">
+          <Icon name={isVipTable(selected) ? 'crown' : 'table'} size={16} />
         </span>
         <span className={`tfield__value ${selected ? '' : 'is-placeholder'}`}>
           {selected ? (

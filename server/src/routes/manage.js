@@ -27,6 +27,7 @@ import {
 } from '../lib/owner.js';
 import { getVapidKeys, pushTest } from '../lib/push.js';
 import { resolveLanguage } from '../lib/languages.js';
+import { isTableType, tableNamesFor } from '../lib/table-naming.js';
 
 const router = express.Router();
 router.use(requireAuth);
@@ -34,29 +35,60 @@ router.use(requireAuth);
 /* --------------------------------------------------------------- tables */
 
 /*
- * A table is ONE record holding its four localized names (name_ku … name_en),
- * the same shape categories and products already use. `name` stays the resolved
- * display value — Kurdish first, then Persian, Arabic, English — because the
- * customer menu, the order snapshot, the receipts and the dashboard all read
- * that one column.
+ * A table is ONE record. Its type is the existing `vip` flag, its number comes
+ * from that type's own sequence inside the business, and its four localized
+ * names (name_ku … name_en) are generated from the two — "مێزی 7" / "Table 7"
+ * for a regular table, "VIP 3" for a VIP one. `name` stays the resolved display
+ * value the customer menu, the order snapshot, the receipts and the dashboard
+ * all read, so no screen has to know about the type to print the right name.
  */
-const TABLE_LANGS = ['ku', 'fa', 'ar', 'en'];
 
-/** The four submitted names, trimmed and length-capped. */
-function tableNames(body) {
-  const names = {};
-  for (const code of TABLE_LANGS) {
-    const raw = body?.[`name_${code}`];
-    names[code] = raw === undefined || raw === null ? '' : String(raw).trim().slice(0, 80);
-  }
-  return names;
+/** The type a request asks for: the explicit `type`, or the legacy `vip` flag. */
+function requestedType(body) {
+  if (isTableType(body?.type)) return body.type;
+  if (body?.vip !== undefined) return body.vip === true ? 'vip' : 'regular';
+  return null;
 }
 
-/** True when the caller sent any of the four name fields at all. */
-const hasNameFields = (body) => TABLE_LANGS.some((code) => body?.[`name_${code}`] !== undefined);
+/**
+ * Reserve the next number of one type for this business.
+ *
+ * The single INSERT … ON CONFLICT UPDATE statement is the atomic counter: two
+ * administrators creating a VIP table at the same instant are serialized on the
+ * sequence row, so they get VIP 1 and VIP 2 — never the same number. The seed
+ * and the GREATEST() keep the counter ahead of any number already stored, so a
+ * legacy row can never be handed out twice, and a deleted number is never
+ * reused.
+ */
+async function reserveTableNumber(client, businessId, type) {
+  const vip = type === 'vip';
+  const { rows } = await client.query(
+    `INSERT INTO table_number_seq (business_id, kind, last_number)
+     VALUES ($1, $2, COALESCE(
+       (SELECT max(table_number) FROM tables WHERE business_id = $1 AND vip = $3), 0
+     ) + 1)
+     ON CONFLICT (business_id, kind) DO UPDATE
+       SET last_number = GREATEST(
+         table_number_seq.last_number,
+         COALESCE((SELECT max(table_number) FROM tables WHERE business_id = $1 AND vip = $3), 0)
+       ) + 1
+     RETURNING last_number`,
+    [businessId, type, vip],
+  );
+  return rows[0].last_number;
+}
 
-/** The stored display name: the first language that carries one. */
-const displayName = (names) => TABLE_LANGS.map((code) => names[code]).find(Boolean) || '';
+/** The number a new table of `type` would take right now, without reserving it. */
+async function previewTableNumber(businessId, type) {
+  const { rows } = await q(
+    `SELECT GREATEST(
+       COALESCE((SELECT last_number FROM table_number_seq WHERE business_id = $1 AND kind = $2), 0),
+       COALESCE((SELECT max(table_number) FROM tables WHERE business_id = $1 AND vip = $3), 0)
+     ) + 1 AS number`,
+    [businessId, type, type === 'vip'],
+  );
+  return rows[0].number;
+}
 
 /** A positive whole number, null when absent/empty, NaN when not one. */
 function positiveInt(raw) {
@@ -82,7 +114,8 @@ router.get(
       // that share it (every table created before display order existed is 0):
       // names group by their text ("Table 1 … Table 10", then "Terrace 1") and
       // inside a group the number decides, so 10 never sorts before 2.
-      `SELECT t.*, (SELECT count(*)::int FROM orders o WHERE o.table_id = t.id) AS order_count
+      `SELECT t.*, CASE WHEN t.vip THEN 'vip' ELSE 'regular' END AS type,
+              (SELECT count(*)::int FROM orders o WHERE o.table_id = t.id) AS order_count
          FROM tables t WHERE t.business_id = $1
         ORDER BY t.display_order ASC,
                  regexp_replace(t.name, '\\d+$', '') ASC,
@@ -94,19 +127,32 @@ router.get(
   }),
 );
 
+/*
+ * The number a new table of one type would take right now. The form shows it as
+ * a provisional suggestion while the owner picks the type; only POST /tables
+ * actually reserves it, so two administrators never collide.
+ */
+router.get(
+  '/tables/next-number',
+  withBusiness('staff'),
+  perm('tables.view'),
+  ah(async (req, res) => {
+    const type = isTableType(String(req.query.type)) ? String(req.query.type) : 'regular';
+    res.json({ type, number: await previewTableNumber(req.businessId, type) });
+  }),
+);
+
 router.post(
   '/tables',
   withBusiness('manager'),
   perm('tables.create'),
   ah(async (req, res) => {
-    const names = tableNames(req.body);
-    const name = displayName(names);
-    if (!name) throw bad('NAME_REQUIRED');
-
-    // The number the guest sees: required, positive, and unique in this business.
-    const tableNumber = positiveInt(req.body?.table_number);
-    if (tableNumber === null) throw bad('TABLE_NUMBER_REQUIRED');
-    if (Number.isNaN(tableNumber)) throw bad('TABLE_NUMBER_INVALID');
+    /*
+     * The type decides the table's own numbering sequence: regular tables count
+     * 1, 2, 3… and VIP tables count 1, 2, 3… independently of them, so a
+     * business with ten regular tables still starts at VIP 1.
+     */
+    const type = requestedType(req.body) || 'regular';
 
     // Seating capacity keeps its existing rule: optional, 1–40, four by default.
     const seats = positiveInt(req.body?.seats);
@@ -115,59 +161,51 @@ router.post(
     const requestedOrder = orderInt(req.body?.display_order);
     if (Number.isNaN(requestedOrder)) throw bad('DISPLAY_ORDER_INVALID');
 
-    // One table per name inside a business: the check is server-side so it holds
-    // whatever the client sends, and it only ever looks at this business's rows.
-    const dupe = await q(
-      'SELECT 1 FROM tables WHERE business_id = $1 AND lower(name) = lower($2)',
-      [req.businessId, name],
-    );
-    if (dupe.rowCount) throw conflict('TABLE_DUPLICATE');
-
-    const numberTaken = await q(
-      'SELECT 1 FROM tables WHERE business_id = $1 AND table_number = $2',
-      [req.businessId, tableNumber],
-    );
-    if (numberTaken.rowCount) throw conflict('TABLE_NUMBER_DUPLICATE');
-
-    // Appended after every existing table unless the owner chose an order.
-    const order =
-      requestedOrder ??
-      (
-        await q('SELECT COALESCE(max(display_order), 0) + 1 AS next FROM tables WHERE business_id = $1', [
-          req.businessId,
-        ])
-      ).rows[0].next;
-
     const token = crypto.randomBytes(8).toString('hex');
-    let rows;
-    try {
-      ({ rows } = await q(
+    const active = req.body?.active === undefined ? true : Boolean(req.body.active);
+
+    /*
+     * The number is reserved here, never taken from the client: the form only
+     * suggests one, and the confirmed number comes back in the response. The
+     * four names are written from the same number in the same transaction.
+     */
+    const table = await tx(async (c) => {
+      const number = await reserveTableNumber(c, req.businessId, type);
+      const names = tableNamesFor(type, number);
+
+      // Appended after every existing table unless the owner chose an order.
+      const order =
+        requestedOrder ??
+        (
+          await c.query('SELECT COALESCE(max(display_order), 0) + 1 AS next FROM tables WHERE business_id = $1', [
+            req.businessId,
+          ])
+        ).rows[0].next;
+
+      const { rows } = await c.query(
         `INSERT INTO tables (business_id, name, name_ku, name_fa, name_ar, name_en,
                              table_number, seats, display_order, vip, zone, qr_token, active)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) RETURNING *`,
         [
           req.businessId,
-          name,
-          names.ku || null,
-          names.fa || null,
-          names.ar || null,
-          names.en || null,
-          tableNumber,
+          names.name,
+          names.name_ku,
+          names.name_fa,
+          names.name_ar,
+          names.name_en,
+          number,
           seats ?? 4,
           order,
-          req.body?.vip === true,
+          type === 'vip',
           req.body?.zone ? String(req.body.zone).slice(0, 60) : null,
           token,
-          req.body?.active === undefined ? true : Boolean(req.body.active),
+          active,
         ],
-      ));
-    } catch (err) {
-      // The unique index is the real guard: a number taken between the check
-      // above and this insert is reported as a duplicate, never as a 500.
-      if (err?.code === '23505') throw conflict('TABLE_NUMBER_DUPLICATE');
-      throw err;
-    }
-    res.status(201).json({ table: rows[0] });
+      );
+      return rows[0];
+    });
+
+    res.status(201).json({ table });
   }),
 );
 
@@ -177,22 +215,9 @@ router.put(
   perm('tables.edit'),
   ah(async (req, res) => {
     const b = req.body || {};
-    // Renaming keeps `qr_token` untouched: an already distributed QR link must
-    // survive a rename, so only the display fields are written here.
-    const names = tableNames(b);
-    const withNames = hasNameFields(b);
-    const name = withNames ? displayName(names) : null;
-    if (withNames && !name) throw bad('NAME_REQUIRED');
-    // A cleared language field clears that translation; a language the caller
-    // never sent keeps whatever it already stored.
-    const nameParams = withNames ? TABLE_LANGS.map((code) => names[code] || null) : [null, null, null, null];
+    if (!isUuid(req.params.id)) throw notFound('TABLE_NOT_FOUND');
 
-    let tableNumber = null;
-    if (b.table_number !== undefined) {
-      tableNumber = positiveInt(b.table_number);
-      if (tableNumber === null || Number.isNaN(tableNumber)) throw bad('TABLE_NUMBER_INVALID');
-    }
-
+    // Seating capacity keeps its existing rule: optional, 1–40, four by default.
     let seats = null;
     if (b.seats !== undefined) {
       seats = positiveInt(b.seats);
@@ -205,56 +230,70 @@ router.put(
       if (order === null || Number.isNaN(order)) throw bad('DISPLAY_ORDER_INVALID');
     }
 
-    if (name) {
-      const dupe = await q(
-        'SELECT 1 FROM tables WHERE business_id = $1 AND lower(name) = lower($2) AND id <> $3',
-        [req.businessId, name, req.params.id],
-      );
-      if (dupe.rowCount) throw conflict('TABLE_DUPLICATE');
-    }
-    if (tableNumber !== null) {
-      const taken = await q(
-        'SELECT 1 FROM tables WHERE business_id = $1 AND table_number = $2 AND id <> $3',
-        [req.businessId, tableNumber, req.params.id],
-      );
-      if (taken.rowCount) throw conflict('TABLE_NUMBER_DUPLICATE');
-    }
+    const zone = b.zone === undefined ? null : String(b.zone).slice(0, 60);
+    const active = b.active === undefined ? null : Boolean(b.active);
+    const wantedType = requestedType(b);
 
-    let rows;
-    try {
-      ({ rows } = await q(
-        `UPDATE tables SET name = COALESCE($3, name),
-                           name_ku = CASE WHEN $14 THEN $4 ELSE name_ku END,
-                           name_fa = CASE WHEN $14 THEN $5 ELSE name_fa END,
-                           name_ar = CASE WHEN $14 THEN $6 ELSE name_ar END,
-                           name_en = CASE WHEN $14 THEN $7 ELSE name_en END,
+    /*
+     * Editing never touches `qr_token` or the table's id: a code already printed
+     * and stuck on the table keeps working, and its past orders stay attached.
+     * Changing the TYPE does move the table to the destination sequence — it
+     * takes that type's next free number and its four names follow — while an
+     * unchanged type keeps its number exactly as it is.
+     */
+    const table = await tx(async (c) => {
+      const current = await c.query(
+        'SELECT id, vip, table_number FROM tables WHERE id = $1 AND business_id = $2 FOR UPDATE',
+        [req.params.id, req.businessId],
+      );
+      const row = current.rows[0];
+      if (!row) throw notFound('TABLE_NOT_FOUND');
+
+      const type = wantedType ?? (row.vip ? 'vip' : 'regular');
+      const changingType = wantedType !== null && (wantedType === 'vip') !== row.vip;
+      // A type change, or a table saved before numbers existed, takes the next
+      // number of its own type; otherwise the table keeps the number it has.
+      const number =
+        changingType || !row.table_number
+          ? await reserveTableNumber(c, req.businessId, type)
+          : row.table_number;
+      // The names always follow the stored number and type, so the form's
+      // preview and the saved table can never drift apart.
+      const names = tableNamesFor(type, number);
+
+      const { rows } = await c.query(
+        `UPDATE tables SET seats = COALESCE($3, seats),
+                           display_order = COALESCE($4, display_order),
+                           zone = COALESCE($5, zone),
+                           active = COALESCE($6, active),
+                           vip = COALESCE($7, vip),
                            table_number = COALESCE($8, table_number),
-                           seats = COALESCE($9, seats), display_order = COALESCE($10, display_order),
-                           vip = COALESCE($11, vip), zone = COALESCE($12, zone),
-                           active = COALESCE($13, active)
+                           name = COALESCE($9, name),
+                           name_ku = COALESCE($10, name_ku),
+                           name_fa = COALESCE($11, name_fa),
+                           name_ar = COALESCE($12, name_ar),
+                           name_en = COALESCE($13, name_en)
           WHERE id = $1 AND business_id = $2 RETURNING *`,
         [
           req.params.id,
           req.businessId,
-          name,
-          ...nameParams,
-          tableNumber,
           seats,
           order,
-          b.vip === undefined ? null : Boolean(b.vip),
-          b.zone === undefined ? null : String(b.zone).slice(0, 60),
-          b.active === undefined ? null : Boolean(b.active),
-          // Names the request includes are written exactly as sent (an empty
-          // one clears that translation); omitted ones keep their stored value.
-          withNames,
+          zone,
+          active,
+          wantedType === null ? null : wantedType === 'vip',
+          number,
+          names.name,
+          names.name_ku,
+          names.name_fa,
+          names.name_ar,
+          names.name_en,
         ],
-      ));
-    } catch (err) {
-      if (err?.code === '23505') throw conflict('TABLE_NUMBER_DUPLICATE');
-      throw err;
-    }
-    if (!rows[0]) throw notFound('TABLE_NOT_FOUND');
-    res.json({ table: rows[0] });
+      );
+      return rows[0];
+    });
+
+    res.json({ table });
   }),
 );
 

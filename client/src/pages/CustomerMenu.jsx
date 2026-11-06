@@ -599,6 +599,20 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
             with the day and the saved hours beside it. */}
         {orderingLive ? null : <CustomerClosedNotice status={opening} timeZone={timeZone} />}
 
+        {/* A table the owner switched off is not a broken link: the guest is at
+            a real table whose ordering is paused, and is told exactly that. */}
+        {data.table_state === 'inactive' ? (
+          <div className="cui-table-off" role="status">
+            <span className="cui-table-off__ico" aria-hidden="true">
+              <Icon name="alert" size={18} />
+            </span>
+            <span className="cui-table-off__text">
+              <strong>{t('table_unavailable_title')}</strong>
+              <small>{t('table_unavailable_hint')}</small>
+            </span>
+          </div>
+        ) : null}
+
         {/* Search, summary strip and working hours share one centred column,
             so the banner stays wide while the controls below it read as a
             single, calm vertical rhythm. */}

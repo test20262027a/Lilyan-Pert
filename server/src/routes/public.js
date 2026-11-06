@@ -1,6 +1,6 @@
 import express from 'express';
 import { q, tx } from '../db.js';
-import { ah, bad, isUuid, notFound } from '../lib/http.js';
+import { ah, bad, conflict, isUuid, notFound } from '../lib/http.js';
 import { pushNewOrder } from '../lib/push.js';
 import { menuContext, normalizeMenuSettings } from '../lib/menu-settings.js';
 import { openStatus, zonedNow } from '../lib/hours.js';
@@ -235,15 +235,18 @@ router.get(
     const token = String(req.params.token || '').slice(0, 64);
     if (!token) throw notFound('TABLE_NOT_FOUND');
     const { rows } = await q(
-      `SELECT b.slug
+      `SELECT b.slug, t.active
          FROM tables t JOIN businesses b ON b.id = t.business_id
-        WHERE t.qr_token = $1 AND t.active = true
+        WHERE t.qr_token = $1
         LIMIT 1`,
       [token],
     );
+    // A removed token has nothing to open; a table the owner has switched off
+    // still opens its menu, which then states that ordering is unavailable here
+    // rather than showing a broken link the guest cannot act on.
     if (!rows[0]) throw notFound('TABLE_NOT_FOUND');
     res.set('Cache-Control', 'no-cache');
-    res.json({ slug: rows[0].slug });
+    res.json({ slug: rows[0].slug, inactive: rows[0].active === false });
   }),
 );
 
@@ -280,11 +283,17 @@ router.get(
     const token = req.query.table ? String(req.query.table).slice(0, 64) : '';
     if (menu.context === 'qr' && menu.table_mode !== 'manual' && token) {
       const t = await q(
-        'SELECT id, name, zone, seats, qr_token FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
+        `SELECT id, name, table_number, vip, zone, seats, qr_token, active
+           FROM tables WHERE qr_token = $1 AND business_id = $2`,
         [token, business.id],
       );
-      table = t.rows[0] || null;
-      tableState = table ? 'resolved' : 'invalid';
+      const scanned = t.rows[0] || null;
+      // A switched-off table is not a broken code: the guest really did scan a
+      // table, so the menu says it is unavailable for ordering — never that the
+      // link is wrong, and never by silently seating them somewhere else.
+      table = scanned && scanned.active ? scanned : null;
+      tableState = table ? 'resolved' : scanned ? 'inactive' : 'invalid';
+      if (table) delete table.active;
     }
 
     /*
@@ -296,9 +305,9 @@ router.get(
     let tables = [];
     if (menu.context === 'main' || menu.table_mode !== 'qr') {
       const rows = await q(
-        `SELECT id, name, table_number, zone, name_ku, name_fa, name_ar, name_en
+        `SELECT id, name, table_number, vip, zone, name_ku, name_fa, name_ar, name_en
            FROM tables WHERE business_id = $1 AND active = true
-          ORDER BY display_order, name`,
+          ORDER BY vip, display_order, name`,
         [business.id],
       );
       tables = rows.rows;
@@ -672,11 +681,16 @@ router.post(
       const mode = menu.table_mode;
       if (req.body?.table_token && mode !== 'manual') {
         const t = await c.query(
-          'SELECT id, name FROM tables WHERE qr_token = $1 AND business_id = $2 AND active = true',
+          'SELECT id, name, active FROM tables WHERE qr_token = $1 AND business_id = $2',
           [String(req.body.table_token).slice(0, 64), business.id],
         );
-        table = t.rows[0] || null;
-        if (!table) throw bad('INVALID_TABLE');
+        const found = t.rows[0] || null;
+        // Revalidated at the moment the order is written: a table the owner
+        // switched off — even while the guest had the menu open — rejects the
+        // order for that reason instead of quietly accepting it.
+        if (found && found.active === false) throw conflict('TABLE_INACTIVE');
+        if (!found) throw bad('INVALID_TABLE');
+        table = { id: found.id, name: found.name };
         tableSource = 'qr';
       }
       // The main ordering menu has no QR code to identify the table, so its
@@ -685,11 +699,13 @@ router.post(
       if (!table && req.body?.table_id && (menu.context === 'main' || mode !== 'qr')) {
         if (!isUuid(String(req.body.table_id))) throw bad('INVALID_TABLE');
         const t = await c.query(
-          'SELECT id, name FROM tables WHERE id = $1 AND business_id = $2 AND active = true',
+          'SELECT id, name, active FROM tables WHERE id = $1 AND business_id = $2',
           [req.body.table_id, business.id],
         );
-        table = t.rows[0] || null;
-        if (!table) throw bad('INVALID_TABLE');
+        const found = t.rows[0] || null;
+        if (found && found.active === false) throw conflict('TABLE_INACTIVE');
+        if (!found) throw bad('INVALID_TABLE');
+        table = { id: found.id, name: found.name };
         tableSource = 'manual';
       }
 

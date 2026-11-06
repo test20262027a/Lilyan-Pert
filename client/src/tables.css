@@ -234,15 +234,25 @@
 }
 .tcard__qr img { display: block; border-radius: 8px; }
 
+/* The name and its optional VIP / inactive badge share one centred line; only
+   the name itself shrinks, so a long name never pushes a badge off the card. */
 .tcard__name {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 0;
   font-size: 20px;
   font-weight: 800;
   text-align: center;
   color: var(--tp-ink);
+}
+.tcard__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tcard__seats { font-size: 13px; color: var(--tp-muted); text-align: center; }
 
@@ -435,8 +445,264 @@
 .tform__vip .switch__track { background: #d3d8d3; }
 .tform__vip .switch input:checked + .switch__track { background: var(--mm-green); }
 
+/* --------------------------------------------------- table type selector */
+
+/* Exactly two types, side by side. Each plate states what the table will be
+   called and how its own numbering runs — regular from 1, VIP from 1. */
+.tform__types {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.ttype {
+  --tone: var(--mm-green);
+  --tone-ink: var(--theme-primary-strong);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 11px 12px;
+  border-radius: 15px;
+  border: 1px solid var(--mm-line);
+  background: linear-gradient(180deg, #ffffff, #f6f8f6);
+  color: var(--mm-ink);
+  text-align: start;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(23, 26, 43, 0.05);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.ttype:hover { transform: translateY(-1px); }
+
+.ttype__ico {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid color-mix(in srgb, var(--tone) 32%, #ffffff);
+  color: var(--tone-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 3px color-mix(in srgb, var(--tone) 22%, transparent),
+    0 6px 12px -8px color-mix(in srgb, var(--tone) 85%, transparent);
+}
+
+.ttype__text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ttype__text strong { font-size: 13px; font-weight: 800; overflow-wrap: anywhere; }
+.ttype__text small {
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--mm-muted);
+  overflow-wrap: anywhere;
+}
+
+/* The tick keeps its slot whether it is shown or not, so selecting a type never
+   moves the label. */
+.ttype__tick {
+  margin-inline-start: auto;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: #ffffff;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.ttype--regular { --tone: #2f9fb5; --tone-ink: #0f6b7c; }
+.ttype--vip { --tone: #d9a12b; --tone-ink: #8f6412; }
+
+.ttype.is-on {
+  border-color: color-mix(in srgb, var(--tone) 60%, #ffffff);
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--tone) 15%, #ffffff),
+    color-mix(in srgb, var(--tone) 5%, #ffffff)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 4px color-mix(in srgb, var(--tone) 22%, transparent),
+    0 10px 20px -14px color-mix(in srgb, var(--tone) 90%, transparent);
+}
+
+.ttype.is-on .ttype__tick { opacity: 1; background: var(--tone); }
+.ttype.is-on .ttype__text strong { color: var(--tone-ink); }
+.ttype:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--tone) 55%, transparent);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------- automatic number / names */
+
+/* The number is read-only: it is reserved by the server when the dialog saves. */
+.tform__num[readonly] {
+  background: var(--mm-card);
+  color: var(--mm-ink);
+  font-weight: 800;
+  cursor: default;
+}
+
+.tform__auto {
+  margin-inline-start: 6px;
+  padding: 1px 7px 2px;
+  border-radius: 999px;
+  border: 1px solid var(--mm-line);
+  background: var(--mm-card);
+  color: var(--mm-muted);
+  font-size: 9.5px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* The four generated names, shown exactly as they will be stored. */
+.tform__generated {
+  display: flex;
+  align-items: center;
+  min-height: 43px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px dashed color-mix(in srgb, var(--mm-green) 34%, var(--mm-line));
+  background: color-mix(in srgb, var(--mm-green) 6%, var(--mm-card));
+  color: var(--mm-ink);
+  font-size: 14px;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+/* The active switch shares the VIP row's frame, with its own semantic plate. */
+.tform__toggle .tform__crown {
+  background: color-mix(in srgb, var(--mm-green) 16%, #ffffff);
+  border-color: color-mix(in srgb, var(--mm-green) 32%, #ffffff);
+  color: var(--mm-green);
+}
+.tform__toggle .tform__crown.is-off {
+  background: #fff2f2;
+  border-color: #fadada;
+  color: #c04545;
+}
+
+/* ------------------------------------------------ VIP / inactive cards */
+
+/* A VIP table is the same card in the room's warm accent: a crown, a gold
+   hairline and a small badge — never a different layout. */
+.tcard.is-vip {
+  border-color: color-mix(in srgb, #d9a12b 42%, var(--tp-line));
+  background: linear-gradient(180deg, rgba(217, 161, 43, 0.07), var(--surface) 45%);
+}
+
+.tcard.is-vip .tcard__icon {
+  background: #fdf3d7;
+  border-color: #f2dd9e;
+  color: #b8860f;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 8px 16px -10px rgba(200, 150, 30, 0.85);
+}
+
+/* A switched-off table stays on this page, muted — it is the only place an
+   administrator can switch it back on. */
+.tcard.is-inactive { opacity: 0.72; }
+.tcard.is-inactive .tcard__qr { filter: grayscale(0.55); }
+
+.tcard__vip,
+.tcard__off {
+  flex: none;
+  padding: 2px 8px 3px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.tcard__vip {
+  color: #8f6412;
+  background: linear-gradient(180deg, #fdf3d7, #f5e2ae);
+  border: 1px solid #ecd394;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 4px 8px -6px rgba(180, 130, 20, 0.9);
+}
+
+.tcard__off {
+  color: #b04747;
+  background: var(--tp-red-soft);
+  border: 1px solid var(--tp-red-line);
+}
+
+[data-theme='dark'] .ttype {
+  background: linear-gradient(180deg, var(--surface), color-mix(in srgb, var(--surface) 90%, #000));
+  border-color: var(--border);
+  color: var(--text);
+}
+
+[data-theme='dark'] .ttype__ico {
+  background: color-mix(in srgb, var(--tone) 20%, var(--surface));
+  border-color: color-mix(in srgb, var(--tone) 45%, transparent);
+  color: color-mix(in srgb, var(--tone) 55%, #ffffff);
+}
+
+[data-theme='dark'] .ttype.is-on {
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--tone) 26%, var(--surface)),
+    color-mix(in srgb, var(--tone) 10%, var(--surface))
+  );
+  border-color: color-mix(in srgb, var(--tone) 55%, transparent);
+}
+
+[data-theme='dark'] .ttype.is-on .ttype__text strong {
+  color: color-mix(in srgb, var(--tone) 55%, #ffffff);
+}
+
+[data-theme='dark'] .tform__generated {
+  background: color-mix(in srgb, var(--mm-green) 14%, var(--surface));
+  border-color: color-mix(in srgb, var(--mm-green) 32%, transparent);
+}
+
+[data-theme='dark'] .tform__toggle .tform__crown.is-off {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: rgba(239, 68, 68, 0.34);
+  color: #ffb0a8;
+}
+
+[data-theme='dark'] .tcard.is-vip {
+  background: linear-gradient(180deg, rgba(217, 161, 43, 0.13), var(--surface) 45%);
+  border-color: rgba(217, 161, 43, 0.42);
+}
+
+[data-theme='dark'] .tcard.is-vip .tcard__icon {
+  background: rgba(201, 146, 42, 0.18);
+  border-color: rgba(242, 221, 158, 0.35);
+  color: #f0c163;
+}
+
+[data-theme='dark'] .tcard__vip {
+  color: #f0c163;
+  background: rgba(201, 146, 42, 0.2);
+  border-color: rgba(242, 221, 158, 0.35);
+}
+
 /* The name cards' columns come from LanguageFieldsGrid (see languageGrid.css). */
 
 @media (max-width: 560px) {
   .tform .mcmodal__head { min-height: var(--hd-modal-h-sm); padding: 12px 14px; padding-inline-end: 52px; }
+  /* Two type plates stacked, so neither label is squeezed on a phone. */
+  .tform__types { grid-template-columns: minmax(0, 1fr); }
 }

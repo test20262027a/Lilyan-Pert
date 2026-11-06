@@ -416,6 +416,61 @@
  * full content width, so its left and right edges line up exactly with the ads,
  * featured products, best sellers, about and contact sections below.
  */
+/*
+ * A scanned table the owner switched off: the guest is at a real table, so the
+ * page says ordering is unavailable there instead of looking like a bad link.
+ */
+.cui-table-off {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 13px 16px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #e05252 34%, transparent);
+  background:
+    radial-gradient(120% 140% at 12% 0%, rgba(255, 255, 255, 0.55) 0%, transparent 60%),
+    color-mix(in srgb, #e05252 10%, var(--surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 10px 22px -18px rgba(200, 60, 60, 0.9);
+}
+
+.cui-table-off__ico {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, #e05252 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, #e05252 30%, transparent);
+  color: #c0362e;
+}
+
+.cui-table-off__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cui-table-off__text strong {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.cui-table-off__text small {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+[data-theme='dark'] .cui-table-off__ico { color: #ffb0a8; }
+
 .cui-head {
   width: 100%;
   display: flex;

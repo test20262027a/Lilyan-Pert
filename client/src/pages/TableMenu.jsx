@@ -24,6 +24,7 @@ export default function TableMenu() {
   const { t } = useI18n();
   const [slug, setSlug] = useState(null);
   const [failed, setFailed] = useState(false);
+  const [inactive, setInactive] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -34,8 +35,12 @@ export default function TableMenu() {
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error('TABLE_NOT_FOUND'))))
       .then((data) => {
         if (!alive) return;
-        if (data?.slug) setSlug(data.slug);
-        else setFailed(true);
+        /* A switched-off table still opens its own menu, which then states that
+           ordering is unavailable here — the code is real, the table is paused. */
+        if (data?.slug) {
+          setSlug(data.slug);
+          setInactive(data.inactive === true);
+        } else setFailed(true);
       })
       .catch(() => {
         if (alive) setFailed(true);
@@ -51,6 +56,18 @@ export default function TableMenu() {
     return (
       <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 24 }}>
         <EmptyState icon="qr" title={t('table_link_invalid')} hint={t('table_link_invalid_hint')} />
+      </main>
+    );
+  }
+
+  if (inactive) {
+    return (
+      <main style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', padding: 24 }}>
+        <EmptyState
+          icon="alert"
+          title={t('table_unavailable_title')}
+          hint={t('table_unavailable_hint')}
+        />
       </main>
     );
   }

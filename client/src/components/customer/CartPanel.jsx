@@ -463,7 +463,17 @@ export default function CartPanel({
                   main ordering menu never mentions the QR code, and a scanned
                   QR menu reports a bad link instead of asking for a scan the
                   guest has already made. */}
-              {!qrTable && !canPickTable ? (
+              {/* The scanned table exists but the owner switched it off: the
+                  reason is stated plainly, and checkout stays blocked because no
+                  valid table can be attached to the order. */}
+              {tableState === 'inactive' ? (
+                <p className="cui-note cui-note--warn">
+                  <Icon name="alert" size={14} />
+                  {t('customer_table_inactive')}
+                </p>
+              ) : null}
+
+              {!qrTable && !canPickTable && tableState !== 'inactive' ? (
                 <p className="cui-note cui-note--warn">
                   <Icon name="alert" size={14} />
                   {isMain

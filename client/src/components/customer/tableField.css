@@ -233,6 +233,26 @@
   flex: none;
   color: color-mix(in srgb, var(--primary) 74%, var(--muted));
 }
+
+/* A VIP table keeps its own warm accent in the picker — a crown, not a second
+   flow: the same row, the same selection. */
+.tfield-opt.is-vip .tfield-opt__lead { color: #c08a17; }
+.tfield-opt.is-vip.is-selected {
+  color: color-mix(in srgb, #b8860f 82%, var(--text));
+}
+.tfield__icon.is-vip,
+.tfield__autoicon.is-vip {
+  color: #b8860f;
+  background: #fdf3d7;
+  border-color: #f2dd9e;
+}
+[data-theme='dark'] .tfield-opt.is-vip .tfield-opt__lead { color: #f0c163; }
+[data-theme='dark'] .tfield__icon.is-vip,
+[data-theme='dark'] .tfield__autoicon.is-vip {
+  color: #f0c163;
+  background: rgba(201, 146, 42, 0.18);
+  border-color: rgba(242, 221, 158, 0.35);
+}
 .tfield-opt__text {
   flex: 1 1 auto;
   min-width: 0;

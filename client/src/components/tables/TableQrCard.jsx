@@ -8,6 +8,7 @@ import { localizedFallback, useI18n } from '../../i18n';
 import { copyText, qrFileName } from './menuUrl';
 import { isStandalone } from '../../pwa';
 import { fmtDigits } from '../../format';
+import { isVipTable } from '../../tableNaming';
 
 /*
  * One table, one QR code.
@@ -37,6 +38,10 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
   // The table's own name in the language the owner is reading, falling back to
   // the stored display name of a table created before the four languages existed.
   const label = localizedFallback(table, 'name', locale) || table.name || '';
+  // VIP is the same table with a crown and a warm accent; a switched-off table
+  // stays on this page — it is the only place it can be switched back on.
+  const vip = isVipTable(table);
+  const inactive = table.active === false;
 
   // A large PNG (1024px, full quiet zone) so the printed code scans reliably.
   const download = async () => {
@@ -109,7 +114,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
   };
 
   return (
-    <article className="tcard">
+    <article className={`tcard ${vip ? 'is-vip' : ''} ${inactive ? 'is-inactive' : ''}`.trim()}>
       <button
         type="button"
         className="tcard__share"
@@ -121,7 +126,7 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
       </button>
 
       <span className="tcard__icon" aria-hidden="true">
-        <Icon name="utensils" size={21} />
+        <Icon name={vip ? 'crown' : 'utensils'} size={21} />
       </span>
 
       <a
@@ -144,7 +149,9 @@ export default function TableQrCard({ table, menuUrl, businessSlug, canManage, o
       </a>
 
       <div className="tcard__name" title={label}>
-        {label}
+        <span className="tcard__label">{label}</span>
+        {vip ? <span className="tcard__vip">{t('table_vip_badge')}</span> : null}
+        {inactive ? <span className="tcard__off">{t('table_inactive')}</span> : null}
       </div>
       <div className="tcard__seats">
         {Number.isFinite(seats) && seats > 0 ? `${fmtDigits(seats, locale)} ${t('table_seats')}` : t('label_none')}

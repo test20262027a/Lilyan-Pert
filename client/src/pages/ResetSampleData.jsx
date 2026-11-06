@@ -9,6 +9,7 @@ import { useI18n } from '../i18n';
 import { useBusiness } from '../context/BusinessContext';
 import { useLiveRefresh } from '../hooks/useLiveRefresh';
 import { get, post } from '../api';
+import { fmtNumber } from '../format';
 import '../reset.css';
 
 /*
@@ -118,7 +119,7 @@ const STATUS_KEYS = {
 };
 
 export default function ResetSampleData() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { business } = useBusiness();
   const toast = useToast();
 
@@ -187,6 +188,10 @@ export default function ResetSampleData() {
 
   const selectable = cards.filter((c) => c.count > 0);
 
+  /* The one selection state, read here as a set: each group's header counter is
+     derived from it, never stored a second time inside the header. */
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+
   const groups = useMemo(() => {
     const placed = new Set();
     const out = GROUPS.map((group) => {
@@ -199,8 +204,15 @@ export default function ResetSampleData() {
     // Anything the server knows but this page does not group still stays reachable.
     const rest = cards.filter((card) => !placed.has(card.key));
     if (rest.length) out[out.length - 1].items.push(...rest);
-    return out.filter((group) => group.items.length);
-  }, [cards]);
+    return out
+      .filter((group) => group.items.length)
+      .map((group) => ({
+        ...group,
+        // Module cards in this group, and how many of them are selected — both
+        // counts of cards, never of database records.
+        selectedCount: group.items.filter((card) => selectedSet.has(card.key)).length,
+      }));
+  }, [cards, selectedSet]);
 
   const switchMode = (next) => {
     if (next === mode) return;
@@ -396,7 +408,31 @@ export default function ResetSampleData() {
                   <Icon name={group.icon} size={19} />
                 </span>
                 <h2 className="rs-group__title">{t(`reset_group_${group.key}`)}</h2>
-                <span className="rs-group__count">{group.items.length}</span>
+                {/* Two live counters, both about module cards: how many the
+                    group holds, and how many of them are selected right now. */}
+                <div className="rs-group__counters">
+                  <span
+                    className="rs-group__counter"
+                    title={t('reset_group_total_hint', { count: group.items.length })}
+                  >
+                    <span className="rs-group__count">
+                      {fmtNumber(group.items.length, locale)}
+                    </span>
+                    <span className="rs-group__counter-label">{t('reset_group_total')}</span>
+                  </span>
+                  <span
+                    className={`rs-group__counter rs-group__counter--selected ${
+                      group.selectedCount ? 'is-on' : ''
+                    }`}
+                    title={t('reset_group_selected_hint', { count: group.selectedCount })}
+                  >
+                    <span className="rs-group__count rs-group__count--selected">
+                      <Icon name="check" size={10} />
+                      {fmtNumber(group.selectedCount, locale)}
+                    </span>
+                    <span className="rs-group__counter-label">{t('reset_group_selected')}</span>
+                  </span>
+                </div>
               </header>
               <div className="rs-group__body">
                 <div className="rs-grid">

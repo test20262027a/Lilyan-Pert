@@ -411,6 +411,34 @@
   overflow-wrap: anywhere;
 }
 
+/* The group's two live counters: how many module cards the group holds, then
+   how many of those are selected. Labels keep the two numbers from reading as
+   the same value. */
+.rs-group__counters {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  margin-inline-start: 2px;
+}
+
+.rs-group__counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rs-group__counter-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--rs-group-ink) 72%, #6b736c);
+}
+
 /* A compact, perfectly round 3D plate — the number of modules, never a record
    count. It keeps a fixed width so 1 and 12 look alike. */
 .rs-group__count {
@@ -437,6 +465,63 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     inset 0 -2px 3px color-mix(in srgb, var(--rs-group-tone) 26%, transparent),
     0 6px 12px -8px color-mix(in srgb, var(--rs-group-tone) 90%, transparent);
+}
+
+/* The selected plate: a filled 3D pill in the active theme colour, with a
+   subtle check so it never reads as a second total. Its padding lets a
+   two-digit count breathe without breaking the shape. */
+.rs-group__count--selected {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto;
+  min-width: 27px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 66%, #ffffff);
+  background:
+    radial-gradient(110% 110% at 32% 10%, rgba(255, 255, 255, 0.62) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--theme-primary) 88%, #ffffff) 0%,
+      var(--theme-primary) 55%,
+      color-mix(in srgb, var(--theme-primary) 74%, #0d2412) 100%
+    );
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+    0 7px 14px -8px color-mix(in srgb, var(--theme-primary) 95%, transparent);
+}
+
+.rs-group__count--selected .icon { opacity: 0.78; }
+
+/* Nothing selected yet: the same plate, drained of its fill, so the 0 stays
+   clearly readable without pretending a selection was made. */
+.rs-group__counter--selected:not(.is-on) .rs-group__count--selected {
+  border-color: color-mix(in srgb, var(--theme-primary) 30%, #ffffff);
+  background:
+    radial-gradient(110% 110% at 32% 12%, rgba(255, 255, 255, 0.95) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--theme-primary) 9%, #ffffff) 0%,
+      color-mix(in srgb, var(--theme-primary) 24%, #ffffff) 100%
+    );
+  color: var(--theme-primary-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 3px color-mix(in srgb, var(--theme-primary) 18%, transparent),
+    0 5px 10px -8px rgba(25, 55, 35, 0.55);
+}
+
+.rs-group__counter--selected.is-on .rs-group__count--selected {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+    0 8px 16px -8px color-mix(in srgb, var(--theme-primary) 95%, transparent);
 }
 
 /* The module cards, in the same frame as their group header. */
@@ -961,10 +1046,15 @@
   /* The group keeps its integrated header on a phone, just more compact: a
      long translated title may wrap, the icon and the count stay on one line. */
   .rs-group { border-radius: 20px; }
-  .rs-group__head { min-height: 54px; padding: 11px 14px; gap: 10px; }
+  /* The counters may take a second row rather than squeeze a translated
+     title: the title keeps its own line, nothing is clipped. */
+  .rs-group__head { flex-wrap: wrap; min-height: 54px; padding: 11px 14px; gap: 10px; row-gap: 8px; }
   .rs-group__icon { width: 32px; height: 32px; border-radius: 10px; }
   .rs-group__title { font-size: 16px; line-height: 1.5; }
   .rs-group__count { width: 25px; height: 25px; font-size: 11.5px; }
+  .rs-group__counters { margin-inline-start: auto; gap: 8px; }
+  .rs-group__count--selected { width: auto; min-width: 25px; padding: 0 7px; }
+  .rs-group__counter-label { font-size: 9.5px; }
   .rs-group__body { padding: 13px; }
   /* A phone shows one card per row, so the card may size to its own content. */
   .rs-card { border-radius: 20px; }
@@ -1132,6 +1222,39 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.1),
     inset 0 -2px 3px rgba(0, 0, 0, 0.35),
     0 6px 12px -8px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .rs-group__counter-label {
+  color: color-mix(in srgb, var(--rs-group-tone) 48%, #a9b0c0);
+}
+
+[data-theme='dark'] .rs-group__count--selected {
+  border-color: color-mix(in srgb, var(--theme-primary) 72%, transparent);
+  background:
+    radial-gradient(110% 110% at 32% 10%, rgba(255, 255, 255, 0.22) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--theme-primary) 70%, var(--surface)),
+      color-mix(in srgb, var(--theme-primary) 40%, var(--surface))
+    );
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    0 7px 14px -8px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .rs-group__counter--selected:not(.is-on) .rs-group__count--selected {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--theme-primary) 16%, var(--surface)),
+    color-mix(in srgb, var(--theme-primary) 26%, var(--surface))
+  );
+  color: color-mix(in srgb, var(--theme-primary) 45%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme='dark'] .rs-group__body {

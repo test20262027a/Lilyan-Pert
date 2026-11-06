@@ -427,11 +427,22 @@ ALTER TABLE tables ADD COLUMN IF NOT EXISTS table_number integer CHECK (table_nu
 ALTER TABLE tables ADD COLUMN IF NOT EXISTS display_order integer NOT NULL DEFAULT 0;
 ALTER TABLE tables ADD COLUMN IF NOT EXISTS vip boolean NOT NULL DEFAULT false;
 
--- One table number per business, enforced by the database so two simultaneous
--- creates can never both take the same number. Existing tables have no number
--- yet, and the partial index leaves them out until each one is given a number.
-CREATE UNIQUE INDEX IF NOT EXISTS tables_business_number_key
-  ON tables (business_id, table_number) WHERE table_number IS NOT NULL;
+-- A table's number is unique inside its own TYPE, never across the business:
+-- Regular Table 1 and VIP 1 are two different tables, each drawing from its own
+-- sequence. The index is what makes two simultaneous creates safe.
+DROP INDEX IF EXISTS tables_business_number_key;
+CREATE UNIQUE INDEX IF NOT EXISTS tables_business_type_number_key
+  ON tables (business_id, vip, table_number) WHERE table_number IS NOT NULL;
+
+-- One monotonic counter per (business, type). Deleting a table never gives its
+-- number back, so a printed QR code or an old order can never point at a
+-- different table that later reused the number.
+CREATE TABLE IF NOT EXISTS table_number_seq (
+  business_id uuid NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+  kind        text NOT NULL CHECK (kind IN ('regular', 'vip')),
+  last_number integer NOT NULL DEFAULT 0,
+  PRIMARY KEY (business_id, kind)
+);
 
 -- Promotion usage limits. Additive: a promotion without a limit keeps behaving
 -- exactly as before (max_uses NULL = unlimited) and starts counting real
@@ -635,6 +646,37 @@ BEGIN
     UPDATE products SET price_fa_unit = 'toman' WHERE price_fa IS NOT NULL AND price_fa = 0;
     UPDATE products SET price_fa_review = true WHERE price_fa IS NOT NULL AND price_fa > 0;
     INSERT INTO app_settings (key, value) VALUES ('migration.price_fa_unit', 'review-flagged')
+      ON CONFLICT (key) DO NOTHING;
+  END IF;
+
+  -- VIP tables used to draw their number from the regular sequence, so a
+  -- business with ten regular tables started at VIP 11. Every existing VIP table
+  -- now gets its own VIP 1…n, in the order its numbers already had. Ids, QR
+  -- tokens, orders, receipts and every other table are untouched: only the
+  -- visible number and its four generated names change.
+  IF NOT EXISTS (SELECT 1 FROM app_settings WHERE key = 'migration.tables_vip_numbering') THEN
+    -- Two steps: a unique index is checked row by row, so lifting the current
+    -- numbers out of the way first makes swaps (VIP 2 → 1 while VIP 1 → 2) safe.
+    UPDATE tables SET table_number = table_number + 1000000
+      WHERE vip = true AND table_number IS NOT NULL;
+
+    WITH ranked AS (
+      SELECT id, row_number() OVER (
+               PARTITION BY business_id ORDER BY table_number, created_at, id
+             ) AS n
+        FROM tables WHERE vip = true AND table_number IS NOT NULL
+    )
+    UPDATE tables t
+       SET table_number = ranked.n,
+           name = 'VIP ' || ranked.n,
+           name_ku = 'VIP ' || ranked.n,
+           name_fa = 'VIP ' || ranked.n,
+           name_ar = 'VIP ' || ranked.n,
+           name_en = 'VIP ' || ranked.n
+      FROM ranked
+     WHERE t.id = ranked.id;
+
+    INSERT INTO app_settings (key, value) VALUES ('migration.tables_vip_numbering', 'done')
       ON CONFLICT (key) DO NOTHING;
   END IF;
 

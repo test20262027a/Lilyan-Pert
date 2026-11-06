@@ -377,7 +377,10 @@ function CreateOrderModal({ products, tables, currency, onClose, onCreated }) {
             value={tableId}
             onChange={setTableId}
             placeholder={t('label_none')}
-            options={tables.map((tb) => ({ value: tb.id, label: tb.name }))}
+            /* A switched-off table takes no new orders anywhere — the manual
+               order form included. It stays visible in Table Management, where
+               an administrator can switch it back on. */
+            options={tables.filter((tb) => tb.active !== false).map((tb) => ({ value: tb.id, label: tb.name }))}
           />
         </Field>
         <Field label={t('label_customer_name')}>
