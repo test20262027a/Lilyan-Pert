@@ -35,8 +35,9 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
 
   const featureRows = [
     { key: 'search', icon: 'search', tone: '#4f7cf7', title: t('menu_feat_search'), hint: t('menu_feat_search_hint') },
-    { key: 'status', icon: 'store', tone: '#12a67a', title: t('menu_feat_status'), hint: t('menu_feat_status_hint') },
+    { key: 'summary', icon: 'chart', tone: '#3f8ecf', title: t('menu_feat_summary'), hint: t('menu_feat_summary_hint') },
     { key: 'hours', icon: 'clock', tone: '#1e9ecb', title: t('menu_feat_hours'), hint: t('menu_feat_hours_hint') },
+    { key: 'status', icon: 'store', tone: '#12a67a', title: t('menu_feat_status'), hint: t('menu_feat_status_hint') },
     { key: 'ads', icon: 'megaphone', tone: '#e8557a', title: t('menu_feat_ads'), hint: t('menu_feat_ads_hint') },
     { key: 'featured', icon: 'star', tone: '#b45ef0', title: t('menu_feat_featured'), hint: t('menu_feat_featured_hint') },
     {
@@ -49,7 +50,6 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
     },
     { key: 'categories', icon: 'grid', tone: '#6c63ff', title: t('menu_feat_categories'), hint: t('menu_feat_categories_hint') },
     { key: 'product_count', icon: 'layers', tone: '#0e9da4', title: t('menu_feat_count'), hint: t('menu_feat_count_hint') },
-    { key: 'summary', icon: 'chart', tone: '#3f8ecf', title: t('menu_feat_summary'), hint: t('menu_feat_summary_hint') },
     { key: 'prices', icon: 'tag', tone: '#c2410c', title: t('menu_feat_prices'), hint: t('menu_feat_prices_hint') },
     { key: 'details', icon: 'eye', tone: '#7c5cd6', title: t('menu_feat_details'), hint: t('menu_feat_details_hint') },
     { key: 'about', icon: 'book', tone: '#b8722e', title: t('menu_feat_about'), hint: t('menu_feat_about_hint') },

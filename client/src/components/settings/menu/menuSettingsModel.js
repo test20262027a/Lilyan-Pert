@@ -9,14 +9,14 @@
 /* Same order the General Menu Features list renders them in. */
 export const FEATURE_KEYS = [
   'search',
-  'status',
+  'summary',
   'hours',
+  'status',
   'ads',
   'featured',
   'best_selling',
   'categories',
   'product_count',
-  'summary',
   'prices',
   'details',
   'about',
