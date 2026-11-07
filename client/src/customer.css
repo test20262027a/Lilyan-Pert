@@ -740,6 +740,14 @@
 .cui-catbar__scroll::-webkit-scrollbar { display: none; }
 
 .cui-cat {
+  /* Count badge geometry. The circle rests just off the icon plate's rounded
+     corner: `--cat-badge-offset` reaches the badge's outer edges from that
+     corner on both axes, which is what keeps ~5px of clear air between the
+     badge and the plate at every size. */
+  --cat-badge: 24px;
+  --cat-badge-offset: 19px;
+  --cat-badge-offset-wide: 22px;
+  --cat-badge-font: 11.5px;
   flex: none;
   width: 88px;
   display: flex;
@@ -794,6 +802,17 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
+/* The plate and its badge share one box, so the badge is placed from a known
+   corner instead of from the whole card. */
+.cui-cat__media {
+  position: relative;
+  flex: none;
+  inline-size: 50px;
+  block-size: 50px;
+  display: grid;
+  place-items: center;
+}
+
 .cui-cat__icon {
   --cic: var(--primary);
   width: 50px;
@@ -828,8 +847,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
-/* Name and count share one line: the name keeps its two-line room, the badge
-   never stretches, and the strip only widens while counts are on. */
+/* The name keeps its two-line room under the plate; the count now lives on the
+   plate's corner instead of this line. */
 .cui-cat__line {
   display: flex;
   align-items: center;
@@ -854,49 +873,95 @@
   overflow-wrap: anywhere;
 }
 
-.cui-catbar.has-counts .cui-cat { width: 100px; }
+/* Counts keep the card a touch wider and give the corner badge its headroom, so
+   the number is never clipped and the card never reflows when it changes. */
+.cui-catbar.has-counts .cui-cat {
+  width: 100px;
+  padding-block-start: 25px;
+}
 
+/* Premium corner badge: a glossy three-tone disc sitting just off the plate's
+   rounded corner (upper end side — top right in LTR, top left in RTL), with a
+   real air gap, a bevel and a soft floating shadow. Only the number is placed
+   absolutely, so a changing count never shifts the card or its neighbours. */
 .cui-cat__count {
-  flex: none;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
+  position: absolute;
+  inset-block-start: calc(-1 * var(--cat-badge-offset));
+  inset-inline-end: calc(-1 * var(--cat-badge-offset));
+  z-index: 2;
+  box-sizing: border-box;
+  min-inline-size: var(--cat-badge);
+  block-size: var(--cat-badge);
+  padding-inline: 4px;
   display: inline-grid;
   place-items: center;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: var(--cat-badge-font);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
   background:
-    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.5), transparent 62%),
+    radial-gradient(115% 85% at 32% 18%, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 62%),
     linear-gradient(
       165deg,
-      color-mix(in srgb, var(--primary) 82%, #ffffff) 0%,
-      var(--primary) 55%,
-      color-mix(in srgb, var(--primary) 74%, #000000) 100%
+      color-mix(in srgb, var(--primary) 74%, #ffffff) 0%,
+      var(--primary) 54%,
+      color-mix(in srgb, var(--primary) 72%, #000000) 100%
     );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.22),
-    0 3px 8px -4px color-mix(in srgb, var(--primary) 68%, transparent);
-  animation: cuiCountPop 260ms ease;
+    inset 0 1px 1px rgba(255, 255, 255, 0.7),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.22),
+    0 1px 2px rgba(16, 30, 22, 0.16),
+    0 5px 10px -4px color-mix(in srgb, var(--primary) 60%, transparent);
+  animation: cuiCountPop 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* A three-digit count widens into a compact pill; the extra body needs a touch
+   more corner clearance so the capsule still floats clear of the plate. */
+.cui-cat__count.is-wide {
+  inset-block-start: calc(-1 * var(--cat-badge-offset-wide));
+  inset-inline-end: calc(-1 * var(--cat-badge-offset-wide));
 }
 
 /* On the selected card the badge flips to a light plate so it stays legible
    against the filled theme colour. */
 .cui-cat.is-active .cui-cat__count {
-  color: color-mix(in srgb, var(--primary) 88%, #0b1220);
-  background: linear-gradient(180deg, #ffffff, rgba(255, 255, 255, 0.82));
+  color: color-mix(in srgb, var(--primary) 90%, #0b1220);
+  background:
+    radial-gradient(115% 85% at 32% 18%, #ffffff, rgba(255, 255, 255, 0) 66%),
+    linear-gradient(170deg, #ffffff 0%, color-mix(in srgb, #ffffff 84%, var(--primary)) 100%);
   box-shadow:
     inset 0 1px 0 #ffffff,
-    0 2px 6px -3px rgba(0, 0, 0, 0.35);
+    inset 0 -2px 3px color-mix(in srgb, var(--primary) 26%, transparent),
+    0 1px 2px rgba(16, 30, 22, 0.12),
+    0 5px 10px -4px rgba(0, 0, 0, 0.32);
 }
 
 @keyframes cuiCountPop {
-  from { transform: scale(0.72); opacity: 0.35; }
+  from { transform: scale(0.7); opacity: 0.3; }
   to { transform: scale(1); opacity: 1; }
+}
+
+/* Badge scale per device: never larger than the plate can carry without
+   crowding its corner. */
+@media (max-width: 1024px) {
+  .cui-cat {
+    --cat-badge: 22px;
+    --cat-badge-offset: 18px;
+    --cat-badge-offset-wide: 21px;
+    --cat-badge-font: 11px;
+  }
+  .cui-catbar.has-counts .cui-cat { padding-block-start: 24px; }
+}
+@media (max-width: 640px) {
+  .cui-cat {
+    --cat-badge: 20px;
+    --cat-badge-offset: 16px;
+    --cat-badge-offset-wide: 20px;
+    --cat-badge-font: 10.5px;
+  }
+  .cui-catbar.has-counts .cui-cat { padding-block-start: 23px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

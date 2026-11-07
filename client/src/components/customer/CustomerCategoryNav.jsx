@@ -22,6 +22,7 @@ import { appearanceOf } from '../menu/categoryIcons';
 function CategoryCard({ row, active, disabled, onSelect, showCount }) {
   const { locale } = useI18n();
   const appearance = row.category ? appearanceOf(row.category) : null;
+  const countText = showCount && row.count !== null ? fmtNumber(row.count, locale) : '';
   return (
     <button
       type="button"
@@ -34,22 +35,32 @@ function CategoryCard({ row, active, disabled, onSelect, showCount }) {
         event.currentTarget.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
       }}
     >
-      <span
-        className={`cui-cat__icon ${row.category ? '' : 'cui-cat__icon--all'}`}
-        style={appearance ? { '--cic': appearance.color } : undefined}
-        aria-hidden="true"
-      >
-        <Icon name={row.category ? appearance.icon : 'grid'} size={26} />
+      {/* Icon plate and count badge share one wrapper: the badge is placed from
+          this box's top inline-end corner, so its gap to the plate stays exact
+          at every size and in both directions. */}
+      <span className="cui-cat__media">
+        <span
+          className={`cui-cat__icon ${row.category ? '' : 'cui-cat__icon--all'}`}
+          style={appearance ? { '--cic': appearance.color } : undefined}
+          aria-hidden="true"
+        >
+          <Icon name={row.category ? appearance.icon : 'grid'} size={26} />
+        </span>
+        {countText ? (
+          /* Keyed on the number, so a changed count replays its pop instead of
+             silently swapping digits. The badge is absolutely placed, so the
+             pop never moves the card; a wide count gets a little more corner
+             clearance so its pill still floats clear of the plate. */
+          <span
+            className={`cui-cat__count${countText.length > 2 ? ' is-wide' : ''}`}
+            key={countText}
+          >
+            {countText}
+          </span>
+        ) : null}
       </span>
       <span className="cui-cat__line">
         <span className="cui-cat__label">{row.label}</span>
-        {showCount && row.count !== null ? (
-          /* Keyed on the number, so a changed count replays its pop instead of
-             silently swapping digits. */
-          <span className="cui-cat__count" key={row.count}>
-            {fmtNumber(row.count, locale)}
-          </span>
-        ) : null}
       </span>
     </button>
   );
@@ -60,8 +71,8 @@ export default function CustomerCategoryNav({
   activeCat,
   onSelect,
   disabled = false,
-  /* The owner's "Show product count" setting: the badge appears beside each
-     name, and the strip only widens for it while it is on. */
+  /* The owner's "Show product count" setting: the badge sits on the icon's
+     upper corner, and the strip only widens for it while it is on. */
   showCounts = false,
   allCount = 0,
 }) {
