@@ -1,0 +1,69 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App';
+import { I18nProvider } from './i18n';
+import { AuthProvider } from './context/AuthContext';
+import { NotificationsProvider } from './context/NotificationsContext';
+import { ToastProvider } from './components/ui';
+import TooltipLayer from './components/tooltip/TooltipLayer';
+import GlobalBrandedLoader from './components/brand/GlobalBrandedLoader';
+import PushBridge from './push/PushBridge';
+import { bootstrapBrand } from './brandLogo';
+import { applyDisplayMode, registerServiceWorker } from './pwa';
+import './styles.css';
+import './scrollbars.css';
+// Shared interactive states (hover / press / focus depth). Imported last so the
+// shared vocabulary wins over page skins at equal specificity.
+import './interaction.css';
+// The one header design system: self-hosted header faces, then the shared
+// 3D icon tile, alignment and typography every section header uses.
+import './headers/headerFonts.css';
+import './headers/headerSystem.css';
+// The one premium 3D action plate: every admin button family (page actions,
+// modal actions, confirm dialogs, toolbars) picks up its geometry, sheen,
+// depth and states from here. Imported last so it wins over page skins.
+import './buttons.css';
+
+/* Safety net only: the branded loader below removes the first-paint splash the
+   moment it paints (or as soon as nothing is loading). */
+window.setTimeout(() => document.getElementById('boot-splash')?.remove(), 4000);
+
+/* Brand before authentication: the public branding payload (name, logo, theme —
+ * no private fields) is requested at startup, so the real business logo is
+ * already fetched and cached when the first loader paints on the login screen,
+ * without waiting for a session or the admin dashboard. */
+bootstrapBrand();
+
+/* Installed app: own the manifest's display mode and register the worker that
+ * makes the installation (and background notifications) real. Both are no-ops
+ * in an ordinary browser tab. */
+applyDisplayMode();
+registerServiceWorker();
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <I18nProvider>
+        <ToastProvider>
+          <AuthProvider>
+            {/* The app's ONE notification listener: mounted above every route,
+                so an order is announced on any page, not only the dashboard. */}
+            <NotificationsProvider>
+              <App />
+              {/* Service-worker messages: a tapped notification opens its order,
+                  an arriving push refreshes the badge. */}
+              <PushBridge />
+            </NotificationsProvider>
+            {/* The app's ONE loader: mounted once, here, above every route, so
+                no page can swap it for a different size, position or variant
+                and it never remounts between loading phases. */}
+            <GlobalBrandedLoader />
+            {/* One global tooltip bubble for every tooltip in the app. */}
+            <TooltipLayer />
+          </AuthProvider>
+        </ToastProvider>
+      </I18nProvider>
+    </BrowserRouter>
+  </React.StrictMode>,
+);

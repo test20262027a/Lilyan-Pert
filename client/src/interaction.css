@@ -1,0 +1,265 @@
+/* ==========================================================================
+   Interaction states — the one place shared controls get their premium 3D
+   hover / press state.
+
+   Every colour below is a token from styles.css, mixed from the active
+   business theme (`--primary`). So a theme switch repaints these states
+   instantly, and a hover can never drift into a foreign colour: it is always
+   the element's own accent, one step deeper.
+
+   This file loads LAST (see main.jsx) so it can fill in the states the shared
+   components were missing without duplicating a page's own rules. Pages keep
+   their layouts and their own semantic colours; only the shared state
+   vocabulary lives here.
+   ========================================================================== */
+
+/* ------------------------------------------------ native form controls --- */
+
+/*
+ * Native checkbox / radio / progress render in the browser's default blue when
+ * no accent is declared, which was the last place the selected theme did not
+ * reach. Semantic overrides (a red acknowledgement box, the ad switch) keep
+ * their own `accent-color` because those declarations are more specific.
+ */
+input[type='checkbox'],
+input[type='radio'],
+progress {
+  accent-color: var(--primary);
+}
+
+/* ------------------------------------------------------------ text fields */
+
+:is(.input, .select, .textarea) {
+  transition:
+    border-color var(--ui-dur) var(--ui-ease),
+    background-color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease);
+}
+
+/* A field warms toward the theme on hover — its resting surface stays, only a
+   theme tint and a hairline accent are added. Focus still owns the ring. */
+:is(.input, .select, .textarea):hover:not(:disabled):not(:focus) {
+  border-color: var(--theme-primary-border);
+  background: var(--theme-focus-surface);
+}
+
+:is(.input, .select, .textarea):disabled {
+  background: var(--surface-2);
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------------- switch */
+
+.switch__track {
+  box-shadow: var(--ui-shade);
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease);
+}
+.switch__track::after {
+  transition:
+    transform var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease);
+}
+
+/* Off: the track warms toward the accent. On: the accent deepens. Both stay in
+   the same colour family, and a soft halo shows the whole pill is the target. */
+.switch:hover .switch__track {
+  background: color-mix(in srgb, var(--border-strong) 86%, var(--primary));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 9%, transparent);
+}
+.switch:hover input:checked + .switch__track {
+  background: var(--theme-primary-hover);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 14%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 26%, transparent);
+}
+.switch:active .switch__track::after {
+  box-shadow: 0 1px 3px rgba(16, 22, 38, 0.28);
+}
+.switch input:focus-visible + .switch__track {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------- selectable cards & markers */
+
+.select-card {
+  transition:
+    border-color var(--ui-dur) var(--ui-ease),
+    background-color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+}
+.select-card:hover {
+  border-color: var(--theme-primary-border);
+  box-shadow: var(--ui-elev-1);
+}
+.select-card:hover .marker { border-color: var(--theme-primary-line); }
+/* A chosen card keeps its ring, and hovering it only lifts the depth. */
+.select-card.is-selected:hover {
+  border-color: var(--theme-primary-deep);
+  box-shadow:
+    0 0 0 1px var(--primary) inset,
+    var(--ui-elev-2);
+}
+.select-card.is-danger:hover { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+.select-card.is-danger.is-selected:hover {
+  border-color: var(--danger-active);
+  box-shadow:
+    0 0 0 1px var(--danger) inset,
+    var(--ui-elev-2);
+}
+
+.marker {
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease);
+}
+.select-card:hover .marker,
+.marker:hover { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent); }
+.marker.is-on { box-shadow: var(--ui-highlight-strong); }
+.marker.is-danger.is-on { box-shadow: var(--ui-highlight-strong); }
+
+/* ------------------------------------------------- category / filter pills */
+
+.cat-pill {
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+}
+.cat-pill:hover {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+  box-shadow: var(--ui-elev-1);
+}
+/* The selected pill stays selected on hover — it only deepens, never greys. */
+.cat-pill.is-active:hover {
+  background: var(--theme-primary-hover);
+  border-color: var(--theme-primary-active);
+  color: var(--primary-ink);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 30%, transparent),
+    var(--ui-elev-accent);
+}
+
+/* ------------------------------------------------------- add-to-cart chips */
+
+.add-btn {
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+}
+.add-btn:hover:not(:disabled) {
+  background: var(--theme-primary-hover);
+  transform: var(--ui-lift);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #ffffff 34%, transparent),
+    0 10px 20px -10px color-mix(in srgb, var(--primary) 92%, transparent);
+}
+.add-btn:active:not(:disabled) {
+  transform: var(--ui-press);
+  box-shadow: inset 0 2px 5px color-mix(in srgb, #10141f 28%, transparent);
+}
+
+/* --------------------------------------------------------- quantity stepper */
+
+.qty button {
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease);
+}
+.qty button:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  color: var(--theme-primary-strong);
+}
+.qty button:active:not(:disabled) {
+  background: var(--theme-primary-tint-active);
+}
+
+/* -------------------------------------------------- dialog close / icon btns */
+
+.modal__close {
+  transition:
+    background-color var(--ui-dur) var(--ui-ease),
+    border-color var(--ui-dur) var(--ui-ease),
+    color var(--ui-dur) var(--ui-ease),
+    box-shadow var(--ui-dur) var(--ui-ease),
+    transform var(--ui-dur-fast) var(--ui-ease);
+}
+.modal__close:hover:not(:disabled) {
+  background: var(--theme-primary-tint-hover);
+  border-color: var(--theme-primary-border);
+  color: var(--theme-primary-strong);
+  box-shadow: var(--ui-elev-1);
+}
+.modal__close:active:not(:disabled) { transform: var(--ui-press); }
+
+/* Icon-only buttons share the same depth ramp as every other plate. */
+.btn--icon { box-shadow: var(--ui-elev-1); }
+.btn--icon:hover:not(:disabled) { box-shadow: var(--ui-elev-2); }
+.btn--icon:active:not(:disabled) {
+  box-shadow: inset 0 2px 5px rgba(16, 22, 38, 0.16);
+}
+
+/* ------------------------------------------------------------ loading state */
+
+/*
+ * A spinner that replaces a button's icon must not resize the button: it takes
+ * the icon's box instead of the default 20px block, and the plate stops
+ * lifting so a busy control reads as busy rather than clickable.
+ */
+:is(.btn, .mbtn, .mcard__btn, .mcmodal__btn, .mform__mini, .bk-btn, .ma-btn,
+    .rs-btn, .ad-save, .ad-add, .promo-save, .um-btn, .dash-modal__btn, .tx-save)
+  .spinner {
+  width: 16px;
+  height: 16px;
+  border-width: 2px;
+}
+:is(.btn, .mbtn, .mcard__btn, .bk-btn, .ma-btn, .rs-btn, .ad-save, .ad-add,
+    .promo-save, .um-btn, .dash-modal__btn, .tx-save):has(> .spinner) {
+  cursor: progress;
+  transform: none;
+}
+
+/* ------------------------------------------------------- touch / pointer --- */
+
+/*
+ * Where hover does not exist, the press is the only feedback a finger gets: a
+ * clearly darker fill plus a pressed inset, so a tap is never ambiguous.
+ */
+@media (hover: none) {
+  .btn:active:not(:disabled),
+  .add-btn:active:not(:disabled),
+  .cat-pill:active,
+  .select-card:active {
+    transform: scale(0.985);
+    box-shadow: inset 0 2px 6px rgba(16, 22, 38, 0.18);
+  }
+  .cat-pill.is-active:active {
+    background: var(--theme-primary-active);
+    box-shadow: inset 0 2px 6px color-mix(in srgb, #10141f 30%, transparent);
+  }
+}
+
+/* ------------------------------------------------------- reduced motion --- */
+
+/* Colour still changes on hover; only the movement is removed. */
+@media (prefers-reduced-motion: reduce) {
+  :is(.btn, .input, .select, .textarea, .switch__track, .switch__track::after,
+      .select-card, .marker, .cat-pill, .add-btn, .qty button, .modal__close) {
+    transition: none !important;
+  }
+  :is(.btn, .add-btn):hover:not(:disabled),
+  :is(.btn, .add-btn, .cat-pill, .select-card):active {
+    transform: none !important;
+  }
+}

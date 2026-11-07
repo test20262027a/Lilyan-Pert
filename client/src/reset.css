@@ -1,0 +1,1354 @@
+/* ==========================================================================
+   Data Reset — illustrated hero, premium 3D mode cards, glass information
+   banner, bulk toolbar and the uniform grid of data-module cards.
+
+   Everything is scoped to .rs-page / .rs-* so no other screen changes, and the
+   hero rules below are the approved banner: the redesign starts at the mode
+   cards, never at the header.
+
+   One card structure for every module, so a grid row always lines up: the icon
+   and its invisible selection slot, name, description, live record count,
+   safety notes, optional Details expansion, and the Delete action pinned to the
+   bottom edge of the card.
+   ========================================================================== */
+
+.rs-page {
+  --rs-green: var(--theme-primary);
+  --rs-green-ink: var(--theme-primary-strong);
+  /* The confirmation mark stays positive green in every theme. */
+  --rs-check: #17a95a;
+  --rs-mint: var(--theme-primary-soft);
+  --rs-mint-line: var(--theme-primary-line);
+  --rs-ink: #23281f;
+  --rs-muted: #8a908a;
+  --rs-line: #eceee9;
+  --rs-card: #ffffff;
+  --rs-red: #e94747;
+  --rs-red-solid: #ef4444;
+  --rs-red-soft: #fff3f3;
+  --rs-red-line: #ff9c9c;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ------------------------------------------------------------- hero banner */
+
+.rs-page .mhero {
+  /* Same height and padding as the other main section banners. */
+  min-height: 150px;
+  padding: 18px 22px;
+  border-radius: 18px;
+  border-color: var(--theme-primary-line);
+  background:
+    radial-gradient(90% 150% at 22% 6%, var(--theme-primary-soft) 0%, transparent 62%),
+    radial-gradient(80% 140% at 90% 98%, var(--theme-primary-soft) 0%, transparent 60%),
+    linear-gradient(180deg, var(--theme-primary-soft), var(--theme-primary-soft));
+}
+
+.rs-page .mhero__title { color: var(--text); }
+.rs-page .mhero__sub { color: var(--muted); }
+
+.rs-page .mhero__art { padding-inline: 6px; }
+.rs-page .mart { max-height: 92px; }
+
+/* ---------------------------------------------------------------- modes */
+
+/*
+ * The two operations of this page, as a matched pair of raised surfaces: the
+ * dangerous one keeps its red identity even when it is not armed, the sample
+ * one stays calm blue. Both are the same height whatever their text length.
+ */
+.rs-modes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.rs-mode {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 96px;
+  padding: 16px 18px;
+  text-align: start;
+  border: 1px solid transparent;
+  border-radius: 20px;
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease,
+    background 200ms ease;
+}
+
+.rs-mode--sample {
+  border-color: #d6e5fa;
+  background: linear-gradient(180deg, #f5f9ff, #e8f1fe);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(37, 99, 235, 0.06),
+    0 12px 24px -20px rgba(37, 99, 235, 0.7);
+}
+
+.rs-mode--data {
+  border-color: #fbd9dc;
+  background: linear-gradient(180deg, #fff6f7, #ffe9ec);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    inset 0 -1px 0 rgba(190, 40, 50, 0.06),
+    0 12px 24px -20px rgba(220, 64, 64, 0.7);
+}
+
+.rs-mode:hover { transform: translateY(-1px); }
+
+.rs-mode.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 55%, #ffffff);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--theme-primary) 15%, transparent),
+    0 14px 26px -18px color-mix(in srgb, var(--theme-primary) 75%, transparent);
+}
+
+.rs-mode--data.is-on {
+  border-color: var(--rs-red);
+  box-shadow:
+    0 0 0 3px rgba(233, 71, 71, 0.15),
+    0 14px 26px -18px rgba(220, 64, 64, 0.9);
+}
+
+/* Raised 3D tile for each mode's glyph. */
+.rs-mode__ico {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, #2563eb 26%, #ffffff);
+  background: linear-gradient(160deg, #ffffff, #dbe9fd);
+  color: #1d4ed8;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -2px 3px rgba(37, 99, 235, 0.14),
+    0 8px 14px -8px rgba(37, 99, 235, 0.75);
+}
+
+.rs-mode--data .rs-mode__ico {
+  border-color: #f6c4c8;
+  background: linear-gradient(160deg, #ffffff, #ffd9de);
+  color: #cf3a3a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -2px 3px rgba(200, 40, 50, 0.16),
+    0 8px 14px -8px rgba(214, 48, 58, 0.7);
+}
+
+.rs-mode__text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.rs-mode__text strong {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--rs-ink);
+}
+
+.rs-mode--data .rs-mode__text strong { color: #c93c3c; }
+
+.rs-mode__text em {
+  font-style: normal;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #6d7a86;
+}
+
+/* ---------------------------------------------------------- protection note */
+
+/* A quiet glass strip: informational, never alarming, whatever the mode. */
+.rs-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 14px;
+  border: 1px solid #dbe8f8;
+  background: linear-gradient(180deg, #f6faff, #eef5fd);
+  color: #3a5a7d;
+  font-size: 13px;
+  line-height: 1.55;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 18px -16px rgba(37, 99, 235, 0.6);
+}
+
+.rs-notice .icon {
+  flex: none;
+  color: #2f6fd0;
+}
+
+/* ---------------------------------------------------------------- toolbar */
+
+.rs-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 12px;
+  border: 1px solid var(--rs-line);
+  border-radius: 16px;
+  background: linear-gradient(180deg, #ffffff, #fbfcfa);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 8px 18px -16px rgba(25, 55, 35, 0.6);
+}
+
+.rs-toolbar__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border-radius: 999px;
+  border: 1px solid #e7e9e4;
+  background: linear-gradient(180deg, #ffffff, #f5f7f4);
+  color: var(--rs-muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+.rs-toolbar__count.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 30%, #ffffff);
+  background: linear-gradient(
+    180deg,
+    #ffffff,
+    color-mix(in srgb, var(--theme-primary) 12%, #ffffff)
+  );
+  color: var(--theme-primary-strong);
+}
+
+.rs-toolbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.rs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 120ms ease;
+}
+
+.rs-btn:active:not(:disabled) { transform: translateY(1px); }
+.rs-btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+.rs-btn--green {
+  border-color: color-mix(in srgb, var(--theme-primary) 55%, #ffffff);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--theme-primary) 78%, #ffffff),
+    var(--theme-primary)
+  );
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.14),
+    0 8px 16px -10px color-mix(in srgb, var(--theme-primary) 85%, transparent);
+}
+
+.rs-btn--green:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.16),
+    0 12px 22px -12px color-mix(in srgb, var(--theme-primary) 95%, transparent);
+}
+
+.rs-btn--ghost {
+  border-color: #e3e7e1;
+  background: linear-gradient(180deg, #ffffff, #f4f6f3);
+  color: #3a423a;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.96),
+    0 6px 12px -12px rgba(25, 55, 35, 0.7);
+}
+
+.rs-btn--ghost:hover:not(:disabled) {
+  border-color: var(--theme-primary-border);
+  background: linear-gradient(180deg, #ffffff, var(--theme-primary-tint-hover));
+  color: var(--theme-primary-strong);
+}
+
+.rs-btn--danger {
+  border-color: #cf3a3a;
+  background: linear-gradient(180deg, #f47070, #dc4040);
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.32),
+    inset 0 -2px 4px rgba(120, 18, 18, 0.24),
+    0 8px 16px -10px rgba(220, 64, 64, 0.95);
+}
+
+.rs-btn--danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: linear-gradient(180deg, #ef5c5c, #cf3333);
+}
+
+/* ------------------------------------------------------------- card sections */
+
+.rs-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/*
+ * One group = one continuous container. The group's own coloured header is the
+ * container's first band (it inherits the rounded top corners), and the module
+ * grid sits directly beneath it inside the same frame — never as a floating
+ * heading above a detached grid.
+ */
+.rs-group {
+  --rs-group-tone: var(--theme-primary);
+  --rs-group-ink: var(--theme-primary-strong);
+
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--rs-group-tone) 22%, var(--rs-line));
+  border-radius: 24px;
+  background: var(--rs-card);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 4px rgba(25, 55, 35, 0.04),
+    0 18px 30px -26px rgba(25, 55, 35, 0.5);
+  overflow: hidden;
+}
+
+/* One semantic colour family per group; the shared primary is never used as
+   the only group colour. */
+.rs-group--sky { --rs-group-tone: #3b82f6; --rs-group-ink: #1d4ed8; }
+.rs-group--mint { --rs-group-tone: #14b8a6; --rs-group-ink: #0f766e; }
+.rs-group--violet { --rs-group-tone: #8b5cf6; --rs-group-ink: #6d28d9; }
+.rs-group--indigo { --rs-group-tone: #6366f1; --rs-group-ink: #4338ca; }
+.rs-group--amber { --rs-group-tone: #d97706; --rs-group-ink: #92400e; }
+
+.rs-group__head {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 13px 20px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rs-group-tone) 24%, transparent);
+  background:
+    radial-gradient(
+      120% 160% at 12% 0%,
+      rgba(255, 255, 255, 0.88) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--rs-group-tone) 21%, #ffffff) 0%,
+      color-mix(in srgb, var(--rs-group-tone) 12%, #ffffff) 60%,
+      color-mix(in srgb, var(--rs-group-tone) 7%, #ffffff) 100%
+    );
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+.rs-group__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--rs-group-tone) 32%, #ffffff);
+  background: linear-gradient(
+    160deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--rs-group-tone) 16%, #ffffff) 58%,
+    color-mix(in srgb, var(--rs-group-tone) 34%, #ffffff) 100%
+  );
+  color: var(--rs-group-ink);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 3px color-mix(in srgb, var(--rs-group-tone) 24%, transparent),
+    0 9px 16px -9px color-mix(in srgb, var(--rs-group-tone) 85%, transparent);
+}
+
+.rs-group__title {
+  margin: 0;
+  min-width: 0;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.45;
+  color: var(--rs-ink);
+  overflow-wrap: anywhere;
+}
+
+/* The group's two live counters: how many module cards the group holds, then
+   how many of those are selected. Labels keep the two numbers from reading as
+   the same value. */
+.rs-group__counters {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  margin-inline-start: 2px;
+}
+
+.rs-group__counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rs-group__counter-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--rs-group-ink) 72%, #6b736c);
+}
+
+/* A compact, perfectly round 3D plate — the number of modules, never a record
+   count. It keeps a fixed width so 1 and 12 look alike. */
+.rs-group__count {
+  display: inline-grid;
+  place-items: center;
+  width: 27px;
+  height: 27px;
+  flex: none;
+  margin-inline-start: 2px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--rs-group-tone) 34%, #ffffff);
+  background:
+    radial-gradient(110% 110% at 32% 12%, rgba(255, 255, 255, 0.95) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--rs-group-tone) 16%, #ffffff) 0%,
+      color-mix(in srgb, var(--rs-group-tone) 34%, #ffffff) 100%
+    );
+  color: var(--rs-group-ink);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 -2px 3px color-mix(in srgb, var(--rs-group-tone) 26%, transparent),
+    0 6px 12px -8px color-mix(in srgb, var(--rs-group-tone) 90%, transparent);
+}
+
+/* The selected plate: a filled 3D pill in the active theme colour, with a
+   subtle check so it never reads as a second total. Its padding lets a
+   two-digit count breathe without breaking the shape. */
+.rs-group__count--selected {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: auto;
+  min-width: 27px;
+  padding: 0 8px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary) 66%, #ffffff);
+  background:
+    radial-gradient(110% 110% at 32% 10%, rgba(255, 255, 255, 0.62) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--theme-primary) 88%, #ffffff) 0%,
+      var(--theme-primary) 55%,
+      color-mix(in srgb, var(--theme-primary) 74%, #0d2412) 100%
+    );
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+    0 7px 14px -8px color-mix(in srgb, var(--theme-primary) 95%, transparent);
+}
+
+.rs-group__count--selected .icon { opacity: 0.78; }
+
+/* Nothing selected yet: the same plate, drained of its fill, so the 0 stays
+   clearly readable without pretending a selection was made. */
+.rs-group__counter--selected:not(.is-on) .rs-group__count--selected {
+  border-color: color-mix(in srgb, var(--theme-primary) 30%, #ffffff);
+  background:
+    radial-gradient(110% 110% at 32% 12%, rgba(255, 255, 255, 0.95) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--theme-primary) 9%, #ffffff) 0%,
+      color-mix(in srgb, var(--theme-primary) 24%, #ffffff) 100%
+    );
+  color: var(--theme-primary-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 3px color-mix(in srgb, var(--theme-primary) 18%, transparent),
+    0 5px 10px -8px rgba(25, 55, 35, 0.55);
+}
+
+.rs-group__counter--selected.is-on .rs-group__count--selected {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+    0 8px 16px -8px color-mix(in srgb, var(--theme-primary) 95%, transparent);
+}
+
+/* The module cards, in the same frame as their group header. */
+.rs-group__body {
+  padding: 18px;
+  /* A barely-there tint of the group's own colour keeps the white module cards
+     readable against their container without becoming a second accent. */
+  background:
+    radial-gradient(
+      120% 90% at 88% 0%,
+      color-mix(in srgb, var(--rs-group-tone) 7%, transparent) 0%,
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--rs-group-tone) 4%, var(--rs-card));
+}
+
+/* ------------------------------------------------------------- card grid */
+
+/*
+ * Three equal columns while there is room, two when the sidebar and the
+ * viewport leave less, one on a phone. Rows stretch, so every card in a row is
+ * exactly as tall as its tallest neighbour.
+ */
+.rs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
+
+/*
+ * Header / body / footer, edge to edge. The card itself keeps the frame and the
+ * rounded corners; the coloured header is the card's own first band, so it
+ * inherits the top corners instead of floating above the frame.
+ */
+.rs-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 20%, #eef0ea);
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 12%, transparent),
+    0 2px 4px rgba(25, 55, 35, 0.04),
+    0 12px 24px -18px rgba(25, 55, 35, 0.55);
+  cursor: pointer;
+  transition:
+    transform 200ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease,
+    background 200ms ease;
+}
+
+.rs-card:not(.is-empty):hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 38%, #eef0ea);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 14%, transparent),
+    0 2px 4px rgba(25, 55, 35, 0.05),
+    0 20px 34px -20px rgba(25, 55, 35, 0.6);
+}
+
+.rs-card:not(.is-empty):active { transform: translateY(0); }
+.rs-card.is-empty { cursor: default; }
+
+.rs-card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--theme-primary) 60%, transparent);
+  outline-offset: 3px;
+}
+
+/* Selected: the module keeps its own tint, raised by the active theme colour. */
+.rs-card.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 52%, #ffffff);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--theme-primary) 13%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 18px 32px -20px color-mix(in srgb, var(--theme-primary) 85%, transparent);
+}
+
+/* --------------------------------------------------------------- card head */
+
+/*
+ * The integrated module header: a low-opacity gradient of the module's own
+ * colour (light → main), a glossy top highlight, a soft inner shadow on its
+ * lower edge, and one hairline separator — no detached plate, no second frame.
+ */
+.rs-card__head {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-height: 96px;
+  padding: 16px 18px 15px;
+  border-bottom: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 22%, transparent);
+  background:
+    radial-gradient(
+      120% 150% at 12% 0%,
+      color-mix(in srgb, #ffffff 70%, transparent) 0%,
+      transparent 58%
+    ),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 20%, #ffffff) 0%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 11%, #ffffff) 62%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 7%, #ffffff) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 6px 12px -12px color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 75%, transparent);
+}
+
+.rs-card__heading {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  text-align: start;
+}
+
+/* -------------------------------------------------- unique 3D module icons */
+
+.rs-tone--red { --rs-tone: #ef5350; --rs-tone-ink: #c02b2b; }
+.rs-tone--sky { --rs-tone: #38bdf8; --rs-tone-ink: #0369a1; }
+.rs-tone--gold { --rs-tone: #f5b73d; --rs-tone-ink: #a16207; }
+.rs-tone--violet { --rs-tone: #8b5cf6; --rs-tone-ink: #6d28d9; }
+.rs-tone--mint { --rs-tone: #34d399; --rs-tone-ink: #0f766e; }
+.rs-tone--amber { --rs-tone: #eab308; --rs-tone-ink: #a16207; }
+.rs-tone--teal { --rs-tone: #2dd4bf; --rs-tone-ink: #0f766e; }
+.rs-tone--emerald { --rs-tone: #10b981; --rs-tone-ink: #047857; }
+.rs-tone--pink { --rs-tone: #ec4899; --rs-tone-ink: #be185d; }
+.rs-tone--cyan { --rs-tone: #22d3ee; --rs-tone-ink: #0e7490; }
+.rs-tone--indigo { --rs-tone: #6366f1; --rs-tone-ink: #4338ca; }
+.rs-tone--lime { --rs-tone: #84cc16; --rs-tone-ink: #4d7c0f; }
+.rs-tone--blue { --rs-tone: #3b82f6; --rs-tone-ink: #1d4ed8; }
+.rs-tone--slate { --rs-tone: #64748b; --rs-tone-ink: #334155; }
+.rs-tone--grape { --rs-tone: #a855f7; --rs-tone-ink: #7e22ce; }
+.rs-tone--graphite { --rs-tone: #64748b; --rs-tone-ink: #374151; }
+.rs-tone--sand { --rs-tone: #d97706; --rs-tone-ink: #92400e; }
+.rs-tone--plum { --rs-tone: #d946ef; --rs-tone-ink: #a21caf; }
+
+.rs-card__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 30%, #ffffff);
+  background: linear-gradient(
+    160deg,
+    #ffffff 0%,
+    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 18%, #ffffff) 58%,
+    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 34%, #ffffff) 100%
+  );
+  color: var(--rs-tone-ink, var(--theme-primary-strong));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.98),
+    inset 0 -2px 3px color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 22%, transparent),
+    0 9px 16px -9px color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 90%, transparent);
+}
+
+/* ------------------------------------------------------- selection badge */
+
+/*
+ * Nothing is drawn while the card is unselected: the slot keeps its width so
+ * picking a module never shifts the layout, but the badge itself is invisible.
+ * Selected, it is a borderless glossy circle with a white check.
+ */
+.rs-card__badge {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--theme-primary) 72%, #ffffff),
+    var(--theme-primary)
+  );
+  color: #ffffff;
+  opacity: 0;
+  transform: scale(0.72);
+  pointer-events: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.16),
+    0 7px 14px -7px color-mix(in srgb, var(--theme-primary) 85%, transparent);
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease;
+}
+
+.rs-card__badge.is-on {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* On the tinted header the badge keeps a thin light rim, so it reads as a
+   raised control rather than a flat dot on the module's colour. */
+.rs-card__head .rs-card__badge.is-on {
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.16),
+    0 7px 14px -7px color-mix(in srgb, var(--theme-primary) 85%, transparent);
+}
+
+/* ------------------------------------------------------------- card text */
+
+.rs-card__name {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 750;
+  line-height: 1.5;
+  color: var(--rs-ink);
+  overflow-wrap: anywhere;
+}
+
+.rs-card__desc {
+  margin: 0;
+  padding-bottom: 1px;
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: color-mix(in srgb, var(--rs-tone-ink, var(--theme-primary-strong)) 42%, #6b736c);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------------- card body */
+
+/* Everything the header does not carry: the live count, the safety notes and
+   the dependency expansion. It takes the leftover height, so the Delete action
+   always sits on the card's bottom edge whatever the module's text length. */
+.rs-card__body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+  padding: 13px 18px 12px;
+}
+
+/* ------------------------------------------------------------------- count */
+
+.rs-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+.rs-card__count {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 11px 4px;
+  border-radius: 11px;
+  border: 1px solid color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 22%, #e9ece6);
+  background: linear-gradient(180deg, #ffffff, #f8faf7);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 4px 9px -7px rgba(25, 55, 35, 0.9);
+}
+
+.rs-card__count strong {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--rs-tone-ink, var(--theme-primary-strong));
+  font-variant-numeric: tabular-nums;
+}
+
+.rs-card__count em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--rs-muted);
+}
+
+.rs-card__count.is-risk {
+  border-color: #f4cccc;
+  background: linear-gradient(180deg, #ffffff, #fff5f5);
+}
+
+.rs-card__count.is-risk strong { color: #d64545; }
+
+.rs-card__kept {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #8f978f;
+}
+
+.rs-card__risk {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid #f7b3b3;
+  background: #ffecec;
+  color: #c93c3c;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ notes */
+
+.rs-card__notes {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.rs-card__warn {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: #c04545;
+}
+
+.rs-card__empty {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 12px;
+  color: #3f8a5c;
+}
+
+/* Long dependency lists stay behind a compact, accessible expansion. */
+.rs-card__more { margin-top: 1px; }
+
+.rs-card__more > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  border: none;
+  background: none;
+  color: var(--theme-primary-strong);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.rs-card__more > summary::-webkit-details-marker { display: none; }
+.rs-card__more > summary:hover { text-decoration: underline; }
+.rs-card__more > summary .icon { transition: transform 180ms ease; }
+.rs-card__more[open] > summary .icon { transform: rotate(180deg); }
+
+.rs-card__more ul {
+  margin: 6px 0 0;
+  padding: 7px 9px;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  border-radius: 10px;
+  border: 1px solid #e9ece6;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.rs-card__more li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--rs-muted);
+}
+
+.rs-card__more li strong {
+  font-weight: 700;
+  color: var(--text-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ----------------------------------------------------------------- footer */
+
+.rs-card__foot {
+  margin-top: auto;
+  padding: 0 18px 16px;
+}
+
+.rs-del {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid #cf3a3a;
+  background: linear-gradient(180deg, #f47070, #dc4040);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -2px 4px rgba(120, 18, 18, 0.26),
+    0 8px 16px -10px rgba(220, 64, 64, 0.95);
+  transition:
+    background 200ms ease,
+    box-shadow 200ms ease,
+    transform 180ms ease;
+}
+
+.rs-del:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ef5c5c, #cf3333);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    inset 0 -2px 4px rgba(120, 18, 18, 0.28),
+    0 12px 22px -12px rgba(207, 51, 51, 1);
+}
+
+.rs-del:active:not(:disabled) {
+  transform: translateY(0);
+  background: linear-gradient(180deg, #cf3333, #b92a2a);
+  box-shadow: inset 0 2px 5px rgba(90, 10, 10, 0.4);
+}
+
+.rs-del:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ------------------------------------------------------------ result panel */
+
+.rs-result {
+  border: 1px solid var(--theme-primary-line);
+  border-radius: 14px;
+  background: var(--theme-primary-soft);
+  padding: 10px 13px;
+}
+
+.rs-result__head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: var(--theme-primary-strong);
+}
+
+.rs-result__close {
+  margin-inline-start: auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.rs-result__close:hover { background: var(--theme-primary-soft); }
+
+.rs-result__list {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 14px;
+}
+
+.rs-result__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-soft);
+  padding: 1px 0;
+}
+
+.rs-result__status.is-done { color: #2c7a49; font-weight: 600; }
+.rs-result__status.is-blocked { color: #d64545; font-weight: 600; }
+
+.rs-result__note {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: #b05a4d;
+}
+
+/* ------------------------------------------------------------- responsive */
+
+@media (max-width: 1199px) {
+  .rs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 900px) {
+  .rs-result__list { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 760px) {
+  .rs-page { gap: 12px; }
+  .rs-modes { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .rs-mode { min-height: 84px; padding: 14px 15px; }
+  .rs-mode__ico { width: 40px; height: 40px; border-radius: 12px; }
+  .rs-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  /* The group keeps its integrated header on a phone, just more compact: a
+     long translated title may wrap, the icon and the count stay on one line. */
+  .rs-group { border-radius: 20px; }
+  /* The counters may take a second row rather than squeeze a translated
+     title: the title keeps its own line, nothing is clipped. */
+  .rs-group__head { flex-wrap: wrap; min-height: 54px; padding: 11px 14px; gap: 10px; row-gap: 8px; }
+  .rs-group__icon { width: 32px; height: 32px; border-radius: 10px; }
+  .rs-group__title { font-size: 16px; line-height: 1.5; }
+  .rs-group__count { width: 25px; height: 25px; font-size: 11.5px; }
+  .rs-group__counters { margin-inline-start: auto; gap: 8px; }
+  .rs-group__count--selected { width: auto; min-width: 25px; padding: 0 7px; }
+  .rs-group__counter-label { font-size: 9.5px; }
+  .rs-group__body { padding: 13px; }
+  /* A phone shows one card per row, so the card may size to its own content. */
+  .rs-card { border-radius: 20px; }
+  .rs-card__head { min-height: 0; padding: 14px 15px 13px; gap: 11px; }
+  .rs-card__icon { width: 40px; height: 40px; border-radius: 12px; }
+  .rs-card__body { padding: 12px 15px 10px; }
+  .rs-card__foot { padding: 0 15px 14px; }
+  .rs-card__name { font-size: 16px; }
+  .rs-card__count strong { font-size: 20px; }
+  .rs-del { height: 40px; font-size: 13.5px; }
+  .rs-toolbar__count { width: 100%; justify-content: center; }
+  .rs-toolbar__actions { width: 100%; }
+  .rs-btn { flex: 1 1 auto; justify-content: center; }
+}
+
+@media (max-width: 620px) {
+  .rs-page .mhero { flex-wrap: wrap; }
+  .rs-page .mhero__art { order: 3; flex-basis: 100%; }
+  .rs-page .mart { max-height: 70px; }
+  .rs-notice { font-size: 12.5px; padding: 10px 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rs-card,
+  .rs-card__badge,
+  .rs-mode,
+  .rs-btn,
+  .rs-del,
+  .rs-card__more > summary .icon {
+    transition: none;
+  }
+  .rs-card:not(.is-empty):hover,
+  .rs-mode:hover,
+  .rs-btn--green:hover:not(:disabled),
+  .rs-btn--danger:hover:not(:disabled),
+  .rs-del:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ------------------------------------------------------------- dark theme */
+
+[data-theme='dark'] .rs-page .mhero {
+  border-color: var(--mint-line);
+  background:
+    radial-gradient(90% 150% at 22% 6%, rgba(243, 214, 150, 0.12) 0%, transparent 62%),
+    radial-gradient(80% 140% at 90% 98%, color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%, transparent 60%),
+    linear-gradient(180deg, #1d1f1a, #191c18);
+}
+
+[data-theme='dark'] .rs-page .mhero__title { color: #f0e9d8; }
+[data-theme='dark'] .rs-page .mhero__sub { color: var(--muted); }
+
+[data-theme='dark'] .rs-mode {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+}
+
+[data-theme='dark'] .rs-mode--data {
+  border-color: rgba(233, 71, 71, 0.3);
+  background: linear-gradient(180deg, rgba(233, 71, 71, 0.14), rgba(233, 71, 71, 0.07));
+}
+
+[data-theme='dark'] .rs-mode--sample {
+  border-color: rgba(59, 130, 246, 0.3);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.14), rgba(59, 130, 246, 0.06));
+}
+
+[data-theme='dark'] .rs-mode.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 60%, transparent);
+}
+
+[data-theme='dark'] .rs-mode--data.is-on { border-color: rgba(233, 71, 71, 0.75); }
+
+[data-theme='dark'] .rs-mode--sample .rs-mode__ico {
+  border-color: rgba(59, 130, 246, 0.4);
+  background: linear-gradient(160deg, #232a3a, rgba(59, 130, 246, 0.28));
+  color: #9dc4fb;
+}
+
+[data-theme='dark'] .rs-mode--data .rs-mode__ico {
+  border-color: rgba(233, 71, 71, 0.4);
+  background: linear-gradient(160deg, #2a2326, rgba(233, 71, 71, 0.26));
+  color: #f2a2a2;
+}
+
+[data-theme='dark'] .rs-mode__text strong { color: #eee9dd; }
+[data-theme='dark'] .rs-mode--data .rs-mode__text strong { color: #f2a2a2; }
+[data-theme='dark'] .rs-mode__text em { color: #9aa3b5; }
+
+[data-theme='dark'] .rs-notice {
+  border-color: rgba(59, 130, 246, 0.28);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.06));
+  color: #b9cbe6;
+}
+
+[data-theme='dark'] .rs-notice .icon { color: #8fb6ea; }
+
+[data-theme='dark'] .rs-toolbar {
+  background: var(--surface);
+  border-color: var(--line);
+}
+
+[data-theme='dark'] .rs-toolbar__count {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  color: #a9b0c0;
+}
+
+[data-theme='dark'] .rs-toolbar__count.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 45%, transparent);
+  background: color-mix(in srgb, var(--theme-primary) 16%, transparent);
+  color: #dfe6d9;
+}
+
+[data-theme='dark'] .rs-group {
+  border-color: color-mix(in srgb, var(--rs-group-tone) 26%, var(--line));
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 16px 28px -22px rgba(0, 0, 0, 0.8);
+}
+
+[data-theme='dark'] .rs-group__head {
+  border-bottom-color: color-mix(in srgb, var(--rs-group-tone) 32%, transparent);
+  background:
+    radial-gradient(120% 160% at 12% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 58%),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--rs-group-tone) 26%, var(--surface)) 0%,
+      color-mix(in srgb, var(--rs-group-tone) 16%, var(--surface)) 60%,
+      color-mix(in srgb, var(--rs-group-tone) 11%, var(--surface)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 12px -12px rgba(0, 0, 0, 0.85);
+}
+
+[data-theme='dark'] .rs-group__icon {
+  border-color: color-mix(in srgb, var(--rs-group-tone) 45%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--rs-group-tone) 22%, var(--surface)),
+    color-mix(in srgb, var(--rs-group-tone) 38%, var(--surface))
+  );
+  color: color-mix(in srgb, var(--rs-group-tone) 55%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 9px 16px -9px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .rs-group__title { color: #f2ede1; }
+
+[data-theme='dark'] .rs-group__count {
+  border-color: color-mix(in srgb, var(--rs-group-tone) 42%, transparent);
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--rs-group-tone) 26%, var(--surface)),
+    color-mix(in srgb, var(--rs-group-tone) 44%, var(--surface))
+  );
+  color: color-mix(in srgb, var(--rs-group-tone) 55%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35),
+    0 6px 12px -8px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .rs-group__counter-label {
+  color: color-mix(in srgb, var(--rs-group-tone) 48%, #a9b0c0);
+}
+
+[data-theme='dark'] .rs-group__count--selected {
+  border-color: color-mix(in srgb, var(--theme-primary) 72%, transparent);
+  background:
+    radial-gradient(110% 110% at 32% 10%, rgba(255, 255, 255, 0.22) 0%, transparent 58%),
+    linear-gradient(
+      170deg,
+      color-mix(in srgb, var(--theme-primary) 70%, var(--surface)),
+      color-mix(in srgb, var(--theme-primary) 40%, var(--surface))
+    );
+  color: #ffffff;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.4),
+    0 7px 14px -8px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .rs-group__counter--selected:not(.is-on) .rs-group__count--selected {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(
+    170deg,
+    color-mix(in srgb, var(--theme-primary) 16%, var(--surface)),
+    color-mix(in srgb, var(--theme-primary) 26%, var(--surface))
+  );
+  color: color-mix(in srgb, var(--theme-primary) 45%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.35);
+}
+
+[data-theme='dark'] .rs-group__body {
+  background:
+    radial-gradient(
+      120% 90% at 88% 0%,
+      color-mix(in srgb, var(--rs-group-tone) 12%, transparent) 0%,
+      transparent 62%
+    ),
+    color-mix(in srgb, var(--rs-group-tone) 5%, var(--surface));
+}
+
+[data-theme='dark'] .rs-card {
+  border-color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 26%, var(--line));
+  background: var(--surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.3),
+    0 14px 26px -18px rgba(0, 0, 0, 0.75);
+}
+
+[data-theme='dark'] .rs-card.is-on {
+  border-color: color-mix(in srgb, var(--theme-primary) 55%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--theme-primary) 16%, transparent),
+    0 16px 28px -18px rgba(0, 0, 0, 0.85);
+}
+
+/* The module header keeps its own semantic colour in the dark theme too — just
+   deeper, so the white icon tile and the title stay legible. */
+[data-theme='dark'] .rs-card__head {
+  border-bottom-color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 30%, transparent);
+  background:
+    radial-gradient(120% 150% at 12% 0%, rgba(255, 255, 255, 0.07) 0%, transparent 58%),
+    linear-gradient(
+      168deg,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 26%, var(--surface)) 0%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 16%, var(--surface)) 62%,
+      color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 11%, var(--surface)) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 6px 12px -12px rgba(0, 0, 0, 0.85);
+}
+
+[data-theme='dark'] .rs-card__icon {
+  border-color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 45%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 22%, var(--surface)),
+    color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 38%, var(--surface))
+  );
+  color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 55%, #ffffff);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3),
+    0 9px 16px -9px rgba(0, 0, 0, 0.9);
+}
+
+[data-theme='dark'] .rs-card__name { color: #f2ede1; }
+[data-theme='dark'] .rs-card__desc { color: color-mix(in srgb, var(--rs-tone, var(--theme-primary)) 32%, #b4bcb5); }
+
+[data-theme='dark'] .rs-card__count {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
+}
+
+[data-theme='dark'] .rs-card__count strong { color: #dfe6d9; }
+[data-theme='dark'] .rs-card__count.is-risk {
+  border-color: rgba(233, 71, 71, 0.45);
+  background: rgba(233, 71, 71, 0.14);
+}
+[data-theme='dark'] .rs-card__count.is-risk strong { color: #f2a2a2; }
+[data-theme='dark'] .rs-card__kept { color: #9aa39a; }
+[data-theme='dark'] .rs-card__warn { color: #f0a1a1; }
+[data-theme='dark'] .rs-card__empty { color: #8fd2a5; }
+
+[data-theme='dark'] .rs-card__more > summary { color: #a6c9b9; }
+
+[data-theme='dark'] .rs-card__more ul {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme='dark'] .rs-card__more li strong { color: #e4e9e0; }
+
+[data-theme='dark'] .rs-btn--ghost {
+  background: #262a22;
+  border-color: #3a3f34;
+  color: #e2ddd0;
+}
+
+[data-theme='dark'] .rs-result {
+  background: color-mix(in srgb, var(--theme-primary) 9%, transparent);
+  border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent);
+}

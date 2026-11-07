@@ -1,0 +1,223 @@
+/* ==========================================================================
+   Working hours — the dashboard's compact full-width bar.
+
+   One row of information groups, separated by hairline dividers: the title, the
+   numeric date, the open/closed pill, today's range and the live clock. Every
+   group is logical (`padding-inline`), so the whole bar mirrors as one object
+   in Kurdish, Persian and Arabic instead of re-ordering its contents.
+
+   Tokens (`--glass-line`, `--mint-deep`, …) come from `.dash` in dashboard.css;
+   selectors are `.dash`-scoped so they cannot leak into another page.
+   ========================================================================== */
+
+.dash .card.hours-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  min-height: 90px;
+  padding: 14px 20px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 190% at 100% 0%, color-mix(in srgb, var(--theme-primary) 11%, transparent) 0%, transparent 58%),
+    radial-gradient(110% 180% at 0% 100%, color-mix(in srgb, var(--theme-primary) 7%, transparent) 0%, transparent 55%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.97), color-mix(in srgb, var(--theme-primary) 5%, #ffffff));
+}
+
+[data-theme='dark'] .dash .card.hours-bar {
+  background:
+    radial-gradient(120% 190% at 100% 0%, color-mix(in srgb, var(--theme-primary) 16%, transparent) 0%, transparent 58%),
+    radial-gradient(110% 180% at 0% 100%, color-mix(in srgb, var(--theme-primary) 10%, transparent) 0%, transparent 55%),
+    linear-gradient(145deg, rgba(32, 37, 49, 0.97), rgba(22, 26, 34, 0.94));
+}
+
+/* --- information groups ---------------------------------------------- */
+
+.dash .hours-bar__group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-inline: 10px;
+  /* Every group takes a share of the bar and centres its content, so the row
+     fills the card edge to edge with no empty end. */
+  flex: 1 1 auto;
+  justify-content: center;
+}
+.dash .hours-bar__group:first-child { padding-inline-start: 0; justify-content: flex-start; flex-grow: 0.6; }
+.dash .hours-bar__group:last-child { padding-inline-end: 0; justify-content: flex-end; flex-grow: 0.6; }
+
+.dash .hours-bar__title {
+  font-size: clamp(13.5px, 1.05vw, 15px);
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* The thin luminous rule between two groups. */
+.dash .hours-bar__sep {
+  flex: none;
+  width: 1px;
+  align-self: stretch;
+  min-height: 34px;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--glass-line) 22%,
+    var(--glass-line) 78%,
+    transparent
+  );
+}
+
+.dash .hours-bar__ico {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  color: var(--dashic-indigo-ink);
+}
+
+.dash .hours-bar__label {
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.4;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.dash .hours-bar__value {
+  font-size: clamp(15px, 1.35vw, 17px);
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--mint-deep);
+  white-space: nowrap;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+.dash .hours-bar__value--empty {
+  font-size: 13px;
+  font-weight: 700;
+  white-space: normal;
+  color: var(--muted);
+}
+.dash .hours-bar__clock { font-size: clamp(16px, 1.5vw, 19px); }
+
+/* The shared range row keeps the opening value first in reading order, so it
+   sits on the right in RTL and on the left in LTR. */
+.dash .hours-bar__range { display: inline-flex; align-items: center; }
+.dash .hours-bar__times { display: inline-flex; align-items: center; gap: 5px; }
+.dash .hours-bar__overnight {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--muted);
+  margin-inline-start: 6px;
+}
+
+/* --- open / closed pill ---------------------------------------------- */
+
+.dash .hours-bar__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.5;
+  white-space: nowrap;
+  border: 1px solid color-mix(in srgb, var(--success) 26%, transparent);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--success) 20%, #ffffff),
+    color-mix(in srgb, var(--success) 11%, #ffffff)
+  );
+  color: color-mix(in srgb, var(--success) 78%, #0b3c22);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 4px 10px -8px color-mix(in srgb, var(--success) 65%, transparent);
+}
+.dash .hours-bar__status.is-closed {
+  border-color: var(--glass-line);
+  background: linear-gradient(180deg, var(--surface-2), var(--surface));
+  color: var(--muted);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+[data-theme='dark'] .dash .hours-bar__status.is-open {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--success) 26%, var(--surface)),
+    color-mix(in srgb, var(--success) 16%, var(--surface))
+  );
+  color: #a9f0c4;
+}
+.dash .hours-bar__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 20%, transparent);
+}
+
+/* --- responsive -------------------------------------------------------
+ * Desktop keeps the single distributed row above. Below 1200px the same five
+ * groups are re-laid-out as a grid — two rows on a tablet, three on a phone —
+ * so nothing is squeezed onto a row it does not fit.
+ * ---------------------------------------------------------------------- */
+
+@media (max-width: 1199px) {
+  /* Same specificity as the desktop rule above, so the grid wins. */
+  .dash .card.hours-bar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: center;
+    column-gap: 14px;
+    row-gap: 12px;
+    min-height: 0;
+    padding: 16px 18px;
+  }
+  .dash .hours-bar__sep { display: none; }
+  .dash .hours-bar__group,
+  .dash .hours-bar__group:first-child,
+  .dash .hours-bar__group:last-child {
+    flex: initial;
+    justify-content: flex-start;
+    padding-inline: 0;
+    min-width: 0;
+  }
+  /* Only a value stays unbroken; the label may take a second line. */
+  .dash .hours-bar__title { white-space: normal; }
+  .dash .hours-bar__label { white-space: normal; }
+  /* Today's range owns two columns, so both times keep their width. */
+  .dash .hours-bar__group[data-part='hours'] { grid-column: span 2; }
+  /* Hairline between the cells of one row. */
+  .dash .hours-bar > [data-part='date'],
+  .dash .hours-bar > [data-part='status'],
+  .dash .hours-bar > [data-part='live'] {
+    border-inline-start: 1px solid var(--glass-line);
+    padding-inline-start: 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .dash .card.hours-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 12px;
+    row-gap: 10px;
+    padding: 14px 16px;
+  }
+  /* Row 1: the title and its icon, across the whole card. */
+  .dash .hours-bar__group[data-part='title'] { grid-column: 1 / -1; }
+  /* Row 2: date, status. Row 3: today's range, live clock. */
+  .dash .hours-bar__group[data-part='hours'] { grid-column: auto; }
+  .dash .hours-bar__group { flex-wrap: wrap; row-gap: 3px; }
+  .dash .hours-bar > [data-part='date'] {
+    border-inline-start: 0;
+    padding-inline-start: 0;
+  }
+  .dash .hours-bar__title { font-size: 13.5px; }
+  .dash .hours-bar__label { font-size: 11.5px; }
+  .dash .hours-bar__value { font-size: 14.5px; }
+  .dash .hours-bar__clock { font-size: 15.5px; }
+  /* The pill keeps its whole label even on a 320px screen. */
+  .dash .hours-bar__status { font-size: 11px; padding: 4px 9px; white-space: normal; }
+}

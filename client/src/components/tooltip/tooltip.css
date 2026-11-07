@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Global tooltip bubble — the one premium floating tooltip of the app.
+
+   Solid, theme-derived navy surface (the accent tints it, never a transparent
+   blur), white label, soft accent border, layered shadow for depth and a small
+   arrow that points back at its button. Every colour comes from `--primary`, so
+   a new appearance repaints tooltips immediately in light and dark mode alike.
+   Position (left/top) and arrow offsets (--ttip-ax / --ttip-ay) are written by
+   TooltipLayer; this file only styles the bubble and its arrow.
+   ========================================================================== */
+
+:root {
+  --ttip-bg: color-mix(in srgb, var(--primary) 17%, #0b1420);
+  --ttip-ink: #ffffff;
+  --ttip-line: color-mix(in srgb, var(--primary) 44%, #2c4054);
+  --ttip-shadow:
+    0 18px 34px -16px rgba(3, 8, 14, 0.72),
+    0 6px 14px -6px rgba(3, 8, 14, 0.42);
+}
+
+[data-theme='dark'] {
+  --ttip-bg: color-mix(in srgb, var(--primary) 22%, #060c14);
+  --ttip-line: color-mix(in srgb, var(--primary) 38%, #33475d);
+  --ttip-shadow:
+    0 20px 38px -14px rgba(0, 0, 0, 0.82),
+    0 6px 14px -6px rgba(0, 0, 0, 0.55);
+}
+
+.ttip {
+  position: fixed;
+  z-index: 2000;
+  max-width: min(19rem, calc(100vw - 20px));
+  padding: 8px 12px 9px;
+  border-radius: 12px;
+  border: 1px solid var(--ttip-line);
+  background: var(--ttip-bg);
+  color: var(--ttip-ink);
+  font-family: var(--font);
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.45;
+  letter-spacing: 0.01em;
+  text-align: start;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  /* Depth: a lit top edge plus a soft contact shadow under the bubble. */
+  box-shadow:
+    var(--ttip-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  opacity: 0;
+  transform: scale(0.94);
+  transform-origin: center;
+  transition:
+    opacity 0.14s ease,
+    transform 0.17s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.ttip[data-placed='true'] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* The bubble grows away from its target, never over it. */
+.ttip[data-side='top'] { transform-origin: var(--ttip-ax, 50%) 100%; }
+.ttip[data-side='bottom'] { transform-origin: var(--ttip-ax, 50%) 0%; }
+.ttip[data-side='left'] { transform-origin: 100% var(--ttip-ay, 50%); }
+.ttip[data-side='right'] { transform-origin: 0% var(--ttip-ay, 50%); }
+
+/* --------------------------------------------------------------- arrow */
+
+.ttip::before {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  background: var(--ttip-bg);
+  border: 1px solid var(--ttip-line);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+/* Only the two outward edges keep their border, so the arrow meets the bubble
+   without a seam. */
+.ttip[data-side='top']::before {
+  bottom: -5px;
+  left: var(--ttip-ax, 50%);
+  margin-left: -4.5px;
+  border-top: 0;
+  border-left: 0;
+}
+
+.ttip[data-side='bottom']::before {
+  top: -5px;
+  left: var(--ttip-ax, 50%);
+  margin-left: -4.5px;
+  border-bottom: 0;
+  border-right: 0;
+}
+
+.ttip[data-side='left']::before {
+  right: -5px;
+  top: var(--ttip-ay, 50%);
+  margin-top: -4.5px;
+  border-bottom: 0;
+  border-left: 0;
+}
+
+.ttip[data-side='right']::before {
+  left: -5px;
+  top: var(--ttip-ay, 50%);
+  margin-top: -4.5px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ttip {
+    transform: none;
+    transition: none;
+  }
+  .ttip[data-placed='true'] { transform: none; }
+}

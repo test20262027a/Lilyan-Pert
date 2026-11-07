@@ -1,0 +1,310 @@
+/*
+ * Customer-menu advertisement section.
+ *
+ * Image-led promo cards on one soft panel: section header with the megaphone
+ * pill, two cards per row, status pill, bold title, clamped description and a
+ * two-action footer. Every accent is mixed from the active theme's `--primary`,
+ * so the composition keeps its reference look under any appearance preset;
+ * only the Active status keeps a semantic green.
+ *
+ * Scoped to `.cui-ads`, so the admin panel is unaffected.
+ */
+
+.cui-ads {
+  position: relative;
+  margin-top: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 26px;
+  background:
+    radial-gradient(120% 70% at 50% -20%, color-mix(in srgb, var(--primary) 7%, transparent), transparent 70%),
+    var(--surface);
+  box-shadow:
+    0 1px 2px rgba(20, 45, 30, 0.05),
+    0 14px 34px -18px rgba(20, 45, 30, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+  overflow: hidden;
+}
+[data-theme='dark'] .cui-ads {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 18px 40px -20px rgba(0, 0, 0, 0.65);
+}
+
+/* ---------------------------------------------------------------- header */
+
+/* The Advertising header is the shared customer section header
+   (customerSections.css) in its own `rose` color family — a 3D megaphone tile
+   with the title and the count, on the same metrics as every other panel. */
+
+/* ------------------------------------------------------------------ grid */
+
+.cui-ads__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+/* ------------------------------------------------------------------ card */
+
+.cui-adcard {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgba(20, 45, 30, 0.04),
+    0 12px 26px -20px rgba(20, 45, 30, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 210ms ease, box-shadow 210ms ease, border-color 210ms ease;
+}
+[data-theme='dark'] .cui-adcard {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 14px 28px -20px rgba(0, 0, 0, 0.7);
+}
+.cui-adcard.is-clickable { cursor: pointer; }
+@media (hover: hover) {
+  .cui-adcard.is-clickable:hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--primary) 26%, var(--border));
+    box-shadow:
+      0 2px 4px rgba(20, 45, 30, 0.05),
+      0 22px 42px -22px rgba(20, 45, 30, 0.45),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  }
+}
+.cui-adcard:focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 16%, transparent);
+}
+
+/* the advertisement picture leads the card */
+.cui-adcard__media {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 78%, transparent);
+}
+.cui-adcard__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 420ms ease;
+}
+@media (hover: hover) {
+  .cui-adcard.is-clickable:hover .cui-adcard__img { transform: scale(1.03); }
+}
+/* No upload yet: a themed illustration instead of a pale empty block — soft
+   light, a floating halo and the megaphone medallion, all mixed from the
+   active theme so it never reads as a missing picture. */
+.cui-adcard__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(70% 90% at 50% 12%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 72%),
+    linear-gradient(160deg, color-mix(in srgb, var(--primary) 13%, var(--surface)), color-mix(in srgb, var(--primary) 4%, var(--surface)));
+}
+.cui-adcard__placeholder::before,
+.cui-adcard__placeholder::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.cui-adcard__placeholder::before {
+  width: 62%;
+  aspect-ratio: 1;
+  inset-block-start: -26%;
+  inset-inline-start: -12%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 20%, transparent), transparent 70%);
+}
+.cui-adcard__placeholder::after {
+  width: 46%;
+  aspect-ratio: 1;
+  inset-block-end: -22%;
+  inset-inline-end: -8%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--primary) 15%, transparent), transparent 70%);
+}
+.cui-adcard__ph-badge {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 22px;
+  color: color-mix(in srgb, var(--primary) 76%, #0b1220);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--primary) 24%, transparent);
+  box-shadow:
+    0 12px 26px color-mix(in srgb, var(--primary) 22%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+[data-theme='dark'] .cui-adcard__ph-badge {
+  color: color-mix(in srgb, var(--primary) 80%, #ffffff);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+/* -------------------------------------------------------------- card body */
+
+.cui-adcard__body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 15px 18px 18px;
+}
+
+/* Title on the reading side, status pill on the opposite side — the reference
+   composition; a long title wraps instead of squeezing the pill. */
+.cui-adcard__top {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.cui-adcard__status {
+  flex: none;
+  margin-top: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.cui-adcard__status.is-active {
+  color: color-mix(in srgb, var(--success) 82%, var(--text));
+  background: color-mix(in srgb, var(--success) 13%, var(--surface));
+  border-color: color-mix(in srgb, var(--success) 28%, transparent);
+}
+.cui-adcard__status.is-inactive {
+  color: var(--muted);
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+.cui-adcard__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 16%, transparent);
+}
+
+.cui-adcard__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 18px;
+  font-weight: 850;
+  line-height: 1.35;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.cui-adcard__desc {
+  margin: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+/* --------------------------------------------------------- bottom actions */
+
+.cui-adcard__foot {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 4px;
+}
+
+.cui-adcard__related {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+  height: 42px;
+  padding-inline: 14px;
+  border-radius: 13px;
+  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  background: color-mix(in srgb, var(--primary) 9%, var(--surface));
+  color: color-mix(in srgb, var(--primary) 74%, var(--text));
+  font-size: 12.5px;
+  font-weight: 780;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.cui-adcard__related > svg { flex: none; }
+.cui-adcard__related-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cui-adcard__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding-inline: 17px;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  border-radius: 13px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--primary-ink);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--primary) 92%, #ffffff), var(--primary));
+  box-shadow:
+    0 10px 20px color-mix(in srgb, var(--primary) 28%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.34);
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+.cui-adcard__cta:hover {
+  filter: saturate(1.06) brightness(0.94);
+  box-shadow:
+    0 13px 24px color-mix(in srgb, var(--primary) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+.cui-adcard__cta:active { transform: translateY(1px); }
+
+/* ------------------------------------------------------------ responsive */
+
+@media (max-width: 900px) {
+  .cui-ads__grid { gap: 16px; padding: 16px; }
+  .cui-adcard__title { font-size: 17px; }
+}
+
+@media (max-width: 700px) {
+  .cui-ads { border-radius: 22px; }
+  .cui-ads__grid { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 14px; }
+  .cui-adcard__body { padding: 14px 15px 15px; }
+  .cui-adcard__foot { flex-wrap: nowrap; }
+  .cui-adcard__related { flex: 1 1 auto; }
+  .cui-adcard__cta { flex: 0 0 auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cui-adcard,
+  .cui-adcard__img,
+  .cui-adcard__cta { transition: none; }
+}

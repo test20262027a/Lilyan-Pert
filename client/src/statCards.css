@@ -1,0 +1,222 @@
+/* ==========================================================================
+   Statistics cards shared by Category Management and Product Management.
+
+   One card shape, one responsive title system. Each card puts its icon and
+   figure on the first line and its title on the second, so the title always
+   gets the card's full width instead of the leftovers beside an icon — that is
+   what used to force an ellipsis.
+
+   The title itself is rendered three times (full / compact / short, see
+   components/menu/StatLabel.jsx) and CSS shows exactly one:
+     · the card's OWN width decides (container query), so a narrow modal or
+       side panel on a wide desktop gets the concise form while a roomy card
+       keeps the complete title;
+     · phones always take the shortest form.
+   No tier ever truncates: a title that must give way wraps to a second line.
+   ========================================================================== */
+
+/* --------------------------------------------------------- category cards */
+
+.mcstats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+/*
+ * The icon tile: one shared surface for both statistic families (category cards
+ * and product pills). It is mixed from the card's own ink, so the glyph sitting
+ * in a card always belongs to that card's colour family — a light tinted tile,
+ * never a detached white chip — with the same raised, glossy treatment in both
+ * light and dark mode.
+ */
+.mcstat,
+.mpill {
+  --stat-ink: var(--mp-green);
+  --stat-ink-strong: var(--mp-green-ink);
+}
+.mcstat--inactive,
+.mpill--inactive {
+  --stat-ink: var(--mp-red);
+  --stat-ink-strong: color-mix(in srgb, var(--mp-red) 78%, var(--mp-ink));
+}
+.stat-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--stat-ink) 15%, var(--surface)),
+    color-mix(in srgb, var(--stat-ink) 27%, var(--surface))
+  );
+  border: 1px solid color-mix(in srgb, var(--stat-ink) 32%, transparent);
+  color: var(--stat-ink-strong);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    inset 0 -1px 0 color-mix(in srgb, var(--stat-ink) 10%, transparent),
+    0 3px 8px -5px color-mix(in srgb, var(--stat-ink) 65%, transparent);
+}
+.mcstat .stat-ico {
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+}
+.mpill .stat-ico {
+  width: 21px;
+  height: 21px;
+  border-radius: 8px;
+}
+
+.mcstat {
+  min-width: 0;
+  /* Measured by the card itself — never by the viewport. */
+  container-type: inline-size;
+  container-name: statcard;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  padding: 8px 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 6px 14px -12px rgba(24, 46, 30, 0.7);
+}
+.mcstat--total {
+  background: var(--mp-mint);
+  border-color: color-mix(in srgb, var(--mp-green) 22%, transparent);
+}
+.mcstat--active {
+  background: color-mix(in srgb, var(--mp-green) 17%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-green) 28%, transparent);
+}
+.mcstat--inactive {
+  background: var(--mp-red-soft);
+  border-color: color-mix(in srgb, var(--mp-red) 22%, transparent);
+}
+.mcstat__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+}
+.mcstat__value { font-size: 17px; font-weight: 800; color: var(--mp-ink); line-height: 1.15; }
+.mcstat--inactive .mcstat__value { color: color-mix(in srgb, var(--mp-red) 82%, var(--mp-ink)); }
+
+/* ---------------------------------------------------------- product pills */
+
+/*
+ * The three product counters stay one fixed three-column row: Total, Active and
+ * Inactive only read correctly side by side, so no card may claim a minimum
+ * width that pushes its neighbour onto a second line.
+ */
+.msummary__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  flex: 1 1 340px;
+  min-width: 0;
+}
+.mpill {
+  min-width: 0;
+  container-type: inline-size;
+  container-name: statcard;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: 5px 7px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  font-size: 10.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 4px 10px -8px rgba(24, 46, 30, 0.8);
+}
+.mpill__top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+}
+.mpill__num { font-size: 13px; font-weight: 800; flex: none; }
+.mpill--total {
+  background: var(--mp-mint);
+  border-color: color-mix(in srgb, var(--mp-green) 22%, transparent);
+  color: var(--mp-green-ink);
+}
+.mpill--active {
+  background: color-mix(in srgb, var(--mp-green) 18%, var(--surface));
+  border-color: color-mix(in srgb, var(--mp-green) 28%, transparent);
+  color: var(--mp-green-ink);
+}
+.mpill--inactive {
+  background: var(--mp-red-soft);
+  border-color: color-mix(in srgb, var(--mp-red) 22%, transparent);
+  color: var(--mp-red);
+}
+
+/* ------------------------------------------------------- responsive titles */
+
+.stat-label {
+  display: block;
+  min-width: 0;
+  max-inline-size: 100%;
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.3;
+  color: inherit;
+  overflow-wrap: break-word;
+}
+/* Category cards carry a quiet grey title; product pills keep their own tone. */
+.mcstat .stat-label { color: var(--mp-muted); }
+
+.stat-label__text { display: block; }
+.stat-label__text--compact,
+.stat-label__text--short { display: none; }
+
+/*
+ * Category card: the complete title wraps onto a second line while there is
+ * room for at least one long word (the card's content box, in practice, is
+ * what the query measures). Only a genuinely tiny card — a squeezed side panel
+ * — drops to the concise form, then to the shortest one.
+ */
+@container statcard (max-width: 52px) {
+  .mcstat .stat-label__text--full { display: none; }
+  .mcstat .stat-label__text--compact { display: block; }
+}
+@container statcard (max-width: 38px) {
+  .mcstat .stat-label__text--compact { display: none; }
+  .mcstat .stat-label__text--short { display: block; }
+}
+
+/* Product pill: same ladder, shifted because these titles are longer. */
+@container statcard (max-width: 76px) {
+  .mpill .stat-label__text--full { display: none; }
+  .mpill .stat-label__text--compact { display: block; }
+}
+@container statcard (max-width: 56px) {
+  .mpill .stat-label__text--compact { display: none; }
+  .mpill .stat-label__text--short { display: block; }
+}
+
+/*
+ * Phones: the shortest forms, whatever the card happens to measure — Total /
+ * Active / Inactive in the current language. Declared last so it wins over the
+ * container ladder above.
+ */
+@media (max-width: 767px) {
+  .mcstat .stat-label__text--full,
+  .mcstat .stat-label__text--compact,
+  .mpill .stat-label__text--full,
+  .mpill .stat-label__text--compact { display: none; }
+  .mcstat .stat-label__text--short,
+  .mpill .stat-label__text--short { display: block; }
+}

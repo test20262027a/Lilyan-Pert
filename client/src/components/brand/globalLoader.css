@@ -1,0 +1,152 @@
+/*
+ * The full-screen loading surface (see GlobalBrandedLoader.jsx).
+ *
+ * This file owns the overlay only — the backdrop, the centring column and the
+ * failure line. The mark itself is `LilyanPertLoader`, the app's one loader
+ * (components/brand/lilyanPertLoader.css), used here at the full size.
+ *
+ * Nothing in the overlay animates size or position: entering and leaving are
+ * one opacity transition on `.gbl`, so the mark can never shrink, jump or
+ * split apart as loading finishes.
+ */
+
+.gbl {
+  position: fixed;
+  inset: 0;
+  /* `inset: 0` on the document's stable scrollbar gutter (see styles.css) keeps
+     this box the same size whether or not the page behind it scrolls, so the
+     mark can never slide sideways during the final fade. */
+  z-index: 99999;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom)
+    env(safe-area-inset-left);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(7px) saturate(112%);
+  -webkit-backdrop-filter: blur(7px) saturate(112%);
+  opacity: 1;
+  transition: opacity 250ms ease;
+  overscroll-behavior: contain;
+}
+
+/* The whole loader leaves as one unit: one opacity transition on the overlay,
+   no per-element animation, then the component removes the node itself. */
+.gbl.is-leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The stage only stacks the mark and, on a failure, its message. */
+.gbl__stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  gap: 14px;
+  isolation: isolate;
+}
+
+/* ------------------------------------------------------------- error state -- */
+
+/* A failure keeps the exact same ring, in the danger hue and still: no second
+   loader design, no size change. */
+.gbl .lpl.is-error .lpl__spin {
+  animation: none;
+  opacity: 0.5;
+}
+
+.gbl .lpl.is-error .lpl__glow {
+  animation: none;
+  opacity: 0.7;
+}
+
+.gbl__mark {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  display: grid;
+  place-items: center;
+  inline-size: 48%;
+  block-size: 48%;
+  /* Above the glass disc, like the logo it replaces. */
+  z-index: 6;
+  border-radius: 30%;
+  color: var(--primary-ink, #ffffff);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, #e05252 62%, #ffffff),
+    color-mix(in srgb, #e05252 88%, #2a1414)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -3px 8px color-mix(in srgb, #e05252 55%, #000000),
+    0 10px 20px -12px color-mix(in srgb, #e05252 70%, transparent);
+}
+
+.gbl__error {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 11px;
+  max-inline-size: min(320px, calc(100vw - 48px));
+  text-align: center;
+}
+
+.gbl__message {
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.4;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: color-mix(in srgb, var(--muted) 78%, var(--text));
+}
+
+.gbl__retry {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 38px;
+  padding-inline: 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--primary) 34%, var(--border-strong));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--primary) 92%, #ffffff),
+    color-mix(in srgb, var(--primary) 88%, #241c14)
+  );
+  color: var(--primary-ink, #ffffff);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 3px 0 color-mix(in srgb, var(--primary) 60%, #241c14),
+    0 10px 18px -12px color-mix(in srgb, var(--primary) 80%, transparent);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.gbl__retry:hover { transform: translateY(-1px); }
+.gbl__retry:active { transform: translateY(1px); }
+.gbl__retry:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 3px var(--theme-focus-ring),
+    0 3px 0 color-mix(in srgb, var(--primary) 60%, #241c14);
+}
+
+/* ------------------------------------------------------- dark mode polish -- */
+
+[data-theme='dark'] .gbl {
+  background: color-mix(in srgb, #0b0f16 88%, transparent);
+}
+
+/* --------------------------------------------------------- reduced motion -- */
+
+@media (prefers-reduced-motion: reduce) {
+  /* No fade: the overlay simply is there and then is not. Geometry is
+     untouched either way. */
+  .gbl { transition: none; }
+  .gbl__retry { transition: none; }
+}

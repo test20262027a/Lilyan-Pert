@@ -1,0 +1,72 @@
+/* ==========================================================================
+   ProductTitle — one line, never truncated, always complete.
+
+   A product's saved name is never shortened, ellipsised or moved onto a second
+   line. The title always renders its FULL text: when the name is wider than the
+   space the card/modal can give it, the type is first reduced down to a still
+   readable minimum, and only a name that cannot fit even then scrolls
+   horizontally inside this element (touch swipe, trackpad, arrow keys).
+
+   Kurdish Sorani (پ چ ڕ ڵ ێ ە گ ڤ) and Arabic-script letters in general paint
+   above and below their em box: dots, small v marks, ascenders and descenders
+   reach past a tight line box. Because this element is the horizontal scroller,
+   `overflow-y` is necessarily hidden — so the line box itself has to be taller
+   than the font's painted height, and real padding-block has to sit inside the
+   clip box. That is what stops the top of "شەربەتی" or the dots under "پ" from
+   being cut off.
+   ========================================================================== */
+
+/*
+ * The Arabic-script voice for product names, self-hosted from /public/fonts and
+ * restricted to the Arabic blocks, so Kurdish/Persian/Arabic names always shape
+ * with the same reliable glyph metrics on every OS — while Latin names keep
+ * falling through to the app's own font (see `var(--font)` below).
+ */
+@font-face {
+  font-family: 'Lilyan Arabic Display';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('/fonts/noto-kufi-arabic-arabic.woff2') format('woff2');
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-0891, U+0897-08E1, U+08E3-08FF, U+200C-200E,
+    U+2010-2011, U+204F, U+2E41, U+FB50-FDFF, U+FE70-FE74, U+FE76-FEFC;
+}
+
+.product-title {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+  text-overflow: clip;
+  /* Open line box + real padding: the painted letterforms always fit inside the
+     clip box, at every size, for every script. */
+  line-height: 1.6;
+  padding-block: 3px 5px;
+  min-height: 1.7em;
+  /* Connected Arabic-script letterforms are never squeezed together. */
+  letter-spacing: normal;
+  font-family: 'Lilyan Arabic Display', var(--font);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.product-title::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+/* A title that still has more text than room gets a focus ring — the cue that
+   it can be read to the end — and its whole name in the native tooltip. */
+.product-title[data-overflow='true'] {
+  cursor: text;
+}
+.product-title[data-overflow='true']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 62%, transparent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

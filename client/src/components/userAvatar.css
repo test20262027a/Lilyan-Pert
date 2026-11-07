@@ -1,0 +1,81 @@
+/* ==========================================================================
+   Shared user avatar — a circular, theme-aware frame used by the user list,
+   the form preview, the account menu and the profile dialog.
+
+   Size comes from the `--uavatar-size` custom property so one class covers
+   32 px header chips and 100 px form previews without duplicated rules.
+   ========================================================================== */
+
+.uavatar {
+  --uavatar-size: 40px;
+  position: relative;
+  flex: none;
+  width: var(--uavatar-size);
+  height: var(--uavatar-size);
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  color: var(--theme-primary-strong);
+  background:
+    radial-gradient(120% 120% at 30% 15%, var(--theme-primary-soft) 0%, transparent 70%),
+    color-mix(in srgb, var(--theme-primary) 12%, var(--surface));
+  border: 1.5px solid var(--theme-primary-line);
+  box-shadow:
+    0 1px 1px color-mix(in srgb, var(--theme-primary) 12%, transparent),
+    0 4px 10px -4px color-mix(in srgb, var(--theme-primary) 34%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.uavatar__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.uavatar__img.is-loaded { opacity: 1; }
+
+/* A soft sheen sits behind the image while it decodes, so the frame never
+   flashes empty white. */
+.uavatar[data-loading='true']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--theme-primary) 14%, transparent) 45%,
+    transparent 70%
+  );
+  animation: uavatar-sheen 1.1s ease-in-out infinite;
+}
+@keyframes uavatar-sheen {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+
+.uavatar__glyph { position: relative; z-index: 1; }
+
+/* The feminine silhouette carries a touch more warmth, the masculine one a
+   slightly cooler tint — both derived from the same theme hue, never fixed
+   colours, so all five themes stay consistent. */
+.uavatar--female {
+  background:
+    radial-gradient(120% 120% at 30% 15%, color-mix(in srgb, var(--theme-primary) 22%, #ffffff) 0%, transparent 72%),
+    color-mix(in srgb, var(--theme-primary) 14%, var(--surface));
+  color: color-mix(in srgb, var(--theme-primary-strong) 88%, #b23a7a);
+}
+.uavatar--male {
+  background:
+    radial-gradient(120% 120% at 30% 15%, color-mix(in srgb, var(--theme-primary) 18%, #ffffff) 0%, transparent 72%),
+    color-mix(in srgb, var(--theme-primary) 12%, var(--surface));
+  color: color-mix(in srgb, var(--theme-primary-strong) 88%, #2f6f9e);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .uavatar[data-loading='true']::after { animation: none; }
+}

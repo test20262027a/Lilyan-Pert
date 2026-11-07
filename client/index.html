@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en" dir="ltr" data-theme="light" data-boot="pending">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#F4F7F6" />
+    <!--
+      INSTALLED APP IDENTITY.
+
+      The manifest is what makes a Home Screen install a real application
+      window instead of a browser shortcut: `display: "standalone"`, `/` as both
+      start URL and scope, and the 192/512 icons Android requires. Without it an
+      Android install opens as a tab with a visible URL bar, which is the issue
+      this link fixes. The theme colour here matches the first-paint meta above;
+      the app then re-tints that meta from the business theme, so a standalone
+      status bar follows the restaurant's own accent.
+    -->
+    <!--
+      The manifest is served by the API rather than from a static file: it is
+      built from the icon set the administrator's logo produced, so the icon
+      Chrome shows on the Home Screen, in the install dialog and on the splash is
+      the business's own mark. `start_url`, `scope` and `display` inside it are
+      relative, so the same manifest is correct at the preview host and at the
+      published origin. The static /manifest.webmanifest remains as the bundled
+      fallback the API quotes until a logo has produced an icon set.
+    -->
+    <link rel="manifest" href="/api/public/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="application-name" content="Lilyan Pert" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Lilyan Pert" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!--
+      THEME BEFORE FIRST PAINT.
+
+      The saved appearance is mirrored to localStorage by client/src/theme.js
+      every time the app applies a business theme. This script is inline and
+      synchronous, so it runs before the browser paints the splash *and* before
+      any module of the app is evaluated: the very first frame already carries
+      the business's own light/dark mode, accent colour and accent ink. That is
+      what removes the flash of the default (or the previous) theme — the app is
+      never painted in one appearance and repainted in another.
+
+      With no usable cache the flag stays `pending` and the splash below paints
+      a deliberately neutral surface with a grey ring, instead of guessing a
+      preset hue and switching it later.
+    -->
+    <script>
+      (function () {
+        var root = document.documentElement;
+        /* Android is the only platform where the page itself can paint the
+           bottom navigation-bar area (see #system-bar-bottom below): Android
+           reserves it with env(safe-area-inset-bottom) and draws the system
+           navigation bar over the page in edge-to-edge. On iOS the same inset is
+           the home indicator, which is left to the page surface as before. */
+        if (/Android/i.test(navigator.userAgent)) root.dataset.android = 'true';
+        try {
+          var raw = window.localStorage.getItem('lilyan.theme.v1');
+          if (!raw) return;
+          var theme = JSON.parse(raw);
+          if (!theme || !theme.mode || !theme.primary) return;
+          root.dataset.theme = theme.mode === 'dark' ? 'dark' : 'light';
+          root.style.setProperty('--primary', theme.primary);
+          if (theme.ink) root.style.setProperty('--primary-ink', theme.ink);
+          root.dataset.boot = 'cached';
+          /* The appearance is now known — see theme.js. The mark only takes a
+             colour while this is present, in this first paint and in React. */
+          root.dataset.themeSource = 'cached';
+          /* The cached system-bar colour, already varied for the saved
+             light/dark mode, so a cold start never flashes the wrong tint.
+             The SAME value is published to the top bar (the meta) and to the
+             bottom strip (--system-bar) right here, before any module runs. */
+          var bar = theme.bar || theme.primary;
+          var meta = document.querySelector('meta[name="theme-color"]');
+          if (meta) meta.setAttribute('content', bar);
+          root.style.setProperty('--system-bar', bar);
+        } catch (e) {}
+      })();
+    </script>
+    <!--
+      The tab icon and title are managed by the app (client/src/favicon.js and
+      client/src/metadata.js): the icon is drawn from the business logo saved in
+      Business Profile, and the title names the current section and business in
+      the reader's language. This bare brand name is only what the browser shows
+      for the instant before that runs — never a section that may not apply.
+    -->
+    <title>Lilyan Pert</title>
+    <!--
+      The first frame, before any module has run: the same branded loader the
+      app then takes over (components/brand/GlobalBrandedLoader.jsx), built from
+      plain CSS the browser can paint immediately. It draws the business logo
+      remembered from the last visit, inside the ring (one square stage, one
+      shared centre — never beside it), in the theme the script above just
+      applied. The React loader removes it on its first paint: no reload, no
+      duplicate overlay.
+    -->
+    <style>
+      #boot-splash {
+        /* Neutral by default; the accent only becomes a business colour when
+           the cached theme above was actually applied. */
+        --boot-accent: #98a1b3;
+        /* The three tones of the one accent: LIGHT → MEDIUM → DEEP. */
+        --boot-light: color-mix(in oklab, var(--boot-accent) 38%, #ffffff);
+        --boot-mid: var(--boot-accent);
+        --boot-deep: color-mix(in oklab, var(--boot-accent) 66%, #14120f);
+        --boot-surface: #f4f7f6;
+        --boot-ink: #6b7488;
+        position: fixed;
+        inset: 0;
+        z-index: 240;
+        display: grid;
+        place-items: center;
+        background: var(--boot-surface);
+        font-family: 'Segoe UI', Tahoma, system-ui, sans-serif;
+      }
+      html[data-theme-source] #boot-splash {
+        --boot-accent: var(--primary, #98a1b3);
+        --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 70%, #4b5364);
+      }
+      /* No known appearance yet: no coloured ring, only the neutral glass. */
+      html:not([data-theme-source]) #boot-splash .bs-spin,
+      html:not([data-theme-source]) #boot-splash .bs-glow { opacity: 0; }
+      html[data-theme='dark'] #boot-splash {
+        --boot-surface: #0b0f16;
+        --boot-ink: color-mix(in srgb, var(--primary, #98a1b3) 60%, #aab3c4);
+      }
+      /*
+       * The Mark — the exact geometry of `components/brand/LilyanPertLoader`
+       * (components/brand/lilyanPertLoader.css), repeated here so it paints on
+       * the very first frame without waiting for a stylesheet request. Keep the
+       * two in step: one 160x160 box, the band of the ring along its edge, the
+       * theme's own arc turning inside it, ONE static overhead light over the
+       * band, and a clear glass disc with the logo at 48% of the box.
+       */
+      #boot-splash .bs-stage {
+        --bs-size: 160px;
+        --bs-ring: 10px;
+        --bs-hair: 2.1px;
+        --bs-band: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) - 0.6px),
+          #000 calc(100% - var(--bs-ring) + 0.4px),
+          #000 calc(100% - 0.5px),
+          transparent 100%
+        );
+        --bs-hairline: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-hair) - 0.6px),
+          #000 calc(100% - var(--bs-hair) + 0.4px),
+          #000 calc(100% - 0.6px),
+          transparent 100%
+        );
+        position: relative;
+        inline-size: var(--bs-size);
+        block-size: var(--bs-size);
+        display: grid;
+        place-items: center;
+        isolation: isolate;
+      }
+      #boot-splash .bs-glow {
+        position: absolute;
+        inset: 3%;
+        margin: auto;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 50% 52%,
+          color-mix(in oklab, var(--boot-mid) 20%, transparent),
+          color-mix(in oklab, var(--boot-mid) 7%, transparent) 58%,
+          transparent 78%
+        );
+        opacity: 0.9;
+      }
+      #boot-splash .bs-track {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        border: var(--bs-ring) solid color-mix(in oklab, var(--boot-mid) 13%, transparent);
+      }
+      /* The light never moves, even though the arc under it does: white where
+         the band faces up, nothing through the middle, the deep tone where it
+         turns away at the bottom. This is the whole 3D read of the ring. */
+      #boot-splash .bs-shade {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.34) 0%,
+          rgba(255, 255, 255, 0.12) 20%,
+          rgba(255, 255, 255, 0) 46%,
+          color-mix(in oklab, var(--boot-deep) 12%, transparent) 70%,
+          color-mix(in oklab, var(--boot-deep) 34%, transparent) 100%
+        );
+        -webkit-mask: var(--bs-band);
+        mask: var(--bs-band);
+      }
+      /* The hairline catching the top outer edge. */
+      #boot-splash .bs-rim {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.72) 0%,
+          rgba(255, 255, 255, 0.26) 26%,
+          rgba(255, 255, 255, 0) 48%
+        );
+        -webkit-mask: var(--bs-hairline);
+        mask: var(--bs-hairline);
+      }
+      /* The CLEAR glass disc the logo sits on — barely-there milky tint, one
+         fine reflection, a thin lit rim and the faintest inner shade, so it
+         reads as polished glass rather than a white button. The same disc the
+         React mark draws, so the handover never changes the picture. */
+      #boot-splash .bs-glass {
+        position: absolute;
+        inset: 18%;
+        margin: auto;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at 32% 22%,
+          rgba(255, 255, 255, 0.17),
+          rgba(255, 255, 255, 0.04) 56%,
+          rgba(255, 255, 255, 0.012)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.3),
+          inset 0 -1px 3px rgba(0, 0, 0, 0.04),
+          0 5px 16px rgba(0, 0, 0, 0.06);
+        -webkit-backdrop-filter: blur(3px);
+        backdrop-filter: blur(3px);
+      }
+      #boot-splash .bs-glass::after {
+        content: '';
+        position: absolute;
+        inset: 9% 15% 56% 13%;
+        border-radius: 50%;
+        background: radial-gradient(
+          72% 100% at 46% 0%,
+          rgba(255, 255, 255, 0.42),
+          rgba(255, 255, 255, 0) 76%
+        );
+        opacity: 0.7;
+      }
+      html[data-theme='dark'] #boot-splash .bs-glass {
+        background: radial-gradient(
+          circle at 32% 22%,
+          rgba(255, 255, 255, 0.14),
+          rgba(255, 255, 255, 0.035) 58%,
+          rgba(255, 255, 255, 0.012)
+        );
+        border-color: rgba(255, 255, 255, 0.18);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.22),
+          inset 0 -1px 3px rgba(0, 0, 0, 0.12),
+          0 6px 16px rgba(0, 0, 0, 0.3);
+      }
+      html[data-theme='dark'] #boot-splash .bs-glass::after { opacity: 0.5; }
+      html[data-theme='dark'] #boot-splash .bs-shade {
+        background: linear-gradient(
+          to bottom,
+          rgba(255, 255, 255, 0.26) 0%,
+          rgba(255, 255, 255, 0.08) 20%,
+          rgba(255, 255, 255, 0) 46%,
+          color-mix(in oklab, var(--boot-deep) 14%, transparent) 70%,
+          color-mix(in oklab, var(--boot-deep) 40%, transparent) 100%
+        );
+      }
+      #boot-splash .bs-spin {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        border-radius: 50%;
+        transform-origin: 50% 50%;
+        transform: translateZ(0) rotate(0deg);
+        animation: bs-spin 1.35s linear infinite;
+      }
+      #boot-splash .bs-arc,
+      #boot-splash .bs-glint {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+      }
+      /* One hue in three tones: light at the tail, the accent itself through
+         the middle, the deep tone at the head, and a small white glint. */
+      #boot-splash .bs-arc {
+        background: conic-gradient(
+          from 0deg,
+          transparent 0deg,
+          color-mix(in oklab, var(--boot-light) 52%, transparent) 24deg,
+          var(--boot-light) 88deg,
+          color-mix(in oklab, var(--boot-mid) 92%, transparent) 162deg,
+          var(--boot-mid) 208deg,
+          color-mix(in oklab, var(--boot-deep) 96%, transparent) 280deg,
+          var(--boot-deep) 318deg,
+          color-mix(in oklab, var(--boot-deep) 58%, #ffffff) 346deg,
+          rgba(255, 255, 255, 0.42) 356deg,
+          transparent 360deg
+        );
+        -webkit-mask: var(--bs-band);
+        mask: var(--bs-band);
+      }
+      #boot-splash .bs-glint {
+        background: conic-gradient(
+          from 0deg,
+          transparent 246deg,
+          rgba(255, 255, 255, 0.28) 318deg,
+          rgba(255, 255, 255, 0.62) 352deg,
+          transparent 360deg
+        );
+        -webkit-mask: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) * 1.06),
+          #000 calc(100% - var(--bs-ring) * 0.66),
+          transparent calc(100% - 1px)
+        );
+        mask: radial-gradient(
+          circle closest-side,
+          transparent calc(100% - var(--bs-ring) * 1.06),
+          #000 calc(100% - var(--bs-ring) * 0.66),
+          transparent calc(100% - 1px)
+        );
+        opacity: 0.6;
+      }
+      /* The logo never moves: same size, same place, from the first frame until
+         the React loader takes over. */
+      #boot-splash img {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        inline-size: 48%;
+        block-size: 48%;
+        object-fit: contain;
+        z-index: 3;
+        filter: drop-shadow(0 2px 5px rgba(10, 16, 24, 0.14));
+      }
+      @keyframes bs-spin { to { transform: rotate(360deg); } }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-splash .bs-spin { animation: none; }
+      }
+      /*
+       * THE BOTTOM SYSTEM BAR.
+       *
+       * Android lets the page draw under the bottom navigation bar in
+       * edge-to-edge, and reserves exactly that space for it. This strip paints
+       * only that reserved space — never content — with `--system-bar`, the same
+       * single colour the theme publishes for the top bar. It therefore follows
+       * a theme change in the same frame as the status bar, and carries the
+       * saved theme on the very first paint.
+       *
+       * Where Android reserves nothing (a desktop browser, a tab without
+       * edge-to-edge, iOS) the inset is 0, the strip has no height and nothing
+       * is drawn. The system navigation bar of an installed app whose colour is
+       * baked by Android at install time is not page-controllable; that limit is
+       * documented in client/src/theme.js.
+       */
+      #system-bar-bottom {
+        display: none;
+        position: fixed;
+        inset-inline: 0;
+        inset-block-end: 0;
+        block-size: env(safe-area-inset-bottom, 0px);
+        background: var(--system-bar, transparent);
+        pointer-events: none;
+        z-index: 2147483000;
+      }
+      html[data-android='true'] #system-bar-bottom { display: block; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <div id="print-root"></div>
+    <!-- The bottom system-bar strip: paints only the space Android reserves for
+         the navigation bar, in the live theme colour (see the style above). -->
+    <div id="system-bar-bottom" aria-hidden="true"></div>
+    <!-- Marked aria-hidden: the accessible loading announcement belongs to the
+         React loader (role="status"), never to this first paint. -->
+    <div id="boot-splash" aria-hidden="true">
+      <span class="bs-stage">
+        <span class="bs-glow"></span>
+        <span class="bs-track"></span>
+        <span class="bs-spin"><span class="bs-arc"></span><span class="bs-glint"></span></span>
+        <span class="bs-shade"></span>
+        <span class="bs-rim"></span>
+        <span class="bs-glass"></span>
+        <img
+        id="bs-logo"
+        alt=""
+        decoding="async"
+        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Ccircle cx='44' cy='44' r='26' fill='%2398a1b3' fill-opacity='0.16'/%3E%3Ccircle cx='44' cy='44' r='14' fill='%2398a1b3' fill-opacity='0.12'/%3E%3C/svg%3E"
+      />
+      </span>
+    </div>
+    <script>
+      /* The logo the business saved last time, so the first frame is the brand
+         and not a placeholder (see client/src/brandLogo.js for the shape of
+         this record). Empty or blocked storage keeps the neutral disc above —
+         never the application's own icon in place of the business mark. */
+      try {
+        var rawLogo = localStorage.getItem('lilyan.brand.logo.v1');
+        var savedLogo = rawLogo && rawLogo.charAt(0) === '{' ? JSON.parse(rawLogo) : { url: rawLogo };
+        var logoUrl = savedLogo && savedLogo.url;
+        if (typeof logoUrl === 'string' && /^(\/|https?:)/.test(logoUrl)) {
+          document.getElementById('bs-logo').src = logoUrl;
+        }
+      } catch (e) {}
+    </script>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

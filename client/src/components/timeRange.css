@@ -1,0 +1,28 @@
+/*
+ * One trading range — opening time, separator, closing time — as three separate
+ * elements in a single flex row.
+ *
+ * The row's `direction` is the language's, so `flex-direction: row` puts the
+ * opening time on the right in RTL and on the left in LTR without any DOM swap.
+ * Each time is an isolated LTR island, so `10:00` is never mirrored or reversed
+ * wherever the row sits, and the 24-hour value is printed exactly as saved.
+ */
+.time-range {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-range[dir='rtl'] { direction: rtl; }
+.time-range[dir='ltr'] { direction: ltr; }
+
+.time-range__time {
+  direction: ltr;
+  unicode-bidi: isolate;
+  white-space: nowrap;
+}
+
+.time-range__sep { flex: none; opacity: 0.6; }

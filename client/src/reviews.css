@@ -1,0 +1,535 @@
+/* ==========================================================================
+   Reviews & Feedback — illustrated banner, ratings overview, stacked review
+   cards.
+
+   Layout only: the palette lives in local tokens on .reviews-page so the
+   app-wide light/dark theme keeps working. Semantic colours (rating green, the
+   delete red, the golden stars) stay fixed on purpose: a custom primary accent
+   never repaints a rating or a destructive action.
+   ========================================================================== */
+
+.reviews-page {
+  --rv-surface: #ffffff;
+  --rv-mint: var(--theme-primary-soft);
+  --rv-cream: var(--theme-primary-soft);
+  --rv-green: var(--theme-primary);
+  --rv-green-deep: var(--theme-primary-strong);
+  --rv-star: var(--theme-primary);
+  --rv-gold: #f6b92b;
+  --rv-ink: #252525;
+  --rv-text: #46494a;
+  --rv-muted: #8b8e89;
+  --rv-line: #e9eee9;
+  --rv-track: #f1f2f0;
+  --rv-red: #ef4444;
+  --rv-red-soft: #fdeeee;
+
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+[data-theme='dark'] .reviews-page {
+  --rv-surface: var(--surface);
+  --rv-mint: color-mix(in srgb, var(--theme-primary) 12%, transparent);
+  --rv-cream: rgba(246, 185, 43, 0.14);
+  --rv-green: var(--theme-primary);
+  --rv-green-deep: var(--theme-primary-strong);
+  --rv-star: var(--theme-primary);
+  --rv-ink: var(--text);
+  --rv-text: var(--text-soft);
+  --rv-muted: var(--muted);
+  --rv-line: var(--border);
+  --rv-track: var(--surface-3);
+  --rv-red: #f27b7b;
+  --rv-red-soft: rgba(239, 68, 68, 0.14);
+}
+
+/* ------------------------------------------------------------- the banner */
+
+.reviews-page .mhero {
+  min-height: 167px;
+  padding: 20px 22px;
+}
+
+
+.reviews-page .rart {
+  width: 100%;
+  max-width: 620px;
+  max-height: 138px;
+  height: auto;
+  display: block;
+}
+
+/* -------------------------------------------------------- ratings overview */
+
+.rv-overview {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  min-height: 146px;
+  padding: 18px 24px;
+  background: linear-gradient(180deg, #ffffff, #fdfefc);
+  border: 1px solid var(--rv-line);
+  border-radius: 18px;
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 1px 2px rgba(37, 37, 37, 0.04),
+    0 16px 30px -26px rgba(37, 37, 37, 0.55);
+}
+
+[data-theme='dark'] .rv-overview {
+  background: linear-gradient(180deg, var(--rv-surface), var(--rv-surface));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.36);
+}
+
+.rv-summary {
+  flex: 0 0 auto;
+  width: 176px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding-inline-end: 24px;
+  border-inline-end: 1px solid var(--rv-line);
+}
+
+.rv-summary__value {
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--rv-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-summary__count {
+  font-size: 12.5px;
+  color: var(--rv-muted);
+}
+
+/* --------------------------------------------------------------- the stars */
+
+.rv-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--rv-star);
+}
+
+.rv-stars__slot {
+  position: relative;
+  display: inline-block;
+  flex: none;
+}
+
+.rv-stars__base,
+.rv-stars__fill {
+  display: block;
+  color: inherit;
+}
+.rv-stars__base {
+  color: #d7ded8;
+}
+[data-theme='dark'] .rv-stars__base {
+  color: rgba(255, 255, 255, 0.18);
+}
+.rv-stars .icon {
+  display: block;
+  fill: currentColor;
+  stroke: currentColor;
+  stroke-width: 1;
+}
+
+.rv-stars__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  overflow: hidden;
+}
+
+/* -------------------------------------------------------- rating bars */
+
+.rv-dist {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.rv-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.rv-row__label {
+  flex: none;
+  width: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--rv-ink);
+  font-variant-numeric: tabular-nums;
+}
+.rv-row__label .icon {
+  color: var(--rv-star);
+  fill: currentColor;
+  stroke: none;
+}
+
+.rv-row__track {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--rv-track);
+  overflow: hidden;
+  display: block;
+}
+
+.rv-row__fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--theme-primary), var(--theme-primary));
+  transition: width 0.45s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+[data-theme='dark'] .rv-row__fill {
+  background: linear-gradient(90deg, var(--theme-primary), var(--theme-primary));
+}
+
+.rv-row__count {
+  flex: none;
+  min-width: 22px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--rv-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ review cards */
+
+.rv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  min-width: 0;
+}
+
+.rv-card {
+  background: var(--rv-surface);
+  border: 1px solid var(--rv-line);
+  border-radius: 16px;
+  padding: 15px 18px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(37, 37, 37, 0.035),
+    0 10px 22px -22px rgba(37, 37, 37, 0.55);
+  transition: box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.rv-card:hover {
+  border-color: color-mix(in srgb, var(--rv-green) 20%, var(--rv-line));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(37, 37, 37, 0.04),
+    0 16px 30px -24px rgba(37, 37, 37, 0.6);
+}
+
+[data-theme='dark'] .rv-card {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.36);
+}
+
+.rv-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rv-card__who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.rv-card__name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rv-ink);
+  overflow-wrap: anywhere;
+}
+
+.rv-card__status {
+  flex: none;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.6;
+}
+.rv-card__status.is-pending {
+  background: var(--rv-cream);
+  border: 1px solid #f2e1b8;
+  color: #a9761d;
+}
+.rv-card__status.is-rejected {
+  background: var(--rv-red-soft);
+  border: 1px solid color-mix(in srgb, var(--rv-red) 28%, transparent);
+  color: #c03a35;
+}
+[data-theme='dark'] .rv-card__status.is-pending { color: #e6c37e; border-color: rgba(246, 185, 43, 0.3); }
+[data-theme='dark'] .rv-card__status.is-rejected { color: #f0a3a3; }
+
+.rv-card__aside {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rv-card__date {
+  font-size: 11.5px;
+  color: var(--rv-muted);
+  white-space: nowrap;
+}
+
+.rv-card__del {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--rv-red);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.rv-card__del:hover {
+  background: var(--rv-red-soft);
+  border-color: color-mix(in srgb, var(--rv-red) 26%, transparent);
+}
+.rv-card__del:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--rv-red) 45%, transparent);
+  outline-offset: 1px;
+}
+.rv-card__del:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rv-card__stars {
+  margin-top: 6px;
+}
+
+.rv-card__text {
+  margin-top: 9px;
+  font-size: 13.5px;
+  line-height: 1.85;
+  color: var(--rv-text);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+/* moderation actions, only on a review that still needs a decision */
+.rv-card__mods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.rv-mod {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 30px;
+  padding: 4px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--rv-line);
+  background: var(--rv-surface);
+  color: var(--rv-muted);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+.rv-mod:hover {
+  color: var(--rv-ink);
+  border-color: color-mix(in srgb, var(--rv-green) 32%, var(--rv-line));
+}
+.rv-mod--ok {
+  background: var(--rv-mint);
+  border-color: color-mix(in srgb, var(--rv-green) 30%, var(--rv-line));
+  color: var(--rv-green-deep);
+}
+.rv-mod:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* --------------------------------------------------------------- load more */
+
+.rv-more {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 8px 22px;
+  border-radius: 999px;
+  border: 1px solid var(--rv-line);
+  background: var(--rv-surface);
+  color: var(--rv-green-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+.rv-more:hover {
+  background: var(--rv-mint);
+  border-color: color-mix(in srgb, var(--rv-green) 30%, var(--rv-line));
+}
+.rv-more:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* --------------------------------------------------------------- skeletons */
+
+.rv-skel {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.rv-skel--summary {
+  flex: 0 0 auto;
+  width: 176px;
+  align-items: center;
+  padding-inline-end: 24px;
+  border-inline-end: 1px solid var(--rv-line);
+}
+.rv-skel--rows {
+  flex: 1 1 auto;
+  gap: 8px;
+}
+
+.rv-card--skeleton {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.rv-card--skeleton:hover {
+  border-color: var(--rv-line);
+}
+
+.rv-skel__line {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f1f3f1 25%, #fafbfa 37%, #f1f3f1 63%);
+  background-size: 400% 100%;
+  animation: rv-shimmer 1.5s ease infinite;
+}
+[data-theme='dark'] .rv-skel__line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.11) 37%,
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+}
+
+@keyframes rv-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ---------------------------------------------------------- responsive */
+
+@media (max-width: 1180px) {
+  .rv-row__label { width: 32px; }
+  .rv-summary { width: 156px; padding-inline-end: 20px; }
+}
+
+@media (max-width: 900px) {
+  .reviews-page .mhero {
+    flex-wrap: wrap;
+    row-gap: 12px;
+  }
+  .reviews-page .mhero__identity { flex: 1 1 auto; }
+  .reviews-page .mhero__art {
+    order: 2;
+    flex-basis: 100%;
+    padding-inline: 0;
+  }
+  .reviews-page .rart { max-height: 112px; }
+
+  .rv-overview {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+    padding: 16px 18px;
+  }
+  .rv-summary,
+  .rv-skel--summary {
+    width: auto;
+    padding-inline-end: 0;
+    padding-bottom: 14px;
+    border-inline-end: none;
+    border-bottom: 1px solid var(--rv-line);
+  }
+}
+
+@media (max-width: 560px) {
+  .reviews-page { gap: 12px; }
+  .reviews-page .mhero {
+    min-height: 0;
+    padding: 14px;
+    border-radius: 18px;
+  }
+  .reviews-page .mhero__title { white-space: normal; }
+  .reviews-page .rart { max-height: 92px; }
+
+  .rv-overview {
+    min-height: 0;
+    padding: 14px;
+    border-radius: 16px;
+  }
+  .rv-summary__value { font-size: 34px; }
+  .rv-row { gap: 8px; }
+  .rv-row__label { width: 28px; font-size: 12px; }
+  .rv-row__count { min-width: 18px; font-size: 12px; }
+
+  .rv-card { padding: 13px 14px; border-radius: 15px; }
+  .rv-card__head { flex-wrap: wrap; row-gap: 6px; }
+  .rv-card__date { font-size: 11px; }
+  .rv-card__text { font-size: 13px; line-height: 1.8; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv-card,
+  .rv-card__del,
+  .rv-mod,
+  .rv-more,
+  .rv-row__fill {
+    transition: none;
+  }
+  .rv-skel__line { animation: none; }
+}
