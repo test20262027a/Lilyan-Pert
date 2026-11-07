@@ -28,7 +28,7 @@ const STATE = {
   no_schedule: { label: 'customer_hours_unset', tone: 'is-closed' },
 };
 
-export default function CustomerHours({ hours, timeZone, status }) {
+export default function CustomerHours({ hours, timeZone, status, showStatus = true }) {
   const { t, locale } = useI18n();
   if (!hours || !hours.now) return null;
 
@@ -49,10 +49,14 @@ export default function CustomerHours({ hours, timeZone, status }) {
         tone="mint"
         title={t('dash_working_hours')}
       >
-        <span className={`cui-state ${view.tone}`}>
-          <i aria-hidden="true" />
-          {t(view.label)}
-        </span>
+        {/* The open/closed verdict is its own setting; switched off, the card
+            still shows today's saved hours without stating the state. */}
+        {showStatus ? (
+          <span className={`cui-state ${view.tone}`}>
+            <i aria-hidden="true" />
+            {t(view.label)}
+          </span>
+        ) : null}
       </CustomerSectionHead>
 
       <div className="cui-hours__body">

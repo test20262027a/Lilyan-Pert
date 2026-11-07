@@ -508,7 +508,17 @@ router.get(
         };
       })(),
       tables,
-      categories: cats.rows,
+      /*
+       * Each category carries the number of products a guest can actually see
+       * in it: the count is taken from the very rows above, which the query has
+       * already narrowed to active products in active categories. An inactive
+       * category is never in this list, so it can never show a count, and a
+       * hidden product is never counted.
+       */
+      categories: cats.rows.map((row) => ({
+        ...row,
+        product_count: products.reduce((n, p) => (p.category_id === row.id ? n + 1 : n), 0),
+      })),
       products,
       /* The advertisement module is untouched; its banners are simply withheld
          from a context where the owner turned them off. */
@@ -607,6 +617,12 @@ router.post(
   ah(async (req, res) => {
     const business = await loadBusiness(req.params.key);
     if (business.menu_settings?.show_customer_menu === false) throw bad('MENU_DISABLED');
+    const quoteMenu = menuContext(
+      normalizeMenuSettings(business.menu_settings),
+      menuContextFor(req.body?.context, req.body?.table_token),
+    );
+    // No price may be previewed for a context that hides prices.
+    if (!quoteMenu.prices_visible) throw bad('PRICES_HIDDEN');
     const items = Array.isArray(req.body?.items) ? req.body.items : [];
     if (!items.length) throw bad('EMPTY_ORDER');
     if (items.length > 60) throw bad('TOO_MANY_ITEMS');
@@ -662,6 +678,9 @@ router.post(
     // carrying a scanned table token is a QR order, everything else is the main
     // ordering menu.
     const menu = menuContext(settings, menuContextFor(req.body?.context, req.body?.table_token));
+    // Prices hidden means the guest never saw an amount to agree to — the same
+    // rule the menu UI follows, enforced here so it cannot be bypassed.
+    if (!menu.prices_visible) throw bad('PRICES_HIDDEN');
     if (!menu.can_order) throw bad('ORDERING_DISABLED');
 
     const items = Array.isArray(req.body?.items) ? req.body.items : [];

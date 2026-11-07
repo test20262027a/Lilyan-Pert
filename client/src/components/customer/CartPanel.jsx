@@ -31,6 +31,9 @@ export default function CartPanel({
   language = 'ku',
   /* At least one line has no price in the active language: checkout is blocked. */
   hasUnavailable = false,
+  /* The owner hides product prices: the saved cart stays, but nothing may be
+     added and nothing may be ordered until prices are visible again. */
+  pricesHidden = false,
   busy,
   canCheckout,
   canOrder,
@@ -297,7 +300,7 @@ export default function CartPanel({
                         className="cui-line__name"
                         name={localized(line.product, 'name', locale) || t('customer_menu_name_unavailable')}
                       />
-                      {line.valid === false ? (
+                      {pricesHidden ? null : line.valid === false ? (
                         <small className="cui-line__off">{t('customer_menu_price_unavailable')}</small>
                       ) : (
                         <small>
@@ -325,6 +328,7 @@ export default function CartPanel({
                         onClick={() => onQty(line.product, line.qty + 1)}
                         aria-label={t('customer_cart_increase')}
                         title={t('customer_cart_increase')}
+                        disabled={pricesHidden}
                       >
                         <Icon name="plus" size={14} />
                       </button>
@@ -455,7 +459,7 @@ export default function CartPanel({
               ) : (
                 <p className="cui-note">
                   <Icon name="info" size={14} />
-                  {t('customer_checkout_disabled')}
+                  {pricesHidden ? t('customer_prices_hidden') : t('customer_checkout_disabled')}
                 </p>
               )}
 
@@ -493,6 +497,7 @@ export default function CartPanel({
                 </p>
               ) : null}
 
+              {pricesHidden ? null : (
               <div className="cui-totals">
                 <div className="cui-totals__row">
                   <span>{t('order_subtotal')}</span>
@@ -523,6 +528,7 @@ export default function CartPanel({
                   <Money value={total} currency={currency} />
                 </div>
               </div>
+              )}
             </div>
 
             {canOrder ? (

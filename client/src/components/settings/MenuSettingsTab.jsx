@@ -1,19 +1,22 @@
 import { useI18n } from '../../i18n';
 import { SettingsCard } from './SettingsCard';
+import MenuFeatureCards from './menu/MenuFeatureCards';
 import MenuFeatureMatrix from './menu/MenuFeatureMatrix';
 import TableModeCards from './menu/TableModeCards';
 import LanguageManagementCard from './menu/LanguageManagementCard';
 import { normalizeMenuSettings } from './menu/menuSettingsModel';
 
 /*
- * Menu Settings — the three cards of the reference: general menu features, the
+ * Menu Settings — language management, the twelve general menu features, the
  * ordering & cart capabilities, and table identification.
  *
  * The tab edits the shared settings draft only; nothing is written until the
  * workspace's single Save runs, so switching tabs or languages never loses a
- * choice, and all 23 values persist through the existing business endpoint.
- * Every switch is independent: turning a feature off for the main menu never
- * changes the customer QR menu.
+ * choice, and every value persists through the existing business endpoint.
+ *
+ * The feature list is intentionally fixed — the owner's exact order, never
+ * sorted or regrouped — and every row is one switch writing both menus, so the
+ * customer panel and the QR menu can never disagree.
  */
 export default function MenuSettingsTab({ draft, patch, canManage }) {
   const { t } = useI18n();
@@ -28,48 +31,38 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
       },
     });
 
+  /* One customer-menu setting: the same verdict for the main ordering menu and
+     the QR table menu, never a shared toggle between two different features. */
+  const setFeature = (key, next) => {
+    const current = menu.features[key] || {};
+    patch('menu_settings', {
+      features: {
+        ...menu.features,
+        [key]: { ...current, main: next, qr: next },
+      },
+    });
+  };
+
   const featureRows = [
-    {
-      key: 'search',
-      title: t('menu_feat_search'),
-      hint: t('menu_feat_search_hint'),
-    },
-    {
-      key: 'categories',
-      title: t('menu_feat_categories'),
-      hint: t('menu_feat_categories_hint'),
-    },
-    {
-      key: 'ads',
-      title: t('menu_feat_ads'),
-      hint: t('menu_feat_ads_hint'),
-    },
-    {
-      key: 'featured',
-      title: t('menu_feat_featured'),
-      hint: t('menu_feat_featured_hint'),
-    },
+    { key: 'search', icon: 'search', tone: '#4f7cf7', title: t('menu_feat_search'), hint: t('menu_feat_search_hint') },
+    { key: 'status', icon: 'store', tone: '#12a67a', title: t('menu_feat_status'), hint: t('menu_feat_status_hint') },
+    { key: 'hours', icon: 'clock', tone: '#1e9ecb', title: t('menu_feat_hours'), hint: t('menu_feat_hours_hint') },
+    { key: 'ads', icon: 'megaphone', tone: '#e8557a', title: t('menu_feat_ads'), hint: t('menu_feat_ads_hint') },
+    { key: 'featured', icon: 'star', tone: '#b45ef0', title: t('menu_feat_featured'), hint: t('menu_feat_featured_hint') },
     {
       key: 'best_selling',
+      icon: 'trophy',
+      tone: '#e0a92b',
       title: t('menu_feat_best'),
       hint: t('menu_feat_best_hint'),
       note: bestSellingEnabled ? null : t('menu_best_disabled_note'),
     },
-    {
-      key: 'social',
-      title: t('menu_feat_social'),
-      hint: t('menu_feat_social_hint'),
-    },
-    {
-      key: 'prices',
-      title: t('menu_feat_prices'),
-      hint: t('menu_feat_prices_hint'),
-    },
-    {
-      key: 'details',
-      title: t('menu_feat_details'),
-      hint: t('menu_feat_details_hint'),
-    },
+    { key: 'categories', icon: 'grid', tone: '#6c63ff', title: t('menu_feat_categories'), hint: t('menu_feat_categories_hint') },
+    { key: 'product_count', icon: 'layers', tone: '#0e9da4', title: t('menu_feat_count'), hint: t('menu_feat_count_hint') },
+    { key: 'prices', icon: 'tag', tone: '#c2410c', title: t('menu_feat_prices'), hint: t('menu_feat_prices_hint') },
+    { key: 'details', icon: 'eye', tone: '#7c5cd6', title: t('menu_feat_details'), hint: t('menu_feat_details_hint') },
+    { key: 'about', icon: 'book', tone: '#b8722e', title: t('menu_feat_about'), hint: t('menu_feat_about_hint') },
+    { key: 'social', icon: 'share', tone: '#e0559b', title: t('menu_feat_social'), hint: t('menu_feat_social_hint') },
   ];
 
   const orderRows = [
@@ -98,11 +91,11 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
         title={t('menu_features_title')}
         subtitle={t('menu_features_subtitle')}
       >
-        <MenuFeatureMatrix
+        <MenuFeatureCards
           rows={featureRows}
           value={menu.features}
           disabled={!canManage}
-          onChange={(key, side, next) => setSwitch('features', key, side, next)}
+          onChange={setFeature}
         />
       </SettingsCard>
 

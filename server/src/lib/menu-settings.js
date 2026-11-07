@@ -1,7 +1,7 @@
 /*
  * Canonical shape of `businesses.menu_settings`.
  *
- * The Menu Settings screen stores 23 independent values (eight general
+ * The Menu Settings screen stores 27 independent values (twelve general
  * features × two menu contexts, three ordering capabilities × two contexts and
  * one table-identification mode) inside the existing `menu_settings` jsonb
  * column — no extra table, no duplicate settings record.
@@ -16,13 +16,17 @@ import { normalizeLanguageSettings } from './languages.js';
 
 export const MENU_FEATURE_KEYS = [
   'search',
-  'categories',
+  'status',
+  'hours',
   'ads',
   'featured',
   'best_selling',
-  'social',
+  'categories',
+  'product_count',
   'prices',
   'details',
+  'about',
+  'social',
 ];
 
 export const MENU_ORDER_KEYS = ['cart', 'checkout', 'order'];
@@ -68,14 +72,23 @@ export function menuContext(settings, context = 'qr') {
   const features = pick(settings.features);
   const ordering = pick(settings.ordering);
 
+  /*
+   * A menu that hides product prices cannot sell: the guest has no amount to
+   * agree to, so cart, checkout and order are all effective only while prices
+   * are visible. This is what the order endpoint checks, so a hidden-price
+   * context cannot be ordered through even by posting the endpoint directly.
+   */
+  const prices = features.prices;
+
   return {
     context: side,
     features,
     ordering,
+    prices_visible: prices,
     // Checkout needs a cart and an order needs checkout — the effective
     // capability is the whole chain, never a single toggle.
-    can_checkout: ordering.cart && ordering.checkout,
-    can_order: ordering.cart && ordering.checkout && ordering.order,
+    can_checkout: ordering.cart && ordering.checkout && prices,
+    can_order: ordering.cart && ordering.checkout && ordering.order && prices,
     table_mode: settings.table_mode,
   };
 }

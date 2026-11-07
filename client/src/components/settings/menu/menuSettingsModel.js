@@ -6,15 +6,20 @@
  * identification selected, which is exactly how its menus already behaved.
  */
 
+/* Same order the General Menu Features list renders them in. */
 export const FEATURE_KEYS = [
   'search',
-  'categories',
+  'status',
+  'hours',
   'ads',
   'featured',
   'best_selling',
-  'social',
+  'categories',
+  'product_count',
   'prices',
   'details',
+  'about',
+  'social',
 ];
 
 export const ORDER_KEYS = ['cart', 'checkout', 'order'];

@@ -828,17 +828,79 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
+/* Name and count share one line: the name keeps its two-line room, the badge
+   never stretches, and the strip only widens while counts are on. */
+.cui-cat__line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .cui-cat__label {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
+  flex: 0 1 auto;
+  min-width: 0;
   max-width: 100%;
   font-size: 11.5px;
   font-weight: 780;
   line-height: 1.35;
   text-align: center;
   overflow-wrap: anywhere;
+}
+
+.cui-catbar.has-counts .cui-cat { width: 100px; }
+
+.cui-cat__count {
+  flex: none;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: #ffffff;
+  background:
+    radial-gradient(circle at 32% 22%, rgba(255, 255, 255, 0.5), transparent 62%),
+    linear-gradient(
+      165deg,
+      color-mix(in srgb, var(--primary) 82%, #ffffff) 0%,
+      var(--primary) 55%,
+      color-mix(in srgb, var(--primary) 74%, #000000) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.22),
+    0 3px 8px -4px color-mix(in srgb, var(--primary) 68%, transparent);
+  animation: cuiCountPop 260ms ease;
+}
+
+/* On the selected card the badge flips to a light plate so it stays legible
+   against the filled theme colour. */
+.cui-cat.is-active .cui-cat__count {
+  color: color-mix(in srgb, var(--primary) 88%, #0b1220);
+  background: linear-gradient(180deg, #ffffff, rgba(255, 255, 255, 0.82));
+  box-shadow:
+    inset 0 1px 0 #ffffff,
+    0 2px 6px -3px rgba(0, 0, 0, 0.35);
+}
+
+@keyframes cuiCountPop {
+  from { transform: scale(0.72); opacity: 0.35; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cui-cat__count { animation: none; }
 }
 
 .cui-catbar__arrow {

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Icon from '../Icon';
 import { localized, useI18n } from '../../i18n';
+import { fmtNumber } from '../../format';
 import { appearanceOf } from '../menu/categoryIcons';
 
 /*
@@ -18,7 +19,8 @@ import { appearanceOf } from '../menu/categoryIcons';
  * The arrows are *physical*: the left button always moves the strip leftwards,
  * in RTL too, so their meaning never flips with the language.
  */
-function CategoryCard({ row, active, disabled, onSelect }) {
+function CategoryCard({ row, active, disabled, onSelect, showCount }) {
+  const { locale } = useI18n();
   const appearance = row.category ? appearanceOf(row.category) : null;
   return (
     <button
@@ -39,19 +41,44 @@ function CategoryCard({ row, active, disabled, onSelect }) {
       >
         <Icon name={row.category ? appearance.icon : 'grid'} size={26} />
       </span>
-      <span className="cui-cat__label">{row.label}</span>
+      <span className="cui-cat__line">
+        <span className="cui-cat__label">{row.label}</span>
+        {showCount && row.count !== null ? (
+          /* Keyed on the number, so a changed count replays its pop instead of
+             silently swapping digits. */
+          <span className="cui-cat__count" key={row.count}>
+            {fmtNumber(row.count, locale)}
+          </span>
+        ) : null}
+      </span>
     </button>
   );
 }
 
-export default function CustomerCategoryNav({ categories, activeCat, onSelect, disabled = false }) {
+export default function CustomerCategoryNav({
+  categories,
+  activeCat,
+  onSelect,
+  disabled = false,
+  /* The owner's "Show product count" setting: the badge appears beside each
+     name, and the strip only widens for it while it is on. */
+  showCounts = false,
+  allCount = 0,
+}) {
   const { t, locale, rtl } = useI18n();
   const scroller = useRef(null);
   const [edges, setEdges] = useState({ start: false, end: false, more: false });
 
+  /* The count is the server's own eligible-product number for that category —
+     a category the owner deactivated never reaches this list at all. */
   const rows = [
-    { id: null, label: t('customer_menu_all') },
-    ...categories.map((c) => ({ id: c.id, label: localized(c, 'name', locale) || t('label_translation_missing'), category: c })),
+    { id: null, label: t('customer_menu_all'), count: Number(allCount) || 0 },
+    ...categories.map((c) => ({
+      id: c.id,
+      label: localized(c, 'name', locale) || t('label_translation_missing'),
+      category: c,
+      count: Number.isFinite(Number(c.product_count)) ? Number(c.product_count) : null,
+    })),
   ];
 
   /* Measured from real element boxes, so "is there more that way?" is correct
@@ -99,7 +126,7 @@ export default function CustomerCategoryNav({ categories, activeCat, onSelect, d
   };
 
   return (
-    <nav className="cui-catbar" aria-label={t('customer_menu_categories')}>
+    <nav className={`cui-catbar ${showCounts ? 'has-counts' : ''}`.trim()} aria-label={t('customer_menu_categories')}>
       {edges.more ? (
         <button
           type="button"
@@ -120,6 +147,7 @@ export default function CustomerCategoryNav({ categories, activeCat, onSelect, d
             active={activeCat === row.id}
             disabled={disabled}
             onSelect={onSelect}
+            showCount={showCounts}
           />
         ))}
       </div>

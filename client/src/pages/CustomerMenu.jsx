@@ -163,6 +163,19 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
   }, [load]);
 
   /*
+   * A menu left open keeps up with Menu Settings on its own: a quiet re-read
+   * every 30 seconds brings a section in or takes it out, refreshes the
+   * category product counts and picks up a feature the owner just switched —
+   * with no spinner, no reload and no loss of cart, search or table state.
+   */
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') load({ silent: true });
+    }, 30000);
+    return () => clearInterval(timer);
+  }, [load]);
+
+  /*
    * The compact header appears when the banner leaves the viewport. An
    * IntersectionObserver drives that once per crossing, instead of a scroll
    * listener that would re-render the whole page on every frame.
@@ -376,6 +389,7 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
       return true;
     } catch (err) {
       if (err.code === 'MENU_DISABLED') toast.error(t('customer_menu_unavailable'));
+      else if (err.code === 'PRICES_HIDDEN') toast.error(t('customer_prices_hidden'));
       else if (err.code === 'ORDERING_DISABLED') toast.error(t('customer_ordering_disabled'));
       else if (err.code === 'INVALID_TABLE') toast.error(t('customer_table_invalid'));
       else if (err.code === 'PROMO_MIN_ORDER') toast.error(t('customer_promo_min_order'));
@@ -479,9 +493,17 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
   const ordering = data.menu?.ordering || {};
   const showFeature = (name) => features[name] !== false;
   const allowAction = (name) => ordering[name] !== false;
+  /*
+   * Product prices are the guest's consent to pay: while the owner hides them,
+   * every price is removed, every add/quantity control is locked and the order
+   * can neither be checked out nor submitted. The server applies the same rule
+   * before it writes an order, so this can never be bypassed from the client.
+   */
+  const priceVisible = showFeature('prices');
   const cartEnabled = allowAction('cart');
-  const checkoutEnabled = cartEnabled && allowAction('checkout');
-  const orderingEnabled = checkoutEnabled && allowAction('order');
+  const addAllowed = cartEnabled && priceVisible;
+  const checkoutEnabled = cartEnabled && allowAction('checkout') && priceVisible;
+  const orderingEnabled = checkoutEnabled && allowAction('order') && priceVisible;
   /*
    * The ordering panel is live only while the business is actually trading. The
    * pause is the saved Working Hours verdict — closed, not open yet, an off day
@@ -634,13 +656,25 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
             categories={categories.length}
             items={(data.products || []).length}
             typeLabel={biz.business_type ? t(`settings_type_${biz.business_type}`) : ''}
-            hours={data.hours}
+            hours={showFeature('status') ? data.hours : null}
           />
 
-          <CustomerHours hours={data.hours} timeZone={timeZone} status={opening} />
+          {/* Working hours and the open/closed verdict are two independent
+              settings: a menu can show its hours without the status pill, or
+              the pill without the hours card. */}
+          {showFeature('hours') ? (
+            <CustomerHours
+              hours={data.hours}
+              timeZone={timeZone}
+              status={opening}
+              showStatus={showFeature('status')}
+            />
+          ) : null}
         </div>
 
-        <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={orderingLive ? openAd : undefined} />
+        {showFeature('ads') ? (
+          <CustomerAds ads={adsBelowHeader} locale={locale} onOpen={orderingLive ? openAd : undefined} />
+        ) : null}
 
         {featuredProducts.length > 0 ? (
           <CustomerPanel
@@ -664,8 +698,8 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
                   categoryName={localized(categoryOf(p), 'name', locale)}
                   locale={locale}
                   currency={currency}
-                  showPrices={showFeature('prices')}
-                  canAdd={cartEnabled}
+                  showPrices={priceVisible}
+                  canAdd={addAllowed}
                   addLabel={t('customer_menu_add')}
                   promoLabel={t('customer_menu_promo')}
                   quantity={cart[p.id] || 0}
@@ -701,8 +735,8 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
                   categoryName={localized(categoryOf(p), 'name', locale)}
                   locale={locale}
                   currency={currency}
-                  showPrices={showFeature('prices')}
-                  canAdd={cartEnabled}
+                  showPrices={priceVisible}
+                  canAdd={addAllowed}
                   addLabel={t('customer_menu_add')}
                   promoLabel={t('customer_menu_promo')}
                   badge={t('customer_menu_best_badge')}
@@ -718,11 +752,15 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
         ) : null}
 
         <div className="cui-order">
+          {/* The category strip is pure navigation: without it every product
+              still appears in the grid below, under no category filter. */}
           {showFeature('categories') ? (
             <CustomerCategoryNav
               categories={visibleCategories}
               activeCat={activeCat}
               onSelect={selectCategory}
+              showCounts={showFeature('product_count')}
+              allCount={(data.products || []).length}
             />
           ) : null}
 
@@ -744,8 +782,8 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
                     categoryName={localized(categoryOf(p), 'name', locale)}
                     locale={locale}
                     currency={currency}
-                    showPrices={showFeature('prices')}
-                    canAdd={cartEnabled}
+                    showPrices={priceVisible}
+                    canAdd={addAllowed}
                     addLabel={t('customer_menu_add_to_cart')}
                     promoLabel={t('customer_menu_promo')}
                     quantity={cart[p.id] || 0}
@@ -760,9 +798,11 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
           </div>
         </div>
 
-        <CustomerAds ads={adsMenuEnd} locale={locale} onOpen={openAd} />
+        {showFeature('ads') ? <CustomerAds ads={adsMenuEnd} locale={locale} onOpen={openAd} /> : null}
 
-        <CustomerAbout text={localized(biz, 'description', locale) || biz.description || ''} />
+        {showFeature('about') ? (
+          <CustomerAbout text={localized(biz, 'description', locale) || biz.description || ''} />
+        ) : null}
 
         {showFeature('social') ? (
           <CustomerContact business={biz} locale={locale} onReview={() => setReviewOpen(true)} />
@@ -786,7 +826,7 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
             <button className="btn btn--primary" style={{ flex: 1 }} onClick={() => setCartOpen(true)}>
               <Icon name="cart" size={17} />
               {t('customer_menu_view_order')} · {cartCount}
-              <Money value={cartTotal} currency={currency} />
+              {priceVisible ? <Money value={cartTotal} currency={currency} /> : null}
             </button>
           </div>
         </div>
@@ -804,6 +844,7 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
           locale={locale}
           language={locale}
           hasUnavailable={cartBlocked}
+          pricesHidden={!priceVisible}
           busy={busy}
           canCheckout={checkoutEnabled}
           canOrder={orderingEnabled}
@@ -825,8 +866,8 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
           product={detail}
           category={categories.find((c) => c.id === detail.category_id)}
           currency={currency}
-          showPrices={showFeature('prices')}
-          canAdd={cartEnabled}
+          showPrices={priceVisible}
+          canAdd={addAllowed}
           addLabel={t('customer_menu_add_to_cart')}
           promoLabel={t('customer_menu_promo')}
           quantity={cart[detail.id] || 0}
