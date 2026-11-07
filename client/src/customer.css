@@ -745,8 +745,8 @@
      corner on both axes, which is what keeps ~5px of clear air between the
      badge and the plate at every size. */
   --cat-badge: 24px;
-  --cat-badge-offset: 19px;
-  --cat-badge-offset-wide: 22px;
+  --cat-badge-offset: 12px;
+  --cat-badge-offset-wide: 16px;
   --cat-badge-font: 11.5px;
   flex: none;
   width: 88px;
@@ -803,8 +803,10 @@
 }
 
 /* The plate and its badge share one box, so the badge is placed from a known
-   corner instead of from the whole card. */
+   corner instead of from the whole card, and both read the same category
+   accent (`--cic`) — the badge is that colour at full depth. */
 .cui-cat__media {
+  --cic: var(--primary);
   position: relative;
   flex: none;
   inline-size: 50px;
@@ -814,7 +816,6 @@
 }
 
 .cui-cat__icon {
-  --cic: var(--primary);
   width: 50px;
   height: 50px;
   flex: none;
@@ -877,13 +878,14 @@
    the number is never clipped and the card never reflows when it changes. */
 .cui-catbar.has-counts .cui-cat {
   width: 100px;
-  padding-block-start: 25px;
+  padding-block-start: 19px;
 }
 
-/* Premium corner badge: a glossy three-tone disc sitting just off the plate's
-   rounded corner (upper end side — top right in LTR, top left in RTL), with a
-   real air gap, a bevel and a soft floating shadow. Only the number is placed
-   absolutely, so a changing count never shifts the card or its neighbours. */
+/* Count badge: a glossy disc attached to the plate's upper end corner (top
+   right in LTR, top left in RTL). Its centre sits on that corner, so it laps
+   about a fifth of its diameter over the plate and reads as one component with
+   it — never floating away from it. Only the number is placed absolutely, so a
+   changing count never shifts the card or its neighbours. */
 .cui-cat__count {
   position: absolute;
   inset-block-start: calc(-1 * var(--cat-badge-offset));
@@ -901,19 +903,23 @@
   line-height: 1;
   font-variant-numeric: tabular-nums;
   color: #ffffff;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.32);
+  /* Three tones of the category's own accent — lit top edge, its full hue in
+     the middle and a deep shade underneath — so a purple ice cream category
+     gets a deep purple badge, not a universal blue one. */
   background:
-    radial-gradient(115% 85% at 32% 18%, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0) 62%),
+    radial-gradient(120% 80% at 30% 14%, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 58%),
     linear-gradient(
       165deg,
-      color-mix(in srgb, var(--primary) 74%, #ffffff) 0%,
-      var(--primary) 54%,
-      color-mix(in srgb, var(--primary) 72%, #000000) 100%
+      color-mix(in srgb, var(--cic) 82%, #ffffff) 0%,
+      color-mix(in srgb, var(--cic) 58%, #0b1220) 54%,
+      color-mix(in srgb, var(--cic) 40%, #0b1220) 100%
     );
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.7),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.22),
-    0 1px 2px rgba(16, 30, 22, 0.16),
-    0 5px 10px -4px color-mix(in srgb, var(--primary) 60%, transparent);
+    0 0 0 1.5px color-mix(in srgb, var(--cic) 30%, var(--surface)),
+    inset 0 1px 1px rgba(255, 255, 255, 0.55),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.26),
+    0 4px 9px -3px color-mix(in srgb, var(--cic) 62%, transparent);
   animation: cuiCountPop 260ms cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
@@ -924,19 +930,9 @@
   inset-inline-end: calc(-1 * var(--cat-badge-offset-wide));
 }
 
-/* On the selected card the badge flips to a light plate so it stays legible
-   against the filled theme colour. */
-.cui-cat.is-active .cui-cat__count {
-  color: color-mix(in srgb, var(--primary) 90%, #0b1220);
-  background:
-    radial-gradient(115% 85% at 32% 18%, #ffffff, rgba(255, 255, 255, 0) 66%),
-    linear-gradient(170deg, #ffffff 0%, color-mix(in srgb, #ffffff 84%, var(--primary)) 100%);
-  box-shadow:
-    inset 0 1px 0 #ffffff,
-    inset 0 -2px 3px color-mix(in srgb, var(--primary) 26%, transparent),
-    0 1px 2px rgba(16, 30, 22, 0.12),
-    0 5px 10px -4px rgba(0, 0, 0, 0.32);
-}
+/* The badge keeps the category's own colour on the selected card too: it is
+   part of the icon, not a card-level state, and the deep tone stays legible on
+   the filled theme surface. */
 
 @keyframes cuiCountPop {
   from { transform: scale(0.7); opacity: 0.3; }
@@ -948,20 +944,20 @@
 @media (max-width: 1024px) {
   .cui-cat {
     --cat-badge: 22px;
-    --cat-badge-offset: 18px;
-    --cat-badge-offset-wide: 21px;
+    --cat-badge-offset: 11px;
+    --cat-badge-offset-wide: 15px;
     --cat-badge-font: 11px;
   }
-  .cui-catbar.has-counts .cui-cat { padding-block-start: 24px; }
+  .cui-catbar.has-counts .cui-cat { padding-block-start: 18px; }
 }
 @media (max-width: 640px) {
   .cui-cat {
     --cat-badge: 20px;
-    --cat-badge-offset: 16px;
-    --cat-badge-offset-wide: 20px;
+    --cat-badge-offset: 10px;
+    --cat-badge-offset-wide: 14px;
     --cat-badge-font: 10.5px;
   }
-  .cui-catbar.has-counts .cui-cat { padding-block-start: 23px; }
+  .cui-catbar.has-counts .cui-cat { padding-block-start: 17px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

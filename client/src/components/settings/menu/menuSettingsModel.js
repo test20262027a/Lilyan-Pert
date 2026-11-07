@@ -28,8 +28,11 @@ export const TABLE_MODES = ['manual', 'qr', 'qr_fallback'];
 
 const flag = (value) => (typeof value === 'boolean' ? value : true);
 
+/* A single-boolean record saved before the two switches existed becomes the same
+   verdict for both menus, so an upgrade never re-enables a disabled feature. */
 function pair(raw, key) {
-  const value = raw && typeof raw[key] === 'object' && raw[key] ? raw[key] : {};
+  const saved = raw ? raw[key] : undefined;
+  const value = typeof saved === 'boolean' ? { main: saved, qr: saved } : saved && typeof saved === 'object' ? saved : {};
   return { main: flag(value.main), qr: flag(value.qr) };
 }
 

@@ -35,8 +35,17 @@ export const TABLE_MODES = ['manual', 'qr', 'qr_fallback'];
 
 const flag = (value) => (typeof value === 'boolean' ? value : true);
 
+/*
+ * One setting, two customer interfaces.
+ *
+ * A record saved before the two switches existed held a single boolean; it is
+ * read as that same verdict for both menus, so upgrading never switches a
+ * feature the owner had turned off back on, and every other saved value is
+ * left exactly as it was.
+ */
 function pair(raw, key) {
-  const value = raw && typeof raw[key] === 'object' && raw[key] ? raw[key] : {};
+  const saved = raw ? raw[key] : undefined;
+  const value = typeof saved === 'boolean' ? { main: saved, qr: saved } : saved && typeof saved === 'object' ? saved : {};
   return { main: flag(value.main), qr: flag(value.qr) };
 }
 

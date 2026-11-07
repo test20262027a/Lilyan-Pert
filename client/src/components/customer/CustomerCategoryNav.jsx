@@ -38,10 +38,12 @@ function CategoryCard({ row, active, disabled, onSelect, showCount }) {
       {/* Icon plate and count badge share one wrapper: the badge is placed from
           this box's top inline-end corner, so its gap to the plate stays exact
           at every size and in both directions. */}
-      <span className="cui-cat__media">
+      <span
+        className="cui-cat__media"
+        style={appearance ? { '--cic': appearance.color } : undefined}
+      >
         <span
           className={`cui-cat__icon ${row.category ? '' : 'cui-cat__icon--all'}`}
-          style={appearance ? { '--cic': appearance.color } : undefined}
           aria-hidden="true"
         >
           <Icon name={row.category ? appearance.icon : 'grid'} size={26} />

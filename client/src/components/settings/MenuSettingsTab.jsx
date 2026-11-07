@@ -15,8 +15,9 @@ import { normalizeMenuSettings } from './menu/menuSettingsModel';
  * choice, and every value persists through the existing business endpoint.
  *
  * The feature list is intentionally fixed — the owner's exact order, never
- * sorted or regrouped — and every row is one switch writing both menus, so the
- * customer panel and the QR menu can never disagree.
+ * sorted or regrouped — and every feature row carries two independent switches,
+ * one per customer interface, so the main ordering menu and the QR table menu
+ * can be configured differently.
  */
 export default function MenuSettingsTab({ draft, patch, canManage }) {
   const { t } = useI18n();
@@ -31,17 +32,7 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
       },
     });
 
-  /* One customer-menu setting: the same verdict for the main ordering menu and
-     the QR table menu, never a shared toggle between two different features. */
-  const setFeature = (key, next) => {
-    const current = menu.features[key] || {};
-    patch('menu_settings', {
-      features: {
-        ...menu.features,
-        [key]: { ...current, main: next, qr: next },
-      },
-    });
-  };
+
 
   const featureRows = [
     { key: 'search', icon: 'search', tone: '#4f7cf7', title: t('menu_feat_search'), hint: t('menu_feat_search_hint') },
@@ -95,7 +86,7 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
           rows={featureRows}
           value={menu.features}
           disabled={!canManage}
-          onChange={setFeature}
+          onChange={(key, side, next) => setSwitch('features', key, side, next)}
         />
       </SettingsCard>
 

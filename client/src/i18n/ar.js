@@ -1508,7 +1508,7 @@ export default {
   menu_features_subtitle: 'قائمة الطلب الرئيسية / قائمة QR للعميل / الطاولة',
   menu_col_feature: 'الميزة',
   menu_col_main: 'القائمة الرئيسية',
-  menu_col_qr: 'QR العميل',
+  menu_col_qr: 'QR الطاولة',
   menu_feat_search: 'البحث',
   menu_feat_search_hint: 'حقل البحث في أعلى القائمة',
   menu_feat_status: 'عرض حالة مفتوح/مغلق',

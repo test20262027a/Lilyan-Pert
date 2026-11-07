@@ -1513,7 +1513,7 @@ export default {
   menu_features_subtitle: 'Main ordering menu / Customer QR menu / Table',
   menu_col_feature: 'Feature',
   menu_col_main: 'Main menu',
-  menu_col_qr: 'Customer QR',
+  menu_col_qr: 'Table QR',
   menu_feat_search: 'Search',
   menu_feat_search_hint: 'Search field at the top of the menu',
   menu_feat_status: 'Show open/closed status',

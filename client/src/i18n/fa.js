@@ -1510,7 +1510,7 @@ export default {
   menu_features_subtitle: 'منوی سفارش اصلی / منوی QR مشتری / میز',
   menu_col_feature: 'ویژگی',
   menu_col_main: 'منوی اصلی',
-  menu_col_qr: 'QR مشتری',
+  menu_col_qr: 'QR میز',
   menu_feat_search: 'جستجو',
   menu_feat_search_hint: 'نوار جستجو در بالای منو',
   menu_feat_status: 'نمایش وضعیت باز/بسته',
