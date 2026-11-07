@@ -9,6 +9,8 @@ const TYPE_ICON = {
   fast_food: 'utensils',
   bakery: 'coffee',
   juice_bar: 'coffee',
+  sweets: 'cake',
+  sweets_desserts: 'glass',
 };
 
 /*

@@ -652,12 +652,17 @@ export default function CustomerMenu({ slug, adminMode = false, tableToken: scan
             </div>
           ) : null}
 
-          <CustomerStats
-            categories={categories.length}
-            items={(data.products || []).length}
-            typeLabel={biz.business_type ? t(`settings_type_${biz.business_type}`) : ''}
-            hours={showFeature('status') ? data.hours : null}
-          />
+          {/* The summary bar is its own feature, switched independently for the
+              main ordering menu and the QR table menu; when it is off nothing
+              is reserved for it, so the menu below closes the gap. */}
+          {showFeature('summary') ? (
+            <CustomerStats
+              categories={categories.length}
+              items={(data.products || []).length}
+              typeLabel={biz.business_type ? t(`settings_type_${biz.business_type}`) : ''}
+              hours={data.hours}
+            />
+          ) : null}
 
           {/* Working hours and the open/closed verdict are two independent
               settings: a menu can show its hours without the status pill, or

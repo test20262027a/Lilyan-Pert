@@ -11,7 +11,7 @@ import LanguageFieldsGrid from '../language/LanguageFieldsGrid';
  * first row and Persian/Arabic the second.
  */
 const NAME_ORDER = ['en', 'ku', 'fa', 'ar'];
-const BUSINESS_TYPES = ['cafe', 'restaurant', 'fast_food', 'bakery', 'juice_bar'];
+const BUSINESS_TYPES = ['cafe', 'restaurant', 'fast_food', 'juice_bar', 'sweets', 'sweets_desserts'];
 
 /*
  * The business currency follows the interface language: a Kurdish or Arabic
@@ -37,6 +37,11 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
     : enabledLanguages[0];
   const activeLanguage = enabledLanguages.includes(locale) ? locale : fallbackLanguage;
   const currency = CURRENCY_BY_LANGUAGE[activeLanguage] || draft.currency || '';
+
+  /* A business saved under a type that is no longer offered keeps its stored
+     value selectable on screen until an administrator picks a replacement —
+     the record is never silently rewritten. */
+  const businessTypes = [...new Set([...BUSINESS_TYPES, draft.business_type].filter(Boolean))];
 
   return (
     <>
@@ -70,7 +75,7 @@ export default function BusinessInfoTab({ draft, setField, setVal, canManage }) 
               value={draft.business_type || 'cafe'}
               onChange={(value) => setVal('business_type', value)}
               disabled={!canManage}
-              options={BUSINESS_TYPES.map((value) => ({ value, label: t(`settings_type_${value}`) }))}
+              options={businessTypes.map((value) => ({ value, label: t(`settings_type_${value}`) }))}
             />
           </SetField>
         </div>

@@ -16,6 +16,7 @@ export const FEATURE_KEYS = [
   'best_selling',
   'categories',
   'product_count',
+  'summary',
   'prices',
   'details',
   'about',

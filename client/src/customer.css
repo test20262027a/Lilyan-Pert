@@ -580,10 +580,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* The business type is a word, not a figure: it wraps to a second line rather
+   than being cut off, so a longer name stays readable on a narrow phone. */
+.cui-summary__item--text .cui-summary__value {
+  font-size: 13.5px;
+  line-height: 1.45;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
 @media (min-width: 640px) {
   .cui-summary__item { flex-direction: row; gap: 10px; padding: 15px 16px; }
   .cui-summary__value { font-size: 17px; }
   .cui-summary__label { font-size: 12.5px; }
+  .cui-summary__item--text .cui-summary__value { font-size: 15px; }
 }
 
 /* working hours: tinted header row, then the date opposite the trading range */

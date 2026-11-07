@@ -11,7 +11,10 @@ import { fmtNumber } from '../../format';
  */
 export default function CustomerStats({ categories, items, typeLabel, hours }) {
   const { t, locale } = useI18n();
-  const open = hours?.valid ? hours.is_open : null;
+  /* The bar itself is a Menu Settings feature (main menu and QR menu each carry
+     their own switch); this component only draws its three cells. The closed
+     tint stays so a paused menu still reads at a glance. */
+  const closed = Boolean(hours?.valid && !hours.is_open);
 
   const tiles = [
     {
@@ -28,30 +31,23 @@ export default function CustomerStats({ categories, items, typeLabel, hours }) {
       value: fmtNumber(items, locale),
       label: t('customer_menu_items'),
     },
-    open !== null
-      ? {
-          key: 'status',
-          icon: 'clock',
-          tone: open ? 'mint' : 'rose',
-          value: open ? t('dash_open_now') : t('dash_closed_now'),
-          /* The state stands alone — the business type is never appended to it. */
-          label: '',
-        }
-      : typeLabel
-        ? {
-            key: 'type',
-            icon: 'store',
-            tone: 'mint',
-            value: typeLabel,
-            label: t('settings_business_type'),
-          }
-        : null,
-  ].filter(Boolean);
+    {
+      key: 'type',
+      icon: 'store',
+      tone: 'mint',
+      text: true,
+      value: typeLabel,
+      label: t('settings_business_type'),
+    },
+  ];
 
   return (
-    <div className={`cui-summary ${open === false ? 'is-closed' : ''}`}>
+    <div className={`cui-summary ${closed ? 'is-closed' : ''}`}>
       {tiles.map((tile) => (
-        <div className={`cui-summary__item cui-summary__item--${tile.tone}`} key={tile.key}>
+        <div
+          className={`cui-summary__item cui-summary__item--${tile.tone} ${tile.text ? 'cui-summary__item--text' : ''}`.trim()}
+          key={tile.key}
+        >
           <span className="cui-summary__icon">
             <Icon name={tile.icon} size={17} />
           </span>
