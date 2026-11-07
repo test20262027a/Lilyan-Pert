@@ -1,83 +1,38 @@
 import Icon from '../../Icon';
-import { useI18n } from '../../../i18n';
-import { SwitchControl } from '../SettingsCard';
+import DualMenuFeatureRow, { DualMenuFeatureHeader } from './DualMenuFeatureRow';
 
 /*
- * General Menu Features — the twelve switches, in the owner's fixed reading
- * order.
- *
- * One raised card per feature: an individual 3D icon surface, the localized
- * title and description, and TWO independent switches — the main ordering menu
- * and the QR table menu. Each switch writes only its own side, so a feature can
- * be on in one customer interface and off in the other.
- *
- * The header above the list repeats the same three columns (feature, main
- * menu, QR menu) so both switch columns line up from the first row to the last.
- * On narrow screens the row folds into the feature line above two labelled
- * switch chips.
+ * A menu capability group rendered as raised 3D cards — the twelve general
+ * features and the ordering & cart capabilities share this list, so both
+ * groups inherit the same card geometry and the two switch columns stay
+ * aligned between them.
  */
-export default function MenuFeatureCards({ rows, value, onChange, disabled }) {
-  const { t } = useI18n();
-
+export default function MenuFeatureCards({ rows, value, onChange, disabled, footNote }) {
   return (
     <div className="ms-cards">
-      <div className="ms-cards__head" aria-hidden="true">
-        <span className="ms-cards__col">{t('menu_col_feature')}</span>
-        <span className="ms-cards__col">{t('menu_col_main')}</span>
-        <span className="ms-cards__col">{t('menu_col_qr')}</span>
-      </div>
+      <DualMenuFeatureHeader />
 
-      {rows.map((row) => {
-        const mainOn = value[row.key]?.main !== false;
-        const qrOn = value[row.key]?.qr !== false;
-        /* The card only greys out when the feature is off in BOTH menus; a
-           feature that still runs in one interface keeps its identity colour. */
-        const enabled = mainOn || qrOn;
-        return (
-          <div
-            key={row.key}
-            className={`ms-card ${enabled ? 'is-on' : 'is-off'} ${row.note ? 'has-note' : ''}`.trim()}
-            style={{ '--ms-tone': row.tone }}
-          >
-            <div className="ms-card__feature">
-              <span className="ms-card__icon" aria-hidden="true">
-                <Icon name={row.icon} size={20} />
-              </span>
+      {rows.map((row) => (
+        <DualMenuFeatureRow
+          key={row.key}
+          title={row.title}
+          hint={row.hint}
+          note={row.note}
+          icon={row.icon}
+          tone={row.tone}
+          mainOn={value[row.key]?.main !== false}
+          qrOn={value[row.key]?.qr !== false}
+          disabled={disabled}
+          onChange={(side, next) => onChange(row.key, side, next)}
+        />
+      ))}
 
-              <div className="ms-card__text">
-                <div className="ms-card__title">{row.title}</div>
-                <div className="ms-card__hint">{row.hint}</div>
-                {row.note ? (
-                  <div className="ms-card__note">
-                    <Icon name="info" size={12} />
-                    {row.note}
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="ms-card__cell">
-              <span className="ms-card__cell-label">{t('menu_col_main')}</span>
-              <SwitchControl
-                checked={mainOn}
-                disabled={disabled}
-                label={`${row.title} — ${t('menu_col_main')}`}
-                onChange={(next) => onChange(row.key, 'main', next)}
-              />
-            </div>
-
-            <div className="ms-card__cell">
-              <span className="ms-card__cell-label">{t('menu_col_qr')}</span>
-              <SwitchControl
-                checked={qrOn}
-                disabled={disabled}
-                label={`${row.title} — ${t('menu_col_qr')}`}
-                onChange={(next) => onChange(row.key, 'qr', next)}
-              />
-            </div>
-          </div>
-        );
-      })}
+      {footNote ? (
+        <p className="ms-cards__foot">
+          <Icon name="info" size={13} />
+          {footNote}
+        </p>
+      ) : null}
     </div>
   );
 }

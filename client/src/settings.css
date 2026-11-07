@@ -811,62 +811,6 @@
 
 .ms-art { width: 100%; max-width: 520px; height: auto; max-height: 132px; display: block; }
 
-/* ------------------------------------------------------- feature matrix */
-
-.ms-matrix { display: flex; flex-direction: column; }
-.ms-matrix__head,
-.ms-matrix__row {
-  display: grid;
-  grid-template-columns: minmax(0, 55fr) minmax(96px, 23fr) minmax(96px, 22fr);
-  align-items: center;
-  gap: 12px;
-}
-.ms-matrix__head { padding: 0 12px 9px; border-bottom: 1px solid var(--border); }
-.ms-matrix__col { font-size: 11.5px; font-weight: 650; color: var(--muted); text-align: center; }
-.ms-matrix__col:first-child { text-align: start; }
-
-.ms-matrix__row {
-  padding: 13px 12px;
-  border-bottom: 1px solid var(--border);
-  transition: background 180ms ease;
-}
-.ms-matrix__row:last-child { border-bottom: none; }
-.ms-matrix__row:hover { background: color-mix(in srgb, var(--mint-soft) 42%, transparent); }
-.ms-matrix__title { font-size: 13.5px; font-weight: 650; color: var(--text); }
-.ms-matrix__hint { font-size: 11.5px; color: var(--muted); margin-top: 2px; line-height: 1.55; }
-.ms-matrix__cell { display: flex; align-items: center; justify-content: center; gap: 8px; }
-.ms-matrix__cell-label { display: none; font-size: 11px; font-weight: 600; color: var(--muted); }
-.ms-matrix__note {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding-top: 7px;
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--theme-primary-strong);
-}
-.ms-matrix__foot-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 0;
-  margin-inline: -16px;
-  margin-bottom: -16px;
-  padding: 11px 16px;
-  font-size: 11.5px;
-  line-height: 1.55;
-  color: var(--theme-primary-strong);
-  background: var(--theme-primary-soft);
-  border-top: 1px solid var(--theme-primary-line);
-}
-[data-theme='dark'] .ms-matrix__note { color: var(--theme-primary); }
-[data-theme='dark'] .ms-matrix__foot-note {
-  background: rgba(217, 119, 6, 0.14);
-  border-color: rgba(217, 119, 6, 0.34);
-  color: var(--theme-primary);
-}
-
 /* --------------------------------------------- general menu feature cards */
 
 .ms-cards { display: flex; flex-direction: column; gap: 10px; }
@@ -998,6 +942,27 @@
   min-width: 0;
 }
 .ms-card__cell-label { display: none; font-size: 11px; font-weight: 650; color: var(--muted); }
+
+/* Dependency note closing a card group — a soft chip under the last card. */
+.ms-cards__foot {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 2px 0 0;
+  padding: 10px 13px;
+  border-radius: 12px;
+  border: 1px solid var(--theme-primary-line);
+  background: var(--theme-primary-soft);
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--theme-primary-strong);
+}
+
+[data-theme='dark'] .ms-cards__foot {
+  background: rgba(217, 119, 6, 0.14);
+  border-color: rgba(217, 119, 6, 0.34);
+  color: var(--theme-primary);
+}
 
 [data-theme='dark'] .ms-card {
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
@@ -1258,15 +1223,6 @@
 /* ------------------------------------------------------------ responsive */
 
 @media (max-width: 760px) {
-  .ms-matrix__head { display: none; }
-  .ms-matrix__row {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-    gap: 8px 14px;
-    padding: 12px 2px;
-  }
-  .ms-matrix__cell { flex-direction: column; gap: 4px; }
-  .ms-matrix__cell-label { display: block; white-space: nowrap; }
-  .ms-matrix__foot-note { margin-inline: -14px; margin-bottom: -14px; padding-inline: 14px; }
   .ms-lang__list { grid-template-columns: minmax(0, 1fr); }
   .ms-lang__default { flex-direction: column; align-items: stretch; }
   .ms-lang__select { width: 100%; }
@@ -1275,6 +1231,4 @@
 
 @media (max-width: 430px) {
   .ms-mode { padding: 11px 12px; }
-  .ms-matrix__row { gap: 8px 10px; }
-  .ms-matrix__cell-label { font-size: 10.5px; }
 }

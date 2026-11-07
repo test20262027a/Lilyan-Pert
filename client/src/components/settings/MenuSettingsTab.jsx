@@ -1,7 +1,6 @@
 import { useI18n } from '../../i18n';
 import { SettingsCard } from './SettingsCard';
 import MenuFeatureCards from './menu/MenuFeatureCards';
-import MenuFeatureMatrix from './menu/MenuFeatureMatrix';
 import TableModeCards from './menu/TableModeCards';
 import LanguageManagementCard from './menu/LanguageManagementCard';
 import { normalizeMenuSettings } from './menu/menuSettingsModel';
@@ -57,9 +56,9 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
   ];
 
   const orderRows = [
-    { key: 'cart', title: t('menu_ord_cart'), hint: t('menu_ord_cart_hint') },
-    { key: 'checkout', title: t('menu_ord_checkout'), hint: t('menu_ord_checkout_hint') },
-    { key: 'order', title: t('menu_ord_order'), hint: t('menu_ord_order_hint') },
+    { key: 'cart', icon: 'cart', tone: '#2f86e0', title: t('menu_ord_cart'), hint: t('menu_ord_cart_hint') },
+    { key: 'checkout', icon: 'wallet', tone: '#12a67a', title: t('menu_ord_checkout'), hint: t('menu_ord_checkout_hint') },
+    { key: 'order', icon: 'clipboard', tone: '#7c5cd6', title: t('menu_ord_order'), hint: t('menu_ord_order_hint') },
   ];
 
   const orderBroken = ['main', 'qr'].some(
@@ -96,11 +95,11 @@ export default function MenuSettingsTab({ draft, patch, canManage }) {
         title={t('menu_ordering_title')}
         subtitle={t('menu_ordering_subtitle')}
       >
-        <MenuFeatureMatrix
+        <MenuFeatureCards
           rows={orderRows}
           value={menu.ordering}
           disabled={!canManage}
-          note={orderBroken ? t('menu_order_dependency_hint') : null}
+          footNote={orderBroken ? t('menu_order_dependency_hint') : null}
           onChange={(key, side, next) => setSwitch('ordering', key, side, next)}
         />
       </SettingsCard>
